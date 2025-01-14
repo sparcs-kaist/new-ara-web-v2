@@ -1,0 +1,28 @@
+.carousel-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .arrow-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #555;
+    padding: 10px;
+  }
+  
+  .arrow-button:hover {
+    color: #ff5757;
+  }
+  
+  .carousel-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 93px);
+    gap: 30px;
+    overflow: hidden;
+    justify-items: center;
+  }
+  
