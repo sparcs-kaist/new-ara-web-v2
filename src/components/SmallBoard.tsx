@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './SmallBoard.css';
+import '../styles/SmallBoard.css';
 
 interface Post {
   id: number;

@@ -1,7 +1,7 @@
 // OrganizationCard.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './OrganizationCard.css';
+import '../styles/OrganizationCard.css';
 
 interface OrganizationCardProps {
   name: string;

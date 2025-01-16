@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import OrganizationCard from './OrganizationCard';
-import './OrganizationCardCarousel.css';
+import '../styles/OrganizationCardCarousel.css';
 
 interface OrganizationCardCarouselProps {
   cards: {
