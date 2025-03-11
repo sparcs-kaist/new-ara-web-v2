@@ -14,6 +14,13 @@
   }
 }
 
+@media (max-width: 1200px) {
+  .hide-below-1200 {
+    display: none !important;
+  }
+}
+
+
 body {
   color: var(--foreground);
   background: var(--background);
