@@ -12,7 +12,7 @@ export default function Navbar() {
   
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 1200);
+      setIsMobile(window.innerWidth <= 900);
     };
 
     // 초기 실행

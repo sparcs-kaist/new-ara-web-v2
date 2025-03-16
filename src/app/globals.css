@@ -14,8 +14,8 @@
   }
 }
 
-@media (max-width: 1200px) {
-  .hide-below-1200 {
+@media (max-width: 900px) {
+  .hide-below-900 {
     display: none !important;
   }
 }
