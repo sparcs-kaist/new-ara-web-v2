@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image"
 
 interface TextInputProps {
   label?: string;
@@ -25,7 +26,7 @@ const SearchBar: React.FC<TextInputProps> = ({ label, value, onChange, onReset }
         className="px-4 py-2 text-white rounded-md h-[28px] w-[28px]"
         onClick={onReset} // 버튼 클릭 시 실행
       >
-        <img src="/search.png"/>
+        <Image src="/search.png" width={28} height={28} alt="검색"/>
       </button>
     </div>
   );

@@ -20,7 +20,7 @@ export default function NavBarMore({onClose}: {onClose: () => void}) {
 
   return (
     <div className="w-screen bg-white absolute top-[77px] left-0 shadow-md">
-      <ul className="p-4 space-y-[14px]">
+      <ul className="py-4 space-y-[14px]" style={{paddingLeft: "clamp(20px, 5vw, 150px)"}}>
         {/* 공지 */}
         <li>
           <button

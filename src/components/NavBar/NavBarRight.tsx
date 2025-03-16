@@ -2,6 +2,7 @@
 import {useState} from "react";
 import Link from "next/link";
 import NavBarProfile from "./NavBarProfile";
+import Image from "next/image";
 
 export default function NavBarRight () {
     return (
@@ -10,7 +11,7 @@ export default function NavBarRight () {
         style={{marginRight: "clamp(20px, 5vw, 150px"}}>
         <div className="relative flex items-center space-x-[10px]">
           <button className="relative flex-shrink-0">
-            <img src="/language.png" className="w-5 h-5 min-w-[20px] min-h-[20px]" />
+            <Image src="/language.png" width = {20} height={20} alt="change language image"/>
           </button>
         </div>
 
