@@ -2,12 +2,12 @@
 import { useTranslation } from 'react-i18next';
 import { ReactNode } from "react";
 
-interface SmallBoard_mProps {
+interface SmallBoardMyInfoProps {
     title: string;
     children: ReactNode;
 };
 
-const SmallBoard_m = ({title, children}: SmallBoard_mProps) => {
+const SmallBoardMyInfo = ({title, children}: SmallBoardMyInfoProps) => {
     const { t } = useTranslation();
     return (
         <div 
@@ -22,4 +22,4 @@ const SmallBoard_m = ({title, children}: SmallBoard_mProps) => {
     );
 };
 
-export default SmallBoard_m;
+export default SmallBoardMyInfo;
