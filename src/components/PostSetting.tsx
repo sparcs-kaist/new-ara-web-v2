@@ -17,7 +17,7 @@ const PostSetting = () => {
         <div>
             <div className="p-[10px] w-full">
             <div className="flex justify-between items-center p-[8px] h-[30px]">
-                <span className="text-xs">{t('성인글 보기')}</span>
+                <span className="text-sm">{t('성인글 보기')}</span>
                 <div onClick={toggleSexual} className="cursor-pointer flex-shrink-0">
                 {isSexual ? (
                     <i className="material-icons text-ara_red !text-[30px]">toggle_on</i>
@@ -27,7 +27,7 @@ const PostSetting = () => {
                 </div>
             </div>
             <div className="flex justify-between items-center p-[8px] h-[30px]">
-                <span className="text-xs">{t('settings-social')}</span>
+                <span className="text-sm">{t('settings-social')}</span>
                 <div onClick={toggleSocial} className="cursor-pointer">
                 {isSocial ? (
                     <i className="material-icons text-ara_red !text-[30px]">toggle_on</i>

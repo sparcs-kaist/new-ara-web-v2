@@ -7,7 +7,7 @@ const BlockedUser = () => {
     const deleteBlockedUser = () => {};
     return (
         <div>
-            <ul className="px-2 py-0 text-xs w-full">
+            <ul className="px-2 py-0 text-sm w-full">
             <li>
                 <div className="flex flex-row items-center justify-center my-[10px]">
                 <Image src="/user.png" width={32} height={32} className="mr-[0.5rem] object-cover rounded-full" alt="Blocked User Image"/>
@@ -27,7 +27,7 @@ const BlockedUser = () => {
                 </div>
             </li>
             </ul>
-            <div className="p-[10px] text-[12px]">{t('차단한 유저가 없습니다.')}</div>
+            <div className="p-[10px] text-sm">{t('차단한 유저가 없습니다.')}</div>
         </div>
     );
 };
