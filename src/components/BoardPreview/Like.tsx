@@ -8,7 +8,7 @@ interface LikeProps {
 
 export default function Like({like, dislike, comment}: LikeProps) {
   return (
-    <div className ="flex justify-end">
+    <div className ="flex items-center">
       <Image src="/Like.svg" alt="" width={20} height={20} />
       <p className="text-[12px] mr-1 text-ara_red">{like}</p>
       <Image src="/Dislike.svg" alt="" width={20} height={20} />

@@ -4,6 +4,9 @@ import SearchBar from "@/components/searchBar";
 import BoardPreview from "@/components/BoardPreview/BoardPreview";
 import BoardSelector from "@/components/BoardPreview/BoardSelector";
 import { useState } from "react";
+import Image from "next/image";
+import UserMenu from "@/components/UserMenu/UserMenu";
+import OtherServices from "@/components/UserMenu/OtherServices";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -81,26 +84,32 @@ export default function Home() {
   ];
   return (
     <div>
+      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-ara_red_bright to-white -z-10"></div>
       <div className="h-[220px] w-full flex justify-center items-center">
         <SearchBar
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
         />
       </div>
-
-      <div className="flex items-center justify-center p-6 border-[1px] border-gray-200 rounded-[20px] shadow-sm w-[857px]">
-        <BoardPreview
-          type={boardData[0].type}
-          title={boardData[0].title}
-          posts={boardData[0].posts}
+      <div className="flex w-full px-[80px]">
+        <div className="flex items-center justify-center p-6 border-[1px] border-gray-200 rounded-[20px] shadow-sm w-[857px] bg-white">
+          <BoardPreview
+            type={boardData[0].type}
+            title={boardData[0].title}
+            posts={boardData[0].posts}
+          />
+          <BoardPreview
+            type={boardData[1].type}
+            title={boardData[1].title}
+            posts={boardData[1].posts}
         />
-        <BoardPreview
-          type={boardData[1].type}
-          title={boardData[1].title}
-          posts={boardData[1].posts}
-       />
-      </div>
+        </div>
 
+        <div className="bg-white border-[1px] border-gray-200 rounded-[20px] shadow-sm min-w-[355px] p-[20px] space-y-4">
+          <UserMenu />
+          <OtherServices />
+        </div>
+      </div>
 
       {/*자유게시판 , 포탈공지, 학생 및 단체 동아리, 거래, 소통, 뉴스*/}
       <div className ="items-center justify-center p-6 border-[1px] border-gray-200 rounded-[20px] shadow-sm w-[857px]">

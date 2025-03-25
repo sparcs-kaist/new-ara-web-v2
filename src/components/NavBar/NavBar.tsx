@@ -23,7 +23,7 @@ export default function Navbar() {
   }, []);
   
   return (
-    <nav className="flex w-full mx-auto items-center justify-between h-[77px] p-5 bg-white">
+    <nav className="flex w-full mx-auto items-center justify-between h-[77px] p-5">
       <NavBarLogo />
       <NavBarMiddle />
       {isMobile ? <NavBarHamburger /> : <NavBarRight />}

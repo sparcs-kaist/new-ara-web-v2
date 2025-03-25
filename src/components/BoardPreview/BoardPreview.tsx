@@ -43,7 +43,7 @@ export default function BoardPreview({ type, title, posts }: BoardPreviewProps) 
                       <span className="text-[16px]">{post.title}</span>
                       {post.image && <Image src="/Image.svg" alt="" width={17} height={14.22} />}
                     </div>
-                    <div className="flex w-full mt-1">
+                    <div className="flex w-full mt-1 justify-between">
                       <div className="text-[12px] text-gray-500">{post.author}</div>
                       <Like like={post.likes} dislike={post.dislikes} comment={post.comments} />
                     </div>
@@ -57,7 +57,7 @@ export default function BoardPreview({ type, title, posts }: BoardPreviewProps) 
                     <span className="text-[16px]">{post.title}</span>
                     {post.image && <Image src="/Image.svg" alt="" width={17} height={14.22} />}
                   </div>
-                  <div className="flex space-x-2 w-full mt-1">
+                  <div className="flex space-x-2 w-full mt-1 justify-between">
                     <div className="text-[12px] text-gray-500">{post.boardName} · {post.author} · {post.timeAgo}</div>
                     <Like like={post.likes} dislike={post.dislikes} comment={post.comments} /> 
                   </div>
@@ -71,7 +71,7 @@ export default function BoardPreview({ type, title, posts }: BoardPreviewProps) 
                     <span className="text-[16px]">{post.title}</span>
                     {post.image && <Image src="/Image.svg" alt="" width={17} height={14.22} />}
                   </div>
-                  <div className="flex space-x-2 w-full mt-1">
+                  <div className="flex space-x-2 w-full mt-1 justify-between">
                     <div className="text-[12px] text-gray-500">{post.author}</div>
                     <Like like={post.likes} dislike={post.dislikes} comment={post.comments} /> 
                   </div>
@@ -85,7 +85,7 @@ export default function BoardPreview({ type, title, posts }: BoardPreviewProps) 
                     <span className="text-[16px]">{post.title}</span>
                     {post.image && <Image src="/Image.svg" alt="" width={17} height={14.22} />}
                   </div>
-                  <div className="flex w-full mt-1 space-x-2 text-[12px]">
+                  <div className="flex w-full mt-1 space-x-2 text-[12px] justify-between">
                     {post.answered ? <span className="text-ara_blue">답변 완료</span> : <span className="text-ara_red">답변 대기중</span>}
                     <div className="text-gray-500">· {post.author} · {post.timeAgo}</div> 
                     <Like like={post.likes} dislike={post.dislikes} comment={post.comments} /> 
@@ -99,7 +99,7 @@ export default function BoardPreview({ type, title, posts }: BoardPreviewProps) 
                     <span className="text-[16px]">{post.title}</span>
                     {post.image && <Image src="/Image.svg" alt="" width={17} height={14.22} />}
                   </div>
-                  <div className="flex w-full mt-1 space-x-2 text-[12px]">
+                  <div className="flex w-full mt-1 space-x-2 text-[12px] justify-between">
                     {post.answered ? <span className="text-ara_blue">답변 완료</span> : <span className="text-ara_red">답변 대기중</span>}
                     <div className="text-gray-500">· {post.author} · {post.timeAgo}</div> 
                     <Like like={post.likes} dislike={post.dislikes} comment={post.comments} /> 
