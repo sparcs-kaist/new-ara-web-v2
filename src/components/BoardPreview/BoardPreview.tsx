@@ -4,7 +4,7 @@ import Image from "next/image";
 
 // 📌 BoardPreviewProps: 여러 게시판 타입 처리
 interface BoardPreviewProps {
-  type: "top" | "with-school" | "talk" | "portal-notice"| "all";
+  type: "top" | "with-school" | "talk" | "portal-notice"| "all"| "student-group" | "market";
   title: string;
   posts: {
     id: number;

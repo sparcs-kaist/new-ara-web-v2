@@ -7,7 +7,12 @@ import { useState } from "react";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const [selectedBoard, setSelectedBoard] = useState("talk");
+  const [board, setBoard] = useState("talk");
+
+  const handleBoardSelect = (newBoard: string) => {
+    setBoard(newBoard); // 🔹 하위 컴포넌트에서 받은 데이터를 상태로 저장
+  };
+
   const boardData = [
     {
       type: "top" as const,
@@ -55,6 +60,24 @@ export default function Home() {
         { id: 13, title: "이 문제 해결해주세요", image: true, answered: false, author: "유저6", timeAgo: "3시간 전", likes: 15, dislikes: 2, comments: 3 },
       ],
     },
+    {
+      type: "student-group" as const,
+      title: "학생단체 및 동아리",
+      posts: [
+        { id: 30, title: "스팍스으으", image: false, answered: true, author: "유저5", timeAgo: "1시간 전", likes: 20, dislikes: 3, comments: 5 },
+        { id: 31, title: "이 문제 해결해주세요", image: true, answered: false, author: "유저6", timeAgo: "3시간 전", likes: 15, dislikes: 2, comments: 3 },
+        { id: 32, title: "이 문제 해결해주세요", image: true, answered: false, author: "유저6", timeAgo: "3시간 전", likes: 15, dislikes: 2, comments: 3 },
+      ],
+    },
+    {
+      type: "market" as const,
+      title: "거래",
+      posts: [
+        { id: 33, title: "어은동 원룸", image: false, answered: true, author: "유저5", timeAgo: "1시간 전", likes: 20, dislikes: 3, comments: 5 },
+        { id: 34, title: "냐옹", image: true, answered: false, author: "유저6", timeAgo: "3시간 전", likes: 15, dislikes: 2, comments: 3 },
+        { id: 35, title: "이 문제 해결해주세요", image: true, answered: false, author: "유저6", timeAgo: "3시간 전", likes: 15, dislikes: 2, comments: 3 },
+      ],
+    },
   ];
   return (
     <div>
@@ -81,12 +104,39 @@ export default function Home() {
 
       {/*자유게시판 , 포탈공지, 학생 및 단체 동아리, 거래, 소통, 뉴스*/}
       <div className ="items-center justify-center p-6 border-[1px] border-gray-200 rounded-[20px] shadow-sm w-[857px]">
-      {/* <BoardSelector /> */}
+        <BoardSelector onBoardSelect={handleBoardSelect} />
+      {board === "talk" && (
+        <BoardPreview
+          type={boardData[3].type}
+          title={boardData[3].title}
+          posts={boardData[3].posts}
+        />)}
+      {board === "portal-notice" && (
         <BoardPreview
           type={boardData[4].type}
           title={boardData[4].title}
           posts={boardData[4].posts}
-      />
+        />)}
+      {board === "student-group" && (
+        <BoardPreview
+          type={boardData[5].type}
+          title={boardData[5].title}
+          posts={boardData[5].posts}
+        />)}
+      {board === "market" && (
+        <BoardPreview
+          type={boardData[6].type}
+          title={boardData[6].title}
+          posts={boardData[6].posts}
+        />)}
+      </div>
+
+      <div className ="items-center justify-center p-6 border-[1px] border-gray-200 rounded-[20px] shadow-sm w-[355px]">
+      <BoardPreview
+          type={boardData[2].type}
+          title={boardData[2].title}
+          posts={boardData[2].posts}
+        />
       </div>
     </div>
   );

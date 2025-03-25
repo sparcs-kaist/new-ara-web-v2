@@ -1,36 +1,16 @@
 "use client";
-
-import { useState } from "react";
-
 interface BoardSelectorProps {
-  onSelect: (boardType: string) => void;
-  boardData: Record<string, { type: string; title: string }>;
+  onBoardSelect: (board: string) => void; // 🔹 부모에서 전달받은 콜백 함수
 }
 
-export default function BoardSelector({ onSelect, boardData }: BoardSelectorProps) {
-  const [selected, setSelected] = useState("talk");
-
-  const handleSelect = (boardType: string) => {
-    setSelected(boardType);
-    onSelect(boardType);
-  };
-
+export default function BoardSelector({ onBoardSelect }: BoardSelectorProps) {
   return (
-    <div className="items-center justify-center p-6 border border-gray-200 rounded-[20px] shadow-sm w-[857px]">
-      {/* 📌 탭 메뉴 */}
-      <div className="flex justify-between p-2 border-b border-gray-300">
-        {Object.keys(boardData).map((key) => (
-          <button
-            key={key}
-            className={`px-4 py-2 rounded-md ${
-              selected === key ? "text-black font-bold" : "text-gray-500"
-            }`}
-            onClick={() => handleSelect(key)}
-          >
-            {boardData[key].title}
-          </button>
-        ))}
-      </div>
+    <div className ="flex space-x-2">
+      <button className ="text-[20px]" onClick={() => onBoardSelect("talk")}>자유게시판</button>
+      <button className ="text-[20px]" onClick={() => onBoardSelect("portal-notice")}>포탈 공지</button>
+      <button className ="text-[20px]" onClick={() => onBoardSelect("student-group")}>학생 단체 및 동아리</button>
+      <button className ="text-[20px]" onClick={() => onBoardSelect("market")}>거래</button>
+      {/* <button onClick={() => onBoardSelect("portal-notice")}>소통</button> */}
     </div>
   );
 }
