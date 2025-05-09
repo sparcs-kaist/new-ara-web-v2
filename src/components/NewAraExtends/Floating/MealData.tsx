@@ -1,0 +1,360 @@
+// MealData.tsx
+import React, { useState } from "react";
+import { useEffect } from 'react';
+import AllergyFilter from "./AllergyFilter";
+import RestaurantSelection from "./RestaurantSelection";
+import CourseMenuList from "./CourseMenuList";
+import CafeteriaMenuList from "./CafeteriaMenuList";
+import { mockApiResponse } from "./MockData";
+import { cafeteriaMockData } from './MockDataCafeteria';
+import { Allergen, Restaurant, CafeteriaMenuItem, CafeteriaRestaurant } from './types';
+
+
+// 식당 ID를 API 응답의 키값으로 매핑
+type RestaurantKey = 'fclt' | 'west' | 'east1' | 'east2' | 'emp';
+const restaurantKeyMap: { [key: string]: RestaurantKey } = {
+  "카페테리아": "east1",
+  "카이마루": "fclt",
+  "서맛골": "west",
+  "동맛골 1층": "east1",
+  "동맛골 2층": "east2",
+  "교수회관": "emp"
+};
+
+// 시간대를 API 응답의 키값으로 매핑
+const mealTimeMap: { [key: string]: "morning_menu" | "lunch_menu" | "dinner_menu" } = {
+  "아침": "morning_menu",
+  "점심": "lunch_menu",
+  "저녁": "dinner_menu"
+};
+
+const initialAllergens: Allergen[] = [
+  { id: 1, name: "1: 달걀", selected: false },
+  { id: 2, name: "2: 우유", selected: false },
+  { id: 3, name: "3: 메밀", selected: false },
+  { id: 4, name: "4: 땅콩", selected: false },
+  { id: 5, name: "5: 대두", selected: false },
+  { id: 6, name: "6: 밀", selected: false },
+  { id: 7, name: "7: 고등어", selected: false },
+  { id: 8, name: "8: 게", selected: false },
+  { id: 9, name: "9: 새우", selected: false },
+  { id: 10, name: "10: 돼지고기", selected: false },
+  { id: 11, name: "11: 복숭아", selected: false },
+  { id: 12, name: "12: 토마토", selected: false },
+  { id: 13, name: "13: 아황산", selected: false },
+  { id: 14, name: "14: 호두", selected: false },
+  { id: 15, name: "15: 닭고기", selected: false },
+  { id: 16, name: "16: 쇠고기", selected: false },
+  { id: 17, name: "17: 오징어", selected: false },
+  { id: 18, name: "18: 조개류", selected: false },
+  { id: 19, name: "19: 잣", selected: false },
+];
+
+//functions for api
+const fetchCourseMenu = async (date: string) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/meals/${date}/course_menu/`);
+    if (response.status === 404) {
+      throw new Error("해당 날짜의 식단 정보가 없습니다.");
+    }
+    if (!response.ok) {
+      throw new Error("메뉴를 불러오는데 실패했습니다.");
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+const fetchCafeteriaMenu = async (date: string) => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/meals/${date}/cafeteria_menu/`);
+    if (response.status === 404) {
+      throw new Error("해당 날짜의 식단 정보가 없습니다.");
+    }
+    if (!response.ok) {
+      throw new Error("메뉴를 불러오는데 실패했습니다.");
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export default function MealData() {
+  // 알러지 필터 상태
+  const [isAllergyFilterVisible, setIsAllergyFilterVisible] = useState(false);
+  const [selectedAllergies, setSelectedAllergies] = useState(initialAllergens);
+  
+  const handleAllergyChange = (updatedAllergies: Allergen[]) => {
+    setSelectedAllergies(updatedAllergies);
+  };
+
+  // Meal time options
+  const mealOptions = ["아침", "점심", "저녁"];
+  const [selectedMeal, setSelectedMeal] = useState("점심");
+  
+  // Date management
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Helper function to format date and day
+  const formatDate = (date: Date) => {
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    const day = days[date.getDay()];
+    const formattedDate = `${date.getMonth() + 1}/${date.getDate()} (${day})`;
+    return formattedDate;
+  };
+
+  // Handlers for changing the date
+  const handleNextDay = () => {
+    const nextDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+    setCurrentDate(nextDate);
+  };
+
+  const handlePreviousDay = () => {
+    const prevDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+    setCurrentDate(prevDate);
+  
+  };
+
+  // 드롭다운 상태 관리
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState("카이마루");
+
+  // 드롭다운 토글 함수
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  // 식당 선택 시 호출될 함수
+  const handleRestaurantSelect = (restaurant: string) => {
+    setSelectedRestaurant(restaurant);
+    setIsDropdownOpen(false);
+    fetchMenuData(currentDate);
+  };
+
+  // 현재 선택된 식당과 시간에 해당하는 메뉴 데이터를 가져오는 함수
+  const getCurrentMenuData = () => {
+    if (selectedRestaurant === "카페테리아" || !courseMenuData) {
+      return null;
+    }
+
+    const restaurantKey = restaurantKeyMap[selectedRestaurant];
+    const timeKey = mealTimeMap[selectedMeal];
+    
+    if (!restaurantKey || !timeKey) {
+      return null;
+    }
+
+    const restaurant = courseMenuData[restaurantKey] as Restaurant;
+    if (!restaurant) return null;
+
+    const menuData = restaurant[timeKey];
+    
+    if (!menuData || (Array.isArray(menuData) && menuData.length === 0)) {
+      return null;
+    }
+
+    return menuData;
+  };
+
+  const getCurrentCafeteriaMenuData = () => {
+    if (!cafeteriaMenuData) return null;
+
+    const restaurantKey = "east1" as keyof typeof cafeteriaMenuData;
+    const timeKey = mealTimeMap[selectedMeal];
+    
+    if (!timeKey) {
+      return null;
+    }
+
+    const restaurant = cafeteriaMenuData[restaurantKey] as CafeteriaRestaurant;
+    if (!restaurant) return null;
+
+    const menuData = restaurant[timeKey] as CafeteriaMenuItem[];
+    
+    if (!menuData || menuData.length === 0) {
+      return null;
+    }
+
+    return menuData;
+  };
+
+
+  //API response 관련 state
+  const [courseMenuData, setCourseMenuData] = useState<any>(null);
+  const [cafeteriaMenuData, setCafeteriaMenuData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  //date format function
+  const formatDateForAPI = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  //Load Menu Data
+  const fetchMenuData = async (date: Date) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const formattedDate = formatDateForAPI(date);
+      const [courseData, cafeteriaData] = await Promise.all([
+        fetchCourseMenu(formattedDate).catch(error => {
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error("메뉴를 불러오는데 실패했습니다.");
+        }),
+        fetchCafeteriaMenu(formattedDate).catch(error => {
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error("메뉴를 불러오는데 실패했습니다.");
+        })
+      ]);
+      
+      setCourseMenuData(courseData);
+      setCafeteriaMenuData(cafeteriaData);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("메뉴를 불러오는데 실패했습니다.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // get menu when date changes
+  useEffect(() => {
+    fetchMenuData(currentDate);
+  }, [currentDate]);
+
+  return (
+    <div className="w-[375px] h-auto p-4 bg-white rounded-2xl shadow-md font-inter relative">
+      {/* 헤더 - 식당, 알러지 정보 설정 */}
+      <div className="flex flex-col gap-0">
+        <div className="flex items-center justify-between">
+          {/* 오늘의 학식 */}
+          <h2 className="font-semibold text-black text-[20px] mr-[8px]">오늘의 학식</h2>
+          {/* 알러지 필터 */}
+          <button 
+            className="flex items-center gap-1 text-[#c62626] text-xs font-semibold mr-auto"
+            onClick={() => setIsAllergyFilterVisible((prev) => !prev)}
+          >
+            <span>알러지 필터</span>
+            <img
+              src="/NewAraExtendIcons/filter-icon.svg"
+              alt="Filter Icon"
+              className="w-4 h-4"
+            />
+          </button>
+          {isAllergyFilterVisible && (
+            <div className="absolute top-0 right-full mr-2">
+              <AllergyFilter 
+                onAllergyChange={handleAllergyChange}
+                initialAllergies={selectedAllergies}
+              />
+            </div>
+          )}
+          {/* 식당 선택 드롭다운 */}
+          <div className="relative">
+            <button
+              className="flex items-center gap-[5px]"
+              onClick={toggleDropdown}
+            >
+              <span className="font-semibold text-[#c62626] text-[16px]">
+                {selectedRestaurant}
+              </span>
+              <img
+                src="/NewAraExtendIcons/chevron-down.svg"
+                alt="Down Arrow"
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {/* 드롭다운 메뉴 */}
+            {isDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 z-50">
+                <RestaurantSelection 
+                  onSelect={handleRestaurantSelect} 
+                  initialRestaurant={selectedRestaurant} 
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 구분선 */}
+      <div className="w-full h-px bg-gray-200 my-0"></div>
+
+      {/* 날짜 및 시간 선택 */}
+      <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center gap-[3px] justify-start">
+          <button onClick={handlePreviousDay}>
+            <img
+              src="/NewAraExtendIcons/caret-left-fill.svg"
+              alt="Left Arrow"
+              className="w-[14px] h-[14px]"
+            />
+          </button>
+          <div className="w-[70px] text-center">
+            <span className="font-semibold text-black text-[14px]">{formatDate(currentDate)}</span>
+          </div>
+          <button onClick={handleNextDay}>
+            <img
+              src="/NewAraExtendIcons/caret-right-fill.svg"
+              alt="Right Arrow"
+              className="w-[14px] h-[14px]"
+            />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          {mealOptions.map((meal) => (
+            <button
+              key={meal}
+              onClick={() => setSelectedMeal(meal)}
+              className={`px-3 h-[21px] rounded-[10px] text-[12px] font-semibold ${
+                meal === selectedMeal
+                  ? "bg-[#ed3a3a] text-white"
+                  : "bg-white border border-gray-300 text-black"
+              }`}
+            >
+              {meal}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 메뉴 리스트 */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">
+            <span className="text-gray-500">로딩 중...</span>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-40">
+            <span className="text-gray-500">{error}</span>
+          </div>
+        ) : (
+          selectedRestaurant === "카페테리아" ? (
+            <CafeteriaMenuList 
+              menuData={getCurrentCafeteriaMenuData()}
+              selectedAllergies={selectedAllergies}
+            />
+          ) : (
+            <CourseMenuList 
+              menuData={getCurrentMenuData()}
+              selectedAllergies={selectedAllergies}
+            />
+          )
+        )}
+    </div>
+  );
+}
