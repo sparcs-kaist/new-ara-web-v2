@@ -3,6 +3,13 @@ import AraBetaButton from "./Floating/AraBetaButton";
 import MealExtensionButton from "./Floating/MealExtensionButton";
 import MealData from "./Floating/MealData"; 
 
+/*
+지금 프론트가 마이그레이션 중인 관계로 컴포넌트를 Next로 만들되되, 
+구레포에 embed해 빠르게 beta version을 출시할 수 있도록 설계하였습니다. 
+따라서 컴포넌트의 구조 변경이 필요한 페이지를 만드는 대신에 floating으로 컴포넌트들을 포장하여 
+extension처럼 사용할 수 있도록 하였습니다. 
+(자세한 내용은 Notion에 Extends NewAra 문서를 읽어보시면 될 것 같습니다. )*/
+
 export default function AraBetaSidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMealDataVisible, setIsMealDataVisible] = useState(false);
