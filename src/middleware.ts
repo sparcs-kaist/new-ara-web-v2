@@ -2,20 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
-  // SSO 로그인 페이지만 예외 처리 (필요시 추가)
-  if (pathname.startsWith("/login")) {
+  // API, auth-handler, login 경로는 인증 예외 처리
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/auth-handler") ||
+    pathname.startsWith("/login")
+  ) {
     return NextResponse.next();
   }
 
-  // 세션 쿠키명(예: 'sid')에 맞게 수정
-  const session = request.cookies.get("sid");
+  // 세션 쿠키명(예: 'sessionid')에 맞게 수정
+  const session = request.cookies.get("sessionid");
 
   if (!session) {
-    // SSO 로그인 URL로 리다이렉트, next 파라미터로 원래 경로 전달
-    const ssoLoginUrl = new URL("https://newara.dev.sparcs.org/api/users/sso_login");
-    ssoLoginUrl.searchParams.set("next", pathname);
+    // 현재 요청의 전체 URL
+    const originalUrl = `${request.nextUrl.protocol}//${request.nextUrl.host}${pathname}${search}`;
+    // SSO 로그인 URL에 handler와 next 파라미터를 모두 추가
+    const ssoLoginUrl = new URL("https://migration.newara.dev.sparcs.org/api/users/sso_login");
+    ssoLoginUrl.searchParams.set("handler", `${request.nextUrl.protocol}//${request.nextUrl.host}/auth-handler`);
+    ssoLoginUrl.searchParams.set("next", originalUrl);
     return NextResponse.redirect(ssoLoginUrl);
   }
 
@@ -23,5 +30,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/:path*"], // 전체 경로에 적용
+  matcher: ["/:path*"],
 };
