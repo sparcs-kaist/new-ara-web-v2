@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
-import NavBar from "@/components/navbar";
 import "@/i18n";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
