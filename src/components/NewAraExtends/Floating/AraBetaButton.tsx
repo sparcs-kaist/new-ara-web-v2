@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export default function AraBetaButton() {
   return (
@@ -18,9 +19,11 @@ export default function AraBetaButton() {
           flex items-center justify-center
         "
       >
-        <img
+        <Image
           src="/NewAraExtendIcons/SparcsLogo.svg"
           alt="Sparcs Logo"
+          width={18}
+          height={44}
           className="
             absolute right-[12px] top-[5px] 
             w-[18px] h-[44px]

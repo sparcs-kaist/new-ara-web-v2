@@ -1,8 +1,5 @@
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import NavBarMore from "./NavBarMore";
-import { usePathname } from "next/navigation";
-import Image from "next/image"
+import { useState } from "react";
+import Image from "next/image";
 import NotiDetail from "./NotiDetail";
 
 export default function NotificationButton() {

@@ -1,5 +1,6 @@
 // CafeteriaMenuList.tsx
 import React from 'react';
+import Image from 'next/image';
 import { Allergen } from './types';
 
 interface CafeteriaMenuItem {
@@ -17,7 +18,9 @@ export default function CafeteriaMenuList({
   menuData,
   selectedAllergies 
 }: CafeteriaMenuListProps) {
-  
+  // 1. useState는 항상 컴포넌트 최상단에서 호출
+  const [selectedItems, setSelectedItems] = React.useState<Set<number>>(new Set());
+
   // 메뉴 데이터가 없는 경우 처리
   if (!menuData || menuData.length === 0) {
     return (
@@ -37,9 +40,6 @@ export default function CafeteriaMenuList({
   const hasSelectedAllergy = (allergyList: number[]) => {
     return allergyList.some(id => selectedAllergyIds.includes(id));
   };
-
-  // 메뉴 선택 상태 관리
-  const [selectedItems, setSelectedItems] = React.useState<Set<number>>(new Set());
 
   // 메뉴 선택/해제 토글
   const toggleItem = (index: number) => {
@@ -79,9 +79,11 @@ export default function CafeteriaMenuList({
                 {item.menu_name}
               </span>
               {hasSelectedAllergy(item.allergy) && (
-                <img
+                <Image
                   src="/NewAraExtendIcons/exclamation.svg"
                   alt="Exclamation Icon"
+                  width={16}
+                  height={16}
                   className="w-4 h-4 text-[#c62626]"
                 />
               )}

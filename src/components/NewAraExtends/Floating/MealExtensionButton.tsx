@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export default function MealExtensionButton() {
     return (
@@ -11,9 +12,11 @@ export default function MealExtensionButton() {
                 rounded-[35px]
             "
         >
-            <img
-                src="NewAraExtendIcons/cup-straw.svg" // public 폴더 기준 경로
+            <Image
+                src="/NewAraExtendIcons/cup-straw.svg" // public 폴더 기준 경로
                 alt="Cup with Straw Icon"
+                width={26}
+                height={40}
                 className="flex w-[26px] h-[40px] mx-auto"
             />
         </button>
