@@ -1,5 +1,7 @@
 import myinfo from "./myinfo.json";
 
-export default {
+const translation = {
     ...myinfo,
 };
+
+export default translation;
