@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  console.log("middleware 실행됨!", request.nextUrl.pathname);
   const { pathname } = request.nextUrl;
 
   // SSO 로그인 페이지만 예외 처리 (필요시 추가)
