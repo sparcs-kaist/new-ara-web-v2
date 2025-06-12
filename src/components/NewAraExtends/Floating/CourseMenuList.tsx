@@ -1,5 +1,6 @@
 // CourseMenuList.tsx
 import React from 'react';
+import Image from 'next/image';
 import { Allergen, CourseMenu } from './types';
 
 interface CourseMenuListProps {
@@ -64,9 +65,11 @@ export default function CourseMenuList({
                   {name}
                 </span>
                 {hasSelectedAllergy(allergies) && (
-                  <img
+                  <Image
                     src="/NewAraExtendIcons/exclamation.svg"
                     alt="Exclamation Icon"
+                    width={16}
+                    height={16}
                     className="w-4 h-4 text-[#c62626]"
                   />
                 )}

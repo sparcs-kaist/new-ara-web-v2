@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+// import Link from "next/link";
 import NavBarLogo from "@/components/NavBar/NavBarLogo";
 import NavBarRight from "@/components/NavBar/NavBarRight";
 import NavBarMiddle from "@/components/NavBar/NavBarMiddle";

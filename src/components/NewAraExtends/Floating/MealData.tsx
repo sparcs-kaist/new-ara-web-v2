@@ -1,13 +1,12 @@
 // MealData.tsx
-import React, { useState } from "react";
-import { useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import AllergyFilter from "./AllergyFilter";
 import RestaurantSelection from "./RestaurantSelection";
 import CourseMenuList from "./CourseMenuList";
 import CafeteriaMenuList from "./CafeteriaMenuList";
 import { Allergen, Restaurant, CafeteriaMenuItem, CafeteriaRestaurant } from './types';
 import { initialAllergens } from "./utils";
-
 
 // 식당 ID를 API 응답의 키값으로 매핑
 type RestaurantKey = 'fclt' | 'west' | 'east1' | 'east2' | 'emp';
@@ -159,8 +158,8 @@ export default function MealData() {
 
 
   //API response 관련 state
-  const [courseMenuData, setCourseMenuData] = useState<any>(null);
-  const [cafeteriaMenuData, setCafeteriaMenuData] = useState<any>(null);
+  const [courseMenuData, setCourseMenuData] = useState<Record<string, Restaurant> | null>(null);
+  const [cafeteriaMenuData, setCafeteriaMenuData] = useState<Record<string, CafeteriaRestaurant> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -173,7 +172,7 @@ export default function MealData() {
   };
 
   //Load Menu Data
-  const fetchMenuData = async (date: Date) => {
+  const fetchMenuData = useCallback(async (date: Date) => {
     setIsLoading(true);
     setError(null);
     
@@ -205,12 +204,12 @@ export default function MealData() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // get menu when date changes
   useEffect(() => {
     fetchMenuData(currentDate);
-  }, [currentDate]);
+  }, [currentDate, fetchMenuData]);
 
   return (
     <div className="w-[375px] h-auto p-4 bg-white rounded-2xl shadow-md font-inter relative">
@@ -225,9 +224,11 @@ export default function MealData() {
             onClick={() => setIsAllergyFilterVisible((prev) => !prev)}
           >
             <span>알러지 필터</span>
-            <img
+            <Image
               src="/NewAraExtendIcons/filter-icon.svg"
               alt="Filter Icon"
+              width={16}
+              height={16}
               className="w-4 h-4"
             />
           </button>
@@ -248,9 +249,11 @@ export default function MealData() {
               <span className="font-semibold text-[#c62626] text-[16px]">
                 {selectedRestaurant}
               </span>
-              <img
+              <Image
                 src="/NewAraExtendIcons/chevron-down.svg"
                 alt="Down Arrow"
+                width={16}
+                height={16}
                 className={`w-4 h-4 transition-transform duration-200 ${
                   isDropdownOpen ? "rotate-180" : ""
                 }`}
@@ -276,9 +279,11 @@ export default function MealData() {
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-[3px] justify-start">
           <button onClick={handlePreviousDay}>
-            <img
+            <Image
               src="/NewAraExtendIcons/caret-left-fill.svg"
               alt="Left Arrow"
+              width={14}
+              height={14}
               className="w-[14px] h-[14px]"
             />
           </button>
@@ -286,9 +291,11 @@ export default function MealData() {
             <span className="font-semibold text-black text-[14px]">{formatDate(currentDate)}</span>
           </div>
           <button onClick={handleNextDay}>
-            <img
+            <Image
               src="/NewAraExtendIcons/caret-right-fill.svg"
               alt="Right Arrow"
+              width={14}
+              height={14}
               className="w-[14px] h-[14px]"
             />
           </button>

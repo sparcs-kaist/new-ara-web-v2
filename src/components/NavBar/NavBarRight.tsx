@@ -1,6 +1,4 @@
 "use client";
-import {useState} from "react";
-import Link from "next/link";
 import NavBarProfile from "./NavBarProfile";
 import Image from "next/image";
 import NotificationButton from "./NotificationButton";
@@ -12,13 +10,12 @@ export default function NavBarRight () {
         style={{marginRight: "clamp(10px, 5vw, 150px"}}>
         <div className="relative flex items-center space-x-[10px]">
           <button className="relative flex-shrink-0">
-            <Image src="/language.png" width = {20} height={20} alt="change language image"/>
+            <Image src="/language.png" width={20} height={20} alt="change language image"/>
           </button>
         </div>
         <NotificationButton />
         {/* 사용자 프로필 */}
         <NavBarProfile />
       </div>
-
     )
 }
