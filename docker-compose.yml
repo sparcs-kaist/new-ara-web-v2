@@ -1,6 +1,6 @@
 services:
-  ara-dev-front-migration:
-    image: ara-dev-front-migration
+  newarawebv2:
+    image: newarawebv2
     build:
       context: .
       dockerfile: ./Dockerfile
