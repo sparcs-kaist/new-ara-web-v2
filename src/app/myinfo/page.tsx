@@ -8,7 +8,7 @@ import BlockedUser from "@/components/BlockedUser";
 import Profile from "@/components/Profile";
 
 const MyInfo = () => {
-  const { t } = useTranslation();
+  useTranslation();
 
   return (
     <div className="flex-shrink-0 pl-[146px]">
