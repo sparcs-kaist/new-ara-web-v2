@@ -1,3 +1,5 @@
+version: '3'
+
 services:
   newarawebv2:
     image: newarawebv2
@@ -6,5 +8,24 @@ services:
       dockerfile: ./Dockerfile
     environment:
       NODE_ENV: production
+    expose:
+      - "3000"  # 외부에 공개하지 않고 nginx에서 내부 접근
+    networks:
+      - webnet
+
+  nginx:
+    image: nginx:latest
     ports:
-      - 15022:3000
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/localhost.crt:/etc/nginx/certs/localhost.crt:ro
+      - ./nginx/localhost.key:/etc/nginx/certs/localhost.key:ro
+    depends_on:
+      - newarawebv2
+    networks:
+      - webnet
+
+networks:
+  webnet:
