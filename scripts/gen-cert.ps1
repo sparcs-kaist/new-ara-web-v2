@@ -15,4 +15,4 @@ if (-Not (Test-Path $mkcert)) {
 New-Item -ItemType Directory -Force -Path "./nginx" | Out-Null
 & $mkcert -key-file "./nginx/localhost.key" -cert-file "./nginx/localhost.crt" localhost
 
-Write-Host "인증서가 ./nginx에 생성되었습니다."
+Write-Host "certification generated on ./nginx"
