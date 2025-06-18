@@ -42,8 +42,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   if (pathname === "/login") {
     return (
       <html lang="ko">
-        <body>
-          <main>{children}</main>
+        <body className="h-screen">
+          <main className="h-full">{children}</main>
         </body>
       </html>
     );
