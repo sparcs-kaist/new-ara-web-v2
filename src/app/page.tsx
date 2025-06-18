@@ -4,7 +4,6 @@ import SearchBar from "@/components/searchBar";
 import BoardPreview from "@/components/BoardPreview/BoardPreview";
 import BoardSelector from "@/components/BoardPreview/BoardSelector";
 import { useState } from "react";
-import Image from "next/image";
 import UserMenu from "@/components/UserMenu/UserMenu";
 import OtherServices from "@/components/UserMenu/OtherServices";
 

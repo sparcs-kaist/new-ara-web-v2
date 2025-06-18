@@ -7,8 +7,15 @@ import "@/i18n";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
+    // /login 페이지에서는 인증 체크하지 않음
+    if (pathname === "/login") {
+      setIsLoggedIn(false);
+      return;
+    }
+
     async function checkAuth() {
       try {
         const res = await fetch("https://newara.dev.sparcs.org/api/me", {
@@ -26,7 +33,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
 
     checkAuth();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // /login에서는 바로 children 렌더링
+  if (pathname === "/login") {
+    return (
+      <html lang="ko">
+        <body className="h-screen">
+          <main className="h-full">{children}</main>
+        </body>
+      </html>
+    );
+  }
 
   if (isLoggedIn === null) {
     return (
