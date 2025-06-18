@@ -23,7 +23,7 @@ export default function LoginPageButton({
     <Link
       href={redirectUrl}
       className={`
-        inline-flex items-center gap-2 px-4 py-2
+        inline-flex items-center justify-center gap-2 px-4 py-2
         rounded-lg bg-white text-[#ed3a3a] border border-[#dbdbdb]
         font-normal transition-shadow duration-300
         hover:shadow-[0_2px_6px_0_#d1d5db]
