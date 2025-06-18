@@ -26,9 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       } catch {
         const handler = window.location.origin + "/auth-handler";
         const next = window.location.origin + "/";
-        window.location.href =
-          "https://newara.dev.sparcs.org/api/users/sso_login" +
-          `?handler=${handler}&next=${next}`;
+        window.location.href = "/login";
       }
     }
 
