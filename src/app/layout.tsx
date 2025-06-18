@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
 import "@/i18n";
@@ -9,7 +8,6 @@ import "@/i18n";
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const pathname = typeof window !== "undefined" ? window.location.pathname : "";
-  const router = useRouter();
 
   useEffect(() => {
     // /login 페이지에서는 인증 체크하지 않음

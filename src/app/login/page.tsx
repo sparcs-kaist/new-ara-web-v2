@@ -1,6 +1,5 @@
 'use client'
 
-import { useTranslation } from 'next-i18next'
 import Image from 'next/image'
 import LoginPageButton from './components/LoginPageButton'
 
@@ -9,7 +8,6 @@ import NewAraLogo from '@/assets/ServiceAra.svg'
 import LoginIcon from '@/assets/Icon/login.svg'
 
 export default function LoginPage() {
-  const { t } = useTranslation('login')
   return (
     <div className="flex flex-col sm:flex-row sm:h-full">
       <div className="flex flex-col justify-center items-center w-full h-[250px] bg-[#fbf2f1] 
