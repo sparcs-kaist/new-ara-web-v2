@@ -8,13 +8,8 @@ type Filter = {
 };
 
 type ArticleQuery = {
-  boardId?: number | number[];
-  topicId?: number;
-  username?: string;
-  query?: string;
-  ordering?: string;
-  page?: number;
-  pageSize?: number;
+  boardId?: number | number[]; topicId?: number; username?: string;
+  query?: string; ordering?: string; page?: number; pageSize?: number;
   filter?: Filter;
 };
 
@@ -50,29 +45,38 @@ function buildArticleParams(params: ArticleQuery): Record<string, QueryValue> {
 }
 
 //게시판 리스트 가져오기
-export const fetchBoardList = () =>
-  http.get('boards/').then(({ data }) => data);
+export const fetchBoardList = async () => {
+  const { data } = await http.get('boards/');
+  return data;
+};
 
 //게시판 그룹 정보 가져오기
-export const fetchBoardGroups = () =>
-  http.get('board_groups/').then(({ data }) => data);
+export const fetchBoardGroups = async () => {
+  const { data } = await http.get('board_groups/');
+  return data;
+};
 
 //일반 게시글 목록 조회
-export const fetchArticles = (params: ArticleQuery = {}) =>
-  http.get(`articles/?${queryBuilder(buildArticleParams(params))}`).then(({ data }) => data);
+export const fetchArticles = async (params: ArticleQuery = {}) => {
+  const { data } = await http.get(`articles/?${queryBuilder(buildArticleParams(params))}`);
+  return data;
+};
 
 //추천 게시글 (top) 목록 조회
-export const fetchTopArticles = (params: ArticleQuery = {}) =>
-  http.get(`articles/top/?${queryBuilder(buildArticleParams(params))}`).then(({ data }) => data);
+export const fetchTopArticles = async (params: ArticleQuery = {}) => {
+  const { data } = await http.get(`articles/top/?${queryBuilder(buildArticleParams(params))}`);
+  return data;
+};
 
 //Scrap 목록 조회
-export const fetchArchives = (params: { query?: string; page?: number; pageSize?: number } = {}) => {
+export const fetchArchives = async (params: { query?: string; page?: number; pageSize?: number } = {}) => {
   const context: Record<string, QueryValue> = {};
   if (params.query) context.main_search__contains = params.query;
   if (params.page) context.page = params.page;
   if (params.pageSize) context.page_size = params.pageSize;
 
-  return http.get(`scraps/?${queryBuilder(context)}`).then(({ data }) => data);
+  const { data } = await http.get(`scraps/?${queryBuilder(context)}`);
+  return data;
 };
 
 // Todo : parent_article type issue 해결하기
@@ -87,13 +91,14 @@ export const fetchArchivedPosts = async (params?: Parameters<typeof fetchArchive
 };
 
 //최근 본 게시글 조회
-export const fetchRecentViewedPosts = (params: { query?: string; page?: number; pageSize?: number } = {}) => {
+export const fetchRecentViewedPosts = async (params: { query?: string; page?: number; pageSize?: number } = {}) => {
   const context: Record<string, QueryValue> = {};
   if (params.query) context.main_search__contains = params.query;
   if (params.page) context.page = params.page;
   if (params.pageSize) context.page_size = params.pageSize;
 
-  return http.get(`articles/recent/?${queryBuilder(context)}`).then(({ data }) => data);
+  const { data } = await http.get(`articles/recent/?${queryBuilder(context)}`);
+  return data;
 };
 
 // Todo : 주석 달기
@@ -105,7 +110,7 @@ type BoardQuery = {
   order?: string;
 };
 
-function buildBoardQuery({ boardId, ...params }: BoardQuery, status = 3) {
+async function buildBoardQuery({ boardId, ...params }: BoardQuery, status = 3) {
   const context: Record<string, QueryValue> = {
     school_response_status: status,
   };
@@ -115,24 +120,27 @@ function buildBoardQuery({ boardId, ...params }: BoardQuery, status = 3) {
   if (params.pageSize) context.page_size = params.pageSize;
   if (params.order) context.order = params.order;
 
-  return http.get(`board/${boardId}?${queryBuilder(context)}`).then(({ data }) => data);
+  const { data } = await http.get(`board/${boardId}?${queryBuilder(context)}`);
+  return data;
 }
 
-export const fetchAnsweredPostinTimeOrder = (params: BoardQuery) =>
+export const fetchAnsweredPostinTimeOrder = async (params: BoardQuery) =>
   buildBoardQuery(params);
 
-export const fetchUnansweredPostinTimeOrder = (params: BoardQuery) =>
+export const fetchUnansweredPostinTimeOrder = async (params: BoardQuery) =>
   buildBoardQuery(params);
 
-export const fetchAnsweredPostinPositiveOrder = (params: BoardQuery) =>
+export const fetchAnsweredPostinPositiveOrder = async (params: BoardQuery) =>
   buildBoardQuery({ ...params, order: 'article__positive_vote_count' });
 
-export const fetchUnansweredPostinPositiveOrder = (params: BoardQuery) =>
+export const fetchUnansweredPostinPositiveOrder = async (params: BoardQuery) =>
   buildBoardQuery({ ...params, order: 'article__positive_vote_count' });
 
-export const fetchAllPostinPositiveOrder = (params: BoardQuery) =>
+export const fetchAllPostinPositiveOrder = async (params: BoardQuery) =>
   buildBoardQuery({ ...params, order: 'article__positive_vote_count' });
 
 //신고 목록 조회
-export const fetchReports = () =>
-  http.get('reports/').then(({ data }) => data);
+export const fetchReports = async () => {
+  const { data } = await http.get('reports/');
+  return data;
+};
