@@ -24,16 +24,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         if (!res.ok) throw new Error("Not authenticated");
         setIsLoggedIn(true);
       } catch {
-        const handler = window.location.origin + "/auth-handler";
-        const next = window.location.origin + "/";
         window.location.href =
           "https://newara.dev.sparcs.org/api/users/sso_login" +
-          `?handler=${handler}&next=${next}`;
+          `?handler=${window.location.origin}/auth-handler&next=${window.location.origin}/`;
       }
     }
 
     checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   // /login에서는 바로 children 렌더링
