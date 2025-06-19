@@ -1,4 +1,4 @@
-import http from "./http";
+import http from "@/lib/api/http";
 import { queryBuilder } from "../utils/queryBuilder";
 
 //type QueryValue = string | number | boolean | null | undefined;
