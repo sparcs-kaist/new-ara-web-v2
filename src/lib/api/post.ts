@@ -1,5 +1,4 @@
 import http from '@/lib/api/http';
-import { queryBuilder } from '@/lib/utils/queryBuilder';
 
 type VoteAction = 'vote_cancel' | 'vote_negative' | 'vote_positive';
 
