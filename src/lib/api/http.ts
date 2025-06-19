@@ -15,7 +15,7 @@ const apiUrl = (() => {
 
 const baseApiAddress = `${apiUrl}/api`
 
-export const http = axios.create({
+const http = axios.create({
   baseURL: baseApiAddress,
   withCredentials: true,
 })
@@ -53,4 +53,4 @@ http.interceptors.response.use(
   },
 );
 
-export { apiUrl }
+export default http;
