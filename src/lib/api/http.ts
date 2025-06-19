@@ -1,6 +1,6 @@
 import axios from 'axios'
 //  import { getCookie } from '../utils/cookie'
-import { getValidatorError } from '../utils/validator'
+import { errorParser } from '../utils/errorParser'
 
 const apiUrl = (() => {
   if (process.env.NEXT_PUBLIC_API_HOST) {
@@ -45,7 +45,7 @@ http.interceptors.response.use(
       }
 
       if (typeof error.response.data === 'object') {
-        error.apierr = getValidatorError(error.response.data);
+        error.apierr = errorParser(error.response.data);
       }
     }
 
