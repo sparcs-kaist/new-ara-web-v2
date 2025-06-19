@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { getCookie } from '../utils/cookie'
+//  import { getCookie } from '../utils/cookie'
+import { getValidatorError } from '../utils/validator'
 
 const apiUrl = (() => {
   if (process.env.NEXT_PUBLIC_API_HOST) {
@@ -34,27 +35,22 @@ http.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      const status = error.response.status
+      const status = error.response.status;
 
       if (typeof window !== 'undefined') {
-        if (status === 401) {
-          window.location.href = '/login'
-        } else if (status === 404) {
-          window.location.href = '/404'
-        } else if (status === 418) {
-          window.location.href = '/tos'
-        } else if (status === 410) {
-          window.location.href = '/410'
-        }
+        if (status === 401) window.location.href = '/login';
+        else if (status === 404) window.location.href = '/404';
+        else if (status === 418) window.location.href = '/tos';
+        else if (status === 410) window.location.href = '/410';
       }
 
       if (typeof error.response.data === 'object') {
-        error.apierr = getValidatorError(error.response.data)
+        error.apierr = getValidatorError(error.response.data);
       }
     }
 
-    return Promise.reject(error)
+    return Promise.reject(error);
   },
-)
+);
 
 export { apiUrl }
