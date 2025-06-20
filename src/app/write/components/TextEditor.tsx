@@ -70,7 +70,8 @@ const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
 
       {/* 편집 모드 툴바 */}
       {editable && (
-        <div className="sticky top-0 z-10 flex flex-row gap-x-4 bg-gray-100 p-4 border-b border-gray-300">
+        <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300">
+          {/* 버튼들 */}
           <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleBold().run()}>
             <i className="material-icons text-xl text-gray-600">format_bold</i>
           </button>
