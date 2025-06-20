@@ -10,7 +10,7 @@ import Underline from '@tiptap/extension-underline';
 import LinkBookmark  from './LinkBookmark';
 import AttachmentImage  from './AttachmentImage';
 import { CustomCodeBlock } from './CodeBlock'; // 수정: CustomCodeBlock으로 import
-import LinkDialog from './TextEditorLinkDialog'; // Vue의 TheTextEditorLinkDialog 대응
+import TextEditorLinkDialog from './TextEditorLinkDialog';
 
 interface TextEditorProps {
   content?: string;
@@ -19,7 +19,7 @@ interface TextEditorProps {
 
 const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
   const [imgError, setImgError] = useState(false);
-  const dialogRef = useRef<{ showDialog: (cb: Function, title?: string) => void }>(null);
+  const dialogRef = useRef<{ open: (defaultTitle?: string) => void }>(null);
 
   const editor = useEditor({
     extensions: [
@@ -52,14 +52,7 @@ const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
     if (!editor) return;
     const { from, to } = editor.state.selection;
     const text = editor.state.doc.textBetween(from, to, ' ');
-    dialogRef.current?.showDialog((url: string, title: string, isBookmark: boolean) => {
-      if (!editor) return;
-      if (isBookmark) {
-        editor.chain().focus().linkBookmark({ href: url, title }).run();
-      } else {
-        editor.chain().focus().toggleLink({ href: url }).run();
-      }
-    }, text);
+    dialogRef.current?.open(text);
   };
 
   return (
@@ -141,6 +134,17 @@ const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
       <EditorContent editor={editor} className="prose p-4 min-h-[10rem]" />
 
       {/* 링크 다이얼로그 */}
+      <TextEditorLinkDialog
+        ref={dialogRef}
+        onSubmit={(url, title, isBookmark) => {
+          if (!editor) return;
+          if (isBookmark) {
+            editor.chain().focus().linkBookmark({ href: url, title }).run();
+          } else {
+            editor.chain().focus().toggleLink({ href: url }).run();
+          }
+        }}
+      />
     </div>
   );
 };
