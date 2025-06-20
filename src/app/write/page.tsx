@@ -4,8 +4,8 @@ import PostOptionBar from "./components/PostOptionBar";
 
 export default function Write() {
     return (
-      <div className="bg-white p-8 w-full">
-        <div className="w-[80%]">
+      <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
+        <div className="w-[80vw] max-w-7xl">
           <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">
             게시물 작성하기
           </p>
