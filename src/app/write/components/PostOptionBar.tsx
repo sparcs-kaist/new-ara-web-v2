@@ -4,7 +4,6 @@
 
 import React, { useState } from "react";
 
-// 게시판, 말머리, 익명 가능 여부 데이터
 const boardOptions = [
 	{
 		name: "학생단체",
@@ -58,7 +57,7 @@ const boardOptions = [
 		name: "학교에게 전합니다",
 		categories: ["말머리 없음"],
 		allowAnonymous: false,
-		realname: true, // 실명제
+		realname: true,
 	},
 	{
 		name: "아라 피드백 ",
@@ -78,12 +77,11 @@ interface PostOptionBarProps {
 
 const PostOptionBar: React.FC<PostOptionBarProps> = ({ onChange }) => {
 	const [selectedBoard, setSelectedBoard] = useState(boardOptions[0].name);
-	const [selectedCategory, setSelectedCategory] = useState(
-		boardOptions[0].categories[0]
-	);
-	const [anonymous, setAnonymous] = useState(false);
+	const [selectedCategory, setSelectedCategory] = useState(boardOptions[0].categories[0]);
+	const [political, setPolitical] = useState(false); // 정치글 옵션
+	const [adult, setAdult] = useState(false); // 성인글 옵션
+	const [anonymous, setAnonymous] = useState(false); // 익명 옵션
 
-	// 현재 선택된 게시판 정보
 	const currentBoard = boardOptions.find((b) => b.name === selectedBoard)!;
 
 	// 게시판 변경 시 말머리, 익명 상태 초기화
@@ -93,11 +91,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({ onChange }) => {
 		setSelectedBoard(boardName);
 		setSelectedCategory(board.categories[0]);
 		setAnonymous(false);
-		onChange?.({
-			board: boardName,
-			category: board.categories[0],
-			anonymous: false,
-		});
+		onChange?.({ board: boardName, category: board.categories[0], anonymous: false });
 	};
 
 	// 말머리 변경
@@ -109,23 +103,24 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({ onChange }) => {
 	// 익명 체크박스 변경
 	const handleAnonymousChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setAnonymous(e.target.checked);
-		onChange?.({
-			board: selectedBoard,
-			category: selectedCategory,
-			anonymous: e.target.checked,
-		});
+		onChange?.({ board: selectedBoard, category: selectedCategory, anonymous: e.target.checked });
 	};
 
 	return (
 		<div className="flex items-center gap-4 mb-6">
 			{/* 게시판 드롭다운 */}
 			<select
-				className="border border-gray-300 rounded px-3 py-2"
+				className="appearance-none border border-gray-300 rounded px-3 py-2 text-black"
 				value={selectedBoard}
 				onChange={handleBoardChange}
 			>
-				{boardOptions.map((board) => (
-					<option key={board.name} value={board.name}>
+				{boardOptions.map((board, idx) => (
+					<option
+						key={board.name}
+						value={board.name}
+						className={idx === 0 ? "text-gray-400" : "text-black"}
+						style={idx === 0 ? { color: "#9ca3af" } : { color: "#000" }} // gray-400
+					>
 						{board.name}
 					</option>
 				))}
@@ -133,12 +128,17 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({ onChange }) => {
 
 			{/* 말머리 드롭다운 */}
 			<select
-				className="border border-gray-300 rounded px-3 py-2"
+				className="appearance-none border border-gray-300 rounded px-3 py-2 text-black"
 				value={selectedCategory}
 				onChange={handleCategoryChange}
 			>
-				{currentBoard.categories.map((cat) => (
-					<option key={cat} value={cat}>
+				{currentBoard.categories.map((cat, idx) => (
+					<option
+						key={cat}
+						value={cat}
+						className={idx === 0 ? "text-gray-400" : "text-black"}
+						style={idx === 0 ? { color: "#9ca3af" } : { color: "#000" }}
+					>
 						{cat}
 					</option>
 				))}
@@ -156,11 +156,32 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({ onChange }) => {
 					익명
 				</label>
 			)}
+
+            {/* 정치글 옵션 */}
+            <label className="flex items-center gap-1 text-sm">
+		      <input
+				type="checkbox"
+				checked={political}
+				onChange={(e) => setPolitical(e.target.checked)}
+				className="accent-red-500"
+			  />
+				정치글
+			</label>
+
+            {/* 성인글 옵션 */}
+            <label className="flex items-center gap-1 text-sm">
+		      <input
+				type="checkbox"
+				checked={adult}
+				onChange={(e) => setAdult(e.target.checked)}
+				className="accent-red-500"
+			  />
+				성인글
+			</label>
+
 			{/* 실명제 안내 */}
 			{currentBoard.realname && (
-				<span className="text-xs text-red-500 font-semibold">
-					실명제 게시판입니다
-				</span>
+				<span className="text-xs text-red-500 font-semibold">실명제 게시판입니다</span>
 			)}
 		</div>
 	);
