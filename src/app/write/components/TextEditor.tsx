@@ -6,9 +6,10 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
-import { LinkBookmark } from './LinkBookmark';
-import { AttachmentImage } from './AttachmentImage';
-import { CodeBlock } from './CodeBlock';
+import Underline from '@tiptap/extension-underline';
+import LinkBookmark  from './LinkBookmark';
+import AttachmentImage  from './AttachmentImage';
+import { CustomCodeBlock } from './CodeBlock'; // 수정: CustomCodeBlock으로 import
 import LinkDialog from './TextEditorLinkDialog'; // Vue의 TheTextEditorLinkDialog 대응
 
 interface TextEditorProps {
@@ -21,17 +22,17 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
   const dialogRef = useRef<{ showDialog: (cb: Function, title?: string) => void }>(null);
 
   const editor = useEditor({
-    editable,
     extensions: [
       LinkBookmark,
       AttachmentImage.configure({
         errorCallback: () => setImgError(true),
       }),
       StarterKit.configure({
-        blockquote: true,
+        blockquote: {},
         codeBlock: false, // TipTap React 기본은 비활성
       }),
-      CodeBlock,
+      Underline,
+      CustomCodeBlock, // 수정: CustomCodeBlock 사용
       Link.configure({ openOnClick: false }),
       Placeholder.configure({
         placeholder: 'Write something …',
@@ -119,12 +120,14 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
           <button onClick={() => editor?.chain().focus().toggleCodeBlock().run()} className="btn">
             <i className="material-icons">code</i>
           </button>
-          <button
-            onClick={() => onOpenImageUpload?.()}
-            className="btn"
-          >
-            <i className="material-icons">image</i>
-          </button>
+          {/*
+            <button
+               onClick={() => onOpenImageUpload?.()}
+               className="btn"
+            >
+              <i className="material-icons">image</i>
+            </button>
+          */}
           <button onClick={() => editor?.chain().focus().undo().run()} className="btn">
             <i className="material-icons">undo</i>
           </button>
@@ -138,7 +141,6 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
       <EditorContent editor={editor} className="prose p-4 min-h-[10rem]" />
 
       {/* 링크 다이얼로그 */}
-      <LinkDialog ref={dialogRef} />
     </div>
   );
 };
