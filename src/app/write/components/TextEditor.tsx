@@ -17,7 +17,7 @@ interface TextEditorProps {
   editable?: boolean;
 }
 
-const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false }) => {
+const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
   const [imgError, setImgError] = useState(false);
   const dialogRef = useRef<{ showDialog: (cb: Function, title?: string) => void }>(null);
 
@@ -32,7 +32,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
         codeBlock: false, // TipTap React 기본은 비활성
       }),
       Underline,
-      CustomCodeBlock, // 수정: CustomCodeBlock 사용
+      CustomCodeBlock, // CustomCodeBlock 사용
       Link.configure({ openOnClick: false }),
       Placeholder.configure({
         placeholder: 'Write something …',
@@ -77,48 +77,48 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
 
       {/* 편집 모드 툴바 */}
       {editable && (
-        <div className="sticky top-0 z-10 flex flex-wrap bg-gray-100 p-2 border-b border-gray-300">
-          <button onClick={() => editor?.chain().focus().toggleBold().run()} className="btn">
-            <i className="material-icons">format_bold</i>
+        <div className="sticky top-0 z-10 flex flex-row gap-x-4 bg-gray-100 p-4 border-b border-gray-300">
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleBold().run()}>
+            <i className="material-icons text-xl text-gray-600">format_bold</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleItalic().run()} className="btn">
-            <i className="material-icons">format_italic</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleItalic().run()}>
+            <i className="material-icons text-xl text-gray-600">format_italic</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleStrike().run()} className="btn">
-            <i className="material-icons">format_strikethrough</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleStrike().run()}>
+            <i className="material-icons text-xl text-gray-600">format_strikethrough</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleUnderline().run()} className="btn">
-            <i className="material-icons">format_underline</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+            <i className="material-icons text-xl text-gray-600">format_underline</i>
           </button>
-          <button onClick={showLinkDialog} className="btn">
-            <i className="material-icons">link</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={showLinkDialog}>
+            <i className="material-icons text-xl text-gray-600">link</i>
           </button>
-          <button onClick={() => editor?.chain().focus().setHorizontalRule().run()} className="btn">
-            <i className="material-icons">horizontal_rule</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().setHorizontalRule().run()}>
+            <i className="material-icons text-xl text-gray-600">horizontal_rule</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleCode().run()} className="btn">
-            <i className="material-icons">code</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleCode().run()}>
+            <i className="material-icons text-xl text-gray-600">code</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} className="btn">
-            <i className="material-icons">looks_one</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}>
+            <i className="material-icons text-xl text-gray-600">looks_one</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} className="btn">
-            <i className="material-icons">looks_two</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}>
+            <i className="material-icons text-xl text-gray-600">looks_two</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} className="btn">
-            <i className="material-icons">looks_3</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}>
+            <i className="material-icons text-xl text-gray-600">looks_3</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleBulletList().run()} className="btn">
-            <i className="material-icons">format_list_bulleted</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+            <i className="material-icons text-xl text-gray-600">format_list_bulleted</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleOrderedList().run()} className="btn">
-            <i className="material-icons">format_list_numbered</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+            <i className="material-icons text-xl text-gray-600">format_list_numbered</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleBlockquote().run()} className="btn">
-            <i className="material-icons">format_quote</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleBlockquote().run()}>
+            <i className="material-icons text-xl text-gray-600">format_quote</i>
           </button>
-          <button onClick={() => editor?.chain().focus().toggleCodeBlock().run()} className="btn">
-            <i className="material-icons">code</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().toggleCodeBlock().run()}>
+            <i className="material-icons text-xl text-gray-600">code</i>
           </button>
           {/*
             <button
@@ -128,11 +128,11 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
               <i className="material-icons">image</i>
             </button>
           */}
-          <button onClick={() => editor?.chain().focus().undo().run()} className="btn">
-            <i className="material-icons">undo</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().undo().run()}>
+            <i className="material-icons text-xl text-gray-600">undo</i>
           </button>
-          <button onClick={() => editor?.chain().focus().redo().run()} className="btn">
-            <i className="material-icons">redo</i>
+          <button className="h-auto p-0 flex items-center justify-center" onClick={() => editor?.chain().focus().redo().run()}>
+            <i className="material-icons text-xl text-gray-600">redo</i>
           </button>
         </div>
       )}
