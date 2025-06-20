@@ -17,7 +17,7 @@ interface TextEditorProps {
   editable?: boolean;
 }
 
-const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false }) => {
+const TextEditor = ({ content = '', editable = false } : TextEditorProps) => {
   const [imgError, setImgError] = useState(false);
   const dialogRef = useRef<{ showDialog: (cb: Function, title?: string) => void }>(null);
 
@@ -32,7 +32,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
         codeBlock: false, // TipTap React 기본은 비활성
       }),
       Underline,
-      CustomCodeBlock, // 수정: CustomCodeBlock 사용
+      CustomCodeBlock, // CustomCodeBlock 사용
       Link.configure({ openOnClick: false }),
       Placeholder.configure({
         placeholder: 'Write something …',
@@ -77,7 +77,7 @@ const TextEditor: React.FC<TextEditorProps> = ({ content = '', editable = false 
 
       {/* 편집 모드 툴바 */}
       {editable && (
-        <div className="sticky top-0 z-10 flex flex-wrap bg-gray-100 p-2 border-b border-gray-300">
+        <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 bg-gray-100 p-4 border-b border-gray-300">
           <button onClick={() => editor?.chain().focus().toggleBold().run()} className="btn">
             <i className="material-icons">format_bold</i>
           </button>
