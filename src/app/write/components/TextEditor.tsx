@@ -106,46 +106,63 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         {/* Toolbar */}
         {editable && (
           <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
+            {/* Bold */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bold') ? 'bg-gray-300' : ''
               }`}
               onClick={() => editor?.chain().focus().toggleBold().run()}
             >
-              <i className="material-icons text-xl text-gray-600">
-                format_bold
-              </i>
+              <i className="material-icons text-xl text-gray-600">format_bold</i>
             </button>
+            {/* Italic */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('italic') ? 'bg-gray-300' : ''
               }`}
               onClick={() => editor?.chain().focus().toggleItalic().run()}
             >
-              <i className="material-icons text-xl text-gray-600">
-                format_italic
-              </i>
+              <i className="material-icons text-xl text-gray-600">format_italic</i>
             </button>
+            {/* Strikethrough */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('strike') ? 'bg-gray-300' : ''
               }`}
               onClick={() => editor?.chain().focus().toggleStrike().run()}
             >
-              <i className="material-icons text-xl text-gray-600">
-                format_strikethrough
-              </i>
+              <i className="material-icons text-xl text-gray-600">format_strikethrough</i>
             </button>
+            {/* Underline */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('underline') ? 'bg-gray-300' : ''
               }`}
               onClick={() => editor?.chain().focus().toggleUnderline().run()}
             >
-              <i className="material-icons text-xl text-gray-600">
-                format_underline
-              </i>
+              <i className="material-icons text-xl text-gray-600">format_underline</i>
             </button>
+
+            {/* ───── Color Picker & Reset (moved here) ───── */}
+            <input
+              type="color"
+              value={editor?.getAttributes('textStyle').color ?? '#000000'}
+              onInput={e => {
+                const color = e.currentTarget.value
+                editor?.chain().focus().setColor(color).run()
+              }}
+              className="appearance-none w-4 h-4 p-0 border-none rounded-full cursor-pointer"
+              title="텍스트 색상"
+            />
+            <button
+              onClick={() => editor?.chain().focus().unsetColor().run()}
+              className="h-auto p-0 flex items-center justify-center"
+              title="색 초기화"
+            >
+              <i className="material-icons text-base">format_color_reset</i>
+            </button>
+
+            {/* Link */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('link') ? 'bg-gray-300' : ''
@@ -249,31 +266,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               onClick={() => editor?.chain().focus().redo().run()}
             >
               <i className="material-icons text-xl text-gray-600">redo</i>
-            </button>
-            {/* color picker */}
-            <input
-              type="color"
-              value={editor?.getAttributes('textStyle').color ?? '#000000'}
-              onInput={e => {
-                const color = e.currentTarget.value
-                editor?.chain().focus().setColor(color).run()
-              }}
-              className="
-                appearance-none 
-                w-4 h-4 p-0 
-                border-none 
-                rounded-full 
-                cursor-pointer
-              "
-              title="텍스트 색상"
-            />
-            {/* Initialize Text Color */}
-            <button
-            onClick={() => editor?.chain().focus().unsetColor().run()}
-            className="h-auto p-0 flex items-center justify-center"
-            title="색 초기화"
-            >
-            <i className="material-icons text-base">format_color_reset</i>
             </button>
           </div>
         )}
