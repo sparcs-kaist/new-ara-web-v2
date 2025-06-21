@@ -1,14 +1,17 @@
 'use client';
 import { useRef } from 'react';
+import type { Editor } from '@tiptap/react';
+import type { AttachmentsHandles } from './components/Attachments';
 import TextEditor from './components/TextEditor';
 import PostOptionBar from './components/PostOptionBar';
 import Attachments, { UploadObject } from './components/Attachments';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
+
 export default function Write() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<any>(null);
-  const attachmentsRef = useRef<any>(null);
+  const editorRef = useRef<Editor|null>(null);
+  const attachmentsRef = useRef<AttachmentsHandles|null>(null);
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -18,17 +21,18 @@ export default function Write() {
   // 에디터 -> Attachments (업로드) -> 에디터 삽입
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !editorRef.current) return;
+    const editor = editorRef.current;
 
-    //Attachments에만 추가
+    if (!file || !editor) return;
+
     const uploads = attachmentsRef.current?.handleUpload([file]) || [];
 
-    //그 결과로 에디터에 삽입
     uploads.forEach((u: UploadObject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const src = reader.result as string;
-        editorRef.current
+        // here `editor` is known non-null
+        editor
           .chain()
           .focus()
           .attachmentImage({

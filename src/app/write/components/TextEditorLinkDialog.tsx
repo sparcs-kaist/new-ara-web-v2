@@ -102,6 +102,7 @@ const TextEditorLinkDialog = forwardRef<TextEditorLinkDialogHandle, Props>(
   }
 )
 
+TextEditorLinkDialog.displayName = 'TextEditorLinkDialog'
 export default TextEditorLinkDialog
 
 // Dialog open trigger 사용 예:

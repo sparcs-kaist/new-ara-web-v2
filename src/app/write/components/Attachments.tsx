@@ -8,6 +8,8 @@ import React, {
   useEffect,
 } from 'react';
 
+import Image from 'next/image';
+
 const ALLOWED_EXTENSIONS = [
   'txt', 'docx', 'doc', 'pptx', 'ppt', 'pdf', 'hwp', 'zip', '7z',
   'png', 'jpg', 'jpeg', 'gif',
@@ -44,7 +46,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
 
   //자식 요소위에서도 drag state를 관리하기 위해 counter 사용
   //자식 요소까지 완전히 벗어났을 때 (counter = 0) 되었을 때만 dropzone 비활성화
-  const [dragCounter, setDragCounter] = useState(0);
+  const [ , setDragCounter] = useState(0);
 
   const [dropzoneFailedReason, setDropzoneFailedReason] = useState<string | null>(null);
 
@@ -253,10 +255,12 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
               className="file flex flex-col pointer-events-none p-3 bg-[#fafafa] rounded-xl
               hover:bg-[#ececec] transition-colors duration-200"
             >
-              {file.type === 'image' && (
-                <img
-                  src={file.blobUrl ?? undefined}
+              {file.type === 'image' && file.blobUrl &&(
+                <Image
+                  src={file.blobUrl}
                   alt={file.name}
+                  width={200}
+                  height={200}
                   className="max-w-xs max-h-24 object-cover mb-2"
                 />
               )}
