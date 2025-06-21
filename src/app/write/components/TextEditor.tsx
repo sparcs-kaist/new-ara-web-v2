@@ -14,6 +14,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import LinkBookmark from './LinkBookmark';
 import AttachmentImage from './AttachmentImage';
+
 import { CustomCodeBlock } from './CodeBlock';
 import TextEditorLinkDialog from './TextEditorLinkDialog';
 
@@ -32,7 +33,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none",
+            "prose prose-sm sm:prose m-5 focus:outline-none",
         },
       },
       extensions: [
@@ -242,9 +243,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
         editor={editor}
-        className="editor-content text-sm leading-relaxed dark:prose-invert p-4 min-h-[10rem] max-w-none focus:outline-none"
+        className="editor-content text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] max-w-none focus:outline-none"
         />
-
         <TextEditorLinkDialog
           ref={dialogRef}
           onSubmit={(url, title, isBookmark) => {
