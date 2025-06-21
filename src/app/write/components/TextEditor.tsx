@@ -32,6 +32,12 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
     const dialogRef = useRef<{ open: (defaultTitle?: string) => void }>(null);
 
     const editor = useEditor({
+      editorProps: {
+        attributes: {
+          class:
+            "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none",
+          },
+      },
       extensions: [
         LinkBookmark,
         AttachmentImage.configure({
