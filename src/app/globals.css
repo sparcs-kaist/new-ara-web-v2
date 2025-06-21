@@ -1,3 +1,4 @@
+@import 'highlight.js/styles/github.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +34,7 @@ body {
 }
 
 /* Style for Text Editor */
+/* Code Style */
 .prose code {
   background-color: #f3f4f6; /* gray-100 */
   color: #ec4899;            /* pink-500 */
@@ -62,4 +64,20 @@ body {
 
 .editor-content a {
   color: #00b8d4;
+}
+
+
+
+/* 또는 직접 스타일링 */
+.prose pre {
+  background: #f8f8f8 !important;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+.prose pre code {
+  color: #111 !important;
+  background: transparent !important;
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }

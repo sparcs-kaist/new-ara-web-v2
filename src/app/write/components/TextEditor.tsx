@@ -16,9 +16,6 @@ import LinkBookmark from './LinkBookmark';
 import AttachmentImage from './AttachmentImage';
 import { CustomCodeBlock } from './CodeBlock';
 import TextEditorLinkDialog from './TextEditorLinkDialog';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
 
 interface TextEditorProps {
   content?: string;
@@ -36,7 +33,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         attributes: {
           class:
             "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none",
-          },
+        },
       },
       extensions: [
         LinkBookmark,
@@ -48,9 +45,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           heading: {
             levels: [1, 2, 3],
           },
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
         }),
         Underline,
         CustomCodeBlock,
@@ -59,9 +53,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           placeholder: 'Write something …',
           showOnlyWhenEditable: true,
         }),
-        BulletList,
-        OrderedList,
-        ListItem,
       ],
       content,
     });
@@ -101,7 +92,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         {/* Toolbar */}
         {editable && (
-          <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300">
+          <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bold') ? 'bg-gray-300' : ''
@@ -166,23 +157,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
-            {/* Uncomment if you want to enable heading levels
-            {[1, 2, 3].map((level) => (
-              <button
-                key={level}
-                className={`h-auto p-0 flex items-center justify-center ${
-                  editor?.isActive('heading', { level }) ? 'bg-gray-300' : ''
-                }`}
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level }).run()
-                }
-              >
-                <i className="material-icons text-xl text-gray-600">
-                  looks_{level}
-                </i>
-              </button>
-            ))}
-            */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bulletList') ? 'bg-gray-300' : ''
