@@ -23,19 +23,6 @@ interface TextEditorProps {
   onOpenImageUpload?: () => void;
 }
 
-const CODE_LANGUAGES = [
-  'javascript',
-  'typescript',
-  'react',
-  'python',
-  'java',
-  'c',
-  'cpp',
-  'rust',
-  'ocaml',
-  'fsharp',
-];
-
 const TextEditor = forwardRef<Editor | null, TextEditorProps>(
   ({ content = '', editable = false, onOpenImageUpload }, ref) => {
     const [imgError, setImgError] = useState(false);
@@ -86,8 +73,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       const text = editor.state.doc.textBetween(from, to, ' ');
       dialogRef.current?.open(text);
     };
-
-    const codeBlockLang = editor?.getAttributes('codeBlock')?.language || '';
 
     return (
       <div
@@ -210,23 +195,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
-            {editor?.isActive('codeBlock') && (
-              <select
-                className="ml-2 px-2 py-1 text-sm border rounded"
-                value={codeBlockLang}
-                onChange={(e) =>
-                  editor.commands.updateAttributes('codeBlock', {
-                    language: e.target.value,
-                  })
-                }
-              >
-                {CODE_LANGUAGES.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang}
-                  </option>
-                ))}
-              </select>
-            )}
             <button
               onClick={() => onOpenImageUpload?.()}
               className="h-auto p-0 flex items-center justify-center"

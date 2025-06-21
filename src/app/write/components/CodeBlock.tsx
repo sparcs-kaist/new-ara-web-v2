@@ -1,3 +1,4 @@
+import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { createLowlight } from 'lowlight';
 
@@ -28,25 +29,51 @@ lowlight.register('rust', rust);
 lowlight.register('ocaml', ocaml);
 lowlight.register('fsharp', fsharp);
 
-// 확장 생성
-export const CustomCodeBlock = CodeBlockLowlight.extend({
-  addKeyboardShortcuts() {
-    return {
-      Tab: () => {
-        const { state, dispatch } = this.editor.view;
-        const { selection } = state;
-        const { $from } = selection;
-        const node = $from.node();
+const CODE_LANGUAGES = [
+  'javascript',
+  'typescript',
+  'react',
+  'python',
+  'java',
+  'c',
+  'cpp',
+  'rust',
+  'ocaml',
+  'fsharp',
+];
 
-        if (node.type.name === this.name) {
-          dispatch(state.tr.insertText('\t', selection.from, selection.to));
-          return true;
+const CustomComponent = (props: any) => {
+  const currentLang = props.node.attrs.language || 'javascript';
+
+  return (
+    <NodeViewWrapper as="div" className="relative group">
+      <select
+        value={currentLang}
+        onChange={(e) =>
+          props.updateAttributes({ language: e.target.value })
         }
-        return false;
-      },
-    };
+        className="absolute left-2 top-2 z-10 text-xs 
+        rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity 
+        bg-transparent border-none shadow-none
+        focus:outline-none focus:border-none"
+      >
+        {CODE_LANGUAGES.map((lang) => (
+          <option key={lang} value={lang}>
+            {lang}
+          </option>
+        ))}
+      </select>
+      <pre>
+        <NodeViewContent as="code" />
+      </pre>
+    </NodeViewWrapper>
+  );
+};
+
+export const CustomCodeBlock = CodeBlockLowlight.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(CustomComponent);
   },
 }).configure({
   lowlight,
-  defaultLanguage: 'javascript',
 });
