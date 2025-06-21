@@ -33,6 +33,7 @@ body {
 }
 
 /* Style for Text Editor */
+/* Code Style */
 .prose code {
   background-color: #f3f4f6; /* gray-100 */
   color: #ec4899;            /* pink-500 */
@@ -62,4 +63,19 @@ body {
 
 .editor-content a {
   color: #00b8d4;
+}
+
+/* Code Blocks Style */
+.prose pre {
+  background: #111 !important;      /* 검정 바탕 */
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  color: #fff !important;           /* 흰 글씨 */
+  background: transparent !important;
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }

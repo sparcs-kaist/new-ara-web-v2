@@ -48,9 +48,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           heading: {
             levels: [1, 2, 3],
           },
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
         }),
         Underline,
         CustomCodeBlock,
@@ -59,9 +56,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           placeholder: 'Write something …',
           showOnlyWhenEditable: true,
         }),
-        BulletList,
-        OrderedList,
-        ListItem,
       ],
       content,
     });
