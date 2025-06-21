@@ -2,7 +2,8 @@
 import { useRef } from 'react';
 import TextEditor from './components/TextEditor';
 import PostOptionBar from './components/PostOptionBar';
-import Attachments from './components/Attachments';
+import Attachments, { UploadObject } from './components/Attachments';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 export default function Write() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -14,44 +15,52 @@ export default function Write() {
     fileInputRef.current?.click();
   };
 
-  // 실제 이미지 파일 선택 시 처리
+  // 에디터 -> Attachments (업로드) -> 에디터 삽입
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editorRef.current) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = reader.result;
-      if (typeof src === 'string') {
-        editorRef.current.chain().focus().attachmentImage({
-          src,
-          title: file.name,
-          'data-attachment': 'true',
-        }).run();
-      }
-    };
-    reader.readAsDataURL(file);
-  };
+    //Attachments에만 추가
+    const uploads = attachmentsRef.current?.handleUpload([file]) || [];
 
-  // Attachments 컴포넌트에 파일 직접 추가 (예: 드래그앤드롭 등)
-  const handleAttachFiles = (files: File[]) => {
-    attachmentsRef.current?.handleUpload(files);
-  };
-
-  // Attachments에서 새 파일 추가 시 에디터에도 이미지 추가
-  const handleAddAttachments = (attachments: any[]) => {
-    attachments.forEach(file => {
-      if (file.type === 'image') {
-        editorRef.current?.addImageByFile?.(file);
-      }
+    //그 결과로 에디터에 삽입
+    uploads.forEach((u: UploadObject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const src = reader.result as string;
+        editorRef.current
+          .chain()
+          .focus()
+          .attachmentImage({
+            src,
+            title: u.name,
+            'data-attachment': u.key,
+          })
+          .run();
+      };
+      reader.readAsDataURL(u.file!);
     });
+
+    e.target.value = '';
   };
 
-  // Attachments에서 파일 삭제 시 에디터에서도 이미지 삭제
-  const handleDeleteAttachment = (file: any) => {
-    if (file.type === 'image') {
-      editorRef.current?.removeImageByFile?.(file);
-    }
+  // 삭제 시 에디터에서도 지우기
+  const handleAttachmentDelete = (file: UploadObject) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const { state, view } = editor;
+    state.doc.descendants(
+      (node: ProseMirrorNode, pos: number) => {
+        if (
+          node.type.name === 'attachmentImage' &&
+          node.attrs['data-attachment'] === file.key
+        ) {
+          const tr = view.state.tr.delete(pos, pos + node.nodeSize);
+          view.dispatch(tr);
+        }
+      }
+    );
   };
 
   return (
@@ -83,8 +92,7 @@ export default function Write() {
 
         <Attachments
           ref={attachmentsRef}
-          onAdd={handleAddAttachments}
-          onDelete={handleDeleteAttachment}
+          onDelete={handleAttachmentDelete}
         />
       </div>
     </div>

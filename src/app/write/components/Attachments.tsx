@@ -24,7 +24,7 @@ export interface UploadObject {
 }
 
 export interface AttachmentsHandles {
-  handleUpload: (files: FileList | File[]) => void;
+  handleUpload: (files: FileList | File[]) => UploadObject[];
   files: UploadObject[];
   openImageUpload: () => void;
 }
@@ -123,6 +123,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
 
     setFiles(prev => [...prev, ...success]);
     if (onAdd) onAdd(success);
+    return success;
   };
 
   //drag enter/leave 이벤트 헨들러
