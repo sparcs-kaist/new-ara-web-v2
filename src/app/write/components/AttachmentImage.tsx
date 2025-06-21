@@ -1,8 +1,16 @@
 'use client';
 
 import React from 'react'
-import { NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer } from '@tiptap/react'
+import { NodeViewWrapper, ReactNodeViewRenderer, NodeViewRendererProps } from '@tiptap/react'
 import { Node, mergeAttributes } from '@tiptap/core'
+import Image from 'next/image';
+
+
+// any 타입을 피하고 타입 추론을 위해 명시적으로 커스텀 props 타입 정의
+type ExtendedNodeViewRendererProps<T extends object = { width : number }> = NodeViewRendererProps & {
+  updateAttributes: (attrs: T) => void;
+  options?: AttachmentImageOptions;
+};
 
 export interface AttachmentImageOptions {
   editable: boolean
@@ -26,9 +34,8 @@ declare module '@tiptap/core' {
   }
 }
 
-const AttachmentImageComponent = (props: any) => {
+const AttachmentImageComponent = (props: ExtendedNodeViewRendererProps) => {
   const { node, updateAttributes } = props
-  const options = node.type.options as AttachmentImageOptions;
   const { src, alt, title, width = 500 } = node.attrs
 
   const sizes: Record<string, number> = {
@@ -63,7 +70,7 @@ const AttachmentImageComponent = (props: any) => {
             </button>
           ))}
         </div>
-        <img
+        <Image
           src={src}
           alt={alt}
           title={title}

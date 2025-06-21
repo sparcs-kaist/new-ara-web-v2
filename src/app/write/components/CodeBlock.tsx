@@ -1,4 +1,4 @@
-import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
+import { NodeViewContent, NodeViewWrapper, NodeViewRendererProps, ReactNodeViewRenderer } from '@tiptap/react';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { createLowlight } from 'lowlight';
 
@@ -16,6 +16,11 @@ import fsharp from 'highlight.js/lib/languages/fsharp';
 
 // lowlight 인스턴스 생성
 const lowlight = createLowlight();
+
+// ts컴파일러의 타입 추론을 위해 명시적으로 커스텀 props 타입 정의
+type ExtendedNodeViewRendererProps<T extends object = { language: string }> = NodeViewRendererProps & {
+  updateAttributes: (attrs: T) => void;
+};
 
 // 언어 등록
 lowlight.register('javascript', javascript);
@@ -42,7 +47,7 @@ const CODE_LANGUAGES = [
   'fsharp',
 ];
 
-const CustomComponent = (props: any) => {
+const CustomComponent = (props: ExtendedNodeViewRendererProps) => {
   const currentLang = props.node.attrs.language || 'javascript';
 
   return (
@@ -64,7 +69,7 @@ const CustomComponent = (props: any) => {
         ))}
       </select>
       <pre>
-        <NodeViewContent as="code" spellCheck={false} />
+        <NodeViewContent as="code" spellCheck={false}/>
       </pre>
     </NodeViewWrapper>
   );
