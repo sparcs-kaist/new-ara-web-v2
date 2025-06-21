@@ -15,15 +15,15 @@ export default function Write() {
     fileInputRef.current?.click();
   };
 
-  // 에디터 → Attachments (업로드) → 에디터 삽입
+  // 에디터 -> Attachments (업로드) -> 에디터 삽입
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editorRef.current) return;
 
-    // ① Attachments에만 추가
+    //Attachments에만 추가
     const uploads = attachmentsRef.current?.handleUpload([file]) || [];
 
-    // ② 그 결과로 에디터에 삽입
+    //그 결과로 에디터에 삽입
     uploads.forEach((u: UploadObject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -44,7 +44,7 @@ export default function Write() {
     e.target.value = '';
   };
 
-  // 삭제 시 에디터에서도 지우기 (기존대로)
+  // 삭제 시 에디터에서도 지우기
   const handleAttachmentDelete = (file: UploadObject) => {
     const editor = editorRef.current;
     if (!editor) return;
