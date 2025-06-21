@@ -1,7 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core'
-import { ReactNodeViewRenderer } from '@tiptap/react'
+import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react'
 import PostBookmark from './PostBookmark'
-import { ReactNodeViewProps } from '@tiptap/react'
 
 export interface LinkBookmarkOptions {
   HTMLAttributes: Record<string, unknown>
@@ -23,7 +22,7 @@ const LinkBookmark = Node.create<LinkBookmarkOptions>({
 
   inline: true,
   group: 'inline',
-  draggable: true,
+  draggable: false,
 
   addOptions() {
     return {
@@ -52,7 +51,7 @@ const LinkBookmark = Node.create<LinkBookmarkOptions>({
 
           return {
             href: node.getAttribute('href'),
-            title: node.innerText,
+            title: node.getAttribute('title') ?? node.innerText,
           }
         },
       },
@@ -74,24 +73,31 @@ const LinkBookmark = Node.create<LinkBookmarkOptions>({
       linkBookmark:
         (attrs) =>
         ({ chain }) => {
-          return chain().insertContent({
-            type: this.name,
-            attrs,
-          }).run()
+          return chain()
+            .insertContent({
+              type: this.name,
+              attrs,
+            })
+            .run()
         },
     }
   },
+
   addNodeView() {
-    // Adapter to map ReactNodeViewProps to PostBookmarkProps
     const PostBookmarkNodeView = (props: ReactNodeViewProps) => {
       const { node } = props
       const href = node.attrs.href
       const title = node.attrs.title
-      return <PostBookmark href={href} title={title} />
+
+      return (
+        <NodeViewWrapper as="div" className="block w-full">
+          <PostBookmark href={href} title={title} />
+        </NodeViewWrapper>
+      )
     }
+
     return ReactNodeViewRenderer(PostBookmarkNodeView)
   },
-
 })
 
 export default LinkBookmark

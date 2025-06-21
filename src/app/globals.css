@@ -67,8 +67,16 @@ body {
   filter: brightness(0.5);
 }
 
+/* .editor-content a 기본 스타일 (기존) */
 .editor-content a {
   color: #00b8d4;
+}
+
+/* 북마크(.bookmark-box) 에는 이 기본 룰을 적용하지 않기 */
+.editor-content .bookmark-box {
+  /* 에디터 전체 링크 룰보다 더 구체적이므로 무시됩니다 */
+  color: inherit !important;
+  text-decoration: none !important;
 }
 
 .prose pre {
