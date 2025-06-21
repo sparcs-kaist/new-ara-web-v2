@@ -2,7 +2,8 @@
 import { useRef } from 'react';
 import TextEditor from './components/TextEditor';
 import PostOptionBar from './components/PostOptionBar';
-import Attachments from './components/Attachments';
+import Attachments, { UploadObject } from './components/Attachments';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
 export default function Write() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -14,32 +15,52 @@ export default function Write() {
     fileInputRef.current?.click();
   };
 
-  // 실제 이미지 파일 선택 시 처리
+  // 에디터 → Attachments (업로드) → 에디터 삽입
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editorRef.current) return;
 
-    attachmentsRef.current?.handleUpload([file]);
+    // ① Attachments에만 추가
+    const uploads = attachmentsRef.current?.handleUpload([file]) || [];
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = reader.result;
-      if (typeof src === 'string') {
+    // ② 그 결과로 에디터에 삽입
+    uploads.forEach((u: UploadObject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const src = reader.result as string;
         editorRef.current
           .chain()
           .focus()
           .attachmentImage({
             src,
-            title: file.name,
-            'data-attachment': file.name,
+            title: u.name,
+            'data-attachment': u.key,
           })
           .run();
-      }
-    };
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(u.file!);
+    });
 
-    // input 초기화
     e.target.value = '';
+  };
+
+  // 삭제 시 에디터에서도 지우기 (기존대로)
+  const handleAttachmentDelete = (file: UploadObject) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const { state, view } = editor;
+    state.doc.descendants(
+      (node: ProseMirrorNode, pos: number) => {
+        if (
+          node.type.name === 'attachmentImage' &&
+          node.attrs['data-attachment'] === file.key
+        ) {
+          const tr = view.state.tr.delete(pos, pos + node.nodeSize);
+          view.dispatch(tr);
+        }
+      }
+    );
   };
 
   return (
@@ -71,6 +92,7 @@ export default function Write() {
 
         <Attachments
           ref={attachmentsRef}
+          onDelete={handleAttachmentDelete}
         />
       </div>
     </div>
