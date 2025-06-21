@@ -80,7 +80,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       <div
         className={`editor relative transition-shadow ${
           editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
-        } ${editor?.isFocused ? 'shadow-md' : ''}`}
+        } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
       >
         {/* Error display for read-only mode */}
         {!editable && imgError && (
