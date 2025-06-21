@@ -91,3 +91,24 @@ body {
   margin-bottom: 0.3em !important;
   line-height: 1.4 !important;
 }
+
+
+/* Color Parllette */
+/* -webkit-appearance 끄고 스와치에 둥근 테두리 적용 */
+input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  padding: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 9999px;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 9999px;
+}
