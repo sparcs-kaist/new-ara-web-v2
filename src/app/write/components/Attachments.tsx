@@ -41,6 +41,11 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
 
   const [files, setFiles] = useState<UploadObject[]>([]);
   const [dropzoneEnabled, setDropzoneEnabled] = useState(false);
+
+  //자식 요소위에서도 drag state를 관리하기 위해 counter 사용
+  //자식 요소까지 완전히 벗어났을 때 (counter = 0) 되었을 때만 dropzone 비활성화
+  const [dragCounter, setDragCounter] = useState(0);
+
   const [dropzoneFailedReason, setDropzoneFailedReason] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,14 +125,40 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
     if (onAdd) onAdd(success);
   };
 
+  //drag enter/leave 이벤트 헨들러
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) =>  {
+    e.preventDefault()
+    setDragCounter(c => c + 1)
+    if (e.dataTransfer.items.length > 0) {
+      setDropzoneEnabled(true)
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setDragCounter(c => {
+      const next = c - 1
+      if (next <= 0) {
+        setDropzoneEnabled(false)
+        return 0
+      }
+      return next
+    })
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  };
+
   // 드래그 & 드롭 업로드 처리
-  const handleDropUpload = (event: React.DragEvent<HTMLLabelElement>) => {
-    event.preventDefault();
-    setDropzoneEnabled(false);
+  const handleDropUpload = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    setDropzoneEnabled(false)
+    setDragCounter(0)
 
-    if (!event.dataTransfer) return;
+    if (!e.dataTransfer) return;
 
-    handleUpload(event.dataTransfer.files);
+    handleUpload(e.dataTransfer.files);
   };
 
   // 다이얼로그 업로드
@@ -168,11 +199,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
   }), [files]);
 
   return (
-    <div
-      className={`attachments ${
-        dropzoneFailedReason ? 'attachments--failed' : ''
-      } ${dropzoneEnabled ? 'attachments--enabled' : ''}`}
-    >
+    <div className={`attachments ${dropzoneEnabled ? 'attachments--enabled' : ''}`}>
       <div className="attachments__header flex items-center justify-between mb-5">
         <h3 className="attachments__title text-lg font-semibold">
           첨부파일
@@ -186,24 +213,18 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
         </button>
       </div>
 
-      <div className="attachments__content relative bg-[#fafafa] border border-gray-300 rounded p-5 flex flex-col">
+      <div
+        className="attachments__content relative bg-[#fafafa] border border-gray-300 rounded p-5 flex flex-col"
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         <label
-          className={
-            `attachments__dropzone dropzone absolute inset-0 z-10 cursor-pointer ` +
-            (dropzoneEnabled
-              ? 'pointer-events-auto'
-              : 'pointer-events-none')
-          }
-           onDragOver={e => {
-             e.preventDefault();
-             setDropzoneEnabled(true);
-           }}
-           onDragLeave={e => {
-             e.preventDefault();
-             setDropzoneEnabled(false);
-           }}
-           onDrop={handleDropUpload}
-         >
+          className={`attachments__dropzone absolute inset-0 z-10 cursor-pointer ${
+            dropzoneEnabled ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+          onDrop={handleDropUpload}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -228,7 +249,8 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
           {files.map(file => (
             <div
               key={file.key}
-              className="file flex flex-col pointer-events-none p-3 bg-white rounded"
+              className="file flex flex-col pointer-events-none p-3 bg-[#fafafa] rounded-xl
+              hover:bg-[#ececec] transition-colors duration-200"
             >
               {file.type === 'image' && (
                 <img
