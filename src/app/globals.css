@@ -1,3 +1,4 @@
+@import 'highlight.js/styles/github.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,17 +66,18 @@ body {
   color: #00b8d4;
 }
 
-/* Code Blocks Style */
+
+
+/* 또는 직접 스타일링 */
 .prose pre {
-  background: #111 !important;      /* 검정 바탕 */
+  background: #f8f8f8 !important;
   border-radius: 0.5rem;
   padding: 1rem;
   font-size: 0.95rem;
   overflow-x: auto;
 }
-
 .prose pre code {
-  color: #fff !important;           /* 흰 글씨 */
+  color: #111 !important;
   background: transparent !important;
   font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }

@@ -16,9 +16,6 @@ import LinkBookmark from './LinkBookmark';
 import AttachmentImage from './AttachmentImage';
 import { CustomCodeBlock } from './CodeBlock';
 import TextEditorLinkDialog from './TextEditorLinkDialog';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
 
 interface TextEditorProps {
   content?: string;
