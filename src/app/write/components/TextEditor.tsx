@@ -17,7 +17,7 @@ import AttachmentImage from './AttachmentImage';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 
-import { CustomBold } from './CustomBold'
+import Bold from '@tiptap/extension-bold'
 import Italic from '@tiptap/extension-italic'
 
 import { CustomCodeBlock } from './CodeBlock';
@@ -62,10 +62,10 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           placeholder: 'Write something …',
           showOnlyWhenEditable: true,
         }),
-        CustomBold,
         Italic,
         TextStyle,
         Color,
+        Bold,
       ],
       content,
     });

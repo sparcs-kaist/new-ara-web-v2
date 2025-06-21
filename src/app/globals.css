@@ -112,3 +112,7 @@ input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 9999px;
 }
+
+.prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  color: inherit !important;
+}
