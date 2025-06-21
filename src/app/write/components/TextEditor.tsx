@@ -33,7 +33,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm sm:prose m-5 focus:outline-none leading-normal",
+            "prose prose-sm sm:prose m-5 focus:outline-none max-w-full",
         },
       },
       extensions: [
@@ -244,7 +244,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
         editor={editor}
-        className="editor-content text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] max-w-none focus:outline-none"
+        className="editor-content w-full max-w-full text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] focus:outline-none"
         />
         <TextEditorLinkDialog
           ref={dialogRef}

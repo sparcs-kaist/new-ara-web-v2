@@ -34,6 +34,11 @@ body {
 }
 
 /* Style for Text Editor */
+/* prose 가 걸어주는 max-width 해제 */
+.prose {
+  max-width: none !important;
+}
+
 /* Code Style */
 .prose code {
   background-color: #f3f4f6; /* gray-100 */
@@ -66,9 +71,6 @@ body {
   color: #00b8d4;
 }
 
-
-
-/* 또는 직접 스타일링 */
 .prose pre {
   background: #f8f8f8 !important;
   border-radius: 0.5rem;
