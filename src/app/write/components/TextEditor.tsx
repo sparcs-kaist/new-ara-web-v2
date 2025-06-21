@@ -158,6 +158,30 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
             <button
+                className={`h-auto p-0 flex items-center justify-center ${
+                    editor?.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
+                }`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+                >
+                <span className="font-bold text-lg mr-1">H1</span>
+            </button>
+            <button
+                className={`h-auto p-0 flex items-center justify-center ${
+                    editor?.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
+                }`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                >
+                <span className="font-bold text-base mr-1">H2</span>
+            </button>
+            <button
+                className={`h-auto p-0 flex items-center justify-center ${
+                    editor?.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
+                }`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+                >
+                <span className="font-bold text-sm mr-1">H3</span>
+            </button>
+            <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bulletList') ? 'bg-gray-300' : ''
               }`}
@@ -217,8 +241,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         )}
 
         <EditorContent
-          editor={editor}
-          className="editor-content prose prose-sm dark:prose-invert p-4 min-h-[10rem] max-w-none focus:outline-none"
+        editor={editor}
+        className="editor-content text-sm leading-relaxed dark:prose-invert p-4 min-h-[10rem] max-w-none focus:outline-none"
         />
 
         <TextEditorLinkDialog
