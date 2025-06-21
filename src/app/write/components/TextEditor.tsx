@@ -23,6 +23,19 @@ interface TextEditorProps {
   onOpenImageUpload?: () => void;
 }
 
+const CODE_LANGUAGES = [
+  'javascript',
+  'typescript',
+  'react',
+  'python',
+  'java',
+  'c',
+  'cpp',
+  'rust',
+  'ocaml',
+  'fsharp',
+];
+
 const TextEditor = forwardRef<Editor | null, TextEditorProps>(
   ({ content = '', editable = false, onOpenImageUpload }, ref) => {
     const [imgError, setImgError] = useState(false);
@@ -33,7 +46,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         attributes: {
           class:
             "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none",
-          },
+        },
       },
       extensions: [
         LinkBookmark,
@@ -74,6 +87,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       dialogRef.current?.open(text);
     };
 
+    const codeBlockLang = editor?.getAttributes('codeBlock')?.language || '';
+
     return (
       <div
         className={`editor relative transition-shadow ${
@@ -92,7 +107,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         {/* Toolbar */}
         {editable && (
-          <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300">
+          <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bold') ? 'bg-gray-300' : ''
@@ -157,23 +172,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
-            {/* Uncomment if you want to enable heading levels
-            {[1, 2, 3].map((level) => (
-              <button
-                key={level}
-                className={`h-auto p-0 flex items-center justify-center ${
-                  editor?.isActive('heading', { level }) ? 'bg-gray-300' : ''
-                }`}
-                onClick={() =>
-                  editor?.chain().focus().toggleHeading({ level }).run()
-                }
-              >
-                <i className="material-icons text-xl text-gray-600">
-                  looks_{level}
-                </i>
-              </button>
-            ))}
-            */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bulletList') ? 'bg-gray-300' : ''
@@ -212,6 +210,23 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
+            {editor?.isActive('codeBlock') && (
+              <select
+                className="ml-2 px-2 py-1 text-sm border rounded"
+                value={codeBlockLang}
+                onChange={(e) =>
+                  editor.commands.updateAttributes('codeBlock', {
+                    language: e.target.value,
+                  })
+                }
+              >
+                {CODE_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               onClick={() => onOpenImageUpload?.()}
               className="h-auto p-0 flex items-center justify-center"
