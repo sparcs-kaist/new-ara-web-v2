@@ -230,7 +230,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               }`}
               onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
             >
-              <i className="material-icons text-xl text-gray-600">code</i>
+              <i className="material-icons text-xl text-gray-600">terminal</i>
             </button>
             <button
               onClick={() => onOpenImageUpload?.()}
