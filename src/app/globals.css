@@ -46,3 +46,20 @@ body {
   background-color: #23272e;
   color: #f472b6; /* pink-400 */
 }
+
+.editor-content p:first-child.is-empty::before {
+  content: attr(data-empty-text);
+  float: left;
+  color: #aaa;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+.editor-content img.ProseMirror-selectednode {
+  filter: brightness(0.5);
+}
+
+.editor-content a {
+  color: #00b8d4;
+}

@@ -16,6 +16,9 @@ import LinkBookmark from './LinkBookmark';
 import AttachmentImage from './AttachmentImage';
 import { CustomCodeBlock } from './CodeBlock';
 import TextEditorLinkDialog from './TextEditorLinkDialog';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
 
 interface TextEditorProps {
   content?: string;
@@ -29,6 +32,12 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
     const dialogRef = useRef<{ open: (defaultTitle?: string) => void }>(null);
 
     const editor = useEditor({
+      editorProps: {
+        attributes: {
+          class:
+            "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl m-5 focus:outline-none",
+          },
+      },
       extensions: [
         LinkBookmark,
         AttachmentImage.configure({
@@ -39,6 +48,9 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           heading: {
             levels: [1, 2, 3],
           },
+          bulletList: false,
+          orderedList: false,
+          listItem: false,
         }),
         Underline,
         CustomCodeBlock,
@@ -47,6 +59,9 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           placeholder: 'Write something …',
           showOnlyWhenEditable: true,
         }),
+        BulletList,
+        OrderedList,
+        ListItem,
       ],
       content,
     });
@@ -70,8 +85,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
     return (
       <div
-        className={`editor relative ${
-          editable ? 'border border-gray-300 rounded-lg hover:shadow-md' : ''
+        className={`editor relative transition-shadow ${
+          editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
         } ${editor?.isFocused ? 'shadow-md' : ''}`}
       >
         {/* Error display for read-only mode */}
@@ -229,7 +244,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
           editor={editor}
-          className="prose prose-sm dark:prose-invert p-4 min-h-[10rem] max-w-none"
+          className="editor-content prose prose-sm dark:prose-invert p-4 min-h-[10rem] max-w-none focus:outline-none"
         />
 
         <TextEditorLinkDialog
