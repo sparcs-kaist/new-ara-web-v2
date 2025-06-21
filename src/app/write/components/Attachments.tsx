@@ -174,31 +174,36 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
       } ${dropzoneEnabled ? 'attachments--enabled' : ''}`}
     >
       <div className="attachments__header flex items-center justify-between mb-5">
-        <h2 className="attachments__title text-xl font-semibold">
+        <h3 className="attachments__title text-lg font-semibold">
           첨부파일
-        </h2>
+        </h3>
         <button
           type="button"
-          className="attachments__upload button bg-red-500 text-white px-4 py-1 rounded"
+          className="attachments__upload button bg-gray-100 text-red-400 px-4 py-1 rounded-full font-medium"
           onClick={() => fileInputRef.current?.click()}
         >
-          가져오기
+          첨부하기
         </button>
       </div>
 
-      <div className="attachments__content relative bg-gray-100 border border-gray-300 rounded p-5 flex flex-col">
+      <div className="attachments__content relative bg-[#fafafa] border border-gray-300 rounded p-5 flex flex-col">
         <label
-          className="attachments__dropzone dropzone absolute inset-0 z-10 cursor-pointer"
-          onDragOver={e => {
-            e.preventDefault();
-            setDropzoneEnabled(true);
-          }}
-          onDragLeave={e => {
-            e.preventDefault();
-            setDropzoneEnabled(false);
-          }}
-          onDrop={handleDropUpload}
-        >
+          className={
+            `attachments__dropzone dropzone absolute inset-0 z-10 cursor-pointer ` +
+            (dropzoneEnabled
+              ? 'pointer-events-auto'
+              : 'pointer-events-none')
+          }
+           onDragOver={e => {
+             e.preventDefault();
+             setDropzoneEnabled(true);
+           }}
+           onDragLeave={e => {
+             e.preventDefault();
+             setDropzoneEnabled(false);
+           }}
+           onDrop={handleDropUpload}
+         >
           <input
             ref={fileInputRef}
             type="file"
@@ -209,35 +214,36 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
           />
         </label>
 
-        <span className="attachments__message pl-5 pb-7 text-gray-500 font-medium">
+        <span className="pb-7 text-gray-400 font-medium">
           {dropzoneFailedReason === 'dropzone-unallowed-extensions' ? (
             '허용되지 않은 확장자입니다.'
           ) : dropzoneEnabled ? (
             '여기에 드롭해주세요.'
           ) : (
-            '가져오기 버튼을 클릭하거나 복사한 이미지를 붙여넣거나, 파일을 드래그 앤 드롭하세요.'
+            '가져오기 버튼을 클릭하거나 복사한 이미지를 본문에서 붙여넣기, 또는 파일을 드래그 앤 드롭해 주세요'
           )}
         </span>
 
-        <div className="attachments__filelist space-y-3">
+        <div className="space-y-3">
           {files.map(file => (
             <div
               key={file.key}
-              className="attachments__file file flex flex-col pointer-events-none p-3 bg-white rounded"
+              className="file flex flex-col pointer-events-none p-3 bg-white rounded"
             >
               {file.type === 'image' && (
                 <img
                   src={file.blobUrl ?? undefined}
                   alt={file.name}
-                  className="file__thumbnail max-w-xs max-h-24 object-cover mb-2"
+                  className="max-w-xs max-h-24 object-cover mb-2"
                 />
               )}
 
-              <div className="file__details flex justify-between items-center pointer-events-auto">
+              <div className="flex justify-between items-center pointer-events-auto">
                 <span>{file.name}</span>
                 <button
                   type="button"
-                  className="file__delete bg-transparent border-none rounded p-1 hover:bg-gray-300"
+                  className="bg-transparent border border-[#ed3a3a] font-normal text-[#ed3a3a] rounded-full px-3 py-0.5
+                  hover:bg-[#ed3a3a] hover:text-white transition-colors duration-200"
                   onClick={() => deleteFile(file)}
                 >
                   삭제
