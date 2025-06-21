@@ -33,7 +33,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm sm:prose m-5 focus:outline-none",
+            "prose prose-sm sm:prose m-5 focus:outline-none leading-normal",
         },
       },
       extensions: [
@@ -41,6 +41,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         AttachmentImage.configure({
           errorCallback: () => setImgError(true),
         }),
+
         StarterKit.configure({
           codeBlock: false,
           heading: {

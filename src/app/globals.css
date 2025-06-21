@@ -81,3 +81,11 @@ body {
   background: transparent !important;
   font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }
+
+/* 줄간격 옵션 설정 */
+/* Enter = <p>, Shift + Enter = <br> */
+.prose p {
+  margin-top: 0.3em !important;
+  margin-bottom: 0.3em !important;
+  line-height: 1.4 !important;
+}

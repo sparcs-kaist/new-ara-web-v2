@@ -64,7 +64,7 @@ const CustomComponent = (props: any) => {
         ))}
       </select>
       <pre>
-        <NodeViewContent as="code" />
+        <NodeViewContent as="code" spellCheck={false} />
       </pre>
     </NodeViewWrapper>
   );
