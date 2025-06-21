@@ -264,7 +264,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
                 <span>{file.name}</span>
                 <button
                   type="button"
-                  className="bg-transparent border border-[#ed3a3a] font-normal text-[#ed3a3a] rounded-full px-3 py-0.5
+                  className="bg-transparent font-normal text-[#ed3a3a] rounded-full px-3 py-0.5
                   hover:bg-[#ed3a3a] hover:text-white transition-colors duration-200"
                   onClick={() => deleteFile(file)}
                 >
