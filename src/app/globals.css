@@ -31,3 +31,18 @@ html,
 body {
   min-height: 100%;
 }
+
+/* Style for Text Editor */
+.prose code {
+  background-color: #f3f4f6; /* gray-100 */
+  color: #ec4899;            /* pink-500 */
+  border-radius: 0.25rem;
+  padding: 0.15em 0.4em;
+  font-size: 0.95em;
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+}
+
+.dark .prose code {
+  background-color: #23272e;
+  color: #f472b6; /* pink-400 */
+}

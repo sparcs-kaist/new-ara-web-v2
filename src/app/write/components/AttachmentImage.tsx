@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react'
 import { NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer } from '@tiptap/react'
 import { Node, mergeAttributes } from '@tiptap/core'
@@ -26,6 +28,7 @@ declare module '@tiptap/core' {
 
 const AttachmentImageComponent = (props: any) => {
   const { node, updateAttributes } = props
+  const options = node.type.options as AttachmentImageOptions;
   const { src, alt, title, width = 500 } = node.attrs
 
   const sizes: Record<string, number> = {
@@ -65,8 +68,10 @@ const AttachmentImageComponent = (props: any) => {
           alt={alt}
           title={title}
           width={width}
+          height={width}
           onError={imageLoadError}
           className="rounded max-w-full"
+          style={{ height: 'auto' }}
         />
       </div>
     </NodeViewWrapper>

@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { urlParser } from '@/lib/utils/urlParser'
 
 type PostBookmarkProps = {
@@ -10,7 +9,6 @@ type PostBookmarkProps = {
 }
 
 const PostBookmark: React.FC<PostBookmarkProps> = ({ href, title }) => {
-  const { t } = useTranslation()
 
   const getTitle = () => {
     const rawTitle = title
