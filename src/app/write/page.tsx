@@ -19,39 +19,27 @@ export default function Write() {
     const file = e.target.files?.[0];
     if (!file || !editorRef.current) return;
 
+    attachmentsRef.current?.handleUpload([file]);
+
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result;
       if (typeof src === 'string') {
-        editorRef.current.chain().focus().attachmentImage({
-          src,
-          title: file.name,
-          'data-attachment': 'true',
-        }).run();
+        editorRef.current
+          .chain()
+          .focus()
+          .attachmentImage({
+            src,
+            title: file.name,
+            'data-attachment': file.name,
+          })
+          .run();
       }
     };
     reader.readAsDataURL(file);
-  };
 
-  // Attachments 컴포넌트에 파일 직접 추가 (예: 드래그앤드롭 등)
-  const handleAttachFiles = (files: File[]) => {
-    attachmentsRef.current?.handleUpload(files);
-  };
-
-  // Attachments에서 새 파일 추가 시 에디터에도 이미지 추가
-  const handleAddAttachments = (attachments: any[]) => {
-    attachments.forEach(file => {
-      if (file.type === 'image') {
-        editorRef.current?.addImageByFile?.(file);
-      }
-    });
-  };
-
-  // Attachments에서 파일 삭제 시 에디터에서도 이미지 삭제
-  const handleDeleteAttachment = (file: any) => {
-    if (file.type === 'image') {
-      editorRef.current?.removeImageByFile?.(file);
-    }
+    // input 초기화
+    e.target.value = '';
   };
 
   return (
@@ -83,8 +71,6 @@ export default function Write() {
 
         <Attachments
           ref={attachmentsRef}
-          onAdd={handleAddAttachments}
-          onDelete={handleDeleteAttachment}
         />
       </div>
     </div>
