@@ -1,10 +1,9 @@
 //PostOptionBar.tsx
 'use client';
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Image from 'next/image'
 import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
-import DropdownArrowUp from '@/assets/Icon/dropdown-arrow-up.svg';
 
 const boardOptions = [
   {

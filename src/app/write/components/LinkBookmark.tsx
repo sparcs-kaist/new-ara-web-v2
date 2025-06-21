@@ -4,7 +4,7 @@ import PostBookmark from './PostBookmark'
 import { ReactNodeViewProps } from '@tiptap/react'
 
 export interface LinkBookmarkOptions {
-  HTMLAttributes: Record<string, any>
+  HTMLAttributes: Record<string, unknown>
 }
 
 declare module '@tiptap/core' {

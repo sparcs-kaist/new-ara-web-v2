@@ -151,6 +151,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
+            {/* Uncomment if you want to enable heading levels
             {[1, 2, 3].map((level) => (
               <button
                 key={level}
@@ -166,6 +167,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
                 </i>
               </button>
             ))}
+            */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bulletList') ? 'bg-gray-300' : ''

@@ -19,7 +19,8 @@ export const CustomCodeBlock = CodeBlock.extend({
     };
   },
 
-  renderHTML({ node, HTMLAttributes }) {
+  // node를 사용하지 않을 때 구조분해 할당에서 _로 이름만 바꿔주면 됩니다.
+  renderHTML({ node: _, HTMLAttributes }) {
     return [
       'pre',
       {

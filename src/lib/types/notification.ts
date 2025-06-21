@@ -1,4 +1,6 @@
-/* eslint-disable camelcase */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-wrapper-object-types */
+
 type RelatedArticle = {
   comment_count: number,
   commented_at: string,
