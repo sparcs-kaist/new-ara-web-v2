@@ -126,37 +126,25 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
     const response = await uploadAttachments(success.map(u=> u.file!));
     const result = Array.isArray(response) ? response : [response];
 
-    // 서버에서 받은 id-url로 state 갱신
-    setFiles(prev =>
-      prev.map(f => {
-        const idx = success.findIndex(u => u.key === f.key);
-        if (idx > -1) {
-          const {id, file: url} = result[idx].data;
-          return {
-            ...f,
-            key: String(id),
-            url,
-            blobUrl: url,
-            uploaded: true,
-          };
-        }
-        return f;
-      })
-    );
-
-    //onAdd callback - id-url로 바뀐 객체 전달
-    const updated = success.map((u, i) => {
-      const {id, file: url} = result[i].data
+    // 서버에서 받은 id·url을 포함한 최종 배열 생성
+    const updated: UploadObject[] = success.map((u, i) => {
+      const { id, file: url } = result[i].data;
       return {
         key: String(id),
-        name : u.name,
+        name: u.name,
         type: u.type,
         uploaded: true,
+        file: u.file,
         url,
         blobUrl: url,
-      }
-    })
-    if (onAdd) onAdd(updated);
+      };
+    });
+
+    // 최종 배열을 한 번에 state 에 추가
+    setFiles(prev => [...prev, ...updated]);
+
+    // onAdd 콜백
+    onAdd?.(updated);
     return updated;
   };
 
