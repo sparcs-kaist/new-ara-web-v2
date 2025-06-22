@@ -64,7 +64,9 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         }),
         Italic,
         TextStyle,
-        Color,
+        Color.configure({
+          types: ['textStyle'],
+        }),
         Bold,
       ],
       content,
