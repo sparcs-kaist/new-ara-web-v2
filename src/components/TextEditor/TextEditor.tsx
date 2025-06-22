@@ -15,8 +15,8 @@ import Underline from '@tiptap/extension-underline';
 import LinkBookmark from '@/components/TextEditor/LinkBookmark';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
-import Bold from '@tiptap/extension-bold'
-import Italic from '@tiptap/extension-italic'
+import Bold from '@tiptap/extension-bold';
+import Italic from '@tiptap/extension-italic';
 
 import AttachmentImage from './AttachmentImage';
 import { CustomCodeBlock } from '@/components/TextEditor/CodeBlock';
@@ -34,10 +34,11 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
     const dialogRef = useRef<{ open: (defaultTitle?: string) => void }>(null);
 
     const editor = useEditor({
+      editable,
       editorProps: {
         attributes: {
           class:
-            "prose prose-sm sm:prose m-5 focus:outline-none max-w-full",
+            'prose prose-sm sm:prose m-5 focus:outline-none max-w-full',
         },
       },
       extensions: [
@@ -47,7 +48,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         }),
 
         StarterKit.configure({
-          bold : false,
+          bold: false,
           italic: false,
           codeBlock: false,
           heading: {
@@ -69,15 +70,15 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       content,
     });
 
-    // Expose editor to parent
-    useImperativeHandle(ref, () => editor as Editor, [editor]);
-
-    // Only update content when not editable (view mode)
+    // view 모드일 땐 content만 갱신
     useEffect(() => {
       if (editor && !editable) {
         editor.commands.setContent(content);
       }
     }, [content, editable, editor]);
+
+    // Expose editor to parent
+    useImperativeHandle(ref, () => editor as Editor, [editor]);
 
     const showLinkDialog = () => {
       if (!editor) return;
@@ -92,7 +93,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
         } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
       >
-        {/* Error display for read-only mode */}
+        {/** view 모드에서 이미지 로드 에러만 보여줌 */}
         {!editable && imgError && (
           <blockquote className="p-4 italic border-l-4 text-gray-600">
             <strong>
@@ -102,7 +103,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           </blockquote>
         )}
 
-        {/* Toolbar */}
+        {/** 툴바는 editable일 때만 렌더 */}
         {editable && (
           <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
             <button
@@ -266,9 +267,11 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         )}
 
         <EditorContent
-        editor={editor}
-        className="editor-content w-full max-w-full text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] focus:outline-none"
+          editor={editor}
+          className="editor-content w-full max-w-full text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] focus:outline-none"
         />
+
+        {/** 링크 대화상자 */}
         <TextEditorLinkDialog
           ref={dialogRef}
           onSubmit={(url, title, isBookmark) => {
@@ -282,7 +285,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         />
       </div>
     );
-  },
+  }
 );
 
 TextEditor.displayName = 'TextEditor';
