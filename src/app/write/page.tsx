@@ -11,13 +11,33 @@ import { createPost } from '@/lib/api/post';
 export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME';
 
 export default function Write() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const editorRef = useRef<Editor|null>(null)
-  const attachmentsRef = useRef<AttachmentsHandles|null>(null)
-  const [title, setTitle] = useState<string>('')
-  const [saving, setSaving] = useState(false)
-  const [isSocial, setIsSocial] = useState(false)
-  const [isSexual, setIsSexual] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<Editor|null>(null);
+  const attachmentsRef = useRef<AttachmentsHandles|null>(null);
+
+  // 1) boardId state & 이름→ID 맵
+  const [boardId, setBoardId] = useState<number>(2);
+  const boardIdMap: Record<string, number> = {
+    '포탈공지': 1,
+    '학생단체': 2,
+    '구인구직': 3,
+    '장터': 4,
+    '입주업체 피드백': 5,
+    '자유게시판': 7,
+    '운영진 공지': 8,
+    '아라 피드백': 10,
+    '입주 업체 공지': 11,
+    '동아리': 12,
+    '부동산': 13,
+    '학교에게 전합니다': 14,
+    '카이스트 뉴스': 17,
+    '외부 업체 홍보': 18,
+  };
+
+  const [title, setTitle] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [isSocial, setIsSocial] = useState(false);
+  const [isSexual, setIsSexual] = useState(false);
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -67,30 +87,32 @@ export default function Write() {
   };
 
   const handleSave = async () => {
-    if (!editorRef.current) return
-    setSaving(true)
-    const content = editorRef.current.getHTML()
-    const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? []
+    if (!editorRef.current) return;
+    setSaving(true);
+
+    const content = editorRef.current.getHTML();
+    const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? [];
     const newArticle = {
       title,
       content,
       attachments: attachmentIds,
+      parent_board: boardId,    // ← 동적 boardId 적용
       parent_topic: '',
       is_content_sexual: isSexual,
       is_content_social: isSocial,
       name_type: 'REGULAR',
-    }
+    };
 
     try {
-      const result = await createPost({ boardId: 7, newArticle })
-      alert(`글이 저장되었습니다 (ID: ${result.id})`)
+      const result = await createPost({ boardId, newArticle });
+      alert(`글이 저장되었습니다 (ID: ${result.id})`);
     } catch (err) {
-      console.error(err)
-      alert('글 저장에 실패했습니다.')
+      console.error(err);
+      alert('글 저장에 실패했습니다.');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
@@ -99,20 +121,20 @@ export default function Write() {
         <hr className="border-t border-gray-300 mb-6" />
         <PostOptionBar
           onChangeBoard={(board) => {
-            // board → boardId 매핑 로직
-            console.log('board:', board)
+            const id = boardIdMap[board];
+            if (id !== undefined) setBoardId(id);
           }}
           onChangeCategory={(category) => {
-            console.log('category:', category)
+            console.log('category:', category);
           }}
           onChangeAnonymous={(anon) => {
-            // name_type = anon ? 'ANONYMOUS' : 'REGULAR'
+            const name_type = anon ? 'ANONYMOUS' : 'REGULAR'
           }}
           onChangeSocial={(flag) => {
-            setIsSocial(flag)   // 여기가 is_content_social
+            setIsSocial(flag);
           }}
           onChangeSexual={(flag) => {
-            setIsSexual(flag)   // 여기가 is_content_sexual
+            setIsSexual(flag);
           }}
         />
 
