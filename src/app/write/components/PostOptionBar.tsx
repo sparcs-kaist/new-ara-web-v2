@@ -5,106 +5,68 @@ import React, { useState } from "react";
 import Image from 'next/image'
 import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
 
-const boardOptions = [
-  {
-    name: "학생단체",
-    categories: ["말머리 없음", "총학", "학복위", "생자회", "새학", "협동조합"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "구인구직",
-    categories: ["말머리 없음", "카풀", "기숙사", "실험", "채용", "인턴", "과외"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "장터",
-    categories: ["말머리 없음", "팝니다", "삽니다"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "입주업체 피드백",
-    categories: ["말머리 없음", "이벤트"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "자유게시판",
-    categories: ["말머리 없음", "돈", "게임", "연애", "분실물"],
-    allowAnonymous: true,
-    realname: false,
-  },
-  {
-    name: "입주 업체 공지",
-    categories: ["말머리 없음"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "동아리",
-    categories: ["말머리 없음"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "부동산",
-    categories: ["말머리 없음"],
-    allowAnonymous: false,
-    realname: false,
-  },
-  {
-    name: "학교에게 전합니다",
-    categories: ["말머리 없음"],
-    allowAnonymous: false,
-    realname: true,
-  },
-  {
-    name: "아라 피드백",
-    categories: ["말머리 없음"],
-    allowAnonymous: false,
-    realname: false,
-  },
-];
+interface ApiBoard {
+  id: number
+  ko_name: string
+  topics: Array<{ id: number; ko_name: string }>
+  allowAnonymous?: boolean    // 필요시 API 필드로 매핑
+  realname?: boolean          // 필요시 API 필드로 매핑
+}
 
 interface PostOptionBarProps {
-  onChangeBoard: (board: string) => void;
-  onChangeCategory: (category: string) => void;
-  onChangeAnonymous: (anonymous: boolean) => void;
-  onChangeSocial: (isSocial: boolean) => void;    // ← 추가
-  onChangeSexual: (isSexual: boolean) => void;    // ← 추가
+  boards: ApiBoard[]
+  defaultBoardId?: number       // ← 추가
+  defaultCategoryId?: string    // ← 추가 (string '' 또는 숫자문자열)
+  onChangeBoard: (boardId: number) => void
+  onChangeCategory: (category: string) => void
+  onChangeAnonymous: (anonymous: boolean) => void
+  onChangeSocial: (isSocial: boolean) => void
+  onChangeSexual: (isSexual: boolean) => void
 }
 
 const PostOptionBar: React.FC<PostOptionBarProps> = ({
+  boards,
+  defaultBoardId,
+  defaultCategoryId,
   onChangeBoard,
   onChangeCategory,
   onChangeAnonymous,
   onChangeSocial,
   onChangeSexual,
  }) => {
-   const [selectedBoard, setSelectedBoard] = useState(boardOptions[0].name);
-   const [selectedCategory, setSelectedCategory] = useState(boardOptions[0].categories[0]);
+  // boards[0]가 로드되기 전까지 빈 상태 방지
+  const [selectedBoardId, setSelectedBoardId] = useState<number | null>(
+    // 부모에서 넘겨준 defaultBoardId 우선, 없으면 기존 로직
+    defaultBoardId ?? boards[0]?.id ?? null
+  );
+  const currentBoard = boards.find(b => b.id === selectedBoardId) ?? null;
+  // 말머리 선택: null 이면 “말머리 없음”
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    // defaultCategoryId가 '' 이면 null, 숫자문자열이면 그 숫자로
+    defaultCategoryId === '' || defaultCategoryId == null
+      ? null
+      : Number(defaultCategoryId)
+  );
+
+   // boolean toggles
    const [political, setPolitical] = useState(false);
    const [adult, setAdult] = useState(false);
    const [anonymous, setAnonymous] = useState(false);
 
-   const currentBoard = boardOptions.find((b) => b.name === selectedBoard)!;
-
    const handleBoardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-     const boardName = e.target.value;
-     const board = boardOptions.find((b) => b.name === boardName)!;
-     setSelectedBoard(boardName);
-     setSelectedCategory(board.categories[0]);
+     const id = Number(e.target.value);
+     setSelectedBoardId(id);
+     // 보드 변경 시 항상 “말머리 없음” (빈 값)으로 초기화
+     setSelectedCategoryId(null);
      setAnonymous(false);
-     onChangeBoard(boardName);
-     onChangeCategory(board.categories[0]);
-     onChangeAnonymous(false);
+     onChangeBoard(id);
+     onChangeCategory('');
    };
 
    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-     setSelectedCategory(e.target.value);
-     onChangeCategory(e.target.value);
+     const id = Number(e.target.value);
+     setSelectedCategoryId(id);
+     onChangeCategory(id ? String(id) : '');
      onChangeAnonymous(anonymous);
    };
 
@@ -135,23 +97,15 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
      <div className="flex items-center gap-4 mb-6">
        <div className="relative">
          <select
-           className="appearance-none border border-gray-300 rounded px-3 py-2 text-black pr-8"
-           value={selectedBoard}
-           onChange={e => {
-             handleBoardChange(e);
-             setIsBoardOpen(false);
-           }}
+           className="appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black"
+           value={selectedBoardId ?? ''}
+           onChange={handleBoardChange}
            onFocus={handleBoardFocus}
            onBlur={handleBoardBlur}
          >
-           {boardOptions.map((board, idx) => (
-             <option
-               key={board.name}
-               value={board.name}
-               className={idx === 0 ? "text-gray-400" : "text-black"}
-               style={idx === 0 ? { color: "#9ca3af" } : { color: "#000" }}
-             >
-               {board.name}
+           {boards.map(b => (
+             <option key={b.id} value={b.id}>
+               {b.ko_name}
              </option>
            ))}
          </select>
@@ -167,27 +121,26 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
          </span>
        </div>
 
+       { /* topic dropdown */ }
        <div className="relative">
          <select
-           className="appearance-none border border-gray-300 rounded px-3 py-2 text-black pr-8"
-           value={selectedCategory}
-           onChange={e => {
-             handleCategoryChange(e);
-             setIsCategoryOpen(false);
-           }}
+           className={`appearance-none px-4 py-2 pr-8 border rounded ${
+             selectedCategoryId === null
+               ? 'text-gray-500'
+               : 'text-black'
+           }`}
+           value={selectedCategoryId ?? ''}
+           onChange={handleCategoryChange}
            onFocus={handleCategoryFocus}
            onBlur={handleCategoryBlur}
          >
-           {currentBoard.categories.map((cat, idx) => (
-             <option
-               key={cat}
-               value={cat}
-               className={idx === 0 ? "text-gray-400" : "text-black"}
-               style={idx === 0 ? { color: "#9ca3af" } : { color: "#000" }}
-             >
-               {cat}
-             </option>
-           ))}
+         {/* 항상 첫 번째에 “말머리 없음” */}
+         <option value="">말머리 없음</option>
+         {currentBoard?.topics.map(t => (
+           <option key={t.id} value={t.id}>
+             {t.ko_name}
+           </option>
+         ))}
          </select>
          <span
            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200"
@@ -201,7 +154,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
          </span>
        </div>
 
-       {currentBoard.allowAnonymous && !currentBoard.realname && (
+       {currentBoard && currentBoard.allowAnonymous && !currentBoard.realname && (
          <label className="flex items-center gap-1 text-sm">
            <input
              type="checkbox"
@@ -233,7 +186,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
          성인글
        </label>
 
-       {currentBoard.realname && (
+       {currentBoard && currentBoard.realname && (
          <span className="text-xs text-red-500 font-semibold">
            실명제 게시판입니다
          </span>
