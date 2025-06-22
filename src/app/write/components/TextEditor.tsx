@@ -106,7 +106,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         {/* Toolbar */}
         {editable && (
           <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
-            {/* Bold */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('bold') ? 'bg-gray-300' : ''
@@ -115,7 +114,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">format_bold</i>
             </button>
-            {/* Italic */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('italic') ? 'bg-gray-300' : ''
@@ -124,7 +122,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">format_italic</i>
             </button>
-            {/* Strikethrough */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('strike') ? 'bg-gray-300' : ''
@@ -133,7 +130,6 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">format_strikethrough</i>
             </button>
-            {/* Underline */}
             <button
               className={`h-auto p-0 flex items-center justify-center ${
                 editor?.isActive('underline') ? 'bg-gray-300' : ''
@@ -143,7 +139,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               <i className="material-icons text-xl text-gray-600">format_underline</i>
             </button>
 
-            {/* ───── Color Picker & Reset (moved here) ───── */}
+            {/* ───── Color Picker & Reset  ───── */}
             <input
               type="color"
               value={editor?.getAttributes('textStyle').color ?? '#000000'}

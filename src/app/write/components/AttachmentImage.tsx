@@ -20,9 +20,6 @@ export interface AttachmentImageOptions {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     attachmentImage: {
-      /**
-       * Insert an attachment image.
-       */
       attachmentImage: (attrs: {
         src: string
         title?: string
