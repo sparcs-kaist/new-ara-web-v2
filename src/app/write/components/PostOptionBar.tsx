@@ -8,9 +8,8 @@ import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
 interface ApiBoard {
   id: number
   ko_name: string
+  name_type: number           // 1=Regular, 3=Regular+Anonymous, 4=Realname only
   topics: Array<{ id: number; ko_name: string }>
-  allowAnonymous?: boolean    // 필요시 API 필드로 매핑
-  realname?: boolean          // 필요시 API 필드로 매핑
 }
 
 interface PostOptionBarProps {
@@ -51,6 +50,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
    // boolean toggles
    const [political, setPolitical] = useState(false);
    const [adult, setAdult] = useState(false);
+   // 익명 여부: board.name_type===3에서만 토글 가능
    const [anonymous, setAnonymous] = useState(false);
 
    const handleBoardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -58,7 +58,16 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
      setSelectedBoardId(id);
      // 보드 변경 시 항상 “말머리 없음” (빈 값)으로 초기화
      setSelectedCategoryId(null);
-     setAnonymous(false);
+     // board.name_type에 따라 익명 기본값 및 부모 콜백
+     const board = boards.find(b => b.id === id)!
+     if (board.name_type === 3) {
+       setAnonymous(false)
+       onChangeAnonymous(false)
+     } else {
+       // 1 또는 4: 익명 불가
+       setAnonymous(false)
+       onChangeAnonymous(false)
+     }
      onChangeBoard(id);
      onChangeCategory('');
    };
@@ -154,7 +163,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
          </span>
        </div>
 
-       {currentBoard && currentBoard.allowAnonymous && !currentBoard.realname && (
+       {currentBoard && currentBoard.name_type === 3 && (
          <label className="flex items-center gap-1 text-sm">
            <input
              type="checkbox"
@@ -186,7 +195,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
          성인글
        </label>
 
-       {currentBoard && currentBoard.realname && (
+       {currentBoard && currentBoard.name_type === 4 && (
          <span className="text-xs text-red-500 font-semibold">
            실명제 게시판입니다
          </span>
