@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { AttachmentsHandles } from './components/Attachments'
-import TextEditor from './components/TextEditor'
+import TextEditor from '../../components/TextEditor/TextEditor'
 import PostOptionBar from './components/PostOptionBar'
 import Attachments, { UploadObject } from './components/Attachments'
 import type { Node as ProseMirrorNode } from 'prosemirror-model'
@@ -20,6 +20,7 @@ export default function Write() {
   type ApiBoard = {
     id: number
     ko_name: string
+    name_type: number           // 1=Regular, 3=Regular+Anonymous, 4=Realname only
     user_writable: boolean
     topics: Array<{ id: number; ko_name: string }>
   }
@@ -123,13 +124,20 @@ export default function Write() {
         <hr className="border-t border-gray-300 mb-6" />
         <PostOptionBar
           boards={boards}
-          defaultBoardId={boardId}           // 부모의 state(boardId) 넘겨주기
-          defaultCategoryId={topicId}        // topicId에도 똑같이
+          defaultBoardId={boardId}
+          defaultCategoryId={topicId}
           onChangeBoard={(id) => {
-            setBoardId(Number(id))
+            const bid = Number(id)
+            setBoardId(bid)
             setTopicId('')
+            // 실명제 게시판(name_type===4)일 땐 REALNAME, 아니면 REGULAR
+            const board = boards.find(b => b.id === bid)
+            if (board?.name_type === 4) {
+              setNameType('REALNAME')
+            } else {
+              setNameType('REGULAR')
+            }
           }}
-          // categoryId는 string으로 관리하므로, number → string 변환
           onChangeCategory={(id) => {
             setTopicId(id ? String(id) : '')
           }}
@@ -177,13 +185,14 @@ export default function Write() {
             type="button"
             onClick={handleSavePost}
             className="
-              px-4 py-2 bg-blue-500 text-white rounded
-              hover:bg-blue-600 transition
+              px-4 py-2 bg-white text-[#ed3a3a] rounded-lg border border-spacing-2 border-gray-200
+              hover:border-[#ed3a3a] hover:bg-[#ed3a3a] hover:text-white
+              transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
             "
             disabled={saving}
           >
-            {saving ? '저장 중…' : '저장'}
+            {saving ? '게시글 등록중...' : '게시글 등록하기'}
           </button>
         </div>
       </div>
