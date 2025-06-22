@@ -40,6 +40,18 @@ export default function Write() {
   const [isSexual, setIsSexual] = useState(false);
   const [nameType, setNameType] = useState<NameType>('REGULAR');
 
+  // Topic ID 상태 (말머리)
+  const [topicId, setTopicId] = useState<string>('');
+
+  // 보드별 말머리 이름→ID 매핑
+  const topicMap: Record<number, Record<string, number>> = {
+    2: { 총학: 1, 동연: 2, 생자회: 3, 학복위: 4, 새학: 5, 공간위: 6, 협동조합: 7, 원총: 24 },
+    3: { 과외: 14, 인턴: 15, 채용: 16, 실험: 17, 기숙사: 18 },
+    4: { 부동산: 20, 삽니다: 21, 팝니다: 22 },
+    5: { 이벤트: 23 },
+    7: { 분실물: 10, 연애: 11, 게임: 12, 돈: 13 },
+  };
+
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
     fileInputRef.current?.click();
@@ -97,8 +109,8 @@ export default function Write() {
       title,
       content,
       attachments: attachmentIds,
-      parent_board: boardId,    // ← 동적 boardId 적용
-      parent_topic: '',
+      parent_board: boardId,
+      parent_topic: topicId,   // 말머리 ID 반영
       is_content_sexual: isSexual,
       is_content_social: isSocial,
       name_type: nameType,
@@ -122,15 +134,25 @@ export default function Write() {
         <hr className="border-t border-gray-300 mb-6" />
         <PostOptionBar
           onChangeBoard={(board) => {
-            const id = boardIdMap[board];
-            if (id !== undefined) setBoardId(id);
+            const id = boardIdMap[board.trim()];
+            if (id !== undefined) {
+              setBoardId(id);
+              setTopicId('');  // 보드 변경 시 말머리 초기화
+            }
           }}
           onChangeCategory={(category) => {
-            console.log('category:', category);
+            const name = category.trim();
+            // 말머리 없음 선택 시 빈 문자열
+            if (name === '말머리 없음' || name === '') {
+              setTopicId('');
+            } else {
+              const id = topicMap[boardId]?.[name];
+              setTopicId(id ? String(id) : '');
+            }
           }}
-          onChangeAnonymous={(anon) => {
-            setNameType(anon ? 'ANONYMOUS' : 'REGULAR')
-          }}
+           onChangeAnonymous={(anon) => {
+             setNameType(anon ? 'ANONYMOUS' : 'REGULAR')
+           }}
           onChangeSocial={(flag) => {
             setIsSocial(flag);
           }}
