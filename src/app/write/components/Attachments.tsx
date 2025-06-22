@@ -279,10 +279,10 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
               className="file flex flex-col pointer-events-none p-3 bg-[#fafafa] rounded-xl
               hover:bg-[#ececec] transition-colors duration-200"
             >
-              {file.type === 'image' && file.blobUrl &&(
+              {file.type === 'image' && file.blobUrl && (
                 <Image
-                  src={file.blobUrl}
-                  alt={file.name}
+                  src={file.url ?? file.blobUrl}
+                  alt={file.name || ''}
                   width={200}
                   height={200}
                   className="max-w-xs max-h-24 object-cover mb-2"
