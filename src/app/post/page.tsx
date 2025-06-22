@@ -69,7 +69,7 @@ export default function PostDetailPage() {
                 processedContent = JSON.parse(cleanedContent);
                 console.log('Content loaded as JSON after HTML decoding');
               } catch (secondErr) {
-                console.log('All JSON parse attempts failed, treating as HTML:', secondErr);
+                console.log('All JSON parse attempts failed, treating as HTML:', firstErr, secondErr);
                 processedContent = data.content; // 원본 HTML 유지
               }
             }
