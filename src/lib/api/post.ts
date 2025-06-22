@@ -6,13 +6,26 @@ type VoteAction = 'vote_cancel' | 'vote_negative' | 'vote_positive';
 export const fetchPost = async ({
   postId,
   context,
+  fromView,
+  current,
+  overrideHidden,
 }: {
   postId: number;
   context?: VoteAction;
+  fromView?: string;
+  current?: number;
+  overrideHidden?: boolean;
 }) => {
-  const url = context
+  const baseUrl = context
     ? `articles/${postId}/${context}/`
     : `articles/${postId}/`;
+  
+  const params = new URLSearchParams();
+  if (fromView) params.append('from_view', fromView);
+  if (current !== undefined) params.append('current', current.toString());
+  if (overrideHidden !== undefined) params.append('override_hidden', overrideHidden.toString());
+  
+  const url = params.toString() ? `${baseUrl}?${params}` : baseUrl;
   const { data } = await http.get(url);
   return data;
 };

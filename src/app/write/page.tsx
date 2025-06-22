@@ -93,7 +93,9 @@ export default function Write() {
     if (!editorRef.current) return;
     setSaving(true);
 
-    const content = editorRef.current.getHTML();
+    // HTML 대신 JSON으로 저장 (모든 속성 보존)
+    const content = JSON.stringify(editorRef.current.getJSON());
+    
     const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? [];
     const newArticle = {
       title,
