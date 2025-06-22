@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import type { AttachmentsHandles } from './components/Attachments'
-import TextEditor from './components/TextEditor'
+import TextEditor from '../../components/TextEditor/TextEditor'
 import PostOptionBar from './components/PostOptionBar'
 import Attachments, { UploadObject } from './components/Attachments'
 import type { Node as ProseMirrorNode } from 'prosemirror-model'
@@ -177,13 +177,14 @@ export default function Write() {
             type="button"
             onClick={handleSavePost}
             className="
-              px-4 py-2 bg-blue-500 text-white rounded
-              hover:bg-blue-600 transition
+              px-4 py-2 bg-white text-[#ed3a3a] rounded-lg border border-spacing-2 border-gray-200
+              hover:border-[#ed3a3a] hover:bg-[#ed3a3a] hover:text-white
+              transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
             "
             disabled={saving}
           >
-            {saving ? '저장 중…' : '저장'}
+            {saving ? '게시글 등록중...' : '게시글 등록하기'}
           </button>
         </div>
       </div>
