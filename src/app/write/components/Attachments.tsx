@@ -7,8 +7,8 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-
 import Image from 'next/image';
+import { uploadAttachments } from '@/lib/api/post';
 
 const ALLOWED_EXTENSIONS = [
   'txt', 'docx', 'doc', 'pptx', 'ppt', 'pdf', 'hwp', 'zip', '7z',
@@ -21,12 +21,12 @@ export interface UploadObject {
   type: string; // 'image', 'text', ...
   uploaded: boolean;
   file?: File;
-  url?: string;
-  blobUrl?: string | null;
+  url?: string; //서버가 준 파일 URL
+  blobUrl?: string | null; // local preview
 }
 
 export interface AttachmentsHandles {
-  handleUpload: (files: FileList | File[]) => UploadObject[];
+  handleUpload: (files: FileList | File[]) => Promise<UploadObject[]>;
   files: UploadObject[];
   openImageUpload: () => void;
 }
@@ -84,7 +84,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
   }, [files]);
 
   // 파일 업로드 처리
-  const handleUpload = (fileList: FileList | File[]) => {
+  const handleUpload = async (fileList: FileList | File[]) => {
     const filesArray = Array.from(fileList);
 
     const [success, error] = filesArray.reduce<[UploadObject[], UploadObject[]]>(
@@ -122,10 +122,42 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
         setDropzoneFailedReason(null);
       }, 1500);
     }
+    //upload to server
+    const response = await uploadAttachments(success.map(u=> u.file!));
+    const result = Array.isArray(response) ? response : [response];
 
-    setFiles(prev => [...prev, ...success]);
-    if (onAdd) onAdd(success);
-    return success;
+    // 서버에서 받은 id-url로 state 갱신
+    setFiles(prev =>
+      prev.map(f => {
+        const idx = success.findIndex(u => u.key === f.key);
+        if (idx > -1) {
+          const {id, file: url} = result[idx].data;
+          return {
+            ...f,
+            key: String(id),
+            url,
+            blobUrl: url,
+            uploaded: true,
+          };
+        }
+        return f;
+      })
+    );
+
+    //onAdd callback - id-url로 바뀐 객체 전달
+    const updated = success.map((u, i) => {
+      const {id, file: url} = result[i].data
+      return {
+        key: String(id),
+        name : u.name,
+        type: u.type,
+        uploaded: true,
+        url,
+        blobUrl: url,
+      }
+    })
+    if (onAdd) onAdd(updated);
+    return updated;
   };
 
   //drag enter/leave 이벤트 헨들러
@@ -165,11 +197,11 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
   };
 
   // 다이얼로그 업로드
-  const handleDialogUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDialogUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
     if (!fileList) return;
 
-    handleUpload(fileList);
+    await handleUpload(fileList);
     // 파일 input 초기화 (같은 파일 업로드를 위한)
     event.target.value = '';
   };
@@ -193,13 +225,17 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
   };
 
   // 외부에서 접근 가능한 메서드
-  useImperativeHandle(ref, () => ({
-    handleUpload,
-    files,
-    openImageUpload: () => {
-      imageInputRef.current?.click();
-    },
-  }), [files]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      handleUpload,
+      files,
+      openImageUpload: () => {
+        imageInputRef.current?.click();
+      },
+    }),
+    [files, handleUpload]
+  );
 
   return (
     <div className={`attachments ${dropzoneEnabled ? 'attachments--enabled' : ''}`}>

@@ -22,30 +22,25 @@ export default function Write() {
   };
 
   // 에디터 -> Attachments (업로드) -> 에디터 삽입
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const uploads = await attachmentsRef.current?.handleUpload(e.target.files);
+    // 여기서 Attachments 컴포넌트 내부 state가 이미 업데이트됨 → UI
+
     const editor = editorRef.current;
+    if (!editor || !uploads) return;
 
-    if (!file || !editor) return;
-
-    const uploads = attachmentsRef.current?.handleUpload([file]) || [];
-
-    uploads.forEach((u: UploadObject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const src = reader.result as string;
-        // here `editor` is known non-null
-        editor
-          .chain()
-          .focus()
-          .attachmentImage({
-            src,
-            title: u.name,
-            'data-attachment': u.key,
-          })
-          .run();
-      };
-      reader.readAsDataURL(u.file!);
+    // 서버가 준 URL 을 바로 에디터에 삽입
+    uploads.forEach(u => {
+      editor
+        .chain()
+        .focus()
+        .attachmentImage({
+          src: u.url!,
+          title: u.name,
+          'data-attachment': u.key,
+        })
+        .run();
     });
 
     e.target.value = '';
@@ -117,7 +112,7 @@ export default function Write() {
               const newArticle = { 
                 title, 
                 content, 
-                attachments: [],
+                attachments: attachmentIds,
                 parent_topic: "",
                 parent_board: 7,
                 is_content_sexual: true,

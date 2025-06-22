@@ -9,6 +9,9 @@ const nextConfig = {
       },
     ];
   },
+  images: {
+    domains: ['sparcs-newara-dev.s3.amazonaws.com'],
+  },
 };
 
 module.exports = nextConfig;
