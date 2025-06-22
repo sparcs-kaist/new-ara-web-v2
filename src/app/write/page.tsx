@@ -99,7 +99,8 @@ export default function Write() {
     );
   };
 
-  const handleSave = async () => {
+  // 게시글 저장 API 호출 핸들러
+  const handleSavePost = async () => {
     if (!editorRef.current) return;
     setSaving(true);
 
@@ -192,7 +193,7 @@ export default function Write() {
         <div className="mt-6 text-right">
           <button
             type="button"
-            onClick={handleSave}
+            onClick={handleSavePost}
             className="
               px-4 py-2 bg-blue-500 text-white rounded
               hover:bg-blue-600 transition
