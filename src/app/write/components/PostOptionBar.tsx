@@ -61,7 +61,7 @@ const boardOptions = [
     realname: true,
   },
   {
-    name: "아라 피드백 ",
+    name: "아라 피드백",
     categories: ["말머리 없음"],
     allowAnonymous: false,
     realname: false,

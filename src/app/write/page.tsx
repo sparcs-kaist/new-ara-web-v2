@@ -38,6 +38,7 @@ export default function Write() {
   const [saving, setSaving] = useState(false);
   const [isSocial, setIsSocial] = useState(false);
   const [isSexual, setIsSexual] = useState(false);
+  const [nameType, setNameType] = useState<NameType>('REGULAR');
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -100,7 +101,7 @@ export default function Write() {
       parent_topic: '',
       is_content_sexual: isSexual,
       is_content_social: isSocial,
-      name_type: 'REGULAR',
+      name_type: nameType,
     };
 
     try {
@@ -128,7 +129,7 @@ export default function Write() {
             console.log('category:', category);
           }}
           onChangeAnonymous={(anon) => {
-            const name_type = anon ? 'ANONYMOUS' : 'REGULAR'
+            setNameType(anon ? 'ANONYMOUS' : 'REGULAR')
           }}
           onChangeSocial={(flag) => {
             setIsSocial(flag);
