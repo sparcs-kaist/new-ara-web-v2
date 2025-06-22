@@ -14,7 +14,12 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostData | null>(null);
 
   useEffect(() => {
-    fetchPost({ postId: 11996 })
+    fetchPost({ 
+      postId: 11996,
+      fromView: 'all',
+      current: 3,
+      overrideHidden: true,
+    })
       .then(data => {
         console.log('Post data:', data); // 디버깅용
         setPost(data);
