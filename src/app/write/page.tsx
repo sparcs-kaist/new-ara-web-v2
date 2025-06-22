@@ -8,13 +8,16 @@ import Attachments, { UploadObject } from './components/Attachments';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { createPost } from '@/lib/api/post';
 
+export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME';
 
 export default function Write() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<Editor|null>(null);
-  const attachmentsRef = useRef<AttachmentsHandles|null>(null);
-  const [title, setTitle] = useState<string>('');
-  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<Editor|null>(null)
+  const attachmentsRef = useRef<AttachmentsHandles|null>(null)
+  const [title, setTitle] = useState<string>('')
+  const [saving, setSaving] = useState(false)
+  const [isSocial, setIsSocial] = useState(false)
+  const [isSexual, setIsSexual] = useState(false)
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -25,8 +28,6 @@ export default function Write() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const uploads = await attachmentsRef.current?.handleUpload(e.target.files);
-    // 여기서 Attachments 컴포넌트 내부 state가 이미 업데이트됨 → UI
-
     const editor = editorRef.current;
     if (!editor || !uploads) return;
 
@@ -65,12 +66,55 @@ export default function Write() {
     );
   };
 
+  const handleSave = async () => {
+    if (!editorRef.current) return
+    setSaving(true)
+    const content = editorRef.current.getHTML()
+    const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? []
+    const newArticle = {
+      title,
+      content,
+      attachments: attachmentIds,
+      parent_topic: '',
+      is_content_sexual: isSexual,
+      is_content_social: isSocial,
+      name_type: 'REGULAR',
+    }
+
+    try {
+      const result = await createPost({ boardId: 7, newArticle })
+      alert(`글이 저장되었습니다 (ID: ${result.id})`)
+    } catch (err) {
+      console.error(err)
+      alert('글 저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
       <div className="w-[70vw] max-w-7xl">
         <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">게시물 작성하기</p>
         <hr className="border-t border-gray-300 mb-6" />
-        <PostOptionBar />
+        <PostOptionBar
+          onChangeBoard={(board) => {
+            // board → boardId 매핑 로직
+            console.log('board:', board)
+          }}
+          onChangeCategory={(category) => {
+            console.log('category:', category)
+          }}
+          onChangeAnonymous={(anon) => {
+            // name_type = anon ? 'ANONYMOUS' : 'REGULAR'
+          }}
+          onChangeSocial={(flag) => {
+            setIsSocial(flag)   // 여기가 is_content_social
+          }}
+          onChangeSexual={(flag) => {
+            setIsSexual(flag)   // 여기가 is_content_sexual
+          }}
+        />
 
         <input
           type="text"
@@ -103,47 +147,18 @@ export default function Write() {
         <div className="mt-6 text-right">
           <button
             type="button"
-            onClick={async () => {
-              if (!editorRef.current) return
-              setSaving(true)
-              const content = editorRef.current.getHTML()
-              const attachmentIds =
-                attachmentsRef.current?.files.map(f => f.key) ?? []
-              const newArticle = { 
-                title, 
-                content, 
-                attachments: attachmentIds,
-                parent_topic: "",
-                parent_board: 7,
-                is_content_sexual: true,
-                is_content_social: true,
-                name_type: "REGULAR",
-          }
-
-              try {
-                // boardId는 적절히 바꿔주세요(예: 1 또는 props로)
-                const result = await createPost({ boardId: 7, newArticle })
-                alert(`글이 저장되었습니다 (ID: ${result.id})`)
-              } catch (err) {
-                console.error(err)
-                alert('글 저장에 실패했습니다.')
-              } finally {
-                setSaving(false)
-              }
-            }}
+            onClick={handleSave}
             className="
-               px-4 py-2
-               bg-blue-500 text-white
-               rounded hover:bg-blue-600
-               transition
-+              disabled:opacity-50 disabled:cursor-not-allowed
-             "
+              px-4 py-2 bg-blue-500 text-white rounded
+              hover:bg-blue-600 transition
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
             disabled={saving}
-           >
-             {saving ? '저장 중…' : '저장'}
-           </button>
-         </div>
-       </div>
-     </div>
-   )
+          >
+            {saving ? '저장 중…' : '저장'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
  }
