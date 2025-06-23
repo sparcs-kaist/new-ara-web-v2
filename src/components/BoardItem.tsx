@@ -57,25 +57,24 @@ const MyInfo = () => {
       </div>
 
       <div className="flex flex-col flex-1">
-        <div className="flex justify-start mb-4 gap-6 border-b pb-2 text-base font-semibold">
-          {TABS.map(t => (
-            <button
-              key={t}
-              className={clsx(
-                'pb-1 border-b-2',
-                tab === t ? 'text-pink-500 border-pink-500' : 'text-gray-400 border-transparent'
-              )}
-              onClick={() => {
-                setTab(t);
-                setCurrentPage(1);
-              }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-6 border-b pb-2 text-base font-semibold">
+            {TABS.map(t => (
+              <button
+                key={t}
+                className={clsx(
+                  'pb-1 border-b-2',
+                  tab === t ? 'text-pink-500 border-pink-500' : 'text-gray-400 border-transparent'
+                )}
+                onClick={() => {
+                  setTab(t);
+                  setCurrentPage(1);
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
             placeholder="Search"
@@ -90,10 +89,21 @@ const MyInfo = () => {
 
         <div className="flex flex-col gap-2">
           {paginatedItems.map(item => (
-            <BoardItem key={`${tab}-${item.id}`} {...item} />
+            <BoardItem
+              key={`${tab}-${item.id}`}
+              {...item}
+              createdAt={item.createdAt.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              showThumbnailBehindProfile={true}
+            />
           ))}
         </div>
-        
+
         <div className="flex justify-center mt-6 gap-2 text-sm">
           {Array.from({ length: totalPages }, (_, i) => (
             <button

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import React from "react";
 import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
 import "@/i18n";
