@@ -1,0 +1,43 @@
+name: Build and Lint Next.js
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  reject-invalid-pr-source:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if PR to main is not from dev
+        run: |
+          echo "🔍 PR target: ${{ github.base_ref }}"
+          echo "🔍 PR source: ${{ github.head_ref }}"
+          if [[ "${{ github.base_ref }}" == "main" && "${{ github.head_ref }}" != "dev" ]]; then
+            echo "❌ PR to 'main' must come from 'dev' branch."
+            exit 1
+          fi
+
+  build-and-lint:
+    runs-on: ubuntu-latest
+    needs: reject-invalid-pr-source  # 이전 검사 통과해야 실행됨
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

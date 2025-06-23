@@ -1,3 +1,4 @@
+@import 'highlight.js/styles/github.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,8 +15,112 @@
   }
 }
 
+@media (max-width: 900px) {
+  .hide-below-900 {
+    display: none !important;
+  }
+}
+
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+/* Style for Text Editor */
+/* prose 가 걸어주는 max-width 해제 */
+.prose {
+  max-width: none !important;
+}
+
+/* Code Style */
+.prose code {
+  background-color: #f3f4f6; /* gray-100 */
+  color: #ec4899;            /* pink-500 */
+  border-radius: 0.25rem;
+  padding: 0.15em 0.4em;
+  font-size: 0.95em;
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+}
+
+.dark .prose code {
+  background-color: #23272e;
+  color: #f472b6; /* pink-400 */
+}
+
+.editor-content p:first-child.is-empty::before {
+  content: attr(data-empty-text);
+  float: left;
+  color: #aaa;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+.editor-content img.ProseMirror-selectednode {
+  filter: brightness(0.5);
+}
+
+/* .editor-content a 기본 스타일 (기존) */
+.editor-content a {
+  color: #00b8d4;
+}
+
+/* 북마크(.bookmark-box) 에는 이 기본 룰을 적용하지 않기 */
+.editor-content .bookmark-box {
+  /* 에디터 전체 링크 룰보다 더 구체적이므로 무시됩니다 */
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.prose pre {
+  background: #f8f8f8 !important;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+.prose pre code {
+  color: #111 !important;
+  background: transparent !important;
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* 줄간격 옵션 설정 */
+/* Enter = <p>, Shift + Enter = <br> */
+.prose p {
+  margin-top: 0.3em !important;
+  margin-bottom: 0.3em !important;
+  line-height: 1.4 !important;
+}
+
+
+/* Color Parllette */
+/* -webkit-appearance 끄고 스와치에 둥근 테두리 적용 */
+input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  padding: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 9999px;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 9999px;
+}
+
+.prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+  color: inherit !important;
 }

@@ -11,10 +11,9 @@ const Profile = () => {
     const [, setIsUpdating] = useState(false);
     const toggleNicknameInput = (isEditing: boolean) => {
         if (isEditing){
-            setIsUpdating(true);
+
         } else {
             setIsNicknameEditable(false);
-            setIsUpdating(false);
         }
     }
 
