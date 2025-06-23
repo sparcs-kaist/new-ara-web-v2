@@ -14,7 +14,9 @@ export default {
         ara_red_most_bright: "#FDF0F0",
         ara_blue: "#538DD1",
         ara_gray: "#666666",
-        ara_gray_bright: "#B6B6B6"
+        ara_gray_bright: "#B6B6B6",
+        ara_event_yellow_bright: "#FFEDD2",
+        ara_event_green_bright: "#F8FFCC",
       },
     },
   },

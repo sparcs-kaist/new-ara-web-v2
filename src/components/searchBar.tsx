@@ -26,10 +26,11 @@ const SearchBar: React.FC<TextInputProps> = ({ value, onChange}) => {
   };
 
   return (
-    <div className="flex h-[56px] border-[2px] border-ara_red rounded-[16px] px-4 py-2 space-x-2 w-[90%] max-w-[550px]">
+    <div className="flex h-[56px] border-[2px] bg-white border-ara_red rounded-[16px] 
+      px-4 py-2 space-x-2 w-[90%] max-w-[650px] shadow-sm shadow-ara_red/20">
       <input
         type="search"
-        className="w-full focus:outline-none focus:ring-0 placeholder-ara_red bg-transparent"
+        className="w-full focus:outline-none focus:ring-0 placeholder-ara_red_bright font-bold bg-transparent"
         placeholder="검색어를 입력하세요."
         value={value}
         onChange={onChange}

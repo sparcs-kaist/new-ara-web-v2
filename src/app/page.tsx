@@ -83,7 +83,7 @@ export default function Home() {
   ];
   return (
     <div>
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-ara_red_bright to-white -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-[#FFEDD2] to-[#FFFFFF] -z-10"></div>
       <div className="h-[220px] w-full flex justify-center items-center">
         <SearchBar
           value={inputValue}
