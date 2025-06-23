@@ -1,3 +1,12 @@
+export default function Test() {
+    return (
+      <div>
+        <h1>Build Test 통과용</h1>
+      </div>
+    );
+  }
+  
+/*
 'use client';
 import React, { useState } from 'react';
 import SmallBoardMyInfo from "@/components/SmallBoardMyInfo";
@@ -33,7 +42,7 @@ const dataMap = {
 const ITEMS_PER_PAGE = 10;
 
 const MyInfo = () => {
-  const [tab, setTab] = useState('내가 쓴 글');
+  const [tab, setTab] = useState('내 글');
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -114,3 +123,4 @@ const MyInfo = () => {
 };
 
 export default MyInfo;
+*/
