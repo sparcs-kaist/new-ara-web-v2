@@ -2,6 +2,35 @@
 type WhyHidden = 'ADULT_CONTENT' | 'SOCIAL_CONTENT' | 'REPORTED_CONTENT' | 'BLOCKED_USER_CONTENT'
 type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH'
 
+
+export type ParentTopic = {
+  id : number;
+  slug : string;
+  ko_name : string;
+  en_name : string;
+}
+
+export type BoardGroup = {
+  id : number;
+  ko_name : string;
+  en_name : string;
+  slug : string;
+}
+
+export type ParentBoard = {
+  id : number;
+  slug : string;
+  ko_name : string;
+  en_name : string;
+  is_read_only : boolean;
+  name_type : number;
+  group : BoardGroup;
+  banner_image : string;
+  ko_board_description : string;
+  en_board_description : string;
+  top_threshold : number;
+}
+
 export type Post = {
   attachment_type: Attachment,
   can_override_hidden: boolean,
@@ -29,8 +58,8 @@ export type Post = {
   is_content_social: boolean,
   is_hidden: boolean,
   negative_vote_count: number
-  parent_board: any,
-  parent_topic: any,
+  parent_board: ParentBoard,
+  parent_topic: ParentTopic,
   positive_vote_count: number,
   read_status: string,
   report_count: number,

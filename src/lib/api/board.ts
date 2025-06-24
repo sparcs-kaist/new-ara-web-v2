@@ -8,8 +8,13 @@ type Filter = {
 };
 
 type ArticleQuery = {
-  boardId?: number | number[]; topicId?: number; username?: string;
-  query?: string; ordering?: string; page?: number; pageSize?: number;
+  boardId?: number | number[]; 
+  topicId?: number; 
+  username?: string;
+  query?: string; 
+  ordering?: string; 
+  page?: number; 
+  pageSize?: number;
   filter?: Filter;
 };
 
