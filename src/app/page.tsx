@@ -3,9 +3,6 @@
 import SearchBar from "@/components/searchBar";
 import BoardPreview from "@/components/BoardPreview/BoardPreview";
 import { useState } from "react";
-import UserMenu from "@/components/UserMenu/UserMenu";
-import OtherServices from "@/components/UserMenu/OtherServices";
-import Link from "next/link";
 
 // 옵션 타입 정의
 interface UIOptions {
@@ -24,13 +21,85 @@ interface UIOptions {
 interface OptionControlProps {
   options: UIOptions;
   onChange: (option: string, value: boolean) => void;
+  containerWidth: number;
+  onWidthChange: (width: number) => void;
+  titleFontSize: string;
+  onFontSizeChange: (size: string) => void;
+  titleFontWeight: string;
+  onFontWeightChange: (weight: string) => void;
 }
 
 // 옵션 컨트롤 컴포넌트
-const OptionControl = ({ options, onChange }: OptionControlProps) => {
+const OptionControl = ({ 
+  options, 
+  onChange, 
+  containerWidth, 
+  onWidthChange, 
+  titleFontSize, 
+  onFontSizeChange, 
+  titleFontWeight, 
+  onFontWeightChange 
+}: OptionControlProps) => {
   return (
     <div className="p-4 bg-white rounded-lg shadow-sm mb-4 border border-gray-200">
       <h3 className="text-lg font-bold mb-3">UI 옵션 설정</h3>
+      
+      {/* 크기 조정 슬라이더 */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+        <label className="block text-sm font-medium mb-2">
+          컨테이너 너비: {containerWidth}px
+        </label>
+        <input
+          type="range"
+          min="300"
+          max="800"
+          value={containerWidth}
+          onChange={(e) => onWidthChange(parseInt(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>300px</span>
+          <span>550px (기본)</span>
+          <span>800px</span>
+        </div>
+      </div>
+
+      {/* 폰트 크기 조정 드롭다운 */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+        <label className="block text-sm font-medium mb-2">
+          제목 폰트 크기: {titleFontSize}
+        </label>
+        <select
+          value={titleFontSize}
+          onChange={(e) => onFontSizeChange(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-lg"
+        >
+          <option value="text-sm">Small</option>
+          <option value="text-base">Base</option>
+          <option value="text-lg">Large</option>
+          <option value="text-xl">Extra Large</option>
+          <option value="text-2xl">2XL</option>
+        </select>
+      </div>
+
+      {/* 폰트 굵기 조정 드롭다운 */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+        <label className="block text-sm font-medium mb-2">
+          제목 폰트 굵기: {titleFontWeight}
+        </label>
+        <select
+          value={titleFontWeight}
+          onChange={(e) => onFontWeightChange(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-lg"
+        >
+          <option value="font-normal">Normal</option>
+          <option value="font-bold">Bold</option>
+          <option value="font-light">Light</option>
+          <option value="font-medium">Medium</option>
+          <option value="font-extrabold">Extra Bold</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         {Object.entries(options).map(([key, value]) => (
           <div key={key} className="flex items-center">
@@ -53,6 +122,9 @@ const OptionControl = ({ options, onChange }: OptionControlProps) => {
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
+  const [containerWidth, setContainerWidth] = useState(550); // 기본 크기
+  const [titleFontSize, setTitleFontSize] = useState("text-base"); // 기본 폰트 크기
+  const [titleFontWeight, setTitleFontWeight] = useState("font-normal"); // 기본 폰트 굵기
   
   // UI 옵션 상태 관리
   const [uiOptions, setUiOptions] = useState<UIOptions>({
@@ -79,7 +151,7 @@ export default function Home() {
   const testPosts = [
     { 
       id: 1, 
-      title: "게시판 컴포넌트 테스트 글입니다", 
+      title: "이것은 매우 긴 게시글 제목입니다. 실제로는 이보다 더 길 수도 있고 말줄임표(...) 처리가 잘 되는지 확인해보겠습니다", 
       author: "개발자", 
       timeAgo: "9분 전", 
       likes: 50, 
@@ -107,7 +179,7 @@ export default function Home() {
     },
     { 
       id: 3, 
-      title: "프로필 이미지와 순위 표시 테스트", 
+      title: "프로필 이미지와 순위 표시 테스트 - 이 제목도 상당히 길게 만들어서 말줄임 처리를 확인해보겠습니다", 
       author: "테스터", 
       timeAgo: "1시간 전", 
       likes: 35, 
@@ -151,17 +223,29 @@ export default function Home() {
       <div className="mb-6">
         <OptionControl 
           options={uiOptions} 
-          onChange={handleOptionChange} 
+          onChange={handleOptionChange}
+          containerWidth={containerWidth}
+          onWidthChange={setContainerWidth}
+          titleFontSize={titleFontSize}
+          onFontSizeChange={setTitleFontSize}
+          titleFontWeight={titleFontWeight}
+          onFontWeightChange={setTitleFontWeight}
         />
       </div>
       
       {/* 게시판 프리뷰 테스트 영역 */}
       <div className="flex justify-center">
-        <div className="p-6 border border-gray-200 rounded-[20px] shadow-sm bg-white">
+        <div 
+          className="p-6 border border-gray-200 rounded-[20px] shadow-sm bg-white transition-all duration-300"
+          style={{ width: `${containerWidth + 48}px` }} // padding 24px * 2 = 48px 추가
+        >
           <BoardPreview
             boardTitle="🧪 게시판 컴포넌트 테스트"
             posts={testPosts}
             boardLink="/board/test"
+            containerWidth={containerWidth}
+            titleFontSize={titleFontSize}
+            titleFontWeight={titleFontWeight}
             {...uiOptions}
           />
         </div>

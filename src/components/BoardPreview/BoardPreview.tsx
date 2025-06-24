@@ -23,6 +23,7 @@ interface BoardPreviewProps {
   boardTitle: string;
   posts: BoardPreviewPost[];
   boardLink: string; // 게시판 더보기 링크
+  containerWidth?: number; // 컨테이너 너비
   showWriter?: boolean; // 작성자 표시
   showBoard?: boolean; // 게시판 표시
   showProfile?: boolean; // 작성자 프로필 표시
@@ -32,12 +33,15 @@ interface BoardPreviewProps {
   showRank?: boolean; // 순위 표시 (인기글)
   showAnswerStatus?: boolean; // 답변 상태 표시
   showTimeAgo?: boolean; // 시간 표시
+  titleFontSize?: string; // 제목 폰트 크기 (Tailwind 클래스)
+  titleFontWeight?: string; // 제목 폰트 굵기 (Tailwind 클래스)
 }
 
 export default function BoardPreview({ 
   boardTitle, 
   posts, 
   boardLink,
+  containerWidth = 550,
   showWriter = true,
   showBoard = false,
   showProfile = false,
@@ -46,7 +50,9 @@ export default function BoardPreview({
   showAttachment = true,
   showRank = false,
   showAnswerStatus = false,
-  showTimeAgo = true
+  showTimeAgo = true,
+  titleFontSize = "text-base", // 기본 폰트 크기 설정 (Tailwind 클래스)
+  titleFontWeight = "font-normal" // 기본 폰트 굵기 설정 (Tailwind 클래스)
 }: BoardPreviewProps) {
   // 메타데이터가 표시되는지 확인
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
@@ -58,7 +64,10 @@ export default function BoardPreview({
   const itemHeight = hasBottomContent ? "h-[56px]" : "h-[40px]";
   
   return (
-    <div className="w-full max-w-[550px] p-4 bg-white rounded-lg shadow-sm">
+    <div 
+      className="w-full p-4 bg-white rounded-lg shadow-sm transition-all duration-300"
+      style={{ maxWidth: `${containerWidth}px` }}
+    >
       <Link href={boardLink} className="flex items-center space-x-2 mb-[10px]">
         <h2 className="text-[20px] font-semibold">{boardTitle}</h2>
         <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -70,7 +79,7 @@ export default function BoardPreview({
             <Link href={`/post/${post.id}`} className="block h-full">
               <div className="flex items-center h-full">
                 {showRank && (
-                  <span className="text-[22px] font-bold text-ara_red mr-3">
+                  <span className="text-[22px] font-bold text-ara_red mr-3 flex-shrink-0">
                     {index + 1}
                   </span>
                 )}
@@ -80,25 +89,36 @@ export default function BoardPreview({
                     alt="profile" 
                     width={40} 
                     height={40} 
-                    className="rounded-full mr-3"
+                    className="rounded-full mr-3 flex-shrink-0"
                   />
                 )}
                 
-                <div className="w-full flex flex-col justify-center">
+                <div className="w-full flex flex-col justify-center min-w-0">
                   {/* 첫 번째 라인: Title + Attachment + TimeAgo + Hit + (메타데이터가 없으면) Status */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <span className="text-[16px] truncate">{post.title}</span>
+                      <span 
+                        className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight}`} // Tailwind 클래스 적용
+                        title={post.title} // 호버 시 전체 제목 표시
+                      >
+                        {post.title}
+                      </span>
                       {showAttachment && post.hasAttachment && (
-                        <Image src="/Image.svg" alt="첨부파일" width={17} height={14.22} />
+                        <Image 
+                          src="/Image.svg" 
+                          alt="첨부파일" 
+                          width={17} 
+                          height={14.22} 
+                          className="flex-shrink-0"
+                        />
                       )}
                     </div>
                     
                     {/* 오른쪽 정렬: TimeAgo + Hit + (메타데이터가 없으면) Status */}
-                    <div className="flex items-center text-[12px] text-gray-500 ml-2">
+                    <div className="flex items-center text-[12px] text-gray-500 ml-2 flex-shrink-0">
                       {[
-                        showTimeAgo && post.timeAgo,
-                        showHit && post.hit !== undefined ? `조회 ${post.hit}` : null
+                        showTimeAgo && post.timeAgo && post.timeAgo,
+                        showHit && post.hit !== undefined && `조회 ${post.hit}`
                       ]
                         .filter(Boolean)
                         .map((item, index, array) => (
@@ -124,7 +144,7 @@ export default function BoardPreview({
                   {/* 두 번째 라인: Writer + Board + AnswerStatus vs Status (메타데이터가 있을 때만) */}
                   {hasBottomContent && (
                     <div className="flex w-full mt-1 justify-between items-center">
-                      <div className="text-[12px] text-gray-500 flex items-center">
+                      <div className="text-[12px] text-gray-500 flex items-center min-w-0 flex-1">
                         {/* 메타데이터를 배열로 구성하여 조건부 중간점 처리 */}
                         {[
                           showBoard && post.boardName ? post.boardName : null,
@@ -133,11 +153,13 @@ export default function BoardPreview({
                         ]
                           .filter(Boolean) // falsy 값 제거
                           .map((item, index, array) => (
-                            <span key={index} className={
-                              showAnswerStatus && index === array.length - 1 
+                            <span key={index} className={`
+                              ${showAnswerStatus && index === array.length - 1 
                                 ? (post.answered ? 'text-blue-600' : 'text-red-600')
                                 : 'text-gray-500'
-                            }>
+                              } 
+                              ${index === 0 ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}
+                            `}>
                               {item}
                               {index < array.length - 1 && <span className="mx-1">·</span>}
                             </span>
@@ -146,7 +168,7 @@ export default function BoardPreview({
                       </div>
                       
                       {/* 오른쪽 정렬: Status */}
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-shrink-0 ml-2">
                         {showStatus && (
                           <Like like={post.likes} dislike={post.dislikes} comment={post.comments} />
                         )}
