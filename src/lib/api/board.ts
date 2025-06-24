@@ -7,7 +7,7 @@ type Filter = {
   communication_article__school_response_status__lt?: number;
 };
 
-type ArticleQuery = {
+export type ArticleQuery = {
   boardId?: number | number[]; 
   topicId?: number; 
   username?: string;

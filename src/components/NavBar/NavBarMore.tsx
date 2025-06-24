@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import NavBarProfile from "./NavBarProfile";
+import NavBarProfile from "@/components/NavBar/NavBarProfile";
 
 export default function NavBarMore({onClose}: {onClose: () => void}) {
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({
