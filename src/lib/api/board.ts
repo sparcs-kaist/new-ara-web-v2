@@ -7,9 +7,14 @@ type Filter = {
   communication_article__school_response_status__lt?: number;
 };
 
-type ArticleQuery = {
-  boardId?: number | number[]; topicId?: number; username?: string;
-  query?: string; ordering?: string; page?: number; pageSize?: number;
+export type ArticleQuery = {
+  boardId?: number | number[]; 
+  topicId?: number; 
+  username?: string;
+  query?: string; 
+  ordering?: string; 
+  page?: number; 
+  pageSize?: number;
   filter?: Filter;
 };
 

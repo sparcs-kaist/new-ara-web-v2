@@ -1,8 +1,46 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type WhyHidden = 'ADULT_CONTENT' | 'SOCIAL_CONTENT' | 'REPORTED_CONTENT' | 'BLOCKED_USER_CONTENT'
 type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH'
 
-export type Post = {
+
+export const enum NameType {
+  NICKNAME = 1,
+  ANONYMOUS = 2,
+  NICKNAME_ANONYMOUS = 3,
+  REALNAME = 4,
+  NICKNAME_REALNAME = 5,
+  ANONYMOUS_REALNAME = 6,
+  NICKNAME_ANONYMOUS_REALNAME = 7,
+}
+
+export type ResponseParentTopic = {
+  id : number;
+  slug : string;
+  ko_name : string;
+  en_name : string;
+}
+
+export type ResponseBoardGroup = {
+  id : number;
+  ko_name : string;
+  en_name : string;
+  slug : string;
+}
+
+export type ResponseParentBoard = {
+  id : number;
+  slug : string;
+  ko_name : string;
+  en_name : string;
+  is_read_only : boolean;
+  name_type : number;
+  group : ResponseBoardGroup;
+  banner_image : string;
+  ko_board_description : string;
+  en_board_description : string;
+  top_threshold : number;
+}
+
+export type ResponsePost = {
   attachment_type: Attachment,
   can_override_hidden: boolean,
   comment_count: number,
@@ -29,8 +67,8 @@ export type Post = {
   is_content_social: boolean,
   is_hidden: boolean,
   negative_vote_count: number
-  parent_board: any,
-  parent_topic: any,
+  parent_board: ResponseParentBoard,
+  parent_topic: ResponseParentTopic,
   positive_vote_count: number,
   read_status: string,
   report_count: number,
