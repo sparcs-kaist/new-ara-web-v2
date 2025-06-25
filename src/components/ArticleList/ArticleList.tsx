@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 interface ArticleListProps {
-  posts: ResponsePost[]; // ResponsePost 타입으로 변경
+  posts: ResponsePost[];
   showWriter?: boolean;
   showBoard?: boolean;
   showProfile?: boolean;
@@ -16,6 +16,7 @@ interface ArticleListProps {
   showRank?: boolean;
   showAnswerStatus?: boolean;
   showTimeAgo?: boolean;
+  showReadStatus?: boolean; // 읽은 글 스타일 적용 여부
   titleFontSize?: string;
   titleFontWeight?: string;
 }
@@ -31,6 +32,7 @@ export default function ArticleList({
   showRank = false,
   showAnswerStatus = false,
   showTimeAgo = true,
+  showReadStatus = true, // 기본값은 true (읽은 글 스타일 적용)
   titleFontSize = "text-base",
   titleFontWeight = "font-normal"
 }: ArticleListProps) {
@@ -42,7 +44,7 @@ export default function ArticleList({
   const formatTimeAgo = (dateString: string) => {
     try {
       const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-      return formattedTime.replace('약 ', ''); // "약 " 텍스트 제거
+      return formattedTime.replace(/(약 )|( 미만)/g, ''); // "약 "과 " 미만" 텍스트 제거
     } catch (e) {
       return '';
     }
@@ -62,6 +64,9 @@ export default function ArticleList({
           : 'text-red-600';
         const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
         const timeAgo = post.created_at ? formatTimeAgo(post.created_at) : '';
+
+        // 제목 텍스트 색상 결정
+        const titleTextColor = showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black';
 
         return (
           <li key={post.id} className={`border-b border-gray-200 ${hasBottomContent ? 'pb-2' : 'pb-1'} ${itemHeight} last:border-b-0`}>
@@ -86,7 +91,7 @@ export default function ArticleList({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
                       <span 
-                        className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${post.read_status === '-' ? 'text-gray-500' : 'text-black'}`}
+                        className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor}`}
                         title={post.title}
                       >
                         {post.title}
