@@ -23,18 +23,18 @@ interface ArticleListProps {
 
 export default function ArticleList({ 
   posts, 
-  showWriter = true,
+  showWriter = false,
   showBoard = false,
   showProfile = false,
   showHit = false,
-  showStatus = true,
-  showAttachment = true,
+  showStatus = false,
+  showAttachment = false,
   showRank = false,
   showAnswerStatus = false,
-  showTimeAgo = true,
-  showReadStatus = true, // 기본값은 true (읽은 글 스타일 적용)
+  showTimeAgo = false,
+  showReadStatus = false,
   titleFontSize = "text-base",
-  titleFontWeight = "font-normal"
+  titleFontWeight = "font-medium"
 }: ArticleListProps) {
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
   const hasBottomContent = hasMetadata;
@@ -46,6 +46,7 @@ export default function ArticleList({
       const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
       return formattedTime.replace(/(약 )|( 미만)/g, ''); // "약 "과 " 미만" 텍스트 제거
     } catch (e) {
+      console.error("시간 포맷팅 오류:", e);
       return '';
     }
   };
@@ -55,13 +56,21 @@ export default function ArticleList({
       {posts.map((post, index) => {
         // ResponsePost에서 필요한 값 추출
         const hasAttachment = post.attachment_type !== 'NONE';
-        const answered = post.communication_article_status > 0;
-        const answerStatusText = answered 
-          ? (post.communication_article_status === 2 ? '답변 완료' : '소통중') 
-          : '답변 대기중';
-        const answerStatusColor = answered 
-          ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600') 
-          : 'text-red-600';
+        
+        // communication_article_status가 null인 경우 처리
+        const hasAnswerStatus = post.communication_article_status !== null;
+        const answered = hasAnswerStatus && post.communication_article_status !== null && post.communication_article_status > 0;
+        const answerStatusText = hasAnswerStatus
+          ? (answered
+              ? (post.communication_article_status === 2 ? '답변 완료' : '소통중') 
+              : '답변 대기중')
+          : null;
+        const answerStatusColor = hasAnswerStatus
+          ? (answered
+              ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600') 
+              : 'text-red-600')
+          : '';
+        
         const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
         const timeAgo = post.created_at ? formatTimeAgo(post.created_at) : '';
 
@@ -142,12 +151,12 @@ export default function ArticleList({
                         {[
                           showBoard && post.parent_board?.ko_name,
                           showWriter && post.created_by?.profile?.nickname,
-                          showAnswerStatus ? answerStatusText : null
+                          showAnswerStatus && answerStatusText // answerStatusText가 null이면 표시하지 않음
                         ]
                           .filter(Boolean)
                           .map((item, i, arr) => (
                             <span key={i} className={`
-                              ${showAnswerStatus && i === arr.length - 1 ? answerStatusColor : 'text-gray-500'} 
+                              ${showAnswerStatus && answerStatusText && i === arr.length - 1 ? answerStatusColor : 'text-gray-500'} 
                               ${i === 0 ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}
                             `}>
                               {item}

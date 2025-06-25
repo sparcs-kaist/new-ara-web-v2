@@ -46,7 +46,7 @@ export type ResponsePost = {
   can_override_hidden: boolean,
   comment_count: number,
   commented_at: string,
-  communication_article_status: 0 | 1 | 2,
+  communication_article_status: 0 | 1 | 2 | null,
   content_updated_at: string,
   created_at: string,
   created_by: {
