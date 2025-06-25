@@ -17,6 +17,7 @@ interface UIOptions {
   showRank: boolean;
   showAnswerStatus: boolean;
   showTimeAgo: boolean;
+  showReadStatus: boolean; // 읽은 글 스타일 적용 여부 추가
 }
 
 // 옵션 컨트롤 컴포넌트 타입 정의
@@ -83,8 +84,16 @@ export default function ArticleListDocumentPage() {
   const [titleFontSize, setTitleFontSize] = useState("text-base");
   const [titleFontWeight, setTitleFontWeight] = useState("font-normal");
   const [uiOptions, setUiOptions] = useState<UIOptions>({
-    showWriter: true, showBoard: true, showProfile: false, showHit: true, showStatus: true, 
-    showAttachment: true, showRank: false, showAnswerStatus: false, showTimeAgo: true
+    showWriter: true, 
+    showBoard: true, 
+    showProfile: false, 
+    showHit: true, 
+    showStatus: true, 
+    showAttachment: true, 
+    showRank: false, 
+    showAnswerStatus: false, 
+    showTimeAgo: true,
+    showReadStatus: true // 읽은 글 스타일 적용 여부 추가 (기본값: true)
   });
   const handleOptionChange = (option: string, value: boolean) => {
     setUiOptions(prev => ({ ...prev, [option]: value }));
@@ -147,7 +156,7 @@ export default function ArticleListDocumentPage() {
         is_content_social: false,
         is_hidden: false,
         parent_topic: null,
-        read_status: "",
+        read_status: "-",
         report_count: 0,
         updated_at: "",
         url: "",
@@ -202,7 +211,7 @@ export default function ArticleListDocumentPage() {
         is_content_social: false,
         is_hidden: false,
         parent_topic: null,
-        read_status: "",
+        read_status: "N",
         report_count: 0,
         updated_at: "",
         url: "",
@@ -257,7 +266,7 @@ export default function ArticleListDocumentPage() {
         is_content_social: false,
         is_hidden: false,
         parent_topic: null,
-        read_status: "",
+        read_status: "N",
         report_count: 0,
         updated_at: "",
         url: "",
@@ -312,7 +321,7 @@ export default function ArticleListDocumentPage() {
         is_content_social: false,
         is_hidden: false,
         parent_topic: null,
-        read_status: "",
+        read_status: "-",
         report_count: 0,
         updated_at: "",
         url: "",

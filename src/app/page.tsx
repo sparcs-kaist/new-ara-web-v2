@@ -65,7 +65,7 @@ export default function Home() {
                 <h2 className="text-[20px] font-semibold">최신 글</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
               </Link>
-              <ArticleList posts={recentArticles} showBoard={true} showProfile={true} />
+              <ArticleList posts={recentArticles} showBoard={true} showProfile={true} showAnswerStatus={true} />
             </section>
           </>
         )}
