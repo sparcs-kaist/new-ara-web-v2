@@ -1,5 +1,6 @@
 type WhyHidden = 'ADULT_CONTENT' | 'SOCIAL_CONTENT' | 'REPORTED_CONTENT' | 'BLOCKED_USER_CONTENT'
-type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH'
+type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH' | 'FILE'
+type ReadStatus = 'N' | '-'
 
 
 export const enum NameType {
@@ -68,12 +69,21 @@ export type ResponsePost = {
   is_hidden: boolean,
   negative_vote_count: number
   parent_board: ResponseParentBoard,
-  parent_topic: ResponseParentTopic,
+  parent_topic: ResponseParentTopic | null,
   positive_vote_count: number,
-  read_status: string,
+  read_status: ReadStatus
   report_count: number,
   title: string,
   updated_at: string,
   url: string,
   why_hidden: WhyHidden[]
+}
+
+export type ResponsePostList = {
+  num_pages : number;
+  num_items : number;
+  current: number;
+  previous: string | null;
+  next: string | null;
+  results: ResponsePost[];
 }

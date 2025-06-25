@@ -4,6 +4,7 @@ import ArticleList from "@/components/ArticleList/ArticleList";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ResponsePost, ResponsePostList } from "@/lib/types/post";
 
 // 옵션 타입 정의
 interface UIOptions {
@@ -89,12 +90,236 @@ export default function ArticleListDocumentPage() {
     setUiOptions(prev => ({ ...prev, [option]: value }));
   };
 
-  const testArticles = [
-    { id: 1, title: "이것은 매우 긴 게시글 제목입니다. 실제로는 이보다 더 길 수도 있고 말줄임표(...) 처리가 잘 되는지 확인해보겠습니다", author: "개발자", timeAgo: "9분 전", likes: 50, dislikes: 2, comments: 15, boardName: "개발 게시판", hasAttachment: true, attachmentType: 'image' as const, hit: 230, answered: true, profileImage: "/assets/ServiceAra.svg" },
-    { id: 2, title: "UI 옵션을 변경해보세요!", author: "디자이너", timeAgo: "20분 전", likes: 40, dislikes: 3, comments: 10, boardName: "디자인 게시판", hasAttachment: false, hit: 185, answered: false },
-    { id: 3, title: "프로필 이미지와 순위 표시 테스트 - 이 제목도 상당히 길게 만들어서 말줄임 처리를 확인해보겠습니다", author: "테스터", timeAgo: "1시간 전", likes: 35, dislikes: 1, comments: 8, boardName: "테스트 게시판", hasAttachment: true, attachmentType: 'both' as const, hit: 142, answered: true, profileImage: "/assets/ServiceAra.svg" },
-    { id: 4, title: "첨부파일 표시 기능 확인", author: "사용자", timeAgo: "2시간 전", likes: 25, dislikes: 0, comments: 5, boardName: "일반 게시판", hasAttachment: true, attachmentType: 'file' as const, hit: 98, answered: false }
-  ];
+  // API 응답 형태에 맞춘 모의 데이터
+  const mockPostListResponse: ResponsePostList = {
+    num_pages: 1,
+    num_items: 4,
+    current: 1,
+    previous: null,
+    next: null,
+    results: [
+      {
+        id: 1,
+        title: "이것은 매우 긴 게시글 제목입니다. 실제로는 이보다 더 길 수도 있고 말줄임표(...) 처리가 잘 되는지 확인해보겠습니다",
+        created_by: {
+          id: "1",
+          username: "developer",
+          profile: {
+            nickname: "개발자",
+            picture: "/assets/ServiceAra.svg",
+            user: "1"
+          }
+        },
+        parent_board: {
+          id: 1,
+          slug: "dev",
+          ko_name: "개발 게시판",
+          en_name: "Development",
+          is_read_only: false,
+          name_type: 1,
+          group: {
+            id: 1,
+            ko_name: "일반",
+            en_name: "General",
+            slug: "general"
+          },
+          banner_image: "",
+          ko_board_description: "",
+          en_board_description: "",
+          top_threshold: 10
+        },
+        positive_vote_count: 50,
+        negative_vote_count: 2,
+        comment_count: 15,
+        communication_article_status: 2,
+        created_at: "2025-06-25T01:00:00Z",
+        hit_count: 230,
+        attachment_type: "IMAGE",
+        // 그 외 필요한 필드들에 기본값 부여
+        can_override_hidden: false,
+        commented_at: "",
+        content_updated_at: "",
+        days_left: 0,
+        deleted_at: "",
+        hidden_at: "",
+        name_type: 1,
+        is_content_sexual: false,
+        is_content_social: false,
+        is_hidden: false,
+        parent_topic: null,
+        read_status: "",
+        report_count: 0,
+        updated_at: "",
+        url: "",
+        why_hidden: []
+      },
+      {
+        id: 2,
+        title: "UI 옵션을 변경해보세요!",
+        created_by: {
+          id: "2",
+          username: "designer",
+          profile: {
+            nickname: "디자이너",
+            picture: "",
+            user: "2"
+          }
+        },
+        parent_board: {
+          id: 2,
+          slug: "design",
+          ko_name: "디자인 게시판",
+          en_name: "Design",
+          is_read_only: false,
+          name_type: 1,
+          group: {
+            id: 1,
+            ko_name: "일반",
+            en_name: "General",
+            slug: "general"
+          },
+          banner_image: "",
+          ko_board_description: "",
+          en_board_description: "",
+          top_threshold: 10
+        },
+        positive_vote_count: 40,
+        negative_vote_count: 3,
+        comment_count: 10,
+        communication_article_status: 0,
+        created_at: "2025-06-25T00:30:00Z",
+        hit_count: 185,
+        attachment_type: "NONE",
+        // 그 외 필요한 필드들에 기본값 부여
+        can_override_hidden: false,
+        commented_at: "",
+        content_updated_at: "",
+        days_left: 0,
+        deleted_at: "",
+        hidden_at: "",
+        name_type: 1,
+        is_content_sexual: false,
+        is_content_social: false,
+        is_hidden: false,
+        parent_topic: null,
+        read_status: "",
+        report_count: 0,
+        updated_at: "",
+        url: "",
+        why_hidden: []
+      },
+      {
+        id: 3,
+        title: "프로필 이미지와 순위 표시 테스트 - 이 제목도 상당히 길게 만들어서 말줄임 처리를 확인해보겠습니다",
+        created_by: {
+          id: "3",
+          username: "tester",
+          profile: {
+            nickname: "테스터",
+            picture: "/assets/ServiceAra.svg",
+            user: "3"
+          }
+        },
+        parent_board: {
+          id: 3,
+          slug: "test",
+          ko_name: "테스트 게시판",
+          en_name: "Test",
+          is_read_only: false,
+          name_type: 1,
+          group: {
+            id: 1,
+            ko_name: "일반",
+            en_name: "General",
+            slug: "general"
+          },
+          banner_image: "",
+          ko_board_description: "",
+          en_board_description: "",
+          top_threshold: 10
+        },
+        positive_vote_count: 35,
+        negative_vote_count: 1,
+        comment_count: 8,
+        communication_article_status: 2,
+        created_at: "2025-06-24T23:00:00Z",
+        hit_count: 142,
+        attachment_type: "BOTH",
+        // 그 외 필요한 필드들에 기본값 부여
+        can_override_hidden: false,
+        commented_at: "",
+        content_updated_at: "",
+        days_left: 0,
+        deleted_at: "",
+        hidden_at: "",
+        name_type: 1,
+        is_content_sexual: false,
+        is_content_social: false,
+        is_hidden: false,
+        parent_topic: null,
+        read_status: "",
+        report_count: 0,
+        updated_at: "",
+        url: "",
+        why_hidden: []
+      },
+      {
+        id: 4,
+        title: "첨부파일 표시 기능 확인",
+        created_by: {
+          id: "4",
+          username: "user",
+          profile: {
+            nickname: "사용자",
+            picture: "",
+            user: "4"
+          }
+        },
+        parent_board: {
+          id: 4,
+          slug: "general",
+          ko_name: "일반 게시판",
+          en_name: "General",
+          is_read_only: false,
+          name_type: 1,
+          group: {
+            id: 1,
+            ko_name: "일반",
+            en_name: "General",
+            slug: "general"
+          },
+          banner_image: "",
+          ko_board_description: "",
+          en_board_description: "",
+          top_threshold: 10
+        },
+        positive_vote_count: 25,
+        negative_vote_count: 0,
+        comment_count: 5,
+        communication_article_status: 0,
+        created_at: "2025-06-24T22:00:00Z",
+        hit_count: 98,
+        attachment_type: "FILE",
+        // 그 외 필요한 필드들에 기본값 부여
+        can_override_hidden: false,
+        commented_at: "",
+        content_updated_at: "",
+        days_left: 0,
+        deleted_at: "",
+        hidden_at: "",
+        name_type: 1,
+        is_content_sexual: false,
+        is_content_social: false,
+        is_hidden: false,
+        parent_topic: null,
+        read_status: "",
+        report_count: 0,
+        updated_at: "",
+        url: "",
+        why_hidden: []
+      }
+    ]
+  };
 
   return (
     <div className="max-w-[1200px] mx-auto p-4">
@@ -109,7 +334,16 @@ export default function ArticleListDocumentPage() {
       
       <div className="flex justify-center">
         <div className="w-full p-4 rounded-lg shadow-sm transition-all duration-300 bg-white border" style={{ maxWidth: `${containerWidth}px` }}>
-          <ArticleList posts={testArticles} titleFontSize={titleFontSize} titleFontWeight={titleFontWeight} {...uiOptions} />
+          <Link href="#" className="flex items-center space-x-2 mb-[10px]">
+            <h2 className="text-[20px] font-semibold">🧪 컴포넌트 테스트</h2>
+            <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+          </Link>
+          <ArticleList 
+            posts={mockPostListResponse.results} 
+            titleFontSize={titleFontSize} 
+            titleFontWeight={titleFontWeight} 
+            {...uiOptions} 
+          />
         </div>
       </div>
     </div>
