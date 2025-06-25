@@ -1,7 +1,6 @@
 "use client";
 
 import SearchBar from "@/components/searchBar";
-import ArticleList from "@/components/ArticleList/ArticleList";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,8 +10,8 @@ import { HotPreview, RecentPreview } from "@/containers/ArticleList";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const [hotArticles, setHotArticles] = useState<ResponsePost[]>([]);
-  const [recentArticles, setRecentArticles] = useState<ResponsePost[]>([]);
+  const [, setHotArticles] = useState<ResponsePost[]>([]);
+  const [, setRecentArticles] = useState<ResponsePost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
