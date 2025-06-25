@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
-import { HotPreview, RecentPreview } from "@/containers/ArticleList";
+import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
 import MealData from "@/components/Meal/MealData";
 
 export default function Home() {
@@ -36,7 +36,7 @@ export default function Home() {
 
   return (
     <div className="max-w-[1200px] mx-auto">
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-[#FFEDD2] to-[#FFFFFF] -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-[400px]  -z-10"></div>
       
       <div className="h-[110px] w-full flex justify-center items-start pt-4">
         <SearchBar
@@ -54,7 +54,7 @@ export default function Home() {
             {/* 지금 핫한 글 */}
             <section className="w-full max-w-[550px] p-4 bg-white rounded-lg shadow-sm">
               <Link href="/board/hot" className="flex items-center space-x-2 mb-[10px]">
-                <h2 className="text-[20px] font-semibold">🔥지금 핫한 글</h2>
+                <h2 className="text-[20px] font-semibold">🔥 지금 핫한 글</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
               </Link>
               <HotPreview/>
@@ -63,7 +63,7 @@ export default function Home() {
             {/* 방금 올라온 글 */}
             <section className="w-full max-w-[550px] p-4 bg-white rounded-lg shadow-sm">
               <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
-                <h2 className="text-[20px] font-semibold">🕑방금 올라온 글</h2>
+                <h2 className="text-[20px] font-semibold">🕑 방금 올라온 글</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
               </Link>
               <RecentPreview />
@@ -71,6 +71,15 @@ export default function Home() {
 
             {/* 오늘의 식단 */}
             <MealData />  
+
+            {/* 학교에게 전합니다. */}
+            <section className="w-full max-w-[350px] p-4 bg-white rounded-lg shadow-sm">
+              <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
+                <h2 className="text-[20px] font-semibold">🏫 학교에게 전합니다</h2>
+                <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+              </Link>
+              <ToSchoolPreview />
+            </section>
           </>
         )}
       </main>
