@@ -7,6 +7,7 @@ import CourseMenuList from "./CourseMenuList";
 import CafeteriaMenuList from "./CafeteriaMenuList";
 import { Allergen, Restaurant, CafeteriaMenuItem, CafeteriaRestaurant } from './types';
 import { initialAllergens } from "./utils";
+import { fetchCafeteriaMenu, fetchCourseMenu } from '@/lib/api/meal'; 
 
 // 식당 ID를 API 응답의 키값으로 매핑
 type RestaurantKey = 'fclt' | 'west' | 'east1' | 'east2' | 'emp';
@@ -24,37 +25,6 @@ const mealTimeMap: { [key: string]: "morning_menu" | "lunch_menu" | "dinner_menu
   "아침": "morning_menu",
   "점심": "lunch_menu",
   "저녁": "dinner_menu"
-};
-
-//functions for api
-const fetchCourseMenu = async (date: string) => {
-  try {
-    const response = await fetch(`http://localhost:8000/api/meals/${date}/course_menu/`);
-    if (response.status === 404) {
-      throw new Error("해당 날짜의 식단 정보가 없습니다.");
-    }
-    if (!response.ok) {
-      throw new Error("메뉴를 불러오는데 실패했습니다.");
-    }
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-};
-
-const fetchCafeteriaMenu = async (date: string) => {
-  try {
-    const response = await fetch(`http://localhost:8000/api/meals/${date}/cafeteria_menu/`);
-    if (response.status === 404) {
-      throw new Error("해당 날짜의 식단 정보가 없습니다.");
-    }
-    if (!response.ok) {
-      throw new Error("메뉴를 불러오는데 실패했습니다.");
-    }
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
 };
 
 export default function MealData() {
@@ -90,7 +60,6 @@ export default function MealData() {
   const handlePreviousDay = () => {
     const prevDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
     setCurrentDate(prevDate);
-  
   };
 
   // 드롭다운 상태 관리
@@ -156,7 +125,6 @@ export default function MealData() {
     return menuData;
   };
 
-
   //API response 관련 state
   const [courseMenuData, setCourseMenuData] = useState<Record<string, Restaurant> | null>(null);
   const [cafeteriaMenuData, setCafeteriaMenuData] = useState<Record<string, CafeteriaRestaurant> | null>(null);
@@ -171,7 +139,7 @@ export default function MealData() {
     return `${year}-${month}-${day}`;
   };
 
-  //Load Menu Data
+  //Load Menu Data - 수정된 부분: 이미 import된 API 함수 사용
   const fetchMenuData = useCallback(async (date: Date) => {
     setIsLoading(true);
     setError(null);

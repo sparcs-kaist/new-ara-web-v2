@@ -13,8 +13,8 @@ export function HotPreview() {
             const Response = await fetchTopArticles({pageSize: 3});
             setPosts(Response.results);
         }
-        fetchData()
-    })
+        fetchData();
+    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
     return(
         <ArticleList
             posts = {posts}
@@ -28,7 +28,7 @@ export function HotPreview() {
     )
 }
 
-//메인 페이지 - 최근 올라온 글
+//메인 페이지 - 방금 올라온 글
 export function RecentPreview() {
     const [posts, setPosts] = useState([]);
     useEffect(() => {
@@ -36,8 +36,8 @@ export function RecentPreview() {
             const Response = await fetchArticles({pageSize: 3, ordering: '-created_at'});
             setPosts(Response.results);
         }
-        fetchData()
-    })
+        fetchData();
+    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
     return(
         <ArticleList
             posts = {posts}
