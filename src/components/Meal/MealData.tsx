@@ -180,7 +180,7 @@ export default function MealData() {
   }, [currentDate, fetchMenuData]);
 
   return (
-    <div className="w-[375px] h-auto p-4 bg-white rounded-2xl shadow font-inter relative">
+    <div className="w-[375px] h-auto p-4 bg-white rounded-2xl shadow font-inter relative border border-gray-200">
       {/* 헤더 - 식당, 알러지 정보 설정 */}
       <div className="flex flex-col gap-0">
         <div className="flex items-center justify-between">
