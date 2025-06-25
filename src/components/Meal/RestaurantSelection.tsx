@@ -34,13 +34,14 @@ export default function RestaurantSelection({
                 }}
                 className={`
                   w-[84px] h-5 rounded-xl px-5 py-[3px] 
-                  font-semibold text-[11px] whitespace-nowrap 
+                  font-medium text-[11px] whitespace-nowrap 
                   transition-colors duration-200
                   flex items-center justify-center
+                  bg-white text-black border
                   ${
                     selectedLocation === restaurant
-                      ? "bg-[#ed3a3a] text-white"
-                      : "bg-white text-[#c62626] border-[0.75px] border-solid border-[#c62626]"
+                      ? "border-ara_red_bright border-2 text-ara_red_dark"
+                      : "border-ara_gray_bright"
                   }
                 `}
               >

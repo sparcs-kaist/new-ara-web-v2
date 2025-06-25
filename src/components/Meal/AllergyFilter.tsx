@@ -29,9 +29,11 @@ const AllergyFilter = ({ onAllergyChange, initialAllergies = initialAllergens }:
 
   return (
     <div className="flex flex-col max-w-[366px] w-[306px] h-auto items-start gap-3 p-4 bg-white rounded-2xl shadow-md">
-      <h2 className="text-[14px] font-semibold text-black font-inter">
-        알러지 필터
-      </h2>
+      <div className="flex items-center gap-1">
+        <h2 className="text-[16px] font-semibold text-black font-inter">
+          ⚙️ 알러지 필터
+        </h2>
+      </div>
       <div className="flex flex-wrap gap-2 w-full">
         {allergens.map((allergen) => (
           <button
@@ -40,12 +42,13 @@ const AllergyFilter = ({ onAllergyChange, initialAllergies = initialAllergens }:
             className={`
               flex items-center justify-start 
               min-w-[85px] h-[24px] px-[8px] py-1 
-              rounded-[12px] text-[12px] font-semibold 
+              rounded-[12px] text-[12px] font-medium 
               cursor-pointer transition-colors font-inter 
+              bg-white text-black border
               ${
                 allergen.selected
-                  ? "bg-[#ed3a3a] text-white"
-                  : "bg-white text-[#c62626] border border-[#c62626]"
+                  ? "border-ara_red_bright border-2 text-ara_red_dark" 
+                  : "border-ara_gray_bright"
               }
             `}
           >

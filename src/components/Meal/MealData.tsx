@@ -7,6 +7,7 @@ import CourseMenuList from "./CourseMenuList";
 import CafeteriaMenuList from "./CafeteriaMenuList";
 import { Allergen, Restaurant, CafeteriaMenuItem, CafeteriaRestaurant } from './types';
 import { initialAllergens } from "./utils";
+import { fetchCafeteriaMenu, fetchCourseMenu } from '@/lib/api/meal'; 
 
 // 식당 ID를 API 응답의 키값으로 매핑
 type RestaurantKey = 'fclt' | 'west' | 'east1' | 'east2' | 'emp';
@@ -24,37 +25,6 @@ const mealTimeMap: { [key: string]: "morning_menu" | "lunch_menu" | "dinner_menu
   "아침": "morning_menu",
   "점심": "lunch_menu",
   "저녁": "dinner_menu"
-};
-
-//functions for api
-const fetchCourseMenu = async (date: string) => {
-  try {
-    const response = await fetch(`http://localhost:8000/api/meals/${date}/course_menu/`);
-    if (response.status === 404) {
-      throw new Error("해당 날짜의 식단 정보가 없습니다.");
-    }
-    if (!response.ok) {
-      throw new Error("메뉴를 불러오는데 실패했습니다.");
-    }
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-};
-
-const fetchCafeteriaMenu = async (date: string) => {
-  try {
-    const response = await fetch(`http://localhost:8000/api/meals/${date}/cafeteria_menu/`);
-    if (response.status === 404) {
-      throw new Error("해당 날짜의 식단 정보가 없습니다.");
-    }
-    if (!response.ok) {
-      throw new Error("메뉴를 불러오는데 실패했습니다.");
-    }
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
 };
 
 export default function MealData() {
@@ -90,7 +60,6 @@ export default function MealData() {
   const handlePreviousDay = () => {
     const prevDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
     setCurrentDate(prevDate);
-  
   };
 
   // 드롭다운 상태 관리
@@ -156,7 +125,6 @@ export default function MealData() {
     return menuData;
   };
 
-
   //API response 관련 state
   const [courseMenuData, setCourseMenuData] = useState<Record<string, Restaurant> | null>(null);
   const [cafeteriaMenuData, setCafeteriaMenuData] = useState<Record<string, CafeteriaRestaurant> | null>(null);
@@ -171,7 +139,7 @@ export default function MealData() {
     return `${year}-${month}-${day}`;
   };
 
-  //Load Menu Data
+  //Load Menu Data - 수정된 부분: 이미 import된 API 함수 사용
   const fetchMenuData = useCallback(async (date: Date) => {
     setIsLoading(true);
     setError(null);
@@ -217,20 +185,13 @@ export default function MealData() {
       <div className="flex flex-col gap-0">
         <div className="flex items-center justify-between">
           {/* 오늘의 학식 */}
-          <h2 className="font-semibold text-black text-[20px] mr-[8px]">오늘의 학식</h2>
+          <h2 className="font-semibold text-black text-[20px] mr-[8px]">🍽️ 오늘의 학식</h2>
           {/* 알러지 필터 */}
           <button 
-            className="flex items-center gap-1 text-[#c62626] text-xs font-semibold mr-auto"
+            className="flex items-center gap-1 text-gray-500 text-xs font-semibold mr-auto"
             onClick={() => setIsAllergyFilterVisible((prev) => !prev)}
           >
-            <span>알러지 필터</span>
-            <Image
-              src="/NewAraExtendIcons/filter-icon.svg"
-              alt="Filter Icon"
-              width={16}
-              height={16}
-              className="w-4 h-4"
-            />
+            <span>알러지 필터 ⚙️</span>
           </button>
           {isAllergyFilterVisible && (
             <div className="absolute top-0 right-full mr-2">
@@ -246,7 +207,7 @@ export default function MealData() {
               className="flex items-center gap-[5px]"
               onClick={toggleDropdown}
             >
-              <span className="font-semibold text-[#c62626] text-[16px]">
+              <span className="font-semibold text-black text-[16px]">
                 {selectedRestaurant}
               </span>
               <Image
@@ -305,11 +266,15 @@ export default function MealData() {
             <button
               key={meal}
               onClick={() => setSelectedMeal(meal)}
-              className={`px-3 h-[21px] rounded-[10px] text-[12px] font-semibold ${
-                meal === selectedMeal
-                  ? "bg-[#ed3a3a] text-white"
-                  : "bg-white border border-gray-300 text-black"
-              }`}
+              className={`
+                px-3 h-[21px] rounded-[10px] text-[12px] font-semibold
+                bg-white text-black border
+                ${
+                  meal === selectedMeal
+                    ? "border-ara_red_bright border-1 text-ara_red_dark"
+                    : "border-gray-200"
+                }
+              `}
             >
               {meal}
             </button>
