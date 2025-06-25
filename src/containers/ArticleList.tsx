@@ -55,7 +55,25 @@ export function RecentPreview() {
 
 //메인 페이지 - 학교에게 전합니다.
 export function ToSchoolPreview() {
-    return;
+    const [posts, setPosts] = useState([]);
+    useEffect(() => { 
+        const fetchData = async () => {
+            const Response = await fetchArticles({pageSize: 3, boardId: 14});
+            setPosts(Response.results);
+        }
+        fetchData();
+    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+    return(
+        <ArticleList
+            posts = {posts}
+            showTimeAgo = {true}
+            showAnswerStatus = {true}
+            showStatus = {true}
+            titleFontSize='text-[16px]'
+            
+        >
+        </ArticleList>
+    )
 }
 
 //메인 페이지 - 포탈 공지
