@@ -23,6 +23,7 @@ export function HotPreview() {
             showTimeAgo = {true}
             showStatus = {true}
             showAttachment = {true}
+            titleFontSize='text-[16px]'
         >
         </ArticleList>
     )
@@ -46,6 +47,7 @@ export function RecentPreview() {
             showAttachment = {true}
             showProfile = {true}
             showWriter = {true}
+            titleFontSize='text-[16px]'
         >
         </ArticleList>
     )

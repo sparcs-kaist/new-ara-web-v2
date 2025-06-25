@@ -7,6 +7,7 @@ import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview } from "@/containers/ArticleList";
+import MealData from "@/components/Meal/MealData";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -67,6 +68,9 @@ export default function Home() {
               </Link>
               <RecentPreview />
             </section>
+
+            {/* 오늘의 식단 */}
+            <MealData />  
           </>
         )}
       </main>
