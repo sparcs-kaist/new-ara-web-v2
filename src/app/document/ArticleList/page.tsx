@@ -4,7 +4,7 @@ import ArticleList from "@/components/ArticleList/ArticleList";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ResponsePost, ResponsePostList } from "@/lib/types/post";
+import { ResponsePostList } from "@/lib/types/post";
 
 // 옵션 타입 정의
 interface UIOptions {
@@ -140,7 +140,7 @@ export default function ArticleListDocumentPage() {
         positive_vote_count: 50,
         negative_vote_count: 2,
         comment_count: 15,
-        communication_article_status: 2,
+        communication_article_status: null,
         created_at: "2025-06-25T01:00:00Z",
         hit_count: 230,
         attachment_type: "IMAGE",
@@ -305,7 +305,7 @@ export default function ArticleListDocumentPage() {
         positive_vote_count: 25,
         negative_vote_count: 0,
         comment_count: 5,
-        communication_article_status: 0,
+        communication_article_status: null,
         created_at: "2025-06-24T22:00:00Z",
         hit_count: 98,
         attachment_type: "FILE",
