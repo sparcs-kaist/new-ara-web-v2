@@ -22,8 +22,6 @@ const MakerCard: React.FC<MakerCardProps> = ({
 }) => {
   // PM인지 확인
   const isPM = position?.includes('Project Manager');
-
-  // 프로젝트 카드 디자인
   if (isProject) {
     return (
       <div 
@@ -50,8 +48,6 @@ const MakerCard: React.FC<MakerCardProps> = ({
       </div>
     );
   }
-
-  // PM 카드 레이아웃
   if (isPM) {
     return (
       <div className={`
