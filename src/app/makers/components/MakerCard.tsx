@@ -23,6 +23,7 @@ const MakerCard: React.FC<MakerCardProps> = ({
   // PM인지 확인
   const isPM = position?.includes('Project Manager');
 
+  // 프로젝트 카드 디자인
   if (isProject) {
     return (
       <div 
@@ -35,10 +36,10 @@ const MakerCard: React.FC<MakerCardProps> = ({
         `}
         onClick={onClick}
       >
-        <span className="text-[16px] font-bold leading-[1.47] sm:text-[14px] sm:text-center px-2">
+        <span className="text-[16px] font-bold leading-[1.47] sm:text-center px-2">
           {title}
         </span>
-        <span className="mt-[12px] text-[10px] font-medium leading-[1.44] text-gray-400">
+        <span className="mt-[12px] text-[12px] font-medium leading-[1.44] text-gray-400">
           {subtitle}
         </span>
         {launched && (
