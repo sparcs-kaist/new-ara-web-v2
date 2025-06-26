@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <div className="max-w-[1280px] mx-auto"> {/* 최대 너비 추가 증가 */}
       {/* 상단 그라데이션 배경 적용 */}
-      <div className="absolute top-0 left-0 w-full h-[400px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
+      <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
       
       <div className="h-[110px] w-full flex justify-center items-start pt-4">
         <SearchBar
@@ -55,7 +55,7 @@ export default function Home() {
             {/* 왼쪽 영역 (비율 조정된 그리드 구조) */}
             <div className="w-[70%] grid grid-cols-5 gap-3 auto-rows-auto"> {/* 5열 그리드로 변경 */}
               {/* 1행 1열: 지금 핫한 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow"> {/* 3/5 너비 */}
+              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
                 <Link href="/board/hot" className="flex items-center space-x-2 mb-[10px]">
                   <h2 className="text-[20px] font-semibold">🔥 지금 핫한 글</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -64,7 +64,7 @@ export default function Home() {
               </section>
 
               {/* 1행 2열: 학교에게 전합니다 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow"> {/* 2/5 너비 */}
+              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
                 <Link href="/board/school" className="flex items-center space-x-2 mb-[10px]">
                   <h2 className="text-[20px] font-semibold">🏫 학교에게 전합니다</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -73,7 +73,7 @@ export default function Home() {
               </section>
 
               {/* 2행 1열: 나의 시간표 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow"> {/* 2/5 너비 */}
+              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
                 <Link href="/timetable" className="flex items-center space-x-2 mb-[10px]">
                   <h2 className="text-[20px] font-semibold">📆 나의 시간표</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -84,7 +84,7 @@ export default function Home() {
               </section>
 
               {/* 2행 2열: 방금 올라온 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow"> {/* 3/5 너비 */}
+              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
                 <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
                   <h2 className="text-[20px] font-semibold">🕑 방금 올라온 글</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
