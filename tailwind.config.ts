@@ -19,9 +19,16 @@ export default {
         ara_event_yellow_bright: "#FFEDD2",
         ara_event_green_bright: "#F8FFCC",
       },
+      keyframes: {
+        shine: {
+          "0%": { transform: "translateX(-100%) rotate(45deg)" },
+          "100%": { transform: "translateX(200%) rotate(45deg)" },
+        },
+      },
+      animation: {
+        shine: "shine 3s ease-in-out infinite",
+      },
     },
   },
-  plugins: [
-    require("@tailwindcss/typography"),
-  ],
+  plugins: [require("@tailwindcss/typography")],
 } satisfies Config;

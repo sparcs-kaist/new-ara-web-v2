@@ -219,12 +219,12 @@ export default function Makers() {
   };
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 py-8 bg-[#fafafa]">
+    <div className="max-w-[1280px] w-[80%] mx-auto px-4 py-8 bg-[#fafafa]">
       <h1 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
         Project
       </h1>
       
-      <div className="grid gap-[10px] justify-center mb-[48px] grid-cols-[repeat(auto-fit,minmax(220px,max-content))] sm:grid-cols-[repeat(auto-fit,minmax(110px,max-content))]">
+      <div className="grid gap-[15px] justify-center mb-[48px] grid-cols-6 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-2 xs:grid-cols-1">
         {projects.map((project, index) => (
           <MakerCard
             key={project.name}
@@ -237,14 +237,13 @@ export default function Makers() {
           />
         ))}
       </div>
-
       {projects[selected]?.description && (
         <div className="flex w-full flex-col justify-center my-[48px]">
           <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
             Description
           </h2>
-          <div className="rounded-[10px] shadow-md bg-white p-[22px_64px] mt-[30px] mx-[90px] md:mx-0 sm:mx-[50px] sm:p-[22px_22px] xs:mx-[20px]">
-            <p className="text-[15px] font-medium leading-[1.47] text-left sm:text-[12px]">
+          <div className="rounded-[10px] shadow-sm bg-white p-[22px_64px] mt-[30px] mx-[90px] md:mx-0 sm:mx-[50px] sm:p-[22px_22px] xs:mx-[20px]">
+            <p className="text-[16px] font-normal leading-[1.47] text-left">
               {projects[selected].description}
             </p>
           </div>
@@ -254,8 +253,7 @@ export default function Makers() {
       <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
         Member
       </h2>
-      
-      <div className="grid gap-[10px] justify-center mt-[48px] mb-[10px] grid-cols-[repeat(auto-fit,minmax(280px,max-content))] sm:grid-cols-[repeat(auto-fit,minmax(120px,max-content))]">
+      <div className="grid gap-[15px] justify-center mt-[48px] mb-[10px] grid-cols-5 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1">
         {positions.map(position => 
           projects[selected].members[position as keyof typeof projects[typeof selected]['members']]?.map((member: any) => (
             <MakerCard
