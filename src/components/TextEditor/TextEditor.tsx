@@ -12,15 +12,15 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
-import LinkBookmark from '@/components/TextEditor/LinkBookmark';
+import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Bold from '@tiptap/extension-bold';
 import Italic from '@tiptap/extension-italic';
 
-import AttachmentImage from './AttachmentImage';
-import { CustomCodeBlock } from '@/components/TextEditor/CodeBlock';
-import TextEditorLinkDialog from '@/components/TextEditor/TextEditorLinkDialog';
+import AttachmentImage from './components/AttachmentImage';
+import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
+import TextEditorLinkDialog from '@/components/TextEditor/components/TextEditorLinkDialog';
 
 interface TextEditorProps {
   content?: string;
