@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { BoardArticleList } from '@/containers/ArticleList'
 
 // 보드 설정 타입 정의
 interface BoardConfig {
@@ -139,89 +140,113 @@ export default function Board() {
           </p>
         </div>
 
-        {/* 보드 네비게이션 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">게시판 목록</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* 전체보기 */}
-            <button
-              onClick={handleAllBoard}
-              className={`p-4 rounded-lg border text-left transition-colors ${
-                currentBoardType === 'all'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="font-medium">전체보기</div>
-              <div className="text-sm text-gray-500">모든 게시판</div>
-            </button>
+        {/* 메인 레이아웃 - 좌우 분할 */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* 좌측: 보드 네비게이션 */}
+          <div className="lg:w-1/3 xl:w-1/4">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">게시판 목록</h2>
+              
+              <div className="space-y-3">
+                {/* 전체보기 */}
+                <button
+                  onClick={handleAllBoard}
+                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                    currentBoardType === 'all'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium text-sm">전체보기</div>
+                  <div className="text-xs text-gray-500">모든 게시판</div>
+                </button>
 
-            {/* 인기글 */}
-            <button
-              onClick={handlePopularBoard}
-              className={`p-4 rounded-lg border text-left transition-colors ${
-                currentBoardType === 'popular'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="font-medium">{POPULAR_BOARD.name}</div>
-              <div className="text-sm text-gray-500">{POPULAR_BOARD.description}</div>
-            </button>
+                {/* 인기글 */}
+                <button
+                  onClick={handlePopularBoard}
+                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                    currentBoardType === 'popular'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{POPULAR_BOARD.name}</div>
+                  <div className="text-xs text-gray-500">인기 게시글</div>
+                </button>
 
-            {/* 각 보드별 버튼 */}
-            {boardConfigs.map((config) => (
-              <button
-                key={config.id}
-                onClick={() => handleBoardSelect(config)}
-                className={`p-4 rounded-lg border text-left transition-colors ${
-                  selectedBoard?.id === config.id
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="font-medium">{config.name}</div>
-                <div className="text-sm text-gray-500">{config.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 현재 보드 정보 및 콘텐츠 */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          {/* 보드 정보 헤더 */}
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                {getCurrentTitle()}
-                {selectedBoard && ` (Board ID: ${selectedBoard.id})`}
-              </h3>
-              <p className="text-gray-600 mt-1">{getCurrentDescription()}</p>
-            </div>
-            
-            {/* API 정보 */}
-            <div className="text-right">
-              <div className="text-sm text-gray-500 mb-1">API 호출</div>
-              <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                {currentBoardType === 'all' && 'board_id 없음'}
-                {currentBoardType === 'popular' && 'type=popular'}
-                {currentBoardId && `board_id=${currentBoardId}`}
-              </code>
+                {/* 각 보드별 버튼 */}
+                {boardConfigs.map((config) => (
+                  <button
+                    key={config.id}
+                    onClick={() => handleBoardSelect(config)}
+                    className={`w-full p-3 rounded-lg border text-left transition-colors ${
+                      selectedBoard?.id === config.id
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{config.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{config.description}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* 게시글 목록 영역 */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-800">게시글 목록</h4>
-            
-            {/* 여기에 실제 게시글 목록이 들어갈 예정 */}
-            <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
-              <p className="mb-2">게시글 목록이 여기에 표시됩니다</p>
-              <p className="text-sm">
-                현재 보드 타입: <strong>{currentBoardType}</strong>
-                {currentBoardId && ` | Board ID: ${currentBoardId}`}
-              </p>
+          {/* 우측: 게시글 목록 */}
+          <div className="lg:w-2/3 xl:w-3/4">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              {/* 보드 정보 헤더 */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                <div className="mb-2 sm:mb-0">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {getCurrentTitle()}
+                    {selectedBoard && ` (Board ID: ${selectedBoard.id})`}
+                  </h3>
+                  <p className="text-gray-600 mt-1 text-sm">{getCurrentDescription()}</p>
+                </div>
+                
+                {/* API 정보 */}
+                <div className="text-left sm:text-right">
+                  <div className="text-sm text-gray-500 mb-1">API 호출</div>
+                  <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    {currentBoardType === 'all' && 'board_id 없음'}
+                    {currentBoardType === 'popular' && 'type=popular'}
+                    {currentBoardId && `board_id=${currentBoardId}`}
+                  </code>
+                </div>
+              </div>
+
+              {/* 게시글 목록 영역 */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-800">게시글 목록</h4>
+                  {/* 추가 필터나 정렬 옵션을 여기에 넣을 수 있음 */}
+                </div>
+                
+                {/* 전체보기 */}
+                {currentBoardType === 'all' && (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
+                    <p>전체 게시글 목록 (추후 구현)</p>
+                    <p className="text-sm mt-2">모든 게시판의 글을 표시합니다</p>
+                  </div>
+                )}
+
+                {/* 인기글 */}
+                {currentBoardType === 'popular' && (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
+                    <p>인기글 목록 (추후 구현)</p>
+                    <p className="text-sm mt-2">인기있는 게시글을 표시합니다</p>
+                  </div>
+                )}
+                
+                {/* 특정 보드 게시글 */}
+                {currentBoardType === 'board' && currentBoardId !== null && (
+                  <div className="max-w-none">
+                    <BoardArticleList boardId={currentBoardId} pageSize={10} />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -81,8 +81,38 @@ export function PortalNoticePreview() {
     return;
 }
 
-//Board 페이지 - 일반 게시글
-export function BoardArticleList() {
+interface BoardArticleListProps {
+  boardId: number;
+  pageSize?: number;
+}
+
+// Board 페이지 - 일반 게시글
+export function BoardArticleList({ boardId, pageSize = 10 }: BoardArticleListProps) {
+  const [posts, setPosts] = useState([]);
+  
+  useEffect(() => { 
+    const fetchData = async () => {
+      const Response = await fetchArticles({ pageSize: pageSize, boardId: boardId });
+      setPosts(Response.results);
+    }
+    fetchData();
+  }, [boardId, pageSize]); // dependency에 boardId, pageSize 추가
+  
+  return (
+    <ArticleList
+      posts={posts}
+      showTimeAgo={true}
+      showProfile = {true}
+      showWriter={true}
+      showStatus={true}
+      showHit = {true}
+      titleFontSize='text-[16px]'
+    />
+  )
+}
+
+//Board 페이지 - 전체 게시글
+export function BoardAllArticleList() {
     return;
 }
 

@@ -44,7 +44,7 @@ export default function ArticleList({
   const formatTimeAgo = (dateString: string) => {
     try {
       const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-      return formattedTime.replace(/(약 )|( 미만)/g, ''); // "약 "과 " 미만" 텍스트 제거
+      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, ''); // "약 ", " 미만", "이상", "거의 " 텍스트 제거
     } catch (e) {
       console.error("시간 포맷팅 오류:", e);
       return '';
