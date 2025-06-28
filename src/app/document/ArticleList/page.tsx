@@ -17,7 +17,8 @@ interface UIOptions {
   showRank: boolean;
   showAnswerStatus: boolean;
   showTimeAgo: boolean;
-  showReadStatus: boolean; // 읽은 글 스타일 적용 여부 추가
+  showReadStatus: boolean;
+  showTopic: boolean; // 말머리 표시 옵션 추가
 }
 
 // 옵션 컨트롤 컴포넌트 타입 정의
@@ -93,7 +94,8 @@ export default function ArticleListDocumentPage() {
     showRank: false, 
     showAnswerStatus: false, 
     showTimeAgo: true,
-    showReadStatus: true // 읽은 글 스타일 적용 여부 추가 (기본값: true)
+    showReadStatus: true,
+    showTopic: true // 말머리 표시 기본값 true
   });
   const handleOptionChange = (option: string, value: boolean) => {
     setUiOptions(prev => ({ ...prev, [option]: value }));
@@ -102,7 +104,7 @@ export default function ArticleListDocumentPage() {
   // API 응답 형태에 맞춘 모의 데이터
   const mockPostListResponse: ResponsePostList = {
     num_pages: 1,
-    num_items: 4,
+    num_items: 5,
     current: 1,
     previous: null,
     next: null,
@@ -322,6 +324,66 @@ export default function ArticleListDocumentPage() {
         is_hidden: false,
         parent_topic: null,
         read_status: "-",
+        report_count: 0,
+        updated_at: "",
+        url: "",
+        why_hidden: []
+      },
+      // 아래는 말머리(parent_topic)가 있는 예시
+      {
+        id: 5,
+        title: "말머리(Topic) 테스트용 게시글입니다",
+        created_by: {
+          id: "5",
+          username: "topicuser",
+          profile: {
+            nickname: "토픽유저",
+            picture: "/assets/ServiceAra.svg",
+            user: "5"
+          }
+        },
+        parent_board: {
+          id: 5,
+          slug: "topic",
+          ko_name: "토픽 게시판",
+          en_name: "Topic",
+          is_read_only: false,
+          name_type: 1,
+          group: {
+            id: 1,
+            ko_name: "일반",
+            en_name: "General",
+            slug: "general"
+          },
+          banner_image: "",
+          ko_board_description: "",
+          en_board_description: "",
+          top_threshold: 10
+        },
+        positive_vote_count: 12,
+        negative_vote_count: 0,
+        comment_count: 2,
+        communication_article_status: null,
+        created_at: "2025-06-25T02:00:00Z",
+        hit_count: 77,
+        attachment_type: "NONE",
+        can_override_hidden: false,
+        commented_at: "",
+        content_updated_at: "",
+        days_left: 0,
+        deleted_at: "",
+        hidden_at: "",
+        name_type: 1,
+        is_content_sexual: false,
+        is_content_social: false,
+        is_hidden: false,
+        parent_topic: {
+          id: 101,
+          slug: "notice",
+          ko_name: "공지",
+          en_name: "Notice"
+        },
+        read_status: "N",
         report_count: 0,
         updated_at: "",
         url: "",

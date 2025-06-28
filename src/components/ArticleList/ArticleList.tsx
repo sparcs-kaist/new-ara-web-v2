@@ -19,6 +19,7 @@ interface ArticleListProps {
   showReadStatus?: boolean; // 읽은 글 스타일 적용 여부
   titleFontSize?: string;
   titleFontWeight?: string;
+  showTopic?: boolean; //말머리 표시 여부
 }
 
 export default function ArticleList({ 
@@ -34,7 +35,8 @@ export default function ArticleList({
   showTimeAgo = false,
   showReadStatus = false,
   titleFontSize = "text-base",
-  titleFontWeight = "font-medium"
+  titleFontWeight = "font-medium",
+  showTopic = false,
 }: ArticleListProps) {
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
   const hasBottomContent = hasMetadata;
@@ -77,6 +79,9 @@ export default function ArticleList({
         // 제목 텍스트 색상 결정
         const titleTextColor = showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black';
 
+        // 말머리 정보 추출
+        const topicName = showTopic && post.parent_topic ? post.parent_topic.ko_name : null;
+
         return (
           <li key={post.id} className={`border-b border-gray-200 ${hasBottomContent ? 'pb-2' : 'pb-1'} ${itemHeight} last:border-b-0`}>
             <Link href={`/post/${post.id}`} className="block h-full">
@@ -99,12 +104,21 @@ export default function ArticleList({
                 <div className="w-full flex flex-col justify-center min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <span 
-                        className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor}`}
-                        title={post.title}
-                      >
-                        {post.title}
-                      </span>
+                      <div className="flex items-center min-w-0 flex-1">
+                        {/* 말머리 표시 */}
+                        {topicName && (
+                          <span className="text-ara_red font-medium mr-2 flex-shrink-0">
+                            [{topicName}]
+                          </span>
+                        )}
+                        {/* 제목 */}
+                        <span 
+                          className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor} flex-1`}
+                          title={post.title}
+                        >
+                          {post.title}
+                        </span>
+                      </div>
                       {showAttachment && hasAttachment && (
                         <Image 
                           src="/Image.svg" 
