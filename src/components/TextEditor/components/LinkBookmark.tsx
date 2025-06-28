@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper, ReactNodeViewProps } from '@tiptap/react'
-import PostBookmark from '@/components/TextEditor/PostBookmark'
+import PostBookmark from '@/components/TextEditor/components/PostBookmark'
 
 export interface LinkBookmarkOptions {
   HTMLAttributes: Record<string, unknown>
