@@ -107,6 +107,7 @@ export function BoardArticleList({ boardId, pageSize = 10 }: BoardArticleListPro
       showStatus={true}
       showHit = {true}
       titleFontSize='text-[16px]'
+      showTopic = {true}
     />
   )
 }
