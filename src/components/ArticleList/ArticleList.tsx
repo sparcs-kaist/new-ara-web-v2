@@ -92,13 +92,18 @@ export default function ArticleList({
                   </span>
                 )}
                 {showProfile && (
-                  <Image 
-                    src={profileImage} 
-                    alt="profile" 
-                    width={40} 
-                    height={40} 
-                    className="rounded-full mr-3 flex-shrink-0"
-                  />
+                  <div
+                    className="w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0 relative"
+                    style={{ minWidth: 40, minHeight: 40 }}
+                  >
+                    <Image
+                      src={profileImage}
+                      alt="profile"
+                      width={40}
+                      height={40}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
                 )}
                 
                 <div className="w-full flex flex-col justify-center min-w-0">
