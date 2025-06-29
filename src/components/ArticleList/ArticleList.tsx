@@ -27,6 +27,15 @@ interface ArticleListProps {
   pageSize?: number; // 추가: 페이지당 게시물 수
 }
 
+// 숨김 사유별 대체 텍스트 매핑
+const hiddenReasonText: Record<string, string> = {
+  ADULT_CONTENT: "성인/음란성 게시글 입니다.",
+  SOCIAL_CONTENT: "정치/사회성 게시글 입니다.",
+  REPORTED_CONTENT: "신고 누적으로 차단된 게시물 입니다.",
+  BLOCKED_USER_CONTENT: "차단한 유저의 게시물 입니다.",
+  ACCESS_DENIED_CONTENT: "접근 권한이 없는 게시물 입니다.",
+};
+
 export default function ArticleList({ 
   posts, 
   showWriter = false,
@@ -90,8 +99,20 @@ export default function ArticleList({
           const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
           const timeAgo = post.created_at ? formatTimeAgo(post.created_at) : '';
 
+          // 숨김 처리된 게시물 제목 대체 및 색상 결정
+          let displayTitle = post.title;
+          let isHiddenTitle = false;
+          if ((!displayTitle || displayTitle.trim() === "") && post.why_hidden && post.why_hidden.length > 0) {
+            const reason = post.why_hidden[0];
+            displayTitle = hiddenReasonText[reason] || "숨김 처리된 게시물 입니다.";
+            isHiddenTitle = true;
+          }
+
           // 제목 텍스트 색상 결정
-          const titleTextColor = showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black';
+          const titleTextColor =
+            isHiddenTitle
+              ? 'text-gray-400' // 숨김 게시물은 옅은 회색
+              : (showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black');
 
           // 말머리 정보 추출
           const topicName = showTopic && post.parent_topic ? post.parent_topic.ko_name : null;
@@ -101,22 +122,30 @@ export default function ArticleList({
               <Link href={`/post/${post.id}`} className="block h-full">
                 <div className="flex items-center h-full">
                   {showRank && (
-                    <span className="mr-2 text-ara_red font-bold">
+                    <span className="mr-4 text-ara_red font-bold text-xl">
                       {rank}
                     </span>
                   )}
                   {showProfile && (
                     <div
-                      className="w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0 relative"
+                      className="w-10 h-10 rounded-full overflow-hidden mr-4 flex-shrink-0 relative flex items-center justify-center bg-gray-100"
                       style={{ minWidth: 40, minHeight: 40 }}
                     >
-                      <Image
-                        src={profileImage}
-                        alt="profile"
-                        width={40}
-                        height={40}
-                        className="object-cover w-full h-full"
-                      />
+                      {isHiddenTitle ? (
+                        post.why_hidden?.[0] === "BLOCKED_USER_CONTENT" || post.why_hidden?.[0] === "REPORTED_CONTENT" ? (
+                          <i className="material-icons text-gray-400 text-3xl">voice_over_off</i>
+                        ) : (
+                          <i className="material-icons text-gray-400 text-3xl">visibility_off</i>
+                        )
+                      ) : (
+                        <Image
+                          src={profileImage}
+                          alt="profile"
+                          width={40}
+                          height={40}
+                          className="object-cover w-full h-full"
+                        />
+                      )}
                     </div>
                   )}
                   
@@ -133,9 +162,9 @@ export default function ArticleList({
                           {/* 제목 */}
                           <span 
                             className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor} flex-1`}
-                            title={post.title}
+                            title={displayTitle}
                           >
-                            {post.title}
+                            {displayTitle}
                           </span>
                         </div>
                         {showAttachment && hasAttachment && (
