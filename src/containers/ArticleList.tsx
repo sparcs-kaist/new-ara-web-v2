@@ -90,25 +90,33 @@ interface BoardArticleListProps {
 // Board 페이지 - 일반 게시글
 export function BoardArticleList({ boardId=7, pageSize = 10 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   useEffect(() => { 
     const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize: pageSize, boardId: boardId });
+      const Response = await fetchArticles({ pageSize: pageSize, boardId: boardId, page: currentPage });
       setPosts(Response.results);
+      setTotalPages(Response.num_pages || 1);
     }
     fetchData();
-  }, [boardId, pageSize]); // dependency에 boardId, pageSize 추가
-  
+  }, [boardId, pageSize, currentPage]);
+
   return (
     <ArticleList
       posts={posts}
       showTimeAgo={true}
-      showProfile = {true}
+      showProfile={true}
       showWriter={true}
       showStatus={true}
-      showHit = {true}
+      showAnswerStatus={true}
+      showHit={true}
       titleFontSize='text-[16px]'
-      showTopic = {true}
+      showTopic={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
     />
   )
 }
@@ -122,7 +130,7 @@ export function BoardAllArticleList({ pageSize = 10 }: BoardArticleListProps) {
             setPosts(Response.results);
         }
         fetchData();
-    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+    }, []);
     return(
         <ArticleList
             posts = {posts}
@@ -140,11 +148,6 @@ export function BoardAllArticleList({ pageSize = 10 }: BoardArticleListProps) {
         >
         </ArticleList>
     )
-}
-
-//Board 페이지 - 학교에게 전합니다. (소통) 게시글
-export function BoardToSchoolArticleList() {
-    return;
 }
 
 //Board 페이지 - 최근 본 게시글
@@ -173,7 +176,7 @@ export function BoardBookmarkedArticlesList() {
     const [posts, setPosts] = useState([]);
     useEffect(() => {
         const fetchData = async() => {
-            const Response = await fetchArchives({pageSize: 5});
+            const Response = await fetchArchives();
             setPosts(Response.results);
         }
         fetchData();
