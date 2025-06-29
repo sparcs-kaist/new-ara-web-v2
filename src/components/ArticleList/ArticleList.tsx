@@ -16,18 +16,20 @@ interface ArticleListProps {
   showRank?: boolean;
   showAnswerStatus?: boolean;
   showTimeAgo?: boolean;
-  showReadStatus?: boolean; // 읽은 글 스타일 적용 여부
+  showReadStatus?: boolean;
   titleFontSize?: string;
   titleFontWeight?: string;
-  showTopic?: boolean; //말머리 표시 여부
-  pagination?: boolean; // 페이지네이션 표시 여부
-  currentPage?: number; // 현재 페이지
-  totalPages?: number; //전체 페이지
+  showTopic?: boolean;
+  pagination?: boolean;
+  currentPage?: number;
+  totalPages?: number;
   onPageChange?: (page: number) => void;
-  pageSize?: number; // 추가: 페이지당 게시물 수
+  pageSize?: number;
+
+  gapBetweenPosts?: number; // 게시글들 사이 간격
+  gapBetweenTitleAndMeta?: number; // 제목과 메타데이터 사이 간격
 }
 
-// 숨김 사유별 대체 텍스트 매핑
 const hiddenReasonText: Record<string, string> = {
   ADULT_CONTENT: "성인/음란성 게시글 입니다.",
   SOCIAL_CONTENT: "정치/사회성 게시글 입니다.",
@@ -37,35 +39,36 @@ const hiddenReasonText: Record<string, string> = {
 };
 
 export default function ArticleList({ 
-  posts, 
-  showWriter = false,
-  showBoard = false,
-  showProfile = false,
-  showHit = false,
-  showStatus = false,
-  showAttachment = false,
-  showRank = false,
-  showAnswerStatus = false,
-  showTimeAgo = false,
-  showReadStatus = false,
-  titleFontSize = "text-base",
-  titleFontWeight = "font-medium",
-  showTopic = false,
-  pagination = false,
-  currentPage = 1,
-  pageSize = 10, // 추가: 기본값 10
-  totalPages = 1,
-  onPageChange,
+  posts, // 게시글 목록
+  showWriter = false, // 작성자 표시
+  showBoard = false, // 게시판 표시
+  showProfile = false, // 작성자 프로필 사진 표시
+  showHit = false, // 조회수 표시
+  showStatus = false, // 좋아요, 싫어요, 댓글 수 표시
+  showAttachment = false, // 첨부 파일 여부 표시
+  showRank = false, // 순번 표시
+  showAnswerStatus = false, // (학교에게 전합니다) 답변 상태 표시
+  showTimeAgo = false, // 작성 시간 표시
+  showReadStatus = false, // 읽은 글 회색 처리
+  titleFontSize = "text-base", // 제목 폰트 사이즈
+  titleFontWeight = "font-medium", // 제목 폰트 굵기
+  showTopic = false, // 말머리 표시
+  pagination = false, // 페이지네이션 표시
+  currentPage = 1, // 현재 페이지
+  pageSize = 10, // 페이지당 게시글 수
+  totalPages = 1, // 전체 페이지 수
+  onPageChange, // 페이지 변경 핸들러
+  gapBetweenPosts = 8, // 게시글들 사이 간격 (px 단위)
+  gapBetweenTitleAndMeta = 4, // 제목과 메타데이터 사이 간격 (px 단위)
 }: ArticleListProps) {
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
   const hasBottomContent = hasMetadata;
   const itemHeight = hasBottomContent ? "h-[56px]" : "h-[40px]";
 
-  // 시간 포맷팅 함수
   const formatTimeAgo = (dateString: string) => {
     try {
       const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, ''); // "약 ", " 미만", "이상", "거의 " 텍스트 제거
+      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, '');
     } catch (e) {
       console.error("시간 포맷팅 오류:", e);
       return '';
@@ -74,15 +77,10 @@ export default function ArticleList({
 
   return (
     <>
-      <ul className="space-y-2">
+      <ul style={{ paddingBottom: `${gapBetweenPosts}px` }}>
         {posts.map((post, index) => {
-          // 페이지네이션을 고려한 rank 계산
           const rank = (currentPage - 1) * pageSize + index + 1;
-          
-          // ResponsePost에서 필요한 값 추출
           const hasAttachment = post.attachment_type !== 'NONE';
-          
-          // communication_article_status가 null인 경우 처리
           const hasAnswerStatus = post.communication_article_status !== null;
           const answered = hasAnswerStatus && post.communication_article_status !== null && post.communication_article_status > 0;
           const answerStatusText = hasAnswerStatus
@@ -95,11 +93,10 @@ export default function ArticleList({
                 ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600') 
                 : 'text-red-600')
             : '';
-          
+
           const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
           const timeAgo = post.created_at ? formatTimeAgo(post.created_at) : '';
 
-          // 숨김 처리된 게시물 제목 대체 및 색상 결정
           let displayTitle = post.title;
           let isHiddenTitle = false;
           if ((!displayTitle || displayTitle.trim() === "") && post.why_hidden && post.why_hidden.length > 0) {
@@ -108,17 +105,20 @@ export default function ArticleList({
             isHiddenTitle = true;
           }
 
-          // 제목 텍스트 색상 결정
           const titleTextColor =
             isHiddenTitle
-              ? 'text-gray-400' // 숨김 게시물은 옅은 회색
+              ? 'text-gray-400'
               : (showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black');
 
-          // 말머리 정보 추출
           const topicName = showTopic && post.parent_topic ? post.parent_topic.ko_name : null;
 
           return (
-            <li key={post.id} className={`border-b border-gray-200 ${hasBottomContent ? 'pb-2' : 'pb-1'} ${itemHeight} last:border-b-0`}>
+            <li
+              key={post.id}
+              className={`border-b border-gray-200 last:border-b-0`}
+              style={{ paddingBottom: `${gapBetweenPosts}px`,
+                       paddingTop: `${gapBetweenPosts}px` }}
+            >
               <Link href={`/post/${post.id}`} className="block h-full">
                 <div className="flex items-center h-full">
                   {showRank && (
@@ -153,13 +153,11 @@ export default function ArticleList({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
                         <div className="flex items-center min-w-0 flex-1">
-                          {/* 말머리 표시 */}
                           {topicName && (
                             <span className="text-ara_red font-medium mr-2 flex-shrink-0">
                               [{topicName}]
                             </span>
                           )}
-                          {/* 제목 */}
                           <span 
                             className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor} flex-1`}
                             title={displayTitle}
@@ -179,10 +177,7 @@ export default function ArticleList({
                       </div>
                       
                       <div className="flex items-center text-[12px] text-gray-500 ml-2 flex-shrink-0">
-                        {[
-                          showTimeAgo && timeAgo,
-                          showHit && post.hit_count !== undefined && `조회 ${post.hit_count}`
-                        ]
+                        {[ showTimeAgo && timeAgo, showHit && post.hit_count !== undefined && `조회 ${post.hit_count}` ]
                           .filter(Boolean)
                           .map((item, i, arr) => (
                             <span key={i}>
@@ -191,12 +186,9 @@ export default function ArticleList({
                             </span>
                           ))
                         }
-                        
                         {!hasBottomContent && showStatus && (
                           <>
-                            {(showTimeAgo && timeAgo) || (showHit && post.hit_count !== undefined) ? 
-                              <span className="mx-1">·</span> : null
-                            }
+                            {(showTimeAgo && timeAgo) || (showHit && post.hit_count !== undefined) ? <span className="mx-1">·</span> : null}
                             <Like 
                               like={post.positive_vote_count} 
                               dislike={post.negative_vote_count} 
@@ -208,13 +200,9 @@ export default function ArticleList({
                     </div>
                     
                     {hasBottomContent && (
-                      <div className="flex w-full mt-1 justify-between items-center">
+                      <div className={`flex w-full justify-between items-center`} style={{ marginTop: `${gapBetweenTitleAndMeta}px` }}>
                         <div className="text-[12px] text-gray-500 flex items-center min-w-0 flex-1">
-                          {[
-                            showBoard && post.parent_board?.ko_name,
-                            showWriter && post.created_by?.profile?.nickname,
-                            showAnswerStatus && answerStatusText // answerStatusText가 null이면 표시하지 않음
-                          ]
+                          {[ showBoard && post.parent_board?.ko_name, showWriter && post.created_by?.profile?.nickname, showAnswerStatus && answerStatusText ]
                             .filter(Boolean)
                             .map((item, i, arr) => (
                               <span key={i} className={`
@@ -246,10 +234,9 @@ export default function ArticleList({
           );
         })}
       </ul>
-      {/* 페이지네이션 UI */}
+
       {pagination && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-4 select-none">
-          {/* 이전 그룹(<) */}
           <button
             className="px-2 py-1 rounded"
             onClick={() => onPageChange && onPageChange(Math.max(1, Math.floor((currentPage - 1) / 10) * 10))}
@@ -262,13 +249,10 @@ export default function ArticleList({
               width={8}
               height={8}
               className={`rotate-180 transition
-                ${currentPage <= 10
-                  ? 'grayscale brightness-100'
-                  : 'grayscale brightness-50'
-                }`}
+                ${currentPage <= 10 ? 'grayscale brightness-100' : 'grayscale brightness-50'}`}
             />
           </button>
-          {/* 숫자 버튼 */}
+
           {Array.from({ length: Math.min(10, totalPages - Math.floor((currentPage - 1) / 10) * 10) }).map((_, idx) => {
             const page = Math.floor((currentPage - 1) / 10) * 10 + idx + 1;
             return (
@@ -282,7 +266,7 @@ export default function ArticleList({
               </button>
             );
           })}
-          {/* 다음 그룹(>) */}
+
           <button
             className="px-2 py-1 rounded"
             onClick={() => onPageChange && onPageChange(Math.min(totalPages, Math.floor((currentPage - 1) / 10 + 1) * 10 + 1))}

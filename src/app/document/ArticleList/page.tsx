@@ -111,10 +111,13 @@ export default function ArticleListDocumentPage() {
     showTopic: true
   });
 
-  // 페이지네이션 테스트용 state 추가
   const [pagination, setPagination] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10; // 테스트용 전체 페이지 수
+  const totalPages = 10;
+
+  // px 단위로 간격 조절
+  const [gapBetweenPosts, setGapBetweenPosts] = useState(8); // 기본값 8px
+  const [gapBetweenTitleAndMeta, setGapBetweenTitleAndMeta] = useState(4); // 기본값 4px
 
   const handleOptionChange = (option: string, value: boolean) => {
     setUiOptions(prev => ({ ...prev, [option]: value }));
@@ -414,7 +417,7 @@ export default function ArticleListDocumentPage() {
   return (
     <div className="max-w-[1200px] mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">ArticleList Component Document</h1>
-      
+
       <div className="mb-6">
         <OptionControl 
           options={uiOptions}
@@ -428,10 +431,44 @@ export default function ArticleListDocumentPage() {
           pagination={pagination}
           onPaginationChange={setPagination}
         />
+
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <label className="block text-sm font-medium mb-2">
+              게시글 간 세로 간격 (gapBetweenPosts, px): {gapBetweenPosts}px
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="40"
+              value={gapBetweenPosts}
+              onChange={e => setGapBetweenPosts(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <label className="block text-sm font-medium mb-2">
+              제목-메타 간격 (gapBetweenTitleAndMeta, px): {gapBetweenTitleAndMeta}px
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="40"
+              value={gapBetweenTitleAndMeta}
+              onChange={e => setGapBetweenTitleAndMeta(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
       </div>
-      
+
       <div className="flex justify-center">
-        <div className="w-full p-4 rounded-lg shadow-sm transition-all duration-300 bg-white border" style={{ maxWidth: `${containerWidth}px` }}>
+        <div
+          className="w-full p-4 rounded-lg shadow-sm transition-all duration-300 bg-white border"
+          style={{ maxWidth: `${containerWidth}px` }}
+        >
           <Link href="#" className="flex items-center space-x-2 mb-[10px]">
             <h2 className="text-[20px] font-semibold">🧪 컴포넌트 테스트</h2>
             <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -445,6 +482,8 @@ export default function ArticleListDocumentPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
+            gapBetweenPosts={gapBetweenPosts}
+            gapBetweenTitleAndMeta={gapBetweenTitleAndMeta}
           />
         </div>
       </div>
