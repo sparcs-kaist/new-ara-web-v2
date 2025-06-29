@@ -24,6 +24,7 @@ interface ArticleListProps {
   currentPage?: number; // 현재 페이지
   totalPages?: number; //전체 페이지
   onPageChange?: (page: number) => void;
+  pageSize?: number; // 추가: 페이지당 게시물 수
 }
 
 export default function ArticleList({ 
@@ -43,6 +44,7 @@ export default function ArticleList({
   showTopic = false,
   pagination = false,
   currentPage = 1,
+  pageSize = 10, // 추가: 기본값 10
   totalPages = 1,
   onPageChange,
 }: ArticleListProps) {
@@ -65,6 +67,9 @@ export default function ArticleList({
     <>
       <ul className="space-y-2">
         {posts.map((post, index) => {
+          // 페이지네이션을 고려한 rank 계산
+          const rank = (currentPage - 1) * pageSize + index + 1;
+          
           // ResponsePost에서 필요한 값 추출
           const hasAttachment = post.attachment_type !== 'NONE';
           
@@ -96,8 +101,8 @@ export default function ArticleList({
               <Link href={`/post/${post.id}`} className="block h-full">
                 <div className="flex items-center h-full">
                   {showRank && (
-                    <span className="text-[22px] font-bold text-ara_red mr-3 flex-shrink-0">
-                      {index + 1}
+                    <span className="mr-2 text-ara_red font-bold">
+                      {rank}
                     </span>
                   )}
                   {showProfile && (
