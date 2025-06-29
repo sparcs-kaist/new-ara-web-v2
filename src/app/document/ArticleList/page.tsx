@@ -42,8 +42,10 @@ const OptionControl = ({
   titleFontSize, 
   onFontSizeChange, 
   titleFontWeight, 
-  onFontWeightChange 
-}: OptionControlProps) => {
+  onFontWeightChange,
+  pagination, // 추가
+  onPaginationChange, // 추가
+}: OptionControlProps & { pagination: boolean; onPaginationChange: (v: boolean) => void }) => {
   return (
     <div className="p-4 bg-white rounded-lg shadow-sm mb-4 border border-gray-200">
       <h3 className="text-lg font-bold mb-3">UI 옵션 설정</h3>
@@ -68,13 +70,24 @@ const OptionControl = ({
         </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {Object.entries(options).map(([key, value]) => (
           <div key={key} className="flex items-center">
             <input type="checkbox" id={key} checked={value} onChange={() => onChange(key, !value)} className="mr-2" />
             <label htmlFor={key} className="text-sm">{key.replace('show', '')}</label>
           </div>
         ))}
+      </div>
+      {/* 페이지네이션 옵션도 UI 옵션에 포함 */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="pagination"
+          checked={pagination}
+          onChange={() => onPaginationChange(!pagination)}
+          className="mr-2"
+        />
+        <label htmlFor="pagination" className="text-sm font-medium">pagination (페이지네이션)</label>
       </div>
     </div>
   );
@@ -95,8 +108,14 @@ export default function ArticleListDocumentPage() {
     showAnswerStatus: false, 
     showTimeAgo: true,
     showReadStatus: true,
-    showTopic: true // 말머리 표시 기본값 true
+    showTopic: true
   });
+
+  // 페이지네이션 테스트용 state 추가
+  const [pagination, setPagination] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10; // 테스트용 전체 페이지 수
+
   const handleOptionChange = (option: string, value: boolean) => {
     setUiOptions(prev => ({ ...prev, [option]: value }));
   };
@@ -398,8 +417,16 @@ export default function ArticleListDocumentPage() {
       
       <div className="mb-6">
         <OptionControl 
-          options={uiOptions} onChange={handleOptionChange} containerWidth={containerWidth} onWidthChange={setContainerWidth}
-          titleFontSize={titleFontSize} onFontSizeChange={setTitleFontSize} titleFontWeight={titleFontWeight} onFontWeightChange={setTitleFontWeight}
+          options={uiOptions}
+          onChange={handleOptionChange}
+          containerWidth={containerWidth}
+          onWidthChange={setContainerWidth}
+          titleFontSize={titleFontSize}
+          onFontSizeChange={setTitleFontSize}
+          titleFontWeight={titleFontWeight}
+          onFontWeightChange={setTitleFontWeight}
+          pagination={pagination}
+          onPaginationChange={setPagination}
         />
       </div>
       
@@ -413,7 +440,11 @@ export default function ArticleListDocumentPage() {
             posts={mockPostListResponse.results} 
             titleFontSize={titleFontSize} 
             titleFontWeight={titleFontWeight} 
-            {...uiOptions} 
+            {...uiOptions}
+            pagination={pagination}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         </div>
       </div>
