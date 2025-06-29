@@ -42,8 +42,10 @@ const OptionControl = ({
   titleFontSize, 
   onFontSizeChange, 
   titleFontWeight, 
-  onFontWeightChange 
-}: OptionControlProps) => {
+  onFontWeightChange,
+  pagination, // 추가
+  onPaginationChange, // 추가
+}: OptionControlProps & { pagination: boolean; onPaginationChange: (v: boolean) => void }) => {
   return (
     <div className="p-4 bg-white rounded-lg shadow-sm mb-4 border border-gray-200">
       <h3 className="text-lg font-bold mb-3">UI 옵션 설정</h3>
@@ -68,13 +70,24 @@ const OptionControl = ({
         </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {Object.entries(options).map(([key, value]) => (
           <div key={key} className="flex items-center">
             <input type="checkbox" id={key} checked={value} onChange={() => onChange(key, !value)} className="mr-2" />
             <label htmlFor={key} className="text-sm">{key.replace('show', '')}</label>
           </div>
         ))}
+      </div>
+      {/* 페이지네이션 옵션도 UI 옵션에 포함 */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="pagination"
+          checked={pagination}
+          onChange={() => onPaginationChange(!pagination)}
+          className="mr-2"
+        />
+        <label htmlFor="pagination" className="text-sm font-medium">pagination (페이지네이션)</label>
       </div>
     </div>
   );
@@ -95,8 +108,17 @@ export default function ArticleListDocumentPage() {
     showAnswerStatus: false, 
     showTimeAgo: true,
     showReadStatus: true,
-    showTopic: true // 말머리 표시 기본값 true
+    showTopic: true
   });
+
+  const [pagination, setPagination] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 10;
+
+  // px 단위로 간격 조절
+  const [gapBetweenPosts, setGapBetweenPosts] = useState(8); // 기본값 8px
+  const [gapBetweenTitleAndMeta, setGapBetweenTitleAndMeta] = useState(4); // 기본값 4px
+
   const handleOptionChange = (option: string, value: boolean) => {
     setUiOptions(prev => ({ ...prev, [option]: value }));
   };
@@ -395,16 +417,58 @@ export default function ArticleListDocumentPage() {
   return (
     <div className="max-w-[1200px] mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">ArticleList Component Document</h1>
-      
+
       <div className="mb-6">
         <OptionControl 
-          options={uiOptions} onChange={handleOptionChange} containerWidth={containerWidth} onWidthChange={setContainerWidth}
-          titleFontSize={titleFontSize} onFontSizeChange={setTitleFontSize} titleFontWeight={titleFontWeight} onFontWeightChange={setTitleFontWeight}
+          options={uiOptions}
+          onChange={handleOptionChange}
+          containerWidth={containerWidth}
+          onWidthChange={setContainerWidth}
+          titleFontSize={titleFontSize}
+          onFontSizeChange={setTitleFontSize}
+          titleFontWeight={titleFontWeight}
+          onFontWeightChange={setTitleFontWeight}
+          pagination={pagination}
+          onPaginationChange={setPagination}
         />
+
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <label className="block text-sm font-medium mb-2">
+              게시글 간 세로 간격 (gapBetweenPosts, px): {gapBetweenPosts}px
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="40"
+              value={gapBetweenPosts}
+              onChange={e => setGapBetweenPosts(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <label className="block text-sm font-medium mb-2">
+              제목-메타 간격 (gapBetweenTitleAndMeta, px): {gapBetweenTitleAndMeta}px
+            </label>
+            <input
+              type="number"
+              step="1"
+              min="0"
+              max="40"
+              value={gapBetweenTitleAndMeta}
+              onChange={e => setGapBetweenTitleAndMeta(Number(e.target.value))}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
       </div>
-      
+
       <div className="flex justify-center">
-        <div className="w-full p-4 rounded-lg shadow-sm transition-all duration-300 bg-white border" style={{ maxWidth: `${containerWidth}px` }}>
+        <div
+          className="w-full p-4 rounded-lg shadow-sm transition-all duration-300 bg-white border"
+          style={{ maxWidth: `${containerWidth}px` }}
+        >
           <Link href="#" className="flex items-center space-x-2 mb-[10px]">
             <h2 className="text-[20px] font-semibold">🧪 컴포넌트 테스트</h2>
             <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
@@ -413,7 +477,13 @@ export default function ArticleListDocumentPage() {
             posts={mockPostListResponse.results} 
             titleFontSize={titleFontSize} 
             titleFontWeight={titleFontWeight} 
-            {...uiOptions} 
+            {...uiOptions}
+            pagination={pagination}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            gapBetweenPosts={gapBetweenPosts}
+            gapBetweenTitleAndMeta={gapBetweenTitleAndMeta}
           />
         </div>
       </div>

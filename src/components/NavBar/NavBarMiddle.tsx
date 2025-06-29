@@ -23,8 +23,16 @@ const DropdownArrow = ({ isOpen, isHovered }: { isOpen: boolean, isHovered: bool
   </svg>
 );
 
+interface ApiBoard {
+  id: number;
+  ko_name: string;
+  name_type: number; // 1=Regular, 3=Regular+Anonymous, 4=Realname only
+  topics: Array<{ id: number; ko_name: string }>;
+  slug: string;
+}
+
 export default function NavBarMiddle() {
-  const [boardList, setBoardList] = useState<any[]>([]);
+  const [boardList, setBoardList] = useState<ApiBoard[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
@@ -185,7 +193,7 @@ export default function NavBarMiddle() {
         )}
       </div>
 
-      <Link href="/board/top" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">인기글</Link>
+      <Link href="/board?board=popular" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">인기글</Link>
     </div>
   );
 }
