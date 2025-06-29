@@ -23,8 +23,16 @@ const DropdownArrow = ({ isOpen, isHovered }: { isOpen: boolean, isHovered: bool
   </svg>
 );
 
+interface ApiBoard {
+  id: number;
+  ko_name: string;
+  name_type: number; // 1=Regular, 3=Regular+Anonymous, 4=Realname only
+  topics: Array<{ id: number; ko_name: string }>;
+  slug: string;
+}
+
 export default function NavBarMiddle() {
-  const [boardList, setBoardList] = useState<any[]>([]);
+  const [boardList, setBoardList] = useState<ApiBoard[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 

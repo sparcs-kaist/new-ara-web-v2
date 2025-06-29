@@ -252,7 +252,8 @@ export function BoardBookmarkedArticlesList() {
     useEffect(() => {
         const fetchData = async() => {
             const Response = await fetchArchives();
-            // parent_article만 추출 (Response.results는 ArticleArchive 객체의 배열)
+            //@ TODO : 알맞는 타입 추가하기
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const articles = (Response.results || []).map((item: any) => item.parent_article);
             setPosts(articles);
         }

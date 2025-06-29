@@ -101,12 +101,6 @@ export default function Board() {
     return '전체보기';
   };
 
-  const getCurrentDescription = () => {
-    if (currentBoardType === 'popular') return POPULAR_BOARD.description;
-    if (selectedBoard) return selectedBoard.ko_banner_description || selectedBoard.description;
-    return '모든 게시판의 글을 한번에 볼 수 있습니다';
-  };
-
   useEffect(() => {
     setSelectedTopicId('');
   }, [currentBoardId]);

@@ -63,7 +63,6 @@ export default function ArticleList({
 }: ArticleListProps) {
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
   const hasBottomContent = hasMetadata;
-  const itemHeight = hasBottomContent ? "h-[56px]" : "h-[40px]";
 
   const formatTimeAgo = (dateString: string) => {
     try {

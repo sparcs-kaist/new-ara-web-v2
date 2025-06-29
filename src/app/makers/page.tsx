@@ -11,8 +11,28 @@ const abbr = {
   DV: 'Developer'
 };
 
+// 타입 정의 추가
+type MemberString = string; // 예: 'killerwhale:박승범'
+type MemberArray = [string, string]; // 예: ['killerwhale:박승범', '2025~']
+type Member = MemberString | MemberArray;
+
+type ProjectMembers = {
+  SO?: MemberString[];
+  PM?: Member[];
+  DS?: MemberString[];
+  DV?: MemberString[];
+};
+
+type Project = {
+  name: string;
+  period: string;
+  launched?: string;
+  description?: string;
+  members: ProjectMembers;
+};
+
 // 프로젝트 데이터 - 모든 프로젝트 포함
-const projects = [
+const projects: Project[] = [
   {
     name: 'SPARCS BBS', // Eagle BBs 기반 아라
     period: '1991~1998',
@@ -183,7 +203,7 @@ const projects = [
 
 export default function Makers() {
   const [selected, setSelected] = useState(9); // 기본 선택은 뉴아라 (마지막 항목)
-  const positions = ['SO', 'PM', 'DS', 'DV'];
+  const positions: (keyof ProjectMembers)[] = ['SO', 'PM', 'DS', 'DV'];
 
   useEffect(() => {
     document.body.style.background = '#fafafa';
@@ -193,28 +213,28 @@ export default function Makers() {
   }, []);
 
   // 프로젝트 이름 포맷팅
-  const projectName = (project: any) => {
+  const projectName = (project: Project) => {
     return project.launched ? `🚀 ${project.name}` : project.name;
   };
 
   // 멤버 이름 추출
-  const memberName = (member: any) => {
+  const memberName = (member: Member) => {
     if (Array.isArray(member)) member = member[0];
     return member.split(':')[1];
   };
 
   // 멤버 닉네임 추출
-  const memberNickname = (member: any) => {
+  const memberNickname = (member: Member) => {
     if (Array.isArray(member)) member = member[0];
     return member.split(':')[0];
   };
 
   // 멤버 포지션 포맷팅
-  const memberPosition = (member: any, position: string) => {
+  const memberPosition = (member: Member, position: keyof typeof abbr) => {
     if (Array.isArray(member)) {
-      return `${member[1]} ${abbr[position as keyof typeof abbr]}`;
+      return `${member[1]} ${abbr[position]}`;
     } else {
-      return abbr[position as keyof typeof abbr];
+      return abbr[position];
     }
   };
 
@@ -254,8 +274,8 @@ export default function Makers() {
         Member
       </h2>
       <div className="grid gap-[15px] justify-center mt-[48px] mb-[10px] grid-cols-5 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1">
-        {positions.map(position => 
-          projects[selected].members[position as keyof typeof projects[typeof selected]['members']]?.map((member: any) => (
+        {positions.map(position =>
+          projects[selected].members[position]?.map((member) => (
             <MakerCard
               key={Array.isArray(member) ? member[0] : member}
               title={memberName(member)}

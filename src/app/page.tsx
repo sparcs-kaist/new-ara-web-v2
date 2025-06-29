@@ -1,7 +1,7 @@
 "use client";
 
 import SearchBar from "@/components/searchBar";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
