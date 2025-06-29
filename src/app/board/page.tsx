@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
-import { BoardArticleList } from '@/containers/ArticleList'
+import { BoardArticleList, BoardAllArticleList, BoardHotArticleList } from '@/containers/ArticleList'
 import { fetchBoardList } from '@/lib/api/board'
 import Image from 'next/image'
 
@@ -275,16 +275,14 @@ export default function Board() {
                 </div>
                 {/* 전체보기 */}
                 {currentBoardType === 'all' && (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
-                    <p>전체 게시글 목록 (추후 구현)</p>
-                    <p className="text-sm mt-2">모든 게시판의 글을 표시합니다</p>
+                  <div className="max-w-none">
+                    <BoardAllArticleList/>
                   </div>
                 )}
                 {/* 인기글 */}
                 {currentBoardType === 'popular' && (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500">
-                    <p>인기글 목록 (추후 구현)</p>
-                    <p className="text-sm mt-2">인기있는 게시글을 표시합니다</p>
+                  <div className="max-w-none">
+                    <BoardHotArticleList/>
                   </div>
                 )}
                 {/* 특정 보드 게시글 */}

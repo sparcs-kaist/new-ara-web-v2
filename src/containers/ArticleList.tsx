@@ -82,12 +82,12 @@ export function PortalNoticePreview() {
 }
 
 interface BoardArticleListProps {
-  boardId: number;
+  boardId?: number;
   pageSize?: number;
 }
 
 // Board 페이지 - 일반 게시글
-export function BoardArticleList({ boardId, pageSize = 10 }: BoardArticleListProps) {
+export function BoardArticleList({ boardId=7, pageSize = 10 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   
   useEffect(() => { 
@@ -113,8 +113,32 @@ export function BoardArticleList({ boardId, pageSize = 10 }: BoardArticleListPro
 }
 
 //Board 페이지 - 전체 게시글
-export function BoardAllArticleList() {
-    return;
+export function BoardAllArticleList({ pageSize = 10 }: BoardArticleListProps) {
+    const [posts, setPosts] = useState([]);
+    useEffect(() => {
+        const fetchData = async () => {
+            const Response = await fetchArticles({pageSize: pageSize});
+            setPosts(Response.results);
+        }
+        fetchData();
+    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+    return(
+        <ArticleList
+            posts = {posts}
+            showBoard = {true}
+            showTimeAgo = {true}
+            showAttachment = {true}
+            showProfile = {true}
+            showWriter = {true}
+            titleFontSize='text-[16px]'
+            showTopic = {true}
+            showHit = {true}
+            showStatus = {true}
+            showAnswerStatus = {true}
+
+        >
+        </ArticleList>
+    )
 }
 
 //Board 페이지 - 학교에게 전합니다. (소통) 게시글
@@ -128,8 +152,32 @@ export function BoardBookmarkedArticleList() {
 }
 
 //Board 페이지 - 인기 게시글
-export function BoardHotArticleList() {
-    return;
+export function BoardHotArticleList({ pageSize = 10 }: BoardArticleListProps) {
+    const [posts, setPosts] = useState([]);
+    useEffect(() => {
+        const fetchData = async () => {
+            const Response = await fetchTopArticles({pageSize: pageSize});
+            setPosts(Response.results);
+        }
+        fetchData();
+    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+    return(
+        <ArticleList
+            posts = {posts}
+            showBoard = {true}
+            showTimeAgo = {true}
+            showAttachment = {true}
+            showProfile = {true}
+            showWriter = {true}
+            titleFontSize='text-[16px]'
+            showTopic = {true}
+            showHit = {true}
+            showStatus = {true}
+            showAnswerStatus = {true}
+            showRank = {true}
+        >
+        </ArticleList>
+    )
 }
 
 //Profile 페이지 - 내가 쓴 글
