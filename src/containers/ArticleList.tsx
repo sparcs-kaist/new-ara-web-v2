@@ -1,6 +1,6 @@
 //Dumb Component (ArticleList)를 사용하는 모든 component들의 Set입니다.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
@@ -88,26 +88,32 @@ interface BoardArticleListProps {
   query?: string; // 검색어 prop 추가
 }
 
-// Board 페이지 - 일반 게시글
+// 🔸 Board 페이지 - 일반 게시글
 export function BoardArticleList({ boardId = 7, pageSize = 10, topicId, query }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
 
   useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
+
     const fetchData = async () => {
       const Response = await fetchArticles({
         pageSize,
         boardId,
         page: currentPage,
         topicId,
-        query, // 검색어 적용
+        query,
       });
-      setPosts(Response.results);
-      setTotalPages(Response.num_pages || 1);
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
     };
     fetchData();
-  }, [boardId, pageSize, currentPage, topicId, query]); // query 의존성 추가
+  }, [boardId, pageSize, currentPage, topicId, query]);
 
   return (
     <ArticleList
@@ -128,40 +134,95 @@ export function BoardArticleList({ boardId = 7, pageSize = 10, topicId, query }:
   );
 }
 
-//Board 페이지 - 전체 게시글
+// 검색을 지원하는 Board 페이지의 컴포넌트들의 경우
+// state update를 fetch한 순서대로 유지하기 위해 useRef를 사용합니다. (ABBA 문제 방지)
+// 가장 최근에 요청한 fetch의 state만을 반영할 수 있도록 합니다.
+// 다른 방법으로는 Abort Controller를 사용하여 이전 요청을 취소하는 방법이 있지만,
+// 이 경우에는 useRef를 사용하여 요청 토큰을 관리하는 것이 더 간단하고 효과적이다.
+
+// Board 페이지 - 전체 게시글
 export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListProps) {
-    const [posts, setPosts] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const Response = await fetchArticles({ pageSize, page: currentPage, query });
-            setPosts(Response.results);
-            setTotalPages(Response.num_pages || 1);
-        }
-        fetchData();
-    }, [pageSize, currentPage, query]);
+  useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
 
-    return(
-        <ArticleList
-            posts={posts}
-            showBoard={true}
-            showTimeAgo={true}
-            showAttachment={true}
-            showProfile={true}
-            showWriter={true}
-            titleFontSize='text-[16px]'
-            showTopic={true}
-            showHit={true}
-            showStatus={true}
-            showAnswerStatus={true}
-            pagination={true}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-        />
-    )
+    const fetchData = async () => {
+      const Response = await fetchArticles({ pageSize, page: currentPage, query });
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
+    };
+    fetchData();
+  }, [pageSize, currentPage, query]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showBoard={true}
+      showTimeAgo={true}
+      showAttachment={true}
+      showProfile={true}
+      showWriter={true}
+      titleFontSize='text-[16px]'
+      showTopic={true}
+      showHit={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
+}
+
+// 🔸 Board 페이지 - 인기 게시글
+export function BoardHotArticleList({ pageSize = 10, query }: BoardArticleListProps) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
+
+  useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
+
+    const fetchData = async () => {
+      const Response = await fetchTopArticles({ pageSize, page: currentPage, query });
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
+    };
+    fetchData();
+  }, [pageSize, currentPage, query]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showBoard={true}
+      showTimeAgo={true}
+      showAttachment={true}
+      showProfile={true}
+      showWriter={true}
+      titleFontSize='text-[16px]'
+      showTopic={true}
+      showHit={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      showRank={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
 }
 
 //Board 페이지 - 최근 본 게시글
@@ -206,42 +267,6 @@ export function BoardBookmarkedArticlesList() {
     )
 }
 
-//Board 페이지 - 인기 게시글
-export function BoardHotArticleList({ pageSize = 10 }: BoardArticleListProps) {
-    const [posts, setPosts] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const Response = await fetchTopArticles({ pageSize, page: currentPage });
-            setPosts(Response.results);
-            setTotalPages(Response.num_pages || 1);
-        }
-        fetchData();
-    }, [pageSize, currentPage]);
-
-    return(
-        <ArticleList
-            posts={posts}
-            showBoard={true}
-            showTimeAgo={true}
-            showAttachment={true}
-            showProfile={true}
-            showWriter={true}
-            titleFontSize='text-[16px]'
-            showTopic={true}
-            showHit={true}
-            showStatus={true}
-            showAnswerStatus={true}
-            showRank={true}
-            pagination={true}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-        />
-    )
-}
 
 //Profile 페이지 - 내가 쓴 글
 export function ProfileMyArticleList () {

@@ -1,6 +1,7 @@
 "use client";
 
 import SearchBar from "@/components/searchBar";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +13,7 @@ import OtherServices from "@/components/UserMenu/OtherServices";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
+  const router = useRouter();
   const [, setHotArticles] = useState<ResponsePost[]>([]);
   const [, setRecentArticles] = useState<ResponsePost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,19 +37,32 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="max-w-[1280px] mx-auto"> {/* 최대 너비 추가 증가 */}
+    <div className="max-w-[1280px] mx-auto">
       {/* 상단 그라데이션 배경 적용 */}
       <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
       
-      <div className="h-[110px] w-full flex justify-center items-start pt-4">
-        <SearchBar
-          value={inputValue}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
-        />
+      <div className="h-[110px] w-full flex justify-center items-center pt-4 relative">
+        <form
+          className="w-full max-w-[600px] mx-auto flex justify-center"
+          onSubmit={e => {
+            e.preventDefault();
+            if (inputValue.trim()) {
+              // board로 검색 라우팅 (검색어 보존)
+              router.push(`/board?search=${encodeURIComponent(inputValue.trim())}`);
+            } else {
+              router.push("/board");
+            }
+          }}
+        >
+          <SearchBar
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+          />
+        </form>
       </div>
 
       {/* 실제 메인 페이지 컨텐츠 */}
-      <main className="flex gap-4 px-1"> {/* 패딩, 갭 추가 감소 */}
+      <main className="flex gap-4 px-1">
         {loading ? (
           <div className="text-center py-8 w-full">데이터를 불러오는 중...</div>
         ) : (
