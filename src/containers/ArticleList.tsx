@@ -252,7 +252,9 @@ export function BoardBookmarkedArticlesList() {
     useEffect(() => {
         const fetchData = async() => {
             const Response = await fetchArchives();
-            setPosts(Response.results);
+            // parent_article만 추출 (Response.results는 ArticleArchive 객체의 배열)
+            const articles = (Response.results || []).map((item: any) => item.parent_article);
+            setPosts(articles);
         }
         fetchData();
     }, []);
@@ -262,11 +264,9 @@ export function BoardBookmarkedArticlesList() {
             showAttachment={true}
             showTimeAgo={true}
             titleFontSize='text-[14px]'       
-        >
-        </ArticleList>
+        />
     )
 }
-
 
 //Profile 페이지 - 내가 쓴 글
 export function ProfileMyArticleList () {
