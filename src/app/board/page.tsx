@@ -23,7 +23,7 @@ interface BoardConfig {
   description?: string;
 }
 
-export const POPULAR_BOARD = {
+const POPULAR_BOARD = {
   name: '인기글',
   slug: 'popular',
   description: '인기있는 게시글 모음',
