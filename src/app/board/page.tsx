@@ -231,6 +231,7 @@ export default function Board() {
                     <BoardArticleList
                       boardId={currentBoardId}
                       pageSize={10}
+                      topicId={selectedTopicId ? Number(selectedTopicId) : undefined} // 말머리 prop 추가
                     />
                   </div>
                 )}

@@ -1,7 +1,6 @@
 //Dumb Component (ArticleList)를 사용하는 모든 component들의 Set입니다.
 
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
@@ -85,22 +84,28 @@ export function PortalNoticePreview() {
 interface BoardArticleListProps {
   boardId?: number;
   pageSize?: number;
+  topicId?: number; // 말머리 추가
 }
 
 // Board 페이지 - 일반 게시글
-export function BoardArticleList({ boardId=7, pageSize = 10 }: BoardArticleListProps) {
+export function BoardArticleList({ boardId = 7, pageSize = 10, topicId }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => { 
+  useEffect(() => {
     const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize: pageSize, boardId: boardId, page: currentPage });
+      const Response = await fetchArticles({
+        pageSize: pageSize,
+        boardId: boardId,
+        page: currentPage,
+        topicId: topicId, // 말머리 적용
+      });
       setPosts(Response.results);
       setTotalPages(Response.num_pages || 1);
-    }
+    };
     fetchData();
-  }, [boardId, pageSize, currentPage]);
+  }, [boardId, pageSize, currentPage, topicId]); // topicId 의존성 추가
 
   return (
     <ArticleList
@@ -118,7 +123,7 @@ export function BoardArticleList({ boardId=7, pageSize = 10 }: BoardArticleListP
       totalPages={totalPages}
       onPageChange={setCurrentPage}
     />
-  )
+  );
 }
 
 //Board 페이지 - 전체 게시글
