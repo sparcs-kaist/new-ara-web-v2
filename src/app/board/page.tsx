@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useMemo } from 'react'
-import { BoardArticleList, BoardAllArticleList, BoardHotArticleList } from '@/containers/ArticleList'
+import { BoardArticleList, BoardAllArticleList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList'
 import { fetchBoardList } from '@/lib/api/board'
 import Image from 'next/image'
 
@@ -109,78 +109,18 @@ export default function Board() {
   }, [currentBoardId]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            {getCurrentTitle()}
-          </h1>
-          <p className="text-gray-600">
-            {getCurrentDescription()}
-          </p>
-        </div>
-
+    <div className="min-h-screen">
+      <div className="container mx-auto px-20 py-0">
         {/* 메인 레이아웃 - 좌우 분할 */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* 좌측: 보드 네비게이션 */}
-          <div className="lg:w-1/3 xl:w-1/4">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">게시판 목록</h2>
-              <div className="space-y-3">
-                {/* 전체보기 */}
-                <button
-                  onClick={handleAllBoard}
-                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                    currentBoardType === 'all'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-sm">전체보기</div>
-                  <div className="text-xs text-gray-500">모든 게시판</div>
-                </button>
-                {/* 인기글 */}
-                <button
-                  onClick={handlePopularBoard}
-                  className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                    currentBoardType === 'popular'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-sm">{POPULAR_BOARD.name}</div>
-                  <div className="text-xs text-gray-500">인기 게시글</div>
-                </button>
-                {/* 각 보드별 버튼 */}
-                {boardConfigs.map((config) => (
-                  <button
-                    key={config.id}
-                    onClick={() => handleBoardSelect(config)}
-                    className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                      selectedBoard?.id === config.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">{config.ko_name}</div>
-                    <div className="text-xs text-gray-500 truncate">{config.ko_banner_description || config.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
+        <div className="flex flex-col lg:flex-row gap-4">
           {/* 우측: 게시글 목록 */}
           <div className="lg:w-2/3 xl:w-3/4">
             <div className="bg-white rounded-lg shadow-sm p-6">
               {/* 보드 정보 헤더 */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-gray-100">
-                <div className="mb-2 sm:mb-0">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {getCurrentTitle()}
-                  </h3>
-                </div>
+              <div className="mb-3">
+                <h3 className="text-xl font-semibold text-black">
+                  {getCurrentTitle()}
+                </h3>
               </div>
               {/* 게시글 목록 영역 */}
               <div className="space-y-4">
@@ -295,6 +235,22 @@ export default function Board() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+          {/* 좌측: 최근 본 글/담아둔 글/게시판 목록 (순서 바꿈) */}
+          <div className="lg:w-1/3 xl:w-1/4">
+            <div className="bg-white rounded-lg shadow-sm px-4 py-8 sticky top-8">
+              {/* 최근 본 글 리스트 */}
+              <div className="mb-6">
+                <h2 className="text-base font-semibold text-gray-800 mb-2">최근 본 글</h2>
+                <BoardRecentArticleList />
+              </div>
+              {/* 북마크한 글 리스트 */}
+              <div className="mb-6">
+                <h2 className="text-base font-semibold text-gray-800 mb-2">담아둔 글</h2>
+                <BoardBookmarkedArticlesList />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">게시판 목록</h2>
             </div>
           </div>
         </div>

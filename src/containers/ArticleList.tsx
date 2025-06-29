@@ -4,6 +4,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
+import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -146,9 +147,46 @@ export function BoardToSchoolArticleList() {
     return;
 }
 
-//Board 페이지 - 담아둔 게시글 (북마크)
-export function BoardBookmarkedArticleList() {
-    return;
+//Board 페이지 - 최근 본 게시글
+export function BoardRecentArticleList() {
+    const [posts, setPosts] = useState([]);
+    useEffect(() => {
+        const fetchData = async() => {
+            const Response = await fetchRecentViewedPosts({pageSize: 5});
+            setPosts(Response.results);
+        }
+        fetchData();
+    }, []);
+    return(
+        <ArticleList
+            posts={posts}  
+            showAttachment={true}
+            showTimeAgo={true}
+            titleFontSize='text-[14px]'       
+        >
+        </ArticleList>
+    )
+}
+
+//Board 페이지 - 북마크한 게시글
+export function BoardBookmarkedArticlesList() {    
+    const [posts, setPosts] = useState([]);
+    useEffect(() => {
+        const fetchData = async() => {
+            const Response = await fetchArchives({pageSize: 5});
+            setPosts(Response.results);
+        }
+        fetchData();
+    }, []);
+    return(
+        <ArticleList
+            posts={posts}  
+            showAttachment={true}
+            showTimeAgo={true}
+            titleFontSize='text-[14px]'       
+        >
+        </ArticleList>
+    )
 }
 
 //Board 페이지 - 인기 게시글
@@ -160,7 +198,7 @@ export function BoardHotArticleList({ pageSize = 10 }: BoardArticleListProps) {
             setPosts(Response.results);
         }
         fetchData();
-    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+    }, []);
     return(
         <ArticleList
             posts = {posts}
