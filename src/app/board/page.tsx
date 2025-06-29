@@ -250,7 +250,6 @@ export default function Board() {
                 <h2 className="text-base font-semibold text-gray-800 mb-2">담아둔 글</h2>
                 <BoardBookmarkedArticlesList />
               </div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">게시판 목록</h2>
             </div>
           </div>
         </div>
