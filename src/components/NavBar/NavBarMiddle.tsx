@@ -185,7 +185,7 @@ export default function NavBarMiddle() {
         )}
       </div>
 
-      <Link href="/board/top" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">인기글</Link>
+      <Link href="/board?board=popular" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">인기글</Link>
     </div>
   );
 }

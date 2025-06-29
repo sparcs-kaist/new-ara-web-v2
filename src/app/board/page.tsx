@@ -42,7 +42,8 @@ export default function Board() {
   // 말머리(Topic) 필터 상태
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   // 검색어 상태
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>('');         // 실제 검색에 사용되는 값
+  const [searchInput, setSearchInput] = useState<string>(''); // input에 표시되는 값
 
   // 게시판 목록 불러오기 (API)
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function Board() {
   };
 
   const handlePopularBoard = () => {
-    router.push('/board?board=popular');
+    router.push('/board/top');
   };
 
   const handleAllBoard = () => {
@@ -196,8 +197,11 @@ export default function Board() {
                         type="text"
                         className="rounded-xl pl-8 pr-2 py-1.5 text-sm w-45 bg-gray-50 text-gray-700 font-medium"
                         placeholder="검색어를 입력하세요"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        value={searchInput}
+                        onChange={e => setSearchInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') setSearch(searchInput);
+                        }}
                       />
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">
                         <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M11.5 11.5L15 15M7 12A5 5 0 1 1 7 2a5 5 0 0 1 0 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -216,7 +220,7 @@ export default function Board() {
                 {/* 전체보기 */}
                 {currentBoardType === 'all' && (
                   <div className="max-w-none">
-                    <BoardAllArticleList/>
+                    <BoardAllArticleList query={search} />
                   </div>
                 )}
                 {/* 인기글 */}
@@ -231,7 +235,8 @@ export default function Board() {
                     <BoardArticleList
                       boardId={currentBoardId}
                       pageSize={10}
-                      topicId={selectedTopicId ? Number(selectedTopicId) : undefined} // 말머리 prop 추가
+                      topicId={selectedTopicId ? Number(selectedTopicId) : undefined}
+                      query={search} // 검색어 prop 추가
                     />
                   </div>
                 )}
