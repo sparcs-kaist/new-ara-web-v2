@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="w-full py-10 bg-white mt-12">
+    <footer className="w-full py-10 bg-white mt-8">
       <div className="max-w-[1280px] mx-auto flex flex-col items-center text-center text-[#c9c9c9] text-sm">
         <div className="flex items-center gap-2 mb-2">
           <Image
@@ -19,9 +20,9 @@ export default function Footer() {
           />
         </div>
         <div className="flex flex-wrap justify-center items-center gap-2 mb-2 text-base font-normal">
-          <span className="cursor-pointer hover:text-ara_red transition">이용약관</span>
+          <Link href="/tos" className="cursor-pointer hover:text-ara_red transition">이용약관</Link>
           <span className="mx-1 text-gray-300 select-none">|</span>
-          <span className="cursor-pointer hover:text-ara_red transition">만든 사람들</span>
+          <Link href="/makers" className="cursor-pointer hover:text-ara_red transition">만든 사람들</Link>
           <span className="mx-1 text-gray-300 select-none">|</span>
           <span className="cursor-pointer hover:text-ara_red transition">채팅 문의</span>
         </div>
