@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import React from "react";
 import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
+import Footer from "@/components/Footer/Footer";
 import "@/i18n";
 import { fetchMe } from "@/lib/api/user";
 
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <NavBar />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
