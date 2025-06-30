@@ -12,7 +12,10 @@ export default function Footer() {
             alt="SPARCS Logo"
             width={84.2}
             height={25}
-            className="opacity-60"
+            style={{
+              filter:
+              "invert(67%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%)",
+            }}
           />
         </div>
         <div className="flex flex-wrap justify-center items-center gap-2 mb-2 text-base font-normal">
@@ -26,7 +29,13 @@ export default function Footer() {
           본 서비스 내의 모든 게시물은 KAIST 학내 구성원만 접근 가능하며, 외부로의 무단 유출 및 전재를 금합니다.
         </div>
         <div className="mb-1">
-          기타 문의: <a href="mailto:ara@sparcs.org" className="underline hover:text-ara_red">ara@sparcs.org</a>
+          기타 문의:{" "}
+          <a
+            href="mailto:ara@sparcs.org"
+            className="underline hover:text-ara_red"
+          >
+            ara@sparcs.org
+          </a>
         </div>
       </div>
     </footer>
