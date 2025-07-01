@@ -1,47 +1,32 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function WebSocketTest() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState('');
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    const socket = new WebSocket('wss://newara.dev.sparcs.org/api/ws');
+    const socket = new WebSocket('wss://newara.dev.sparcs.org/api/ws/'); // URL 확인 필요
+    socketRef.current = socket;
 
-    socket.onopen = () => {
-      console.log('WebSocket 연결 성공');
-      setMessages((msgs) => [...msgs, '서버와 연결됨']);
-    };
+    socket.onopen = () => setMessages(msgs => [...msgs, '서버와 연결됨']);
+    socket.onmessage = (event) => setMessages(msgs => [...msgs, `서버: ${event.data}`]);
+    socket.onerror = () => setMessages(msgs => [...msgs, 'WebSocket 에러 발생']);
+    socket.onclose = () => setMessages(msgs => [...msgs, '연결 종료']);
 
-    socket.onmessage = (event) => {
-      console.log('받은 메시지:', event.data);
-      setMessages((msgs) => [...msgs, `서버: ${event.data}`]);
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket 에러:', error);
-      setMessages((msgs) => [...msgs, 'WebSocket 에러 발생']);
-    };
-
-    socket.onclose = () => {
-      console.log('WebSocket 연결 종료');
-      setMessages((msgs) => [...msgs, '연결 종료']);
-    };
-
-    return () => {
-      socket.close();
-    };
+    return () => socket.close();
   }, []);
 
   const sendMessage = () => {
-    const socket = new WebSocket('wss://newara.dev.sparcs.org/api/ws/');
-    socket.onopen = () => {
-      socket.send(input);
-      setMessages((msgs) => [...msgs, `나: ${input}`]);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(input);
+      setMessages(msgs => [...msgs, `나: ${input}`]);
       setInput('');
-      socket.close();
-    };
+    } else {
+      setMessages(msgs => [...msgs, '소켓이 연결되어 있지 않습니다.']);
+    }
   };
 
   return (
