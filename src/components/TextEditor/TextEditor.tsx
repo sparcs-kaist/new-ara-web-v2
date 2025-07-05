@@ -38,7 +38,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       editorProps: {
         attributes: {
           class:
-            'prose prose-sm sm:prose m-5 focus:outline-none max-w-full',
+            'prose prose-sm sm:prose focus:outline-none max-w-full',
         },
       },
       extensions: [
@@ -270,7 +270,7 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
           editor={editor}
-          className="editor-content w-full max-w-full text-[0.625rem] leading-relaxed dark:text-gray-100 p-4 min-h-[10rem] focus:outline-none"
+          className="editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none"
         />
 
         {/** 링크 대화상자 */}

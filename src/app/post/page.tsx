@@ -101,7 +101,6 @@ export default function PostDetailPage() {
       <div className="w-[70vw] max-w-7xl">
         <h1 className="text-3xl font-bold mb-6 text-[#ed3a3a]">{post.title}</h1>
         <hr className="border-t border-gray-300 mb-6" />
-        
         <TextEditor 
           content={post.content} 
           editable={false} 
