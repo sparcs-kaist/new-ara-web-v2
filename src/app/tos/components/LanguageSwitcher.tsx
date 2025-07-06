@@ -25,7 +25,7 @@ const LanguageSwitcher = ({ currentLocale, onLocaleChange }: LanguageSwitcherPro
   return (
     <button 
       onClick={toggleLanguage}
-      className="fixed top-4 right-4 z-50 flex items-center space-x-2 px-3 py-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-300"
+      className="z-50 flex items-center space-x-2 px-3 py-2 bg-white rounded-full hover:shadow-sm transition-all duration-300"
     >
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
