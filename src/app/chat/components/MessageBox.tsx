@@ -9,6 +9,8 @@ type MessageBoxProps = {
     time: string;
     children: React.ReactNode;
     theme?: MessageTheme;
+    readStatus?: 'read' | 'delivered' | 'sending';
+    readCount?: number; // 추가
 };
 
 export default function MessageBox({
@@ -18,11 +20,47 @@ export default function MessageBox({
     time,
     children,
     theme = 'ara',
+    readStatus = 'read',
+    readCount, // 추가
 }: MessageBoxProps) {
     const themeStyle = messageThemes[theme] || messageThemes['ara'];
-
     const isCatTheme = (theme: BaseTheme | CatTheme): theme is CatTheme => {
         return (theme as CatTheme).character !== undefined;
+    };
+
+    // 읽음 상태 텍스트 및 아이콘
+    const getReadStatus = () => {
+        switch (readStatus) {
+            case 'read':
+                return (
+                    <span style={{ color: themeStyle.readStatusColor }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="inline mr-1">
+                            <path d="M6 10l3 3 5-5" stroke="currentColor" strokeWidth="2" fill="none" />
+                        </svg>
+                        읽음
+                    </span>
+                );
+            case 'delivered':
+                return (
+                    <span style={{ color: themeStyle.readStatusColor }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="inline mr-1">
+                            <path d="M6 10l3 3 5-5" stroke="currentColor" strokeWidth="2" fill="none" />
+                        </svg>
+                        전송됨
+                    </span>
+                );
+            case 'sending':
+                return (
+                    <span style={{ color: themeStyle.readStatusColor }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" className="inline mr-1 animate-spin">
+                            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
+                        </svg>
+                        전송중...
+                    </span>
+                );
+            default:
+                return null;
+        }
     };
 
     return (
@@ -70,9 +108,14 @@ export default function MessageBox({
                     )}
                 </div>
 
-                {/* 시간 */}
-                <div className={`text-[10px] text-gray-400 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
-                    {time}
+                {/* 시간 및 읽음 숫자만 오른쪽에 표시 (카카오톡 스타일) */}
+                <div className={`flex items-center justify-end text-[10px] mt-1`}>
+                    <span className="text-gray-400">{time}</span>
+                    {isMe && typeof readCount === 'number' && (
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[10px] font-semibold min-w-[20px] text-center">
+                            {readCount}
+                        </span>
+                    )}
                 </div>
             </div>
 

@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import MessageBox from './components/MessageBox';
+import ChatTypePopover from './components/ChatTypePopover';
+import UserSearchDialog from './components/UserSearchDialog';
 
 // 임시 ROOM 타입 및 mock 데이터
 const mockRooms = [
@@ -56,7 +58,7 @@ const mockRooms = [
 // 예시용 메시지 데이터 (실제 API 데이터와 구조 맞춤)
 const mockMessages = [
     {
-        id: 0,
+        id: 1,
         message_type: "TEXT",
         message_content: "안녕하세요! SPARCS입니다.",
         chat_room: 0,
@@ -71,10 +73,11 @@ const mockMessages = [
                 is_school_admin: false
             }
         },
-        created_at: "2025-07-06T08:39:58.013Z"
+        created_at: "2025-07-06T08:39:58.013Z",
+        readCount: 5 // 상대 메시지에는 표시되지 않음
     },
     {
-        id: 1,
+        id: 2,
         message_type: "TEXT",
         message_content: "안녕하세요! 반가워요.",
         chat_room: 0,
@@ -89,7 +92,8 @@ const mockMessages = [
                 is_school_admin: false
             }
         },
-        created_at: "2025-07-06T08:40:10.013Z"
+        created_at: "2025-07-06T08:40:10.013Z",
+        readCount: 3 // 내 메시지에만 표시됨
     }
 ];
 
@@ -98,6 +102,8 @@ export default function ChatPage() {
     const [input, setInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
     const [selectedRoomId, setSelectedRoomId] = useState<number>(mockRooms[0].id);
+    const [showTypePopover, setShowTypePopover] = useState(false);
+    const [showUserSearch, setShowUserSearch] = useState(false);
 
     // 스크롤 항상 아래로
     useEffect(() => {
@@ -115,32 +121,54 @@ export default function ChatPage() {
         setInput('');
     };
 
+    const handleAddChatRoom = (type: 'DM' | 'GROUP') => {
+        if (type === 'DM') {
+            setShowUserSearch(true);
+        } else {
+            alert('단체 채팅방 생성 기능!');
+            // 실제 생성 로직 연결
+        }
+    };
+
+    const handleSelectUser = (user: { id: number; nickname: string }) => {
+        alert(`${user.nickname}님과 1:1 채팅방을 생성합니다.`);
+        // 실제 DM 생성 로직 연결
+    };
+
     return (
         <div className="h-[calc(100vh-80px)] bg-gray-100 flex px-20 py-8">
             {/* 왼쪽 박스 (채팅방 목록 및 검색 기능) */}
-            <div className="w-1/4 bg-white rounded-lg shadow-md p-6 flex flex-col">
+            <div className="w-1/4 bg-white rounded-lg shadow-md p-6 flex flex-col relative">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold">💬채팅방</h2>
-                    <button 
-                        className="bg-white rounded-full hover:bg-gray-100 transition p-1"
-                        onClick={() => alert('새로운 채팅방을 추가합니다!')}
-                    >
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            className="h-5 w-5"
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            stroke="currentColor"
+                    <div className="relative">
+                        <button 
+                            className="bg-white rounded-full hover:bg-gray-100 transition p-1"
+                            onClick={() => setShowTypePopover((v) => !v)}
                         >
-                            <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth={2} 
-                                d="M12 4v16m8-8H4" 
-                                stroke="black"
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                className="h-5 w-5"
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                stroke="currentColor"
+                            >
+                                <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth={2} 
+                                    d="M12 4v16m8-8H4" 
+                                    stroke="black"
+                                />
+                            </svg>
+                        </button>
+                        {showTypePopover && (
+                            <ChatTypePopover
+                                onSelect={handleAddChatRoom}
+                                onClose={() => setShowTypePopover(false)}
                             />
-                        </svg>
-                    </button>
+                        )}
+                    </div>
                 </div>
                 {/* 검색창 */}
                 <input
@@ -218,7 +246,14 @@ export default function ChatPage() {
                 {/* 채팅 메시지 영역 */}
                 <div className="flex-1 overflow-y-auto mb-4 space-y-2">
                     {mockMessages.map((msg, idx) => {
-                        const isMe = msg.created_by.id === 0; // 내 id가 0이라고 가정
+                        const isMe = msg.created_by.id === 0;
+                        let readStatus: 'read' | 'delivered' | 'sending' = 'delivered';
+                        if (isMe && idx === mockMessages.length - 1) readStatus = 'read';
+
+                        // 단체방이면 읽음 숫자 표시 (mockMessages에서 직접 가져옴)
+                        const isGroup = mockRooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
+                        const readCount = isMe && isGroup ? msg.readCount : undefined;
+
                         return (
                             <div
                                 key={msg.id}
@@ -229,7 +264,9 @@ export default function ChatPage() {
                                     profileImg={msg.created_by.profile.picture}
                                     nickname={msg.created_by.profile.nickname}
                                     time={msg.created_at.slice(11, 16)}
-                                    theme="cat" // "ara" | "classic" | "cat" | "gradient"
+                                    theme="ara"
+                                    readStatus={isMe ? readStatus : undefined}
+                                    readCount={readCount}
                                 >
                                     {msg.message_content}
                                 </MessageBox>
@@ -257,6 +294,11 @@ export default function ChatPage() {
                     </button>
                 </form>
             </div>
+            <UserSearchDialog
+                open={showUserSearch}
+                onClose={() => setShowUserSearch(false)}
+                onSelectUser={handleSelectUser}
+            />
         </div>
     );
 }
