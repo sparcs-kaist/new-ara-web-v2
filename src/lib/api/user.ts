@@ -128,6 +128,6 @@ export const readAllNotification = async () => {
 
 // SearchUser : 유저 검색
 export const searchUser = async (query: string = '') => {
-  const { data } = await http.get(`/user_profiles/search?query=${query}`)
+  const { data } = await http.get(`/user_profiles/search/?query=${query}`)
   return data
 }
