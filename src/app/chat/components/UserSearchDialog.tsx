@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { searchUser } from '@/lib/api/user';
+import { createDM } from '@/lib/api/chat'; // 추가
 
 type Props = {
     open: boolean;
@@ -12,7 +13,6 @@ export default function UserSearchDialog({ open, onClose, onSelectUser }: Props)
     const [search, setSearch] = useState('');
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [activeUser, setActiveUser] = useState<number | null>(null);
 
     useEffect(() => {
         if (!open) return;
@@ -23,6 +23,18 @@ export default function UserSearchDialog({ open, onClose, onSelectUser }: Props)
             })
             .finally(() => setLoading(false));
     }, [search, open]);
+
+    // DM 생성 및 예외처리
+    const handleSelectUser = async (user: { id: number; nickname: string }) => {
+        try {
+            await createDM(user.id);
+            alert(`DM방이 생성되었습니다! (${user.nickname}, id: ${user.id})`);
+            onSelectUser(user); // 필요하다면 DM방 이동 등 추가
+            onClose();
+        } catch (e: any) {
+            alert(e.message); // "이미 존재합니다", "차단된 사용자입니다" 등 서버 메시지
+        }
+    };
 
     if (!open) return null;
 
@@ -68,7 +80,7 @@ export default function UserSearchDialog({ open, onClose, onSelectUser }: Props)
                             >
                                 <button
                                     className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
-                                    onClick={() => { onSelectUser({ id: user.user, nickname: user.nickname }); onClose(); }}
+                                    onClick={() => handleSelectUser({ id: user.user, nickname: user.nickname })}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8m0 0l-4-4m4 4l-4 4" />

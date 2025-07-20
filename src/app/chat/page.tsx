@@ -5,55 +5,18 @@ import Image from 'next/image';
 import MessageBox from './components/MessageBox';
 import ChatTypePopover from './components/ChatTypePopover';
 import UserSearchDialog from './components/UserSearchDialog';
+import { fetchChatRoomList } from '@/lib/api/chat';
 
-// 임시 ROOM 타입 및 mock 데이터
-const mockRooms = [
-    {
-        id: 0,
-        room_title: "SPARCS",
-        room_type: "DM",
-        chat_name_type: "NICKNAME",
-        recent_message_at: "2025-07-06T08:32:08.777Z",
-        recent_message: "안녕하세요! SPARCS입니다.",
-        picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png"
-    },
-    {
-        id: 1,
-        room_title: "공지방",
-        room_type: "GROUP",
-        chat_name_type: "NICKNAME",
-        recent_message_at: "2025-07-06T08:32:08.777Z",
-        recent_message: "공지사항이 있습니다.",
-        picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png"
-    },
-    {
-        id: 2,
-        room_title: "친구1",
-        room_type: "DM",
-        chat_name_type: "NICKNAME",
-        recent_message_at: "2025-07-06T08:32:08.777Z",
-        recent_message: "오늘 스터디 할래?",
-        picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png"
-    },
-    {
-        id: 3,
-        room_title: "친구2",
-        room_type: "DM",
-        chat_name_type: "NICKNAME",
-        recent_message_at: "2025-07-06T08:32:08.777Z",
-        recent_message: "점심 뭐 먹지?",
-        picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png"
-    },
-    {
-        id: 4,
-        room_title: "스터디그룹",
-        room_type: "GROUP",
-        chat_name_type: "NICKNAME",
-        recent_message_at: "2025-07-06T08:32:08.777Z",
-        recent_message: "스터디 자료 올렸어요.",
-        picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png"
-    }
-];
+// ROOM 타입 정의
+type ChatRoom = {
+    id: number;
+    room_title: string;
+    room_type: string;
+    chat_name_type: string;
+    picture: string;
+    recent_message_at: string;
+    recent_message: number; // 실제 메시지 id지만, 지금은 사용하지 않음
+};
 
 // 예시용 메시지 데이터 (실제 API 데이터와 구조 맞춤)
 const mockMessages = [
@@ -97,11 +60,15 @@ const mockMessages = [
     }
 ];
 
+// 기본 프로필 이미지 (원하는 URL로 교체)
+const DEFAULT_ROOM_IMAGE = '/default-room.png';
+
 export default function ChatPage() {
+    const [rooms, setRooms] = useState<ChatRoom[]>([]);
+    const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [messages, setMessages] = useState<{sender: 'me' | 'other', text: string}[]>([]);
     const [input, setInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
-    const [selectedRoomId, setSelectedRoomId] = useState<number>(mockRooms[0].id);
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
 
@@ -109,6 +76,16 @@ export default function ChatPage() {
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        fetchChatRoomList()
+            .then((data) => {
+                setRooms(data.results || []);
+                if (data.results && data.results.length > 0) {
+                    setSelectedRoomId(data.results[0].id);
+                }
+            });
+    }, []);
 
     const handleSend = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -179,7 +156,7 @@ export default function ChatPage() {
                 />
                 {/* 채팅방 목록 */}
                 <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-                    {mockRooms.map((room) => {
+                    {rooms.map((room) => {
                         const selected = room.id === selectedRoomId;
                         return (
                             <button
@@ -208,10 +185,10 @@ export default function ChatPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-base truncate">{room.room_title}</div>
-                                    <div className="text-xs text-gray-400 truncate">{room.recent_message}</div>
+                                    {/* recent_message는 표시하지 않음 */}
                                 </div>
                                 <div className="ml-2 text-[10px] text-gray-400 flex-shrink-0">
-                                    {room.recent_message_at.slice(11, 16)}
+                                    {room.recent_message_at ? room.recent_message_at.slice(11, 16) : ''}
                                 </div>
                             </button>
                         );
@@ -222,25 +199,43 @@ export default function ChatPage() {
             <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0">
                 {/* 채팅방 정보 헤더 */}
                 <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
-                    <Image
-                        src={mockRooms.find(r => r.id === selectedRoomId)?.picture ?? ''}
-                        alt={mockRooms.find(r => r.id === selectedRoomId)?.room_title ?? ''}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover mr-3"
-                    />
+                    {(() => {
+                        const room = rooms.find(r => r.id === selectedRoomId);
+                        if (room?.picture) {
+                            return (
+                                <Image
+                                    src={room.picture}
+                                    alt={room.room_title || '채팅방'}
+                                    width={40}
+                                    height={40}
+                                    className="rounded-full object-cover mr-3"
+                                />
+                            );
+                        }
+                        return (
+                            <Image
+                                src={DEFAULT_ROOM_IMAGE}
+                                alt="기본 채팅방"
+                                width={40}
+                                height={40}
+                                className="rounded-full object-cover mr-3"
+                            />
+                        );
+                    })()}
                     <div className="flex-1 min-w-0">
                         <div className="text-lg font-bold truncate">
-                            {mockRooms.find(r => r.id === selectedRoomId)?.room_title}
+                            {rooms.find(r => r.id === selectedRoomId)?.room_title ?? ''}
                         </div>
                         <div className="text-xs text-gray-400">
-                            {mockRooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP'
+                            {rooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP'
                                 ? '그룹 채팅'
                                 : '1:1 채팅'}
                         </div>
                     </div>
                     <div className="ml-2 text-xs text-gray-400 flex-shrink-0">
-                        {mockRooms.find(r => r.id === selectedRoomId)?.recent_message_at.slice(0, 10)}
+                        {rooms.find(r => r.id === selectedRoomId)?.recent_message_at
+                            ? rooms.find(r => r.id === selectedRoomId)!.recent_message_at.slice(0, 10)
+                            : ''}
                     </div>
                 </div>
                 {/* 채팅 메시지 영역 */}
@@ -251,7 +246,7 @@ export default function ChatPage() {
                         if (isMe && idx === mockMessages.length - 1) readStatus = 'read';
 
                         // 단체방이면 읽음 숫자 표시 (mockMessages에서 직접 가져옴)
-                        const isGroup = mockRooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
+                        const isGroup = rooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
                         const readCount = isMe && isGroup ? msg.readCount : undefined;
 
                         return (
