@@ -6,6 +6,7 @@ import MessageBox from './components/MessageBox';
 import ChatTypePopover from './components/ChatTypePopover';
 import UserSearchDialog from './components/UserSearchDialog';
 import { fetchChatRoomList, fetchChatMessages, sendMessage } from '@/lib/api/chat';
+import { fetchMe } from '@/lib/api/user';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -30,11 +31,20 @@ export default function ChatPage() {
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    const [myId, setMyId] = useState<number | null>(null); // 내 ID 저장 (fetchMe) -> 메시지 UI를 위해서.
 
     // 스크롤 항상 아래로
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // 내 ID 가져오기
+    useEffect(() => {
+        fetchMe()
+            .then((data) => {
+                setMyId(data.user);
+            });
+    }, []);
 
     useEffect(() => {
         fetchChatRoomList()
@@ -66,10 +76,13 @@ export default function ChatPage() {
         if (e) e.preventDefault();
         if (!input.trim() || selectedRoomId == null) return;
         try {
-            const sent = await sendMessage(selectedRoomId, input);
-            // 새 메시지 추가 후 input 초기화
-            setMessages(prev => [...prev, sent]);
+            await sendMessage(selectedRoomId, input);
             setInput('');
+            // 메시지 전송 후 전체 메시지 목록 새로 불러오기
+            setLoadingMessages(true);
+            const data = await fetchChatMessages(selectedRoomId);
+            setMessages(data.results || []);
+            setLoadingMessages(false);
         } catch (err: any) {
             alert(err.message || '메시지 전송 실패');
         }
@@ -221,7 +234,7 @@ export default function ChatPage() {
                         <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                     ) : (
                         messages.map((msg, idx) => {
-                            const isMe = msg.created_by?.id === 0; // 실제 내 id로 비교 필요
+                            const isMe = msg.created_by?.id === myId;
                             let readStatus: 'read' | 'delivered' | 'sending' = 'delivered';
                             if (isMe && idx === messages.length - 1) readStatus = 'read';
                             const isGroup = rooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
