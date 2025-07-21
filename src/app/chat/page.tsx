@@ -5,7 +5,7 @@ import Image from 'next/image';
 import MessageBox from './components/MessageBox';
 import ChatTypePopover from './components/ChatTypePopover';
 import UserSearchDialog from './components/UserSearchDialog';
-import { fetchChatRoomList } from '@/lib/api/chat';
+import { fetchChatRoomList, fetchChatMessages, sendMessage } from '@/lib/api/chat';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -18,59 +18,18 @@ type ChatRoom = {
     recent_message: number; // 실제 메시지 id지만, 지금은 사용하지 않음
 };
 
-// 예시용 메시지 데이터 (실제 API 데이터와 구조 맞춤)
-const mockMessages = [
-    {
-        id: 1,
-        message_type: "TEXT",
-        message_content: "안녕하세요! SPARCS입니다.",
-        chat_room: 0,
-        created_by: {
-            id: 1,
-            username: "sparcs",
-            profile: {
-                picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png",
-                nickname: "SPARCS",
-                user: 1,
-                is_official: true,
-                is_school_admin: false
-            }
-        },
-        created_at: "2025-07-06T08:39:58.013Z",
-        readCount: 5 // 상대 메시지에는 표시되지 않음
-    },
-    {
-        id: 2,
-        message_type: "TEXT",
-        message_content: "안녕하세요! 반가워요.",
-        chat_room: 0,
-        created_by: {
-            id: 0,
-            username: "me",
-            profile: {
-                picture: "https://sparcs-newara-dev.s3.amazonaws.com/user_profiles/default_pictures/gray-default2.png",
-                nickname: "나",
-                user: 0,
-                is_official: false,
-                is_school_admin: false
-            }
-        },
-        created_at: "2025-07-06T08:40:10.013Z",
-        readCount: 3 // 내 메시지에만 표시됨
-    }
-];
-
 // 기본 프로필 이미지 (원하는 URL로 교체)
 const DEFAULT_ROOM_IMAGE = '/default-room.png';
 
 export default function ChatPage() {
     const [rooms, setRooms] = useState<ChatRoom[]>([]);
     const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
-    const [messages, setMessages] = useState<{sender: 'me' | 'other', text: string}[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState('');
     const chatEndRef = useRef<HTMLDivElement>(null);
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     // 스크롤 항상 아래로
     useEffect(() => {
@@ -80,22 +39,40 @@ export default function ChatPage() {
     useEffect(() => {
         fetchChatRoomList()
             .then((data) => {
-                setRooms(data.results || []);
-                if (data.results && data.results.length > 0) {
-                    setSelectedRoomId(data.results[0].id);
+                // 정렬: recent_message_at 또는 created_at 중 더 최신인 값 기준 내림차순
+                const sortedRooms = [...(data.results || [])].sort((a, b) => {
+                    const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
+                    const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
+                    return bTime - aTime;
+                });
+                setRooms(sortedRooms);
+                if (sortedRooms.length > 0) {
+                    setSelectedRoomId(sortedRooms[0].id);
                 }
             });
     }, []);
 
-    const handleSend = (e?: React.FormEvent) => {
+    // 채팅방 선택 시 메시지 목록 불러오기
+    useEffect(() => {
+        if (selectedRoomId == null) return;
+        setLoadingMessages(true);
+        fetchChatMessages(selectedRoomId)
+            .then(data => setMessages(data.results || []))
+            .finally(() => setLoadingMessages(false));
+    }, [selectedRoomId]);
+
+    // 메시지 전송
+    const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!input.trim()) return;
-        setMessages(prev => [
-            ...prev,
-            { sender: 'me', text: input },
-            { sender: 'other', text: input }, // 상대방이 똑같이 echo
-        ]);
-        setInput('');
+        if (!input.trim() || selectedRoomId == null) return;
+        try {
+            const sent = await sendMessage(selectedRoomId, input);
+            // 새 메시지 추가 후 input 초기화
+            setMessages(prev => [...prev, sent]);
+            setInput('');
+        } catch (err: any) {
+            alert(err.message || '메시지 전송 실패');
+        }
     };
 
     const handleAddChatRoom = (type: 'DM' | 'GROUP') => {
@@ -240,34 +217,35 @@ export default function ChatPage() {
                 </div>
                 {/* 채팅 메시지 영역 */}
                 <div className="flex-1 overflow-y-auto mb-4 space-y-2">
-                    {mockMessages.map((msg, idx) => {
-                        const isMe = msg.created_by.id === 0;
-                        let readStatus: 'read' | 'delivered' | 'sending' = 'delivered';
-                        if (isMe && idx === mockMessages.length - 1) readStatus = 'read';
-
-                        // 단체방이면 읽음 숫자 표시 (mockMessages에서 직접 가져옴)
-                        const isGroup = rooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
-                        const readCount = isMe && isGroup ? msg.readCount : undefined;
-
-                        return (
-                            <div
-                                key={msg.id}
-                                className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}
-                            >   
-                                <MessageBox
-                                    isMe={isMe}
-                                    profileImg={msg.created_by.profile.picture}
-                                    nickname={msg.created_by.profile.nickname}
-                                    time={msg.created_at.slice(11, 16)}
-                                    theme="ara"
-                                    readStatus={isMe ? readStatus : undefined}
-                                    readCount={readCount}
+                    {loadingMessages ? (
+                        <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
+                    ) : (
+                        messages.map((msg, idx) => {
+                            const isMe = msg.created_by?.id === 0; // 실제 내 id로 비교 필요
+                            let readStatus: 'read' | 'delivered' | 'sending' = 'delivered';
+                            if (isMe && idx === messages.length - 1) readStatus = 'read';
+                            const isGroup = rooms.find(r => r.id === selectedRoomId)?.room_type === 'GROUP';
+                            const readCount = isMe && isGroup ? msg.readCount : undefined;
+                            return (
+                                <div
+                                    key={msg.id}
+                                    className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'}`}
                                 >
-                                    {msg.message_content}
-                                </MessageBox>
-                            </div>
-                        );
-                    })}
+                                    <MessageBox
+                                        isMe={isMe}
+                                        profileImg={msg.created_by?.profile?.picture}
+                                        nickname={msg.created_by?.profile?.nickname}
+                                        time={msg.created_at?.slice(11, 16)}
+                                        theme="ara"
+                                        readStatus={isMe ? readStatus : undefined}
+                                        readCount={readCount}
+                                    >
+                                        {msg.message_content}
+                                    </MessageBox>
+                                </div>
+                            );
+                        })
+                    )}
                     <div ref={chatEndRef} />
                 </div>
                 {/* 입력창 */}
