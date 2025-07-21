@@ -249,7 +249,7 @@ export default function ChatPage() {
                                         profileImg={msg.created_by?.profile?.picture}
                                         nickname={msg.created_by?.profile?.nickname}
                                         time={msg.created_at?.slice(11, 16)}
-                                        theme="ara"
+                                        theme="cat"
                                         readStatus={isMe ? readStatus : undefined}
                                         readCount={readCount}
                                     >
