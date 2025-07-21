@@ -4,7 +4,7 @@ import { queryBuilder } from '@/lib/utils/queryBuilder';
 
 // 채팅방 리스트 가져오기
 export const fetchChatRoomList = async () => {
-    const { data } = await http.get('chat/room/');
+    const { data } = await http.get(`chat/room/`);
     return data;
 }
 
@@ -31,7 +31,7 @@ export const fetchChatMessages = async (
     roomId: number,
     page: number = 1,
     pageSize: number = 20,
-    ordering?: string
+    ordering: string = 'created_at'
 ) => {
     const query = queryBuilder({
         chat_room: roomId,
@@ -82,7 +82,7 @@ export const createGroupDM = async (room_title: string) => {
 // 채팅방에 메시지 보내기
 export const sendMessage = async (roomId : number, content : string) => {
     try {
-        const { data } = await http.post(`chat/room/message/`, {
+        const { data } = await http.post(`chat/message/`, {
             message_type : 'TEXT',
             message_content: content,
             chat_room : roomId,
