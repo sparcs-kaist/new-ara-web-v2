@@ -59,19 +59,23 @@ export const createDM = async (userId: number) => {
 }
 
 // 단체 채팅방 생성
-export const createGroupDM = async (room_title: string) => {
+export const createGroupDM = async (room_title: string, picture: File | null = null) => {
     const room_type = 'GROUP_DM';
     const chat_name_type = "NICKNAME";
+    const formData = new FormData();
+    formData.append("room_title", room_title);
+    formData.append("room_type", room_type);
+    formData.append("chat_name_type", chat_name_type);
+    if (picture) {
+        formData.append("picture", picture);
+    }
     try {
-        const { data } = await http.post('chat/room/', {
-            room_title: room_title,
-            room_type: room_type,
-            chat_name_type: chat_name_type,
+        const { data } = await http.post('chat/room/', formData, {
+            headers: { "Content-Type": "multipart/form-data" }
         });
         return data;
     } catch (error) {
         const err = error as AxiosError<{ detail?: string }>;
-
         if (err.response && err.response.data && err.response.data.detail) {
             throw new Error(err.response.data.detail);
         }

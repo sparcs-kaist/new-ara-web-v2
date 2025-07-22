@@ -5,7 +5,9 @@ import Image from 'next/image';
 import MessageBox from './components/MessageBox';
 import ChatTypePopover from './components/ChatTypePopover';
 import UserSearchDialog from './components/UserSearchDialog';
+import RoomCreateDialog from './components/RoomCreateDialog'; 
 import { fetchChatRoomList, fetchChatMessages, sendMessage } from '@/lib/api/chat';
+import { createGroupDM } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 
 // ROOM 타입 정의
@@ -30,6 +32,7 @@ export default function ChatPage() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
+    const [showRoomCreate, setShowRoomCreate] = useState(false); // RoomCreateDialog 제어 상태 추가
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [myId, setMyId] = useState<number | null>(null); // 내 ID 저장 (fetchMe) -> 메시지 UI를 위해서.
 
@@ -88,18 +91,33 @@ export default function ChatPage() {
         }
     };
 
-    const handleAddChatRoom = (type: 'DM' | 'GROUP') => {
+    const handleAddChatRoom = async (type: 'DM' | 'GROUP') => {
         if (type === 'DM') {
             setShowUserSearch(true);
         } else {
-            alert('단체 채팅방 생성 기능!');
-            // 실제 생성 로직 연결
+            setShowRoomCreate(true); // RoomCreateDialog 오픈
         }
     };
 
     const handleSelectUser = (user: { id: number; nickname: string }) => {
         alert(`${user.nickname}님과 1:1 채팅방을 생성합니다.`);
         // 실제 DM 생성 로직 연결
+    };
+
+    const handleCreateGroupRoom = async ({ title, picture }: { title: string; picture: File | null }) => {
+        await createGroupDM(title, picture);
+        setShowRoomCreate(false);
+        // 채팅방 목록 새로고침
+        const data = await fetchChatRoomList();
+        const sortedRooms = [...(data.results || [])].sort((a, b) => {
+            const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
+            const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
+            return bTime - aTime;
+        });
+        setRooms(sortedRooms);
+        if (sortedRooms.length > 0) {
+            setSelectedRoomId(sortedRooms[0].id);
+        }
     };
 
     return (
@@ -164,12 +182,11 @@ export default function ChatPage() {
                                         style={{ width: '4px', background: '#E8443A', borderRadius: '2px' }}
                                     />
                                 )}
-                                <div className="flex-shrink-0 mr-3 ml-1">
+                                <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
                                     <Image
                                         src={room.picture}
                                         alt={room.room_title}
-                                        width={36}
-                                        height={36}
+                                        fill
                                         className="rounded-full object-cover"
                                     />
                                 </div>
@@ -191,25 +208,16 @@ export default function ChatPage() {
                 <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
                     {(() => {
                         const room = rooms.find(r => r.id === selectedRoomId);
-                        if (room?.picture) {
-                            return (
-                                <Image
-                                    src={room.picture}
-                                    alt={room.room_title || '채팅방'}
-                                    width={40}
-                                    height={40}
-                                    className="rounded-full object-cover mr-3"
-                                />
-                            );
-                        }
                         return (
-                            <Image
-                                src={DEFAULT_ROOM_IMAGE}
-                                alt="기본 채팅방"
-                                width={40}
-                                height={40}
-                                className="rounded-full object-cover mr-3"
-                            />
+                            <div className="relative w-10 h-10 mr-3">
+                                <Image
+                                    src={room?.picture || DEFAULT_ROOM_IMAGE}
+                                    alt={room?.room_title || '채팅방'}
+                                    fill
+                                    className="rounded-full object-cover"
+                                    sizes="40px"
+                                />
+                            </div>
                         );
                     })()}
                     <div className="flex-1 min-w-0">
@@ -284,6 +292,11 @@ export default function ChatPage() {
                 open={showUserSearch}
                 onClose={() => setShowUserSearch(false)}
                 onSelectUser={handleSelectUser}
+            />
+            <RoomCreateDialog
+                open={showRoomCreate}
+                onClose={() => setShowRoomCreate(false)}
+                onCreate={handleCreateGroupRoom}
             />
         </div>
     );
