@@ -8,13 +8,11 @@ const Profile = () => {
     const handlePictureChange = () => {};
     const [isNicknameEditable, setIsNicknameEditable] = useState(false);
     const [newNickname, setNewNickname] = useState('');
-    const [, setIsUpdating] = useState(false);
     const toggleNicknameInput = (isEditing: boolean) => {
         if (isEditing){
-            setIsUpdating(true);
+
         } else {
             setIsNicknameEditable(false);
-            setIsUpdating(false);
         }
     }
 
