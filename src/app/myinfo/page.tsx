@@ -39,12 +39,12 @@ const MyInfo = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const items = dataMap[tab] ?? [];
-  const allItems = items.filter(item =>
+  const filteredItems = items.filter(item =>
     item.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
-  const paginatedItems = allItems.slice(
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const paginatedItems = filteredItems.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -61,17 +61,15 @@ const MyInfo = () => {
 
       {/* 우측 게시글 리스트 */}
       <div className="flex flex-col flex-1">
-        <div className="flex justify-between items-end mb-6 border-b border-gray-200 pb-3">
+        <div className="flex justify-between items-end border-b border-gray-200 pb-3 mt-[17px]">
           {/* 탭 네비게이션 */}
-          <div className="flex gap-8">
+          <div className="relative flex gap-8">
             {TABS.map(t => (
               <button
                 key={t}
                 className={clsx(
-                  'pb-2 text-sm font-semibold transition-colors duration-200',
-                  tab === t
-                    ? 'text-red-600 border-b-2 border-red-600'
-                    : 'text-gray-400 hover:text-red-500 border-b-2 border-transparent'
+                  'relative pb-2 text-sm font-semibold transition-colors duration-200',
+                  tab === t ? 'text-red-600' : 'text-black hover:text-red-500'
                 )}
                 onClick={() => {
                   setTab(t);
@@ -79,21 +77,35 @@ const MyInfo = () => {
                 }}
               >
                 {t}
+                {tab === t && (
+                  <div
+                    className="absolute left-1/2 -bottom-[2px] -translate-x-1/2 w-[20px] h-[4px] rounded bg-[#ED3A3A] transition-all duration-200"
+                  />
+                )}
               </button>
             ))}
           </div>
           
           {/* 검색창 */}
-          <input
-            type="text"
-            placeholder="🔍 Search"
-            className="w-[300px] h-[40px] px-[10px] py-[10px] rounded-[15px] bg-gray-100 text-sm outline-none"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-[300px] h-[40px] pl-10 pr-[10px] py-[10px] rounded-[15px] bg-gray-100 text-sm outline-none"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
+                  <path d="M11.5 11.5L15 15M7 12A5 5 0 1 1 7 2a5 5 0 0 1 0 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
+            </div>
+          </div>
         </div>
         
         {/* 게시글 리스트 */}
