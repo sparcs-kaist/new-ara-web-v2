@@ -1,6 +1,7 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import React from 'react';
 
 const PostSetting = () => {
     const { t } = useTranslation();
