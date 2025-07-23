@@ -42,6 +42,27 @@ export type RelatedComment = {
   parent_comment: number | null;
 };
 
+export type RecentMessage = {
+  id: number;
+  message_type: string;
+  message_content: string;
+  chat_room: number;
+  created_by: {
+    id: number;
+    username: string;
+    profile: {
+      picture: string;
+      nickname: string;
+      user: number;
+      is_official: boolean;
+      is_school_admin: boolean;
+    };
+  };
+  created_at: string;
+  updated_at: string;
+  expired_at: string;
+};
+
 export type RelatedChatRoom = {
   id: number;
   room_title: string;
@@ -49,7 +70,7 @@ export type RelatedChatRoom = {
   chat_name_type: string;
   picture: string;
   recent_message_at: string;
-  recent_message: number;
+  recent_message: RecentMessage;
   created_at: string;
 };
 
@@ -60,11 +81,20 @@ export type Notification = {
   is_read: boolean;
   related_article: RelatedArticle | null;
   related_comment: RelatedComment | null;
-  related_chat_room?: RelatedChatRoom | null;
+  related_chat_room: RelatedChatRoom | null;
   created_at: string;
   updated_at: string;
   deleted_at: string;
-  type: NotificationType;
+  type: string;
   title: string;
   content: string;
+};
+
+export type NotificationApiResponse = {
+  num_pages: number;
+  num_items: number;
+  current: number;
+  previous: string | null;
+  next: string | null;
+  results: Notification[];
 };

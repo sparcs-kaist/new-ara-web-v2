@@ -1,70 +1,90 @@
 import Image from "next/image";
+import { getBoardKoNameById } from "@/lib/types/post";
+import { Notification, NotificationType } from "@/lib/types/notification";
 
-type NotificationType = "article_commented" | "comment_commented" | "chat_message";
+function formatRelativeTime(dateString: string): string {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-interface NotificationConfig {
-  icon: string;
-  iconRead: string;
-  title: string;
-  content: string;
-  tag: string;
-  tagColor: string;
-  detail: string;
-  detailColor: string;
-  time: string;
-  timeRead: string;
-  tagRead?: string;
-  reply?: string;
-  replyColor?: string;
+  if (diff < 60) return `${diff}초 전`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)}일 전`;
+
+  // 한 달 이상은 날짜로 표시
+  return date.toLocaleDateString("ko-KR");
 }
 
-const notificationConfig: Record<NotificationType, NotificationConfig> = {
-  article_commented: {
-    icon: "/notification/comment.svg",
-    iconRead: "/notification/comment_read.svg",
-    title: "회원님의 게시물에 새로운 댓글이 작성되었습니다.",
-    content: "엄청나게 긴 댓글의 내용이라 댓글이 짤려 가지고 말이죠, 그래서 엄청나게 긴 댓글의 내용이라 댓글이 짤려 가지고 말이죠",
-    tag: "[학교에게 전합니다]",
-    tagColor: "text-gray-400",
-    detail: "희망관 샤워실 유리 부스 교체 부탁드립니다.",
-    detailColor: "text-gray-600",
-    reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
-    time: "9분 전",
-    timeRead: "9분 전",
-  },
-  comment_commented: {
-    icon: "/notification/recomment.svg",
-    iconRead: "/notification/recomment_read.svg",
-    title: "회원님의 댓글에 새로운 대댓글이 작성되었습니다.",
-    content: "엄청나게 긴 대댓글의 내용이라 대댓글이 짤려 가지고 말이죠, 그래서 엄청나게 긴 대댓글의 내용이라 대댓글이 짤려 가지고 말이죠",
-    tag: "[학교에게 전합니다]",
-    tagColor: "text-gray-400",
-    detail: "희망관 샤워실 유리 부스 교체 부탁드립니다.",
-    detailColor: "text-gray-600",
-    reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
-    replyColor: "text-color-gray-black",
-    time: "2025.05.27.",
-    timeRead: "2025.05.27.",
-  },
-  chat_message: {
-    icon: "/notification/comment.svg",
-    iconRead: "/notification/comment_read.svg",
-    title: "새로운 메세지가 있습니다.",
-    content: "DM_신나는 포도,사나운 보노보",
-    tag: "[그룹 채팅]",
-    tagRead: "[DM]",
-    tagColor: "text-gray-400",
-    detail: "안녕하세요? 구매 문의 드립니다.",
-    detailColor: "text-gray-600",
-    reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
-    time: "2025.05.27.",
-    timeRead: "2025.05.27.",
-  },
-};
+export function mapNotificationToItemProps(n: Notification): NotificationItemProps {
+  const timestamp = formatRelativeTime(n.created_at);
 
+  if (n.type === "chat_message" && n.related_chat_room) {
+    return {
+      type: n.type,
+      isRead: n.is_read,
+      title: n.title,
+      content: n.content,
+      tag: `[${n.related_chat_room.room_type}]`,
+      showTag: true,
+      showContent: true,
+      showReply: true,
+      showDetail: false,
+      showTimestamp: true,
+      // subcontent: 방 제목
+      detail: n.related_chat_room.room_title,
+      // reply: 최근 메시지 내용 (API에서 recent_message.message.content로 받아야 함)
+      reply: n.related_chat_room.recent_message?.message_content ?? "",
+      timestamp,
+    };
+  }
+  if ((n.type === "article_commented" || n.type === "comment_commented") && n.related_article) {
+    return {
+      type: n.type,
+      isRead: n.is_read,
+      title: n.title,
+      content: n.content,
+      tag: `[${getBoardKoNameById(n.related_article.parent_board)}]`,
+      showTag: true,
+      showContent: true,
+      showReply: true,
+      showDetail: false,
+      showTimestamp: true,
+      // subcontent: 게시글 제목
+      detail: n.related_article.title,
+      // reply: 댓글/대댓글 내용
+      reply: n.type === "article_commented"
+        ? n.content
+        : n.related_comment?.content ?? "",
+      timestamp,
+    };
+  }
+  // fallback
+  return {
+    type: n.type,
+    isRead: n.is_read,
+    title: n.title,
+    content: n.content,
+    showTag: false,
+    showContent: true,
+    showReply: false,
+    showDetail: false,
+    showTimestamp: true,
+    timestamp,
+  };
+}
+
+// NotificationItemProps에 timestamp 추가
 export interface NotificationItemProps {
-  type: NotificationType;
+  // API 에서 받아오는 data관련 Props
+  type: string;
   isRead: boolean;
+  title : string;
+  content : string;
+  tag? : string;
+  detail? : string;
+  reply? : string;
+
   showIcon?: boolean;
   showTag?: boolean;
   showDetail?: boolean;
@@ -94,16 +114,18 @@ export interface NotificationItemProps {
   replyFontWeight?: string;
 
   iconSize?: number; // 아이콘 사이즈(px)
+  
+  timestamp?: string;
 }
 
 export interface NotificationListProps {
-  items: NotificationItemProps[];
+  notifications: Notification[];
   listSpacing?: number;
   titleFontSize?: string;
   contentFontSize?: string;
   detailFontSize?: string;
   timestampFontSize?: string;
-  replyFontSize?: string; // 추가
+  replyFontSize?: string;
   titleFontWeight?: string;
   contentFontWeight?: string;
   detailFontWeight?: string;
@@ -112,6 +134,26 @@ export interface NotificationListProps {
   verticalSpacing?: number;
   detailVerticalSpacing?: number;
   iconSize?: number;
+  showIcon?: boolean;
+  showTag?: boolean;
+  showDetail?: boolean;
+  showContent?: boolean;
+  showTimestamp?: boolean;
+  showReply?: boolean;
+}
+
+// 아이콘 경로를 타입별로 결정하는 함수
+function getNotificationIcon(type: string, isRead: boolean): string {
+  if (type === "article_commented") {
+    return isRead ? "/notification/comment_read.svg" : "/notification/comment.svg";
+  }
+  if (type === "comment_commented") {
+    return isRead ? "/notification/recomment_read.svg" : "/notification/recomment.svg";
+  }
+  if (type === "chat_message") {
+    return isRead ? "/notification/comment_read.svg" : "/notification/comment.svg";
+  }
+  return "/notification/comment.svg";
 }
 
 export function NotificationItem({
@@ -127,7 +169,7 @@ export function NotificationItem({
   contentFontSize = "text-base",
   detailFontSize = "text-sm",
   timestampFontSize = "text-sm",
-  replyFontSize = "text-sm", // 추가
+  replyFontSize = "text-sm",
   titleFontWeight = "font-bold",
   contentFontWeight = "font-medium",
   detailFontWeight = "font-medium",
@@ -136,11 +178,14 @@ export function NotificationItem({
   verticalSpacing = 8,
   detailVerticalSpacing = 8,
   iconSize = 36,
+  tag,
+  detail,
+  reply,
+  content,
+  title,
+  timestamp,
 }: NotificationItemProps) {
-  const config = notificationConfig[type];
-  const icon = isRead ? config.iconRead : config.icon;
-  const time = isRead ? config.timeRead : config.time;
-  const tag = type === "chat_message" ? (isRead ? config.tagRead : config.tag) : config.tag;
+  const icon = getNotificationIcon(type, isRead);
 
   return (
     <div className="flex flex-col justify-center items-center w-full py-0">
@@ -165,21 +210,23 @@ export function NotificationItem({
             />
           </div>
         )}
-        <div className={`flex-1 flex flex-col justify-center items-start min-w-0${!showIcon ? " pl-0" : " pl-0"}`}>
+        <div className="flex-1 flex flex-col justify-center items-start min-w-0">
           <div className={`self-stretch ${titleFontSize} ${titleFontWeight} truncate${isRead ? " text-gray-400" : ""}`}>
-            {config.title}
+            {title}
           </div>
           {showContent && (
             <div
               className={`self-stretch ${contentFontSize} ${contentFontWeight} truncate`}
               style={{ marginTop: verticalSpacing }}
             >
-              {config.content}
+              {content}
             </div>
           )}
         </div>
-        {showTimestamp && (
-          <div className={`w-20 text-right text-gray-400 ${timestampFontSize} ${timestampFontWeight}`}>{time}</div>
+        {showTimestamp && timestamp && (
+          <div className={`w-20 text-right text-gray-400 ${timestampFontSize} ${timestampFontWeight}`}>
+            {timestamp}
+          </div>
         )}
       </div>
       {(showTag || showDetail || showReply) && (
@@ -187,19 +234,16 @@ export function NotificationItem({
           className="self-stretch flex items-center"
           style={{
             marginTop: verticalSpacing,
-            columnGap: 16,
-            paddingLeft: showIcon ? (iconSize + 16) : 0, // 아이콘 크기만큼 왼쪽 패딩 title과 content 사이가 gap-4이므로 16을 더한다.
+            columnGap: 8,
+            paddingLeft: showIcon ?  (iconSize + 16) : 0,
           }}
         >
           <>
-            {/* 세로바는 showTag/showDetail 있을 때만 렌더 */}
             {(showTag || showDetail) && (
               <div
                 className="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-black"
                 style={{
                   minWidth: 0,
-                  // 아이콘 크기만큼 세로바도 content와 맞춰서 이동
-                  marginLeft: showIcon ? 0 : 0,
                 }}
               />
             )}
@@ -207,25 +251,23 @@ export function NotificationItem({
               className="flex-1 flex flex-col items-start min-w-0"
               style={{ rowGap: detailVerticalSpacing }}
             >
-              {/* tag/detail 영역 */}
               {(showTag || showDetail) && (
                 <div className="inline-flex items-start self-stretch min-w-0 gap-x-2">
                   {showTag && (
-                    <div className={config.tagColor + " text-xs " + detailFontWeight}>
+                    <div className={`text-xs text-gray-400 ${detailFontWeight}`}>
                       {tag}
                     </div>
                   )}
                   {showDetail && (
-                    <div className={`flex-1 ${config.detailColor} text-xs ${detailFontWeight} truncate min-w-0 ${detailFontSize}`}>
-                      {config.detail}
+                    <div className={`flex-1 text-gray-600 text-xs ${detailFontWeight} truncate min-w-0 ${detailFontSize}`}>
+                      {detail}
                     </div>
                   )}
                 </div>
               )}
-              {/* reply만 있을 때 위에 불필요한 간격 제거 */}
-              {showReply && config.reply && (
-                <div className={`self-stretch ${config.replyColor ?? ""} ${replyFontSize} ${replyFontWeight} truncate min-w-0`}>
-                  {config.reply}
+              {showReply && reply && (
+                <div className={`self-stretch ${replyFontSize} ${replyFontWeight} truncate min-w-0`}>
+                  {reply}
                 </div>
               )}
             </div>
@@ -236,8 +278,9 @@ export function NotificationItem({
   );
 }
 
+// NotificationList 내부에서 각 표시 옵션을 NotificationItem에 전달하도록 수정
 export default function NotificationList({
-  items,
+  notifications,
   listSpacing = 12,
   titleFontSize = "text-base",
   contentFontSize = "text-base",
@@ -252,28 +295,42 @@ export default function NotificationList({
   verticalSpacing = 8,
   detailVerticalSpacing = 8,
   iconSize = 36,
+  showIcon = true,
+  showTag = true,
+  showDetail = true,
+  showContent = true,
+  showTimestamp = true,
+  showReply = true,
 }: NotificationListProps) {
+  const items = notifications.map(n => ({
+    ...mapNotificationToItemProps(n),
+    showIcon,
+    showTag,
+    showDetail,
+    showContent,
+    showTimestamp,
+    showReply,
+    titleFontSize,
+    contentFontSize,
+    detailFontSize,
+    timestampFontSize,
+    replyFontSize,
+    titleFontWeight,
+    contentFontWeight,
+    detailFontWeight,
+    timestampFontWeight,
+    replyFontWeight,
+    verticalSpacing,
+    detailVerticalSpacing,
+    iconSize,
+  }));
+
   return (
     <div className="flex flex-col h-[568px] rounded-[5px] border border-purple-500 bg-white overflow-y-auto py-4">
       <ul className="flex-1 flex flex-col">
         {items.map((item, idx) => (
           <li key={idx} style={{ marginBottom: idx < items.length - 1 ? listSpacing : 0 }}>
-            <NotificationItem
-              {...item}
-              titleFontSize={titleFontSize}
-              contentFontSize={contentFontSize}
-              detailFontSize={detailFontSize}
-              timestampFontSize={timestampFontSize}
-              replyFontSize={replyFontSize}
-              titleFontWeight={titleFontWeight}
-              contentFontWeight={contentFontWeight}
-              detailFontWeight={detailFontWeight}
-              timestampFontWeight={timestampFontWeight}
-              replyFontWeight={replyFontWeight}
-              verticalSpacing={verticalSpacing}
-              detailVerticalSpacing={detailVerticalSpacing}
-              iconSize={iconSize}
-            />
+            <NotificationItem {...item} />
           </li>
         ))}
       </ul>
