@@ -5,49 +5,43 @@ import MyActivity from "../../components/MyInfo/MyActivity";
 import PostSetting from "../../components/MyInfo/PostSetting";
 import BlockedUser from "../../components/MyInfo/BlockedUser";
 import Profile from "../../components/MyInfo/Profile";
-import ArticleList from "../../components/ArticleList/ArticleList"; 
+import { ProfileRecentArticleList } from "../../containers/ArticleList"
+import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
+import { ProfileMyArticleList } from "../../containers/ArticleList";
+
+
 import clsx from 'clsx';
 
 const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'];
-
-const generateItems = (prefix: string, count = 23) =>
-  new Array(count).fill(null).map((_, i) => ({
-    id: i,
-    title: `${prefix} ${i + 1}.jpg`,
-    author: "귀요미 엘리지아",
-    views: 95 + i,
-    likes: 18 + i,
-    dislikes: 5,
-    comments: 8,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)),
-    profileImgUrl: "/images/profile1.jpg",
-    thumbnailUrl: "/images/thumb1.jpg",
-  }));
-
-const dataMap = {
-  '내가 쓴 글': generateItems('내 글'),
-  '최근 본 글': generateItems('최근 글'),
-  '담아둔 글': generateItems('담은 글'),
-  '알림': generateItems('알림'),
-};
-
 const ITEMS_PER_PAGE = 10;
 
 const MyInfo = () => {
   const [tab, setTab] = useState('내가 쓴 글');
-  const [search, setSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pages, setPages] = useState({
+    '내가 쓴 글': 1,
+    '최근 본 글': 1,
+    '담아둔 글': 1,
+    '알림': 1,
+  });
 
-  const items = dataMap[tab] ?? [];
-  const filteredItems = items.filter(item =>
-    item.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const [searches, setSearches] = useState({
+    '내가 쓴 글': '',
+    '최근 본 글': '',
+    '담아둔 글': '',
+    '알림': '',
+  });
 
-  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
-  const paginatedItems = filteredItems.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const handlePageChange = (newPage: number) => {
+    setPages(prev => ({ ...prev, [tab]: newPage }));
+  };
+
+  const handleSearchChange = (newSearch: string) => {
+    setSearches(prev => ({ ...prev, [tab]: newSearch }));
+    setPages(prev => ({ ...prev, [tab]: 1 }));
+  };
+
+  const currentPage = pages[tab];
+  const currentSearch = searches[tab];
 
   return (
     <div className="flex flex-col lg:flex-row px-[150px] py-8 gap-10">
@@ -71,10 +65,7 @@ const MyInfo = () => {
                   'relative pb-2 text-sm font-semibold transition-colors duration-200',
                   tab === t ? 'text-red-600' : 'text-black hover:text-red-500'
                 )}
-                onClick={() => {
-                  setTab(t);
-                  setCurrentPage(1);
-                }}
+                onClick={() => setTab(t)}
               >
                 {t}
                 {tab === t && (
@@ -93,11 +84,8 @@ const MyInfo = () => {
                 type="text"
                 placeholder="Search"
                 className="w-[300px] h-[40px] pl-10 pr-[10px] py-[10px] rounded-[15px] bg-gray-100 text-sm outline-none"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
+                value={currentSearch}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                 <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
@@ -108,24 +96,20 @@ const MyInfo = () => {
           </div>
         </div>
         
-        {/* 게시글 리스트 */}
-        <ArticleList
-          posts={paginatedItems}
-          showWriter={true}
-          showProfile={true}
-          showHit={true}
-          showStatus={true}
-          showAttachment={true}
-          showTimeAgo={true}
-          pagination={true}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          titleFontSize="text-sm"
-          titleFontWeight="font-normal"
-          gapBetweenPosts={10}
-          gapBetweenTitleAndMeta={6}
-        />
+        <div>
+          {tab === '내가 쓴 글' && (
+            <ProfileMyArticleList/>
+          )}
+          {tab === '최근 본 글' && (
+            <ProfileRecentArticleList/>
+          )}
+          {tab === '담아둔 글' && (
+            <ProfileBookmarkedArticlesList/>
+          )}
+          {tab === '알림' && (
+            <p className="text-gray-600">알림이 없습니다.</p>
+          )}
+        </div>
       </div>
     </div>
   );

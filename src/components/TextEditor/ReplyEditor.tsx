@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 //import Button from "../Button";
+import { Button } from 'antd';
 
 export default function ReplyEditor({isNested = true, isEditing = false, id} : {isNested? : boolean, isEditing? : boolean, id?: number}) {
   const [text, setText] = useState("");
@@ -38,7 +39,7 @@ export default function ReplyEditor({isNested = true, isEditing = false, id} : {
         <div className="flex flex-col gap-[4px] justify-end">
             {/* TODO : 여기에 타입 추가 : request type 확인 필요 */}
             {isNested && <Button type="default" onClick={()=>{setText("")}}>취소</Button>}
-            <Button type="highlighted" onClick={()=> {isEditing ? console.log("updated"): console.log("created")}}>등록</Button>
+            <Button onClick={()=> {isEditing ? console.log("updated"): console.log("created")}}>등록</Button>
         </div>
     </div>
   );
