@@ -87,3 +87,25 @@ export type ResponsePostList = {
   next: string | null;
   results: ResponsePost[];
 }
+
+// 게시판 ID와 이름의 mapping Enum
+// 만약, DB가 뒤틀려서 프로덕션과 Dev가 달라질 경우 API를 통해 가져와야함.
+export function getBoardKoNameById(boardId: number): string {
+  switch (boardId) {
+    case 1: return "포탈공지";
+    case 2: return "학생 단체";
+    case 3: return "구인구직";
+    case 4: return "장터";
+    case 5: return "입주 업체 피드백";
+    case 7: return "자유게시판";
+    case 8: return "운영진 공지";
+    case 10: return "아라 피드백";
+    case 11: return "입주 업체 공지";
+    case 12: return "동아리";
+    case 13: return "부동산";
+    case 14: return "학교에게 전합니다";
+    case 17: return "카이스트 뉴스";
+    case 18: return "외부 업체 홍보";
+    default: return "알 수 없음";
+  }
+}
