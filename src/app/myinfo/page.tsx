@@ -1,23 +1,14 @@
-export default function Test() {
-    return (
-      <div>
-        <h1>Build Test 통과용</h1>
-      </div>
-    );
-  }
-  
-/*
 'use client';
 import React, { useState } from 'react';
-import SmallBoardMyInfo from "@/components/SmallBoardMyInfo";
-import MyActivity from "@/components/MyActivity";
-import PostSetting from "@/components/PostSetting";
-import BlockedUser from "@/components/BlockedUser";
-import Profile from "@/components/Profile";
-import BoardItem from "@/components/BoardItem";
+import SmallBoardMyInfo from "../../components/MyInfo/SmallBoardMyInfo";
+import MyActivity from "../../components/MyInfo/MyActivity";
+import PostSetting from "../../components/MyInfo/PostSetting";
+import BlockedUser from "../../components/MyInfo/BlockedUser";
+import Profile from "../../components/MyInfo/Profile";
+import ArticleList from "../../components/ArticleList/ArticleList"; 
 import clsx from 'clsx';
 
-const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글'];
+const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'];
 
 const generateItems = (prefix: string, count = 23) =>
   new Array(count).fill(null).map((_, i) => ({
@@ -37,16 +28,18 @@ const dataMap = {
   '내가 쓴 글': generateItems('내 글'),
   '최근 본 글': generateItems('최근 글'),
   '담아둔 글': generateItems('담은 글'),
+  '알림': generateItems('알림'),
 };
 
 const ITEMS_PER_PAGE = 10;
 
 const MyInfo = () => {
-  const [tab, setTab] = useState('내 글');
+  const [tab, setTab] = useState('내가 쓴 글');
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const allItems = dataMap[tab].filter(item =>
+  const items = dataMap[tab] ?? [];
+  const allItems = items.filter(item =>
     item.title.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -57,7 +50,8 @@ const MyInfo = () => {
   );
 
   return (
-    <div className="flex flex-col lg:flex-row pl-4 pr-4 lg:pl-[146px] py-8 gap-10">
+    <div className="flex flex-col lg:flex-row px-[150px] py-8 gap-10">
+      {/* 좌측 프로필 + 설정 */}
       <div className="flex flex-col w-full lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />
         <SmallBoardMyInfo title="활동 기록"><MyActivity /></SmallBoardMyInfo>
@@ -65,30 +59,35 @@ const MyInfo = () => {
         <SmallBoardMyInfo title="차단한 유저"><BlockedUser /></SmallBoardMyInfo>
       </div>
 
+      {/* 우측 게시글 리스트 */}
       <div className="flex flex-col flex-1">
-        <div className="flex justify-start mb-4 gap-6 border-b pb-2 text-base font-semibold">
-          {TABS.map(t => (
-            <button
-              key={t}
-              className={clsx(
-                'pb-1 border-b-2',
-                tab === t ? 'text-pink-500 border-pink-500' : 'text-gray-400 border-transparent'
-              )}
-              onClick={() => {
-                setTab(t);
-                setCurrentPage(1);
-              }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-end mb-6 border-b border-gray-200 pb-3">
+          {/* 탭 네비게이션 */}
+          <div className="flex gap-8">
+            {TABS.map(t => (
+              <button
+                key={t}
+                className={clsx(
+                  'pb-2 text-sm font-semibold transition-colors duration-200',
+                  tab === t
+                    ? 'text-red-600 border-b-2 border-red-600'
+                    : 'text-gray-400 hover:text-red-500 border-b-2 border-transparent'
+                )}
+                onClick={() => {
+                  setTab(t);
+                  setCurrentPage(1);
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          
+          {/* 검색창 */}
           <input
             type="text"
-            placeholder="Search"
-            className="border px-3 py-1 rounded text-sm w-64"
+            placeholder="🔍 Search"
+            className="w-[300px] h-[40px] px-[10px] py-[10px] rounded-[15px] bg-gray-100 text-sm outline-none"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -96,31 +95,29 @@ const MyInfo = () => {
             }}
           />
         </div>
-
-        <div className="flex flex-col gap-2">
-          {paginatedItems.map(item => (
-            <BoardItem key={`${tab}-${item.id}`} {...item} />
-          ))}
-        </div>
         
-        <div className="flex justify-center mt-6 gap-2 text-sm">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              className={clsx(
-                'w-8 h-8 rounded',
-                currentPage === i + 1 ? 'text-red-500 font-bold' : 'text-gray-500'
-              )}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
+        {/* 게시글 리스트 */}
+        <ArticleList
+          posts={paginatedItems}
+          showWriter={true}
+          showProfile={true}
+          showHit={true}
+          showStatus={true}
+          showAttachment={true}
+          showTimeAgo={true}
+          pagination={true}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          titleFontSize="text-sm"
+          titleFontWeight="font-normal"
+          gapBetweenPosts={10}
+          gapBetweenTitleAndMeta={6}
+        />
       </div>
     </div>
   );
 };
 
 export default MyInfo;
-*/
+
