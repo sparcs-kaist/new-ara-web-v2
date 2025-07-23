@@ -1,42 +1,38 @@
 "use client";
 
-import NotificationList, { NotificationItemProps } from "@/components/NotificationList/NotificationList";
+import NotificationList from "@/components/NotificationList/NotificationList";
+import { Notification } from "@/lib/types/notification";
+import { NotificationApiResponse } from "./mock";
 import { useState } from "react";
 
-const defaultItems: NotificationItemProps[] = [
-  { type: "article_commented", isRead: false },
-  { type: "comment_commented", isRead: false },
-  { type: "article_commented", isRead: true },
-  { type: "comment_commented", isRead: true },
-  { type: "chat_message", isRead: false },
-  { type: "chat_message", isRead: true },
-];
-
 export default function NotificationListDocumentPage() {
-  const [listSpacing, setListSpacing] = useState(12);
-  const [verticalSpacing, setVerticalSpacing] = useState(8); // title-content, content-아래 영역
-  const [detailVerticalSpacing, setDetailVerticalSpacing] = useState(8); // detail/reply 영역 내부
-  const [containerWidth, setContainerWidth] = useState(591);
+  const [listSpacing, setListSpacing] = useState<number>(12);
+  const [verticalSpacing, setVerticalSpacing] = useState<number>(8);
+  const [detailVerticalSpacing, setDetailVerticalSpacing] = useState<number>(8);
+  const [containerWidth, setContainerWidth] = useState<number>(591);
 
-  const [titleFontSize, setTitleFontSize] = useState("text-base");
-  const [contentFontSize, setContentFontSize] = useState("text-base");
-  const [detailFontSize, setDetailFontSize] = useState("text-sm");
-  const [timestampFontSize, setTimestampFontSize] = useState("text-sm");
-  const [replyFontSize, setReplyFontSize] = useState("text-sm");
+  const [titleFontSize, setTitleFontSize] = useState<string>("text-base");
+  const [contentFontSize, setContentFontSize] = useState<string>("text-base");
+  const [detailFontSize, setDetailFontSize] = useState<string>("text-sm");
+  const [timestampFontSize, setTimestampFontSize] = useState<string>("text-sm");
+  const [replyFontSize, setReplyFontSize] = useState<string>("text-sm");
 
-  const [titleFontWeight, setTitleFontWeight] = useState("font-bold");
-  const [contentFontWeight, setContentFontWeight] = useState("font-medium");
-  const [detailFontWeight, setDetailFontWeight] = useState("font-medium");
-  const [timestampFontWeight, setTimestampFontWeight] = useState("font-medium");
-  const [replyFontWeight, setReplyFontWeight] = useState("font-medium");
+  const [titleFontWeight, setTitleFontWeight] = useState<string>("font-bold");
+  const [contentFontWeight, setContentFontWeight] = useState<string>("font-medium");
+  const [detailFontWeight, setDetailFontWeight] = useState<string>("font-medium");
+  const [timestampFontWeight, setTimestampFontWeight] = useState<string>("font-medium");
+  const [replyFontWeight, setReplyFontWeight] = useState<string>("font-medium");
 
-  const [showIcon, setShowIcon] = useState(true);
-  const [showTag, setShowTag] = useState(true);
-  const [showDetail, setShowDetail] = useState(true);
-  const [showContent, setShowContent] = useState(true);
-  const [showTimestamp, setShowTimestamp] = useState(true);
-  const [showReply, setShowReply] = useState(true);
-  const [iconSize, setIconSize] = useState(36);
+  const [showIcon, setShowIcon] = useState<boolean>(true);
+  const [showTag, setShowTag] = useState<boolean>(true);
+  const [showDetail, setShowDetail] = useState<boolean>(true);
+  const [showContent, setShowContent] = useState<boolean>(true);
+  const [showTimestamp, setShowTimestamp] = useState<boolean>(true);
+  const [showReply, setShowReply] = useState<boolean>(true);
+  const [iconSize, setIconSize] = useState<number>(36);
+
+  // API mock 데이터
+  const notifications: Notification[] = NotificationApiResponse.results;
 
   return (
     <div className="max-w-[800px] mx-auto p-4">
@@ -155,24 +151,7 @@ export default function NotificationListDocumentPage() {
       </div>
       <div style={{ width: containerWidth }}>
         <NotificationList
-          items={defaultItems.map(item => ({
-            ...item,
-            showIcon,
-            showTag,
-            showDetail,
-            showContent,
-            showTimestamp,
-            showReply,
-            titleFontWeight,
-            contentFontWeight,
-            detailFontWeight,
-            timestampFontWeight,
-            replyFontWeight,
-            verticalSpacing,
-            detailVerticalSpacing,
-            replyFontSize,
-            iconSize,
-          }))}
+          notifications={notifications}
           listSpacing={listSpacing}
           titleFontSize={titleFontSize}
           contentFontSize={contentFontSize}
@@ -187,6 +166,12 @@ export default function NotificationListDocumentPage() {
           verticalSpacing={verticalSpacing}
           detailVerticalSpacing={detailVerticalSpacing}
           iconSize={iconSize}
+          showIcon={showIcon}
+          showTag={showTag}
+          showDetail={showDetail}
+          showContent={showContent}
+          showTimestamp={showTimestamp}
+          showReply={showReply}
         />
       </div>
     </div>

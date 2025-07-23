@@ -7,7 +7,7 @@ export const NotificationApiResponse = {
     "results": [
         {
             "id": 1191,
-            "is_read": false,
+            "is_read": true,
             "related_article": null,
             "related_comment": null,
             "related_chat_room": {
