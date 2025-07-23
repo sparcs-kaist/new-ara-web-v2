@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Calendar from "@/components/Calendar/Calendar";
-import NotificationList from "@/components/NotificationList/NotificationList";
 
 const today = new Date();
 const existDates = [today, new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2)];
@@ -31,7 +30,6 @@ export default function CalendarTestPage() {
           onDateClick={handleDateClick}
         />
       </div>
-      <NotificationList />
     </div>
   );
 }
