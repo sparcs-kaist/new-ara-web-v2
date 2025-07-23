@@ -9,11 +9,10 @@ interface NotificationConfig {
   content: string;
   tag: string;
   tagColor: string;
-  subContent: string;
-  subContentColor: string;
+  detail: string;
+  detailColor: string;
   time: string;
   timeRead: string;
-  // 아래 3개는 일부 타입에서만 사용하므로 optional로 지정
   tagRead?: string;
   reply?: string;
   replyColor?: string;
@@ -27,10 +26,9 @@ const notificationConfig: Record<NotificationType, NotificationConfig> = {
     content: "엄청나게 긴 댓글의 내용이라 댓글이 짤려 가지고 말이죠, 그래서 엄청나게 긴 댓글의 내용이라 댓글이 짤려 가지고 말이죠",
     tag: "[학교에게 전합니다]",
     tagColor: "text-gray-400",
-    subContent: "", // article_commented는 subContent 없음
-    subContentColor: "text-gray-600",
-    reply: "희망관 샤워실 유리 부스 교체 부탁드립니다.", // 본문 내용은 reply로
-    replyColor: "text-color-gray-black",
+    detail: "희망관 샤워실 유리 부스 교체 부탁드립니다.",
+    detailColor: "text-gray-600",
+    reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
     time: "9분 전",
     timeRead: "9분 전",
   },
@@ -41,8 +39,8 @@ const notificationConfig: Record<NotificationType, NotificationConfig> = {
     content: "엄청나게 긴 대댓글의 내용이라 대댓글이 짤려 가지고 말이죠, 그래서 엄청나게 긴 대댓글의 내용이라 대댓글이 짤려 가지고 말이죠",
     tag: "[학교에게 전합니다]",
     tagColor: "text-gray-400",
-    subContent: "희망관 샤워실 유리 부스 교체 부탁드립니다.", // comment_commented는 subContent 사용
-    subContentColor: "text-gray-600",
+    detail: "희망관 샤워실 유리 부스 교체 부탁드립니다.",
+    detailColor: "text-gray-600",
     reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
     replyColor: "text-color-gray-black",
     time: "2025.05.27.",
@@ -56,100 +54,229 @@ const notificationConfig: Record<NotificationType, NotificationConfig> = {
     tag: "[그룹 채팅]",
     tagRead: "[DM]",
     tagColor: "text-gray-400",
-    subContent: "", // chat_message도 subContent 없음
-    subContentColor: "text-color-gray-black",
-    reply: "안녕하세요? 구매 문의 드립니다.",
-    replyColor: "text-gray-600",
+    detail: "안녕하세요? 구매 문의 드립니다.",
+    detailColor: "text-gray-600",
+    reply: "맞아요... 저도 유리에 다친 적이 있어요 ㅜㅜ 저 유리 빠르게 교체",
     time: "2025.05.27.",
     timeRead: "2025.05.27.",
   },
 };
 
-interface NotificationItemProps {
+export interface NotificationItemProps {
   type: NotificationType;
   isRead: boolean;
+  showIcon?: boolean;
+  showTag?: boolean;
+  showDetail?: boolean;
+  showContent?: boolean;
+  showTimestamp?: boolean;
+  showReply?: boolean;
+
+  // 분리된 내부 간격
+  verticalSpacing?: number; // title-content, content-아래 영역 사이
+  detailVerticalSpacing?: number; // detail/reply 영역 내부 세로 간격
+
+  // 리스트 간 간격
+  listSpacing?: number; // px 단위
+
+  // font size 관련 props
+  titleFontSize?: string;
+  contentFontSize?: string;
+  detailFontSize?: string;
+  timestampFontSize?: string;
+  replyFontSize?: string; // 추가
+
+  // font weight 관련 props
+  titleFontWeight?: string;
+  contentFontWeight?: string;
+  detailFontWeight?: string;
+  timestampFontWeight?: string;
+  replyFontWeight?: string;
+
+  iconSize?: number; // 아이콘 사이즈(px)
 }
 
-const notificationData: NotificationItemProps[] = [
-  { type: "article_commented", isRead: false },
-  { type: "comment_commented", isRead: false },
-  { type: "article_commented", isRead: true },
-  { type: "comment_commented", isRead: true },
-  { type: "chat_message", isRead: false },
-  { type: "chat_message", isRead: true },
-];
+export interface NotificationListProps {
+  items: NotificationItemProps[];
+  listSpacing?: number;
+  titleFontSize?: string;
+  contentFontSize?: string;
+  detailFontSize?: string;
+  timestampFontSize?: string;
+  replyFontSize?: string; // 추가
+  titleFontWeight?: string;
+  contentFontWeight?: string;
+  detailFontWeight?: string;
+  timestampFontWeight?: string;
+  replyFontWeight?: string;
+  verticalSpacing?: number;
+  detailVerticalSpacing?: number;
+  iconSize?: number;
+}
 
-function NotificationItem({ type, isRead }: NotificationItemProps) {
+export function NotificationItem({
+  type,
+  isRead,
+  showIcon = true,
+  showTag = true,
+  showDetail = true,
+  showContent = true,
+  showTimestamp = true,
+  showReply = true,
+  titleFontSize = "text-base",
+  contentFontSize = "text-base",
+  detailFontSize = "text-sm",
+  timestampFontSize = "text-sm",
+  replyFontSize = "text-sm", // 추가
+  titleFontWeight = "font-bold",
+  contentFontWeight = "font-medium",
+  detailFontWeight = "font-medium",
+  timestampFontWeight = "font-medium",
+  replyFontWeight = "font-medium",
+  verticalSpacing = 8,
+  detailVerticalSpacing = 8,
+  iconSize = 36,
+}: NotificationItemProps) {
   const config = notificationConfig[type];
   const icon = isRead ? config.iconRead : config.icon;
   const time = isRead ? config.timeRead : config.time;
+  const tag = type === "chat_message" ? (isRead ? config.tagRead : config.tag) : config.tag;
 
   return (
-    <div className="w-[551px] py-3 mx-auto flex flex-col justify-center items-center gap-3">
-      <div className="self-stretch flex justify-start items-center gap-3">
-        <div className={`w-9 h-9 rounded-2xl inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden ${
-          type === "article_commented" || type === "comment_commented"
-            ? isRead
-              ? "bg-color-neutral-light1"
-              : "bg-color-brand-default"
-            : "bg-color-neutral-light1"
-        }`}>
-          <Image
-            src={icon}
-            alt="알림 아이콘"
-            width={36}
-            height={36}
-            className="object-contain"
-          />
-        </div>
-        <div className="flex-1 flex flex-col justify-center items-start gap-2 min-w-0">
-          <div className={`self-stretch ${type === "chat_message" ? "text-color-neutral-light1" : "text-color-gray-black"} text-base font-bold truncate`}>
+    <div className="flex flex-col justify-center items-center w-full py-0">
+      <div className="flex w-full justify-start items-center gap-4">
+        {showIcon && (
+          <div
+            className={`rounded-2xl inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden ${
+              type === "article_commented" || type === "comment_commented"
+                ? isRead
+                  ? "bg-color-neutral-light1"
+                  : "bg-color-brand-default"
+                : "bg-color-neutral-light1"
+            }`}
+            style={{ width: iconSize, height: iconSize }}
+          >
+            <Image
+              src={icon}
+              alt="알림 아이콘"
+              width={iconSize}
+              height={iconSize}
+              className="object-contain"
+            />
+          </div>
+        )}
+        <div className={`flex-1 flex flex-col justify-center items-start min-w-0${!showIcon ? " pl-0" : " pl-0"}`}>
+          <div className={`self-stretch ${titleFontSize} ${titleFontWeight} truncate${isRead ? " text-gray-400" : ""}`}>
             {config.title}
           </div>
-          <div className={`self-stretch ${type === "chat_message" ? "text-color-neutral-default" : "text-color-gray-black"} text-base font-medium truncate`}>
-            {config.content}
-          </div>
-        </div>
-        <div className="w-20 text-right text-gray-400 text-sm font-medium">{time}</div>
-      </div>
-      <div className="self-stretch pl-12 flex items-center gap-2">
-        <div className="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-black" />
-        <div className="flex-1 flex flex-col items-start gap-1 min-w-0">
-          <div className="inline-flex items-start gap-1 self-stretch min-w-0">
-            <div className={config.tagColor + " text-xs font-medium"}>
-              {type === "chat_message" ? (isRead ? config.tagRead : config.tag) : config.tag}
-            </div>
-            {(type === "article_commented" || type === "chat_message") && (
-              <div className={`flex-1 ${config.subContentColor} text-xs font-medium truncate min-w-0`}>
-                {config.subContent}
-              </div>
-            )}
-            {type === "comment_commented" && (
-              <div className={`flex-1 ${config.subContentColor} text-xs font-medium truncate min-w-0`}>
-                {config.subContent}
-              </div>
-            )}
-          </div>
-          <div className={`self-stretch ${config.replyColor} text-sm font-medium truncate min-w-0`}>
-            {config.reply}
-          </div>
-          {type === "chat_message" && (
-            <div className={`self-stretch ${config.subContentColor} text-sm font-medium truncate min-w-0`}>
-              {config.subContent}
+          {showContent && (
+            <div
+              className={`self-stretch ${contentFontSize} ${contentFontWeight} truncate`}
+              style={{ marginTop: verticalSpacing }}
+            >
+              {config.content}
             </div>
           )}
         </div>
+        {showTimestamp && (
+          <div className={`w-20 text-right text-gray-400 ${timestampFontSize} ${timestampFontWeight}`}>{time}</div>
+        )}
       </div>
+      {(showTag || showDetail || showReply) && (
+        <div
+          className="self-stretch flex items-center"
+          style={{
+            marginTop: verticalSpacing,
+            columnGap: 16,
+            paddingLeft: showIcon ? (iconSize + 16) : 0, // 아이콘 크기만큼 왼쪽 패딩 title과 content 사이가 gap-4이므로 16을 더한다.
+          }}
+        >
+          <>
+            {/* 세로바는 showTag/showDetail 있을 때만 렌더 */}
+            {(showTag || showDetail) && (
+              <div
+                className="w-0 self-stretch outline outline-1 outline-offset-[-0.50px] outline-black"
+                style={{
+                  minWidth: 0,
+                  // 아이콘 크기만큼 세로바도 content와 맞춰서 이동
+                  marginLeft: showIcon ? 0 : 0,
+                }}
+              />
+            )}
+            <div
+              className="flex-1 flex flex-col items-start min-w-0"
+              style={{ rowGap: detailVerticalSpacing }}
+            >
+              {/* tag/detail 영역 */}
+              {(showTag || showDetail) && (
+                <div className="inline-flex items-start self-stretch min-w-0 gap-x-2">
+                  {showTag && (
+                    <div className={config.tagColor + " text-xs " + detailFontWeight}>
+                      {tag}
+                    </div>
+                  )}
+                  {showDetail && (
+                    <div className={`flex-1 ${config.detailColor} text-xs ${detailFontWeight} truncate min-w-0 ${detailFontSize}`}>
+                      {config.detail}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* reply만 있을 때 위에 불필요한 간격 제거 */}
+              {showReply && config.reply && (
+                <div className={`self-stretch ${config.replyColor ?? ""} ${replyFontSize} ${replyFontWeight} truncate min-w-0`}>
+                  {config.reply}
+                </div>
+              )}
+            </div>
+          </>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function NotificationList() {
+export default function NotificationList({
+  items,
+  listSpacing = 12,
+  titleFontSize = "text-base",
+  contentFontSize = "text-base",
+  detailFontSize = "text-sm",
+  timestampFontSize = "text-sm",
+  replyFontSize = "text-sm",
+  titleFontWeight = "font-bold",
+  contentFontWeight = "font-medium",
+  detailFontWeight = "font-medium",
+  timestampFontWeight = "font-medium",
+  replyFontWeight = "font-medium",
+  verticalSpacing = 8,
+  detailVerticalSpacing = 8,
+  iconSize = 36,
+}: NotificationListProps) {
   return (
-    <div className="w-[591px] h-[568px] rounded-[5px] border border-purple-500 bg-white overflow-y-auto">
-      {notificationData.map((item, idx) => (
-        <NotificationItem key={idx} {...item} />
-      ))}
+    <div className="flex flex-col h-[568px] rounded-[5px] border border-purple-500 bg-white overflow-y-auto py-4">
+      <ul className="flex-1 flex flex-col">
+        {items.map((item, idx) => (
+          <li key={idx} style={{ marginBottom: idx < items.length - 1 ? listSpacing : 0 }}>
+            <NotificationItem
+              {...item}
+              titleFontSize={titleFontSize}
+              contentFontSize={contentFontSize}
+              detailFontSize={detailFontSize}
+              timestampFontSize={timestampFontSize}
+              replyFontSize={replyFontSize}
+              titleFontWeight={titleFontWeight}
+              contentFontWeight={contentFontWeight}
+              detailFontWeight={detailFontWeight}
+              timestampFontWeight={timestampFontWeight}
+              replyFontWeight={replyFontWeight}
+              verticalSpacing={verticalSpacing}
+              detailVerticalSpacing={detailVerticalSpacing}
+              iconSize={iconSize}
+            />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
