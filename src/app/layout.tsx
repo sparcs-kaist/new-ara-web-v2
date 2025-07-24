@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   }
 
   // WebView 페이지 : 기본 NavBar와 Footer를 사용하지 않음.
-  if (pathname.startsWith("/webview")) {
+  if (pathname.startsWith("/web_view")) {
     return (
       <html lang="ko">
         <head>
