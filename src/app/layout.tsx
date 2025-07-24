@@ -7,6 +7,7 @@ import NavBar from "@/components/NavBar/NavBar";
 import Footer from "@/components/Footer/Footer";
 import "@/i18n";
 import { fetchMe } from "@/lib/api/user";
+import path from "path";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -51,6 +52,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // WebView 페이지 : 기본 NavBar와 Footer를 사용하지 않음.
+  if (pathname.startsWith("/webview")) {
+    return (
+      <html lang="ko">
+        <head>
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        </head>
+        <body className="h-screen">
+          <main className="h-full">{children}</main>
+        </body>
+      </html>
+    );
+  }
+
+  // 일반 페이지 : NavBar와 Footer포함해서 렌더링
   return (
     <html lang="ko">
       <head>
