@@ -4,6 +4,7 @@ import DateNavigator from "./components/DateNavigator";
 import RestaurantSelection from "./components/RestaurantSelection";
 import AllergySelection from "./components/AllergySelection";
 import MealHeader from "./components/MealHeader";
+import RestaurantNavigator from "./components/RestaurantNavigator";
 
 //WebView용 뒤로가기 기능 Handler
 //Flutter 채널로 메시지 보내기
@@ -16,9 +17,8 @@ export default function MealPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-8">
       <h1 className="text-2xl font-bold mb-6">학식 페이지</h1>
       <MealHeader onBackClick={handleClick} />
-      {/* <AllergySelection /> */}
-      {/* <DateNavigator /> */}
-      {/* <RestaurantSelection /> */}
+      <DateNavigator />
+      <RestaurantNavigator />
     </div>
   );
 }

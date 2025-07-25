@@ -66,10 +66,10 @@ const NotificationBadge = ({ count }: { count: number }) => (
 interface MealHeaderProps {
   title?: string;
   onBackClick?: () => void;
-  allergyCount?: number;
-  onAllergyFilterClick?: () => void;
   backLabel?: string;
   children?: ReactNode;
+  
+  // 알레르기 관련 props
   selectedAllergies?: string[];
   onAllergyChange?: (allergies: string[]) => void;
 }
@@ -77,8 +77,6 @@ interface MealHeaderProps {
 export default function MealHeader({
   title = "오늘의 학식",
   onBackClick,
-  allergyCount = 0,
-  onAllergyFilterClick,
   backLabel = "홈",
   children,
   selectedAllergies = [],
@@ -90,9 +88,6 @@ export default function MealHeader({
   // 알레르기 필터 아이콘 클릭 핸들러
   const handleAllergyFilterClick = () => {
     setShowAllergySelection(true);
-    if (onAllergyFilterClick) {
-      onAllergyFilterClick();
-    }
   };
 
   // 알레르기 선택 저장 핸들러
@@ -125,9 +120,9 @@ export default function MealHeader({
           className="p-2.5 flex items-center relative cursor-pointer" 
           onClick={handleAllergyFilterClick}
         >
-          <AllergyFilterIcon hasSelections={allergyCount > 0} />
+          <AllergyFilterIcon hasSelections={selectedAllergies.length > 0} />
           <div className="absolute -right-1 -bottom-1">
-            <NotificationBadge count={allergyCount} />
+            <NotificationBadge count={selectedAllergies.length} />
           </div>
         </div>
         
