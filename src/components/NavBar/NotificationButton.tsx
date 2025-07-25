@@ -9,7 +9,7 @@ export default function NotificationButton() {
     <div className="justify-center w-5 h-5">
       <div>
         <button onClick={() => setIsOpen(!isOpen)}>
-          <Image src="/notification.png" width={17} height={20} alt="Notifications" />
+          <Image src="/notification.svg" width={17} height={20} alt="Notifications" />
         </button>
         {isOpen && (<NotiDetail />)}
       </div>
