@@ -79,11 +79,13 @@ export default function MealHeader({
   onBackClick,
   backLabel = "홈",
   children,
-  selectedAllergies = [],
   onAllergyChange
 }: MealHeaderProps) {
   // 알레르기 선택 모달 표시 여부 상태
   const [showAllergySelection, setShowAllergySelection] = useState(false);
+
+  // 알레르기 선택 상태를 컴포넌트 내부에서 관리
+  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
 
   // 알레르기 필터 아이콘 클릭 핸들러
   const handleAllergyFilterClick = () => {
@@ -92,6 +94,7 @@ export default function MealHeader({
 
   // 알레르기 선택 저장 핸들러
   const handleAllergySave = (allergies: string[]) => {
+    setSelectedAllergies(allergies);
     setShowAllergySelection(false);
     if (onAllergyChange) {
       onAllergyChange(allergies);
@@ -121,7 +124,7 @@ export default function MealHeader({
           onClick={handleAllergyFilterClick}
         >
           <AllergyFilterIcon hasSelections={selectedAllergies.length > 0} />
-          <div className="absolute -right-1 -bottom-1">
+          <div className="absolute right-[12px] bottom-[10px]">
             <NotificationBadge count={selectedAllergies.length} />
           </div>
         </div>

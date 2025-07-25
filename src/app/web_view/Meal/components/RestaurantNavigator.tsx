@@ -36,20 +36,19 @@ const TimeButton = ({ label, isSelected, onClick }: TimeButtonProps) => (
 );
 
 interface RestaurantNavigatorProps {
-  defaultRestaurant?: string;
-  defaultMealTime?: string;
+  selectedRestaurant: string;
+  selectedMealTime: string;
   onRestaurantChange?: (restaurant: string) => void;
   onMealTimeChange?: (time: string) => void;
 }
 
 export default function RestaurantNavigator({
-  defaultRestaurant = '동맛골 1층 (카페테리아)',
-  defaultMealTime = '점심',
+  selectedRestaurant = '동맛골 1층 (카페테리아)',
+  selectedMealTime = '점심',
   onRestaurantChange,
   onMealTimeChange
 }: RestaurantNavigatorProps) {
-  const [restaurant, setRestaurant] = useState(defaultRestaurant);
-  const [selectedTime, setSelectedTime] = useState(defaultMealTime);
+  // 모달 표시 상태만 내부에서 관리
   const [showRestaurantModal, setShowRestaurantModal] = useState(false);
   
   // 식당 선택 영역의 ref
@@ -79,7 +78,6 @@ export default function RestaurantNavigator({
   };
 
   const handleRestaurantSelect = (name: string) => {
-    setRestaurant(name);
     setShowRestaurantModal(false);
     if (onRestaurantChange) {
       onRestaurantChange(name);
@@ -87,7 +85,6 @@ export default function RestaurantNavigator({
   };
 
   const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
     if (onMealTimeChange) {
       onMealTimeChange(time);
     }
@@ -104,7 +101,7 @@ export default function RestaurantNavigator({
       '교수회관',
     ];
     
-    return restaurantNames.findIndex(name => name === restaurant) || 2;
+    return restaurantNames.findIndex(name => name === selectedRestaurant) || 2;
   };
 
   return (
@@ -116,7 +113,7 @@ export default function RestaurantNavigator({
         onClick={handleRestaurantClick}
       >
         <div className="text-zinc-800 text-base font-bold">
-          {restaurant}
+          {selectedRestaurant}
         </div>
         <div className="ml-1">
           <ArrowIcon />
@@ -139,7 +136,7 @@ export default function RestaurantNavigator({
           <TimeButton 
             key={index}
             label={time}
-            isSelected={selectedTime === time}
+            isSelected={selectedMealTime === time}
             onClick={() => handleTimeSelect(time)}
           />
         ))}

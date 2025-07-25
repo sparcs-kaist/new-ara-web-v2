@@ -109,13 +109,13 @@ export default function AllergySelection({
       {/* 하단 버튼 */}
       <div className="self-stretch flex">
         <button
-          className="flex-1 py-4 border-t border-r border-gray-200 text-red-500 text-xl"
+          className="flex-1 py-4 border-t border-r border-gray-200 text-red-500 text-[16px]"
           onClick={handleCancel}
         >
           취소
         </button>
         <button
-          className="flex-1 py-4 border-t border-l border-gray-200 text-red-500 text-xl font-bold"
+          className="flex-1 py-4 border-t border-l border-gray-200 text-red-500 text-[16px] font-bold"
           onClick={handleSave}
         >
           저장({selectedAllergies.length})
