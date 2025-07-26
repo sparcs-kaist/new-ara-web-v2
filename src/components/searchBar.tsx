@@ -1,7 +1,7 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import React from 'react';
 
 interface TextInputProps {
   value: string;

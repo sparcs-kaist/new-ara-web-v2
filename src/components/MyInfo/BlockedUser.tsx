@@ -1,6 +1,7 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 import Image from "next/image";
+import React from 'react';
 
 const BlockedUser = () => {
     const { t } = useTranslation();

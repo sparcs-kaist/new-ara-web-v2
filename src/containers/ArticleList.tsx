@@ -271,17 +271,115 @@ export function BoardBookmarkedArticlesList() {
 
 //Profile 페이지 - 내가 쓴 글
 export function ProfileMyArticleList () {
-    return;
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchArticles({ pageSize: 10, page: currentPage, /*내가 쓴 글 조건 추가 필요*/ });
+      setPosts(Response.results);
+      setTotalPages(Response.num_pages || 1);
+    };
+    fetchData();
+  }, [currentPage]);
+
+  return (
+    <ArticleList
+      className="mt-0"
+      posts={posts}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      showAttachment={true}
+      showTimeAgo={true}
+      pagination={true}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
 }
 
 //Profile 페이지 - 최근 본 글
-export function ProfileRecentArticleList () {
-    return;
+export function ProfileRecentArticleList() {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+      setPosts(Response.results);
+      setTotalPages(Response.num_pages || 1);
+    };
+    fetchData();
+  }, [currentPage]);
+
+  return (
+    <ArticleList
+      className="mt-0"
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
 }
 
 //Profile 페이지 - 북마크 한 글
-export function ProfileBookmarkedArticlesList () {
-    return;
+export function ProfileBookmarkedArticlesList() {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchArchives({ pageSize: 10, page: currentPage });
+      // Response 결과에서 parent_article만 추출 (BoardBookmarkedArticlesList 참고)
+      const articles = (Response.results || []).map((item: any) => item.parent_article);
+      setPosts(articles);
+      setTotalPages(Response.num_pages || 1);
+    };
+    fetchData();
+  }, [currentPage]);
+
+  return (
+    <ArticleList
+      className="mt-0"
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
 }
 
 //Post 페이지 - 하단 글 목록

@@ -1,6 +1,7 @@
 'use client';
 import { useTranslation } from 'react-i18next';
 import { ReactNode } from "react";
+import React from 'react';
 
 interface SmallBoardMyInfoProps {
     title: string;

@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import React from 'react';
 
 const Profile = () => {
     const { t } = useTranslation();
