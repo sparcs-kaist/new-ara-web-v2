@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { getBoardKoNameById } from "@/lib/types/post";
-import { Notification, NotificationType } from "@/lib/types/notification";
+import { Notification } from "@/lib/types/notification";
 
 function formatRelativeTime(dateString: string): string {
   const now = new Date();

@@ -1,6 +1,6 @@
 //Dumb Component (ArticleList)를 사용하는 모든 component들의 Set입니다.
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import NotificationList from '@/components/NotificationList/NotificationList';
 import { fetchNotifications } from "@/lib/api/notification";
 
@@ -34,7 +34,7 @@ export function BasicNotificationList() {
 // 메인 화면 알림 미리보기 컴포넌트
 export function MainPageNotificationPreview() {
     const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     
     useEffect(() => {
         const fetchData = async () => {

@@ -25,11 +25,11 @@ const AllergyWarningIcon = ({ allergyIds }: AllergyWarningIconProps) => {
     };
     
     if (showPopover) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('mouseup', handleClickOutside);
     }
     
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mouseup', handleClickOutside);
     };
   }, [showPopover]);
   
@@ -57,7 +57,6 @@ const AllergyWarningIcon = ({ allergyIds }: AllergyWarningIconProps) => {
               <li className="py-1">알레르기 정보가 없습니다</li>
             )}
           </ul>
-          <div className="absolute bottom-[-6px] left-2 w-2 h-2 bg-white transform rotate-45"></div>
         </div>
       )}
     </div>

@@ -1,6 +1,5 @@
 "use client";
 import NavBarProfile from "./NavBarProfile";
-import Image from "next/image";
 import NotificationButton from "./NotificationButton";
 
 export default function NavBarRight () {

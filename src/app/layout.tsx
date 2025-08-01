@@ -7,7 +7,6 @@ import NavBar from "@/components/NavBar/NavBar";
 import Footer from "@/components/Footer/Footer";
 import "@/i18n";
 import { fetchMe } from "@/lib/api/user";
-import path from "path";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
