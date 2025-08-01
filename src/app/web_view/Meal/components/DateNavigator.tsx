@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { format, addDays, subDays, parse } from 'date-fns';
+import { format, addDays, parse } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 interface DateNavigatorProps {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -42,7 +43,7 @@ function getNextNDays(n: number): string[] {
 
 function getRestaurantIdFromName(name: string): RestaurantId {
   const entries = Object.entries(RESTAURANT_DISPLAY_NAMES);
-  const found = entries.find(([_, displayName]) => displayName === name);
+  const found = entries.find(([, displayName]) => displayName === name);
   
   if (found) {
     return found[0] as RestaurantId;

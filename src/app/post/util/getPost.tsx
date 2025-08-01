@@ -18,7 +18,7 @@ export const cleanJsonString = (jsonStr: string): string => {
     .replace(/([^\\])"([^",:}\]]*)"([^",:}\]]*)"([^,:}\]]*)/g, '$1"$2\\"$3\\"$4')
 };
 
-// @ts-ignore
+// @ts-expect-error : temporary fix the build error to make dev server work
 // data format을 any로 설정할 수 있게 하기 위함
 export function formatPost({data}) : PostData {
     console.log(data);
