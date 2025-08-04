@@ -15,7 +15,6 @@ import clsx from 'clsx';
 
 const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'] as const;
 type TabType = typeof TABS[number];
-const ITEMS_PER_PAGE = 10;
 
 const MyInfo = () => {
   const [tab, setTab] = useState<TabType>('내가 쓴 글');
@@ -33,20 +32,15 @@ const MyInfo = () => {
     '알림': '',
   });
 
-  const handlePageChange = (newPage: number) => {
-    setPages(prev => ({ ...prev, [tab]: newPage }));
-  };
-
   const handleSearchChange = (newSearch: string) => {
     setSearches(prev => ({ ...prev, [tab]: newSearch }));
     setPages(prev => ({ ...prev, [tab]: 1 }));
   };
 
-  const currentPage = pages[tab];
   const currentSearch = searches[tab];
 
   return (
-    <div className="flex flex-col lg:flex-row px-[150px] py-8 gap-10">
+    <div className="flex flex-col lg:flex-row px-[150px] py-4 gap-10">
       {/* 좌측 프로필 + 설정 */}
       <div className="flex flex-col w-full lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />

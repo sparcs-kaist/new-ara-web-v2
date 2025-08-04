@@ -283,7 +283,6 @@ export function ProfileMyArticleList () {
     const fetchUser = async () => {
       try {
         const user = await fetchMe();
-        console.log("User info:", user);
         setUserId(user.user);
       } catch (error) {
         console.error("유저 정보를 불러오는 데 실패했습니다.", error);
@@ -323,9 +322,6 @@ export function ProfileMyArticleList () {
     const debugArticles = async () => {
       const user = await fetchMe();
       const res = await fetchArticles({ pageSize: 1, page: 1 });
-  
-      console.log("🔍 현재 로그인한 유저 username:", user.user);
-      console.log("📰 샘플 게시글의 created_by.username:", res.results[0]?.created_by?.username);
     };
     debugArticles();
   }, []);

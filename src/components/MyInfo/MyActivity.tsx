@@ -28,22 +28,22 @@ export function MyActivity() {
   }, []);
 
   return (
-    <div className="grid grid-cols-3 w-full text-center border rounded-lg py-4 mb-6 bg-white shadow-sm">
+    <div className="grid grid-cols-3 w-full text-center"> 
       <div className="flex flex-col">
-        <div className="text-sm text-gray-600">{t('ranking-posts')}</div>
-        <div className="text-lg font-semibold">
+        <div className="text-sm my-2">{t('ranking-posts')}</div>
+        <div className="text-lg mb-2">
           {t('ranking-posts-count', { count: activity.postCount })}
         </div>
       </div>
-      <div className="flex flex-col border-l border-gray-200">
-        <div className="text-sm text-gray-600">{t('ranking-comments')}</div>
-        <div className="text-lg font-semibold">
+      <div className="flex flex-col border-l border-gray-400">
+        <div className="text-sm my-2">{t('ranking-comments')}</div>
+        <div className="text-lg mb-2">
           {t('ranking-comments-count', { count: activity.commentCount })}
         </div>
       </div>
-      <div className="flex flex-col border-l border-gray-200">
-        <div className="text-sm text-gray-600">{t('ranking-likes')}</div>
-        <div className="text-lg font-semibold">
+      <div className="flex flex-col border-l border-gray-400">
+         <div className="text-sm my-2">{t('ranking-likes')}</div>
+         <div className="text-lg mb-2">
           {t('ranking-likes-count', { count: activity.likeCount })}
         </div>
       </div>
