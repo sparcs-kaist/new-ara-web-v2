@@ -20,6 +20,7 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
     (async () => {
       try {
         const data = await fetchMe();
+        console.log('fetchMe data:', data);
         setUserData(data);
         setIsSexual(Boolean(data.see_sexual));
         setIsSocial(Boolean(data.see_social));
