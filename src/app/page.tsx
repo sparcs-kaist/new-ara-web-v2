@@ -116,9 +116,11 @@ export default function Home() {
               </div>
 
               {/* 오늘의 식단 - 높이 확장 */}
+              {/*
               <div className="flex-grow">
                 <MealData />
               </div>
+              */}
             </div>
           </>
         )}

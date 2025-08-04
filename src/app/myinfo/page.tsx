@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import SmallBoardMyInfo from "../../components/MyInfo/SmallBoardMyInfo";
-import MyActivity from "../../components/MyInfo/MyActivity";
+import { MyActivity } from "../../components/MyInfo/MyActivity";
 import PostSetting from "../../components/MyInfo/PostSetting";
 import BlockedUser from "../../components/MyInfo/BlockedUser";
 import Profile from "../../components/MyInfo/Profile";

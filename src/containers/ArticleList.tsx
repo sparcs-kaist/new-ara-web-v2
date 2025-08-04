@@ -333,7 +333,6 @@ export function ProfileMyArticleList () {
   
   return (
     <ArticleList
-      className="mt-0"
       posts={posts}
       currentPage={currentPage}
       totalPages={totalPages}
@@ -371,7 +370,6 @@ export function ProfileRecentArticleList() {
 
   return (
     <ArticleList
-      className="mt-0"
       posts={posts}
       showAttachment={true}
       showTimeAgo={true}
@@ -401,7 +399,10 @@ export function ProfileBookmarkedArticlesList() {
     const fetchData = async () => {
       const Response = await fetchArchives({ pageSize: 10, page: currentPage });
       // Response 결과에서 parent_article만 추출 (BoardBookmarkedArticlesList 참고)
-      const articles = (Response.results || []).map((item: any) => item.parent_article);
+      const articles = (Response.results || [])
+        .map((item: any) => item?.parent_article)
+        .filter((article: any) => article && article.id && article.title); // 필수 필드 기준 필터링
+
       setPosts(articles);
       setTotalPages(Response.num_pages || 1);
     };
@@ -410,7 +411,6 @@ export function ProfileBookmarkedArticlesList() {
 
   return (
     <ArticleList
-      className="mt-0"
       posts={posts}
       showAttachment={true}
       showTimeAgo={true}
