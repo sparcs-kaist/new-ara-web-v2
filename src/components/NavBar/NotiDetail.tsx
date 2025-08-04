@@ -1,13 +1,21 @@
 import Link from 'next/link';
+import { MainPageNotificationPreview } from '@/containers/NotificationList';
 
-export default function NotiDetail () {
+interface NotiDetailProps {
+  position?: string;
+}
+
+export default function NotiDetail({ position = "right-0" }: NotiDetailProps) {
     return (
-        <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded p-2">
-            <div className="text-center text-sm text-gray-700">알림이 없습니다.</div>
-            <Link href="/notifications" className="block text-center text-blue-500 mt-2">
+        <div className={`absolute ${position} mt-2 w-100 bg-white shadow-lg rounded-[15px] border border-gray-100 z-50`}>
+            <div className="px-4 py-2">
+                <h3 className="text-lg font-semibold mb-2">알림</h3>
+                <MainPageNotificationPreview />
+            </div>
+            <Link href="/notifications" className="p-2 block text-center text-[#ed3a3a] mt-2 font-medium
+              hover:text-white hover:bg-[#ed3a3a] hover:rounded-b-[15px] transition-colors duration-200">
                 알림 더 보기
             </Link>
         </div>
     )
-
 }

@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getCookie } from '../utils/cookie'
 import { errorParser } from '../utils/errorParser'
 
 const apiUrl = (() => {
@@ -9,34 +8,27 @@ const apiUrl = (() => {
 
   const mode = process.env.NODE_ENV
   if (mode === 'production') return 'https://newara.sparcs.org'
-  if (mode === 'development') return 'https://migration-newara.dev.sparcs.org'
+  if (mode === 'development') return 'https://newara.dev.sparcs.org'
   throw new Error('Unknown NODE_ENV')
 })()
 
 const baseApiAddress = `${apiUrl}/api`
 
-const http = axios.create({
+const httpNoRedirect = axios.create({
   baseURL: baseApiAddress,
   withCredentials: true,
 })
 
-http.interceptors.request.use(
-  config => {
-    config.headers['X-CSRFToken'] = getCookie('csrftoken')
-    return config
-  },
-  error => Promise.reject(error),
-)
-
-http.interceptors.response.use(
+httpNoRedirect.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
       const status = error.response.status;
 
+      // 404 에러는 리디렉션하지 않음
       if (typeof window !== 'undefined') {
         if (status === 401) window.location.href = '/login';
-        else if (status === 404) window.location.href = '/404';
+        // 404 처리 제거 - 컴포넌트에서 직접 처리하도록 함
         else if (status === 418) window.location.href = '/tos';
         else if (status === 410) window.location.href = '/410';
       }
@@ -50,4 +42,4 @@ http.interceptors.response.use(
   },
 );
 
-export default http;
+export default httpNoRedirect;

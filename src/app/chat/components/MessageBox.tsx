@@ -20,7 +20,7 @@ export default function MessageBox({
     time,
     children,
     theme = 'ara',
-    readStatus = 'read',
+    //readStatus = 'read',
     readCount, // 추가
 }: MessageBoxProps) {
     const themeStyle = messageThemes[theme] || messageThemes['ara'];
@@ -29,7 +29,7 @@ export default function MessageBox({
     };
 
     // 읽음 상태 텍스트 및 아이콘
-    const getReadStatus = () => {
+    /*const getReadStatus = () => {
         switch (readStatus) {
             case 'read':
                 return (
@@ -62,6 +62,7 @@ export default function MessageBox({
                 return null;
         }
     };
+    */
 
     return (
         <div className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'} mb-3`}>

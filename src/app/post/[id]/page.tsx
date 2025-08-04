@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -5,8 +7,8 @@ import { fetchPost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
 import ReplyEditor from '@/components/TextEditor/ReplyEditor';
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
+//import { formatDistanceToNow } from 'date-fns';
+//import { ko } from 'date-fns/locale';
 
 export interface PostData {
   id: number;
@@ -28,6 +30,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostData | null>(null);
 
   // 요거 Article List에도 동일하게 사용되는데 util로 빼는게 좋을지두
+  /*
   const formatTimeAgo = (dateString: string) => {
     try {
       const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
@@ -37,6 +40,7 @@ export default function PostDetailPage() {
       return '';
     }
   };
+  */
 
   useEffect(() => {
     fetchPost({ 

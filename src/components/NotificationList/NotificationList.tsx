@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { getBoardKoNameById } from "@/lib/types/post";
-import { Notification, NotificationType } from "@/lib/types/notification";
+import { Notification } from "@/lib/types/notification";
 
 function formatRelativeTime(dateString: string): string {
   const now = new Date();
@@ -326,7 +326,7 @@ export default function NotificationList({
   }));
 
   return (
-    <div className="flex flex-col h-[568px] rounded-[5px] bg-white overflow-y-auto py-4">
+    <div className="flex flex-col rounded-[5px] bg-white overflow-y-auto py-4">
       <ul className="flex-1 flex flex-col">
         {items.map((item, idx) => (
           <li key={idx} style={{ marginBottom: idx < items.length - 1 ? listSpacing : 0 }}>
