@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
+import React from 'react';
 
 const Profile = () => {
     const { t } = useTranslation();
@@ -17,7 +18,7 @@ const Profile = () => {
     }
 
     return (
-        <div className="flex flex-col items-center mb-[48px]">
+        <div className="flex flex-col items-center mb-[24px]">
             <div className="relative mb-[24px]">
                 <Image src="/user.png" width={128} height={128} style={{objectFit: "cover", borderRadius: "100px"}} alt="Profile Image"/>
                 <input type="file" className="hidden" style={{ display: "none" }} onChange={handlePictureChange}/>

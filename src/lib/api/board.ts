@@ -11,6 +11,7 @@ export type ArticleQuery = {
   boardId?: number | number[]; 
   topicId?: number; 
   username?: string;
+  userId?: number;
   query?: string; 
   ordering?: string; 
   page?: number; 
@@ -32,7 +33,8 @@ function buildArticleParams(params: ArticleQuery): Record<string, QueryValue> {
   if (params.topicId) context.parent_topic = params.topicId;
   if (params.ordering) context.ordering = params.ordering;
   if (params.query) context.main_search__contains = params.query;
-  if (params.username) context.created_by = params.username;
+  if (params.userId) context.created_by = params.userId;
+  
 
   const filter = params.filter;
   if (filter) {
@@ -41,6 +43,7 @@ function buildArticleParams(params: ArticleQuery): Record<string, QueryValue> {
     } else if (filter.communication_article__school_response_status__lt !== undefined) {
       context.communication_article__school_response_status__lt = filter.communication_article__school_response_status__lt;
     }
+    
   }
 
   if (params.page) context.page = params.page;

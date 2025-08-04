@@ -1,121 +1,115 @@
-export default function Test() {
-    return (
-      <div>
-        <h1>Build Test 통과용</h1>
-      </div>
-    );
-  }
-  
-/*
 'use client';
 import React, { useState } from 'react';
-import SmallBoardMyInfo from "@/components/SmallBoardMyInfo";
-import MyActivity from "@/components/MyActivity";
-import PostSetting from "@/components/PostSetting";
-import BlockedUser from "@/components/BlockedUser";
-import Profile from "@/components/Profile";
-import BoardItem from "@/components/BoardItem";
+import SmallBoardMyInfo from "../../components/MyInfo/SmallBoardMyInfo";
+import { MyActivity } from "../../components/MyInfo/MyActivity";
+import PostSetting from "../../components/MyInfo/PostSetting";
+import BlockedUser from "../../components/MyInfo/BlockedUser";
+import Profile from "../../components/MyInfo/Profile";
+import { ProfileRecentArticleList } from "../../containers/ArticleList"
+import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
+import { ProfileMyArticleList } from "../../containers/ArticleList";
+import { BasicNotificationList } from "../../containers/NotificationList";
+
+
 import clsx from 'clsx';
 
-const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글'];
-
-const generateItems = (prefix: string, count = 23) =>
-  new Array(count).fill(null).map((_, i) => ({
-    id: i,
-    title: `${prefix} ${i + 1}.jpg`,
-    author: "귀요미 엘리지아",
-    views: 95 + i,
-    likes: 18 + i,
-    dislikes: 5,
-    comments: 8,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)),
-    profileImgUrl: "/images/profile1.jpg",
-    thumbnailUrl: "/images/thumb1.jpg",
-  }));
-
-const dataMap = {
-  '내가 쓴 글': generateItems('내 글'),
-  '최근 본 글': generateItems('최근 글'),
-  '담아둔 글': generateItems('담은 글'),
-};
-
-const ITEMS_PER_PAGE = 10;
+const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'] as const;
+type TabType = typeof TABS[number];
 
 const MyInfo = () => {
-  const [tab, setTab] = useState('내 글');
-  const [search, setSearch] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [tab, setTab] = useState<TabType>('내가 쓴 글');
+  const [pages, setPages] = useState<Record<TabType, number>>({
+    '내가 쓴 글': 1,
+    '최근 본 글': 1,
+    '담아둔 글': 1,
+    '알림': 1,
+  });
 
-  const allItems = dataMap[tab].filter(item =>
-    item.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const [searches, setSearches] = useState<Record<TabType, string>>({
+    '내가 쓴 글': '',
+    '최근 본 글': '',
+    '담아둔 글': '',
+    '알림': '',
+  });
 
-  const totalPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
-  const paginatedItems = allItems.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const [filters, setFilters] = useState({
+    seeSexual: false,
+    seeSocial: false,
+  });
+
+  const handleSearchChange = (newSearch: string) => {
+    setSearches(prev => ({ ...prev, [tab]: newSearch }));
+    setPages(prev => ({ ...prev, [tab]: 1 }));
+  };
+
+  const currentSearch = searches[tab];
 
   return (
-    <div className="flex flex-col lg:flex-row pl-4 pr-4 lg:pl-[146px] py-8 gap-10">
+    <div className="flex flex-col lg:flex-row px-[150px] py-4 gap-10">
+      {/* 좌측 프로필 + 설정 */}
       <div className="flex flex-col w-full lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />
         <SmallBoardMyInfo title="활동 기록"><MyActivity /></SmallBoardMyInfo>
-        <SmallBoardMyInfo title="설정"><PostSetting /></SmallBoardMyInfo>
+        <SmallBoardMyInfo title="설정"><PostSetting onSettingChange={setFilters} /></SmallBoardMyInfo>
         <SmallBoardMyInfo title="차단한 유저"><BlockedUser /></SmallBoardMyInfo>
       </div>
 
+      {/* 우측 게시글 리스트 */}
       <div className="flex flex-col flex-1">
-        <div className="flex justify-start mb-4 gap-6 border-b pb-2 text-base font-semibold">
-          {TABS.map(t => (
-            <button
-              key={t}
-              className={clsx(
-                'pb-1 border-b-2',
-                tab === t ? 'text-pink-500 border-pink-500' : 'text-gray-400 border-transparent'
-              )}
-              onClick={() => {
-                setTab(t);
-                setCurrentPage(1);
-              }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-end mb-4">
-          <input
-            type="text"
-            placeholder="Search"
-            className="border px-3 py-1 rounded text-sm w-64"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {paginatedItems.map(item => (
-            <BoardItem key={`${tab}-${item.id}`} {...item} />
-          ))}
+        <div className="flex justify-between items-end border-b border-gray-200 pb-3 mt-[17px]">
+          {/* 탭 네비게이션 */}
+          <div className="relative flex gap-8">
+            {TABS.map(t => (
+              <button
+                key={t}
+                className={clsx(
+                  'relative pb-2 text-sm font-semibold transition-colors duration-200',
+                  tab === t ? 'text-red-600' : 'text-black hover:text-red-500'
+                )}
+                onClick={() => setTab(t)}
+              >
+                {t}
+                {tab === t && (
+                  <div
+                    className="absolute left-1/2 -bottom-[2px] -translate-x-1/2 w-[20px] h-[4px] rounded bg-[#ED3A3A] transition-all duration-200"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          
+          {/* 검색창 */}
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-[300px] h-[40px] pl-10 pr-[10px] py-[10px] rounded-[15px] bg-gray-100 text-sm outline-none"
+                value={currentSearch}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
+                  <path d="M11.5 11.5L15 15M7 12A5 5 0 1 1 7 2a5 5 0 0 1 0 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
+            </div>
+          </div>
         </div>
         
-        <div className="flex justify-center mt-6 gap-2 text-sm">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              className={clsx(
-                'w-8 h-8 rounded',
-                currentPage === i + 1 ? 'text-red-500 font-bold' : 'text-gray-500'
-              )}
-              onClick={() => setCurrentPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
+        <div>
+          {tab === '내가 쓴 글' && (
+            <ProfileMyArticleList filters={filters} />
+          )}
+          {tab === '최근 본 글' && (
+            <ProfileRecentArticleList filters={filters} />
+          )}
+          {tab === '담아둔 글' && (
+            <ProfileBookmarkedArticlesList filters={filters} />
+          )}
+          {tab === '알림' && (
+            <BasicNotificationList />
+          )}
         </div>
       </div>
     </div>
@@ -123,4 +117,4 @@ const MyInfo = () => {
 };
 
 export default MyInfo;
-*/
+

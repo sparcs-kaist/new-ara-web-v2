@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
+import { fetchMe } from "@/lib/api/user";
+
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -269,19 +271,194 @@ export function BoardBookmarkedArticlesList() {
     )
 }
 
-//Profile 페이지 - 내가 쓴 글
-export function ProfileMyArticleList () {
-    return;
+interface Filters {
+  seeSexual: boolean;
+  seeSocial: boolean;
 }
 
+function isPostHidden(post: any, filters: Filters) {
+  if (!filters.seeSexual && post.isSexual) return true;
+  if (!filters.seeSocial && post.isSocial) return true;
+  return false;
+}
+
+//Profile 페이지 - 내가 쓴 글
+export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolean; seeSocial: boolean } }) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [userId, setUserId] = useState<number | null>(null); // userId → username
+
+  // 유저 정보 가져오기
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await fetchMe();
+        setUserId(user.user);
+      } catch (error) {
+        console.error("유저 정보를 불러오는 데 실패했습니다.", error);
+      }
+    };
+    fetchUser();
+  }, []);
+  
+  // 내가 쓴 글 가져오기
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchData = async () => {
+      try {
+        const response = await fetchArticles({
+          pageSize: 10,
+          page: currentPage,
+          userId: Number(userId),
+        });
+
+        const filteredPosts = response.results.map((post: any) => {
+          if (isPostHidden(post, filters)) {
+            const newPost = { ...post };
+            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+            if (post.isSexual && !filters.seeSexual) {
+              newPost.why_hidden.push('ADULT_CONTENT');
+            }
+            if (post.isSocial && !filters.seeSocial) {
+              newPost.why_hidden.push('SOCIAL_CONTENT');
+            }
+            return newPost;
+          }
+          return post;
+        });
+
+        setPosts(filteredPosts);
+        setTotalPages(response.num_pages || 1);
+      } catch (error) {
+        console.error("게시글을 불러오는 데 실패했습니다.", error);
+      }
+    };
+    fetchData();
+  }, [userId, currentPage, filters]);
+
+  
+  return (
+    <ArticleList
+      posts={posts}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      showAttachment={true}
+      showTimeAgo={true}
+      pagination={true}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
+}
+
+
 //Profile 페이지 - 최근 본 글
-export function ProfileRecentArticleList () {
-    return;
+export function ProfileRecentArticleList({ filters }: { filters: Filters }) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+
+      const filteredPosts = response.results.map((post: any) => {
+        if (isPostHidden(post, filters)) {
+          const newPost = { ...post };
+          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+          return newPost;
+        }
+        return post;
+      });
+
+      setPosts(filteredPosts);
+      setTotalPages(response.num_pages || 1);
+    };
+    fetchData();
+  }, [currentPage, filters]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
 }
 
 //Profile 페이지 - 북마크 한 글
-export function ProfileBookmarkedArticlesList () {
-    return;
+export function ProfileBookmarkedArticlesList({ filters }: { filters: Filters }) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetchArchives({ pageSize: 10, page: currentPage });
+
+      const articles = (response.results || [])
+        .map((item: any) => item?.parent_article)
+        .filter((article: any) => article && article.id && article.title);
+
+      const filteredPosts = articles.map((post: any) => {
+        if (isPostHidden(post, filters)) {
+          const newPost = { ...post };
+          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+          return newPost;
+        }
+        return post;
+      });
+
+      setPosts(filteredPosts);
+      setTotalPages(response.num_pages || 1);
+    };
+    fetchData();
+  }, [currentPage, filters]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      showWriter={true}
+      showProfile={true}
+      showHit={true}
+      showStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      titleFontSize="text-base"
+      titleFontWeight="font-semibold"
+      gapBetweenPosts={12}
+      gapBetweenTitleAndMeta={4}
+    />
+  );
 }
 
 //Post 페이지 - 하단 글 목록
