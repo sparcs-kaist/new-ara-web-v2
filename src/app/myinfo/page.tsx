@@ -32,6 +32,11 @@ const MyInfo = () => {
     '알림': '',
   });
 
+  const [filters, setFilters] = useState({
+    seeSexual: false,
+    seeSocial: false,
+  });
+
   const handleSearchChange = (newSearch: string) => {
     setSearches(prev => ({ ...prev, [tab]: newSearch }));
     setPages(prev => ({ ...prev, [tab]: 1 }));
@@ -45,7 +50,7 @@ const MyInfo = () => {
       <div className="flex flex-col w-full lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />
         <SmallBoardMyInfo title="활동 기록"><MyActivity /></SmallBoardMyInfo>
-        <SmallBoardMyInfo title="설정"><PostSetting /></SmallBoardMyInfo>
+        <SmallBoardMyInfo title="설정"><PostSetting onSettingChange={setFilters} /></SmallBoardMyInfo>
         <SmallBoardMyInfo title="차단한 유저"><BlockedUser /></SmallBoardMyInfo>
       </div>
 
@@ -94,13 +99,13 @@ const MyInfo = () => {
         
         <div>
           {tab === '내가 쓴 글' && (
-            <ProfileMyArticleList/>
+            <ProfileMyArticleList filters={filters} />
           )}
           {tab === '최근 본 글' && (
-            <ProfileRecentArticleList/>
+            <ProfileRecentArticleList filters={filters} />
           )}
           {tab === '담아둔 글' && (
-            <ProfileBookmarkedArticlesList/>
+            <ProfileBookmarkedArticlesList filters={filters} />
           )}
           {tab === '알림' && (
             <BasicNotificationList />

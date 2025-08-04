@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { fetchMe, updateUser } from '@/lib/api/user';
 
-const PostSetting = () => {
+interface PostSettingProps {
+    onSettingChange?: (settings: { seeSexual: boolean; seeSocial: boolean }) => void;
+  }
+
+const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
   const { t } = useTranslation();
   const [isSexual, setIsSexual] = useState<boolean>(false);
   const [isSocial, setIsSocial] = useState<boolean>(false);
@@ -40,6 +44,7 @@ const PostSetting = () => {
         social: newSocial,
       });
       setError(null);
+      onSettingChange?.({ seeSexual: newSexual, seeSocial: newSocial });
     } catch {
       setError(t('설정 저장에 실패했습니다.'));
     }

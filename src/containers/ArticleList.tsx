@@ -271,8 +271,19 @@ export function BoardBookmarkedArticlesList() {
     )
 }
 
+interface Filters {
+  seeSexual: boolean;
+  seeSocial: boolean;
+}
+
+function isPostHidden(post: any, filters: Filters) {
+  if (!filters.seeSexual && post.isSexual) return true;
+  if (!filters.seeSocial && post.isSocial) return true;
+  return false;
+}
+
 //Profile 페이지 - 내가 쓴 글
-export function ProfileMyArticleList () {
+export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolean; seeSocial: boolean } }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -303,28 +314,29 @@ export function ProfileMyArticleList () {
           userId: Number(userId),
         });
 
-        console.log("Fetched articles:", response);
-        setPosts(response.results);
+        const filteredPosts = response.results.map((post: any) => {
+          if (isPostHidden(post, filters)) {
+            const newPost = { ...post };
+            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+            if (post.isSexual && !filters.seeSexual) {
+              newPost.why_hidden.push('ADULT_CONTENT');
+            }
+            if (post.isSocial && !filters.seeSocial) {
+              newPost.why_hidden.push('SOCIAL_CONTENT');
+            }
+            return newPost;
+          }
+          return post;
+        });
+
+        setPosts(filteredPosts);
         setTotalPages(response.num_pages || 1);
       } catch (error) {
-        if (error instanceof Error) {
-          console.error("게시글을 불러오는 데 실패했습니다.", error.message);
-        } else {
-          console.error("게시글을 불러오는 데 실패했습니다.", error);
-        }
+        console.error("게시글을 불러오는 데 실패했습니다.", error);
       }
     };
     fetchData();
-  }, [userId, currentPage]);
-  
-
-  useEffect(() => {
-    const debugArticles = async () => {
-      const user = await fetchMe();
-      const res = await fetchArticles({ pageSize: 1, page: 1 });
-    };
-    debugArticles();
-  }, []);
+  }, [userId, currentPage, filters]);
 
   
   return (
@@ -350,19 +362,31 @@ export function ProfileMyArticleList () {
 
 
 //Profile 페이지 - 최근 본 글
-export function ProfileRecentArticleList() {
+export function ProfileRecentArticleList({ filters }: { filters: Filters }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
-      const Response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
-      setPosts(Response.results);
-      setTotalPages(Response.num_pages || 1);
+      const response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+
+      const filteredPosts = response.results.map((post: any) => {
+        if (isPostHidden(post, filters)) {
+          const newPost = { ...post };
+          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+          return newPost;
+        }
+        return post;
+      });
+
+      setPosts(filteredPosts);
+      setTotalPages(response.num_pages || 1);
     };
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   return (
     <ArticleList
@@ -386,24 +410,35 @@ export function ProfileRecentArticleList() {
 }
 
 //Profile 페이지 - 북마크 한 글
-export function ProfileBookmarkedArticlesList() {
+export function ProfileBookmarkedArticlesList({ filters }: { filters: Filters }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
-      const Response = await fetchArchives({ pageSize: 10, page: currentPage });
-      // Response 결과에서 parent_article만 추출 (BoardBookmarkedArticlesList 참고)
-      const articles = (Response.results || [])
-        .map((item: any) => item?.parent_article)
-        .filter((article: any) => article && article.id && article.title); // 필수 필드 기준 필터링
+      const response = await fetchArchives({ pageSize: 10, page: currentPage });
 
-      setPosts(articles);
-      setTotalPages(Response.num_pages || 1);
+      const articles = (response.results || [])
+        .map((item: any) => item?.parent_article)
+        .filter((article: any) => article && article.id && article.title);
+
+      const filteredPosts = articles.map((post: any) => {
+        if (isPostHidden(post, filters)) {
+          const newPost = { ...post };
+          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+          return newPost;
+        }
+        return post;
+      });
+
+      setPosts(filteredPosts);
+      setTotalPages(response.num_pages || 1);
     };
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   return (
     <ArticleList
