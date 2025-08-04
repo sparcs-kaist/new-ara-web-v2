@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
+import { fetchMe } from "@/lib/api/user";
+
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -274,16 +276,61 @@ export function ProfileMyArticleList () {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [userId, setUserId] = useState<number | null>(null); // userId → username
 
+  // 유저 정보 가져오기
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await fetchMe();
+        console.log("User info:", user);
+        setUserId(user.user);
+      } catch (error) {
+        console.error("유저 정보를 불러오는 데 실패했습니다.", error);
+      }
+    };
+    fetchUser();
+  }, []);
+  
+  // 내가 쓴 글 가져오기
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize: 10, page: currentPage, /*내가 쓴 글 조건 추가 필요*/ });
-      setPosts(Response.results);
-      setTotalPages(Response.num_pages || 1);
+      try {
+        const response = await fetchArticles({
+          pageSize: 10,
+          page: currentPage,
+          userId: Number(userId),
+        });
+
+        console.log("Fetched articles:", response);
+        setPosts(response.results);
+        setTotalPages(response.num_pages || 1);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("게시글을 불러오는 데 실패했습니다.", error.message);
+        } else {
+          console.error("게시글을 불러오는 데 실패했습니다.", error);
+        }
+      }
     };
     fetchData();
-  }, [currentPage]);
+  }, [userId, currentPage]);
+  
 
+  useEffect(() => {
+    const debugArticles = async () => {
+      const user = await fetchMe();
+      const res = await fetchArticles({ pageSize: 1, page: 1 });
+  
+      console.log("🔍 현재 로그인한 유저 username:", user.user);
+      console.log("📰 샘플 게시글의 created_by.username:", res.results[0]?.created_by?.username);
+    };
+    debugArticles();
+  }, []);
+
+  
   return (
     <ArticleList
       className="mt-0"
@@ -305,6 +352,7 @@ export function ProfileMyArticleList () {
     />
   );
 }
+
 
 //Profile 페이지 - 최근 본 글
 export function ProfileRecentArticleList() {

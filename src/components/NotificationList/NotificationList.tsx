@@ -326,7 +326,7 @@ export default function NotificationList({
   }));
 
   return (
-    <div className="flex flex-col h-[568px] rounded-[5px] border border-purple-500 bg-white overflow-y-auto py-4">
+    <div className="flex flex-col h-[568px] rounded-[5px] bg-white overflow-y-auto py-4">
       <ul className="flex-1 flex flex-col">
         {items.map((item, idx) => (
           <li key={idx} style={{ marginBottom: idx < items.length - 1 ? listSpacing : 0 }}>

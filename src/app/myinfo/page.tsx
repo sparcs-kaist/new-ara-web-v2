@@ -8,23 +8,25 @@ import Profile from "../../components/MyInfo/Profile";
 import { ProfileRecentArticleList } from "../../containers/ArticleList"
 import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
 import { ProfileMyArticleList } from "../../containers/ArticleList";
+import { BasicNotificationList } from "../../containers/NotificationList";
 
 
 import clsx from 'clsx';
 
-const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'];
+const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'] as const;
+type TabType = typeof TABS[number];
 const ITEMS_PER_PAGE = 10;
 
 const MyInfo = () => {
-  const [tab, setTab] = useState('내가 쓴 글');
-  const [pages, setPages] = useState({
+  const [tab, setTab] = useState<TabType>('내가 쓴 글');
+  const [pages, setPages] = useState<Record<TabType, number>>({
     '내가 쓴 글': 1,
     '최근 본 글': 1,
     '담아둔 글': 1,
     '알림': 1,
   });
 
-  const [searches, setSearches] = useState({
+  const [searches, setSearches] = useState<Record<TabType, string>>({
     '내가 쓴 글': '',
     '최근 본 글': '',
     '담아둔 글': '',
@@ -107,7 +109,7 @@ const MyInfo = () => {
             <ProfileBookmarkedArticlesList/>
           )}
           {tab === '알림' && (
-            <p className="text-gray-600">알림이 없습니다.</p>
+            <BasicNotificationList />
           )}
         </div>
       </div>
