@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
@@ -5,8 +6,8 @@ import React from 'react';
 import { fetchMe, updateUser } from '@/lib/api/user';
 
 interface PostSettingProps {
-    onSettingChange?: (settings: { seeSexual: boolean; seeSocial: boolean }) => void;
-  }
+  onSettingChange?: (settings: { seeSexual: boolean; seeSocial: boolean }) => void;
+}
 
 const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
   const { t } = useTranslation();

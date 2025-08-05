@@ -8,7 +8,7 @@ import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
-import MealData from "@/components/Meal/MealData";
+//import MealData from "@/components/Meal/MealData";
 import OtherServices from "@/components/UserMenu/OtherServices";
 
 export default function Home() {
@@ -23,7 +23,7 @@ export default function Home() {
       try {
         const hotResponse = await fetchTopArticles({ pageSize: 3 });
         const recentResponse = await fetchArticles({ pageSize: 3, ordering: '-created_at' });
-        
+
         setHotArticles(hotResponse.results);
         setRecentArticles(recentResponse.results);
       } catch (error) {
@@ -40,7 +40,7 @@ export default function Home() {
     <div className="max-w-[1280px] mx-auto">
       {/* 상단 그라데이션 배경 적용 */}
       <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
-      
+
       <div className="h-[110px] w-full flex justify-center items-center pt-4 relative">
         <form
           className="w-full max-w-[600px] mx-auto flex justify-center"
@@ -75,7 +75,7 @@ export default function Home() {
                   <h2 className="text-[20px] font-semibold">🔥 지금 핫한 글</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
-                <HotPreview/>
+                <HotPreview />
               </section>
 
               {/* 1행 2열: 학교에게 전합니다 (넓어짐) */}

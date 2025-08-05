@@ -1,4 +1,4 @@
-//Dumb Component (ArticleList)를 사용하는 모든 component들의 Set입니다.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
@@ -9,78 +9,78 @@ import { fetchMe } from "@/lib/api/user";
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
-    const [posts, setPosts] = useState([]);
-    useEffect(() => {
-        const fetchData = async () => {
-            const Response = await fetchTopArticles({pageSize: 3});
-            setPosts(Response.results);
-        }
-        fetchData();
-    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
-    return(
-        <ArticleList
-            posts = {posts}
-            showRank = {true}
-            showWriter = {true}
-            showTimeAgo = {true}
-            showStatus = {true}
-            showAttachment = {true}
-            titleFontSize='text-[16px]'
-        >
-        </ArticleList>
-    )
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchTopArticles({ pageSize: 3 });
+      setPosts(Response.results);
+    }
+    fetchData();
+  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  return (
+    <ArticleList
+      posts={posts}
+      showRank={true}
+      showWriter={true}
+      showTimeAgo={true}
+      showStatus={true}
+      showAttachment={true}
+      titleFontSize='text-[16px]'
+    >
+    </ArticleList>
+  )
 }
 
 //메인 페이지 - 방금 올라온 글
 export function RecentPreview() {
-    const [posts, setPosts] = useState([]);
-    useEffect(() => {
-        const fetchData = async () => {
-            const Response = await fetchArticles({pageSize: 3, ordering: '-created_at'});
-            setPosts(Response.results);
-        }
-        fetchData();
-    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
-    return(
-        <ArticleList
-            posts = {posts}
-            showBoard = {true}
-            showTimeAgo = {true}
-            showAttachment = {true}
-            showProfile = {true}
-            showWriter = {true}
-            titleFontSize='text-[16px]'
-        >
-        </ArticleList>
-    )
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchArticles({ pageSize: 3, ordering: '-created_at' });
+      setPosts(Response.results);
+    }
+    fetchData();
+  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  return (
+    <ArticleList
+      posts={posts}
+      showBoard={true}
+      showTimeAgo={true}
+      showAttachment={true}
+      showProfile={true}
+      showWriter={true}
+      titleFontSize='text-[16px]'
+    >
+    </ArticleList>
+  )
 }
 
 //메인 페이지 - 학교에게 전합니다.
 export function ToSchoolPreview() {
-    const [posts, setPosts] = useState([]);
-    useEffect(() => { 
-        const fetchData = async () => {
-            const Response = await fetchArticles({pageSize: 3, boardId: 14});
-            setPosts(Response.results);
-        }
-        fetchData();
-    }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
-    return(
-        <ArticleList
-            posts = {posts}
-            showTimeAgo = {true}
-            showAnswerStatus = {true}
-            showStatus = {true}
-            titleFontSize='text-[16px]'
-            
-        >
-        </ArticleList>
-    )
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchArticles({ pageSize: 3, boardId: 14 });
+      setPosts(Response.results);
+    }
+    fetchData();
+  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  return (
+    <ArticleList
+      posts={posts}
+      showTimeAgo={true}
+      showAnswerStatus={true}
+      showStatus={true}
+      titleFontSize='text-[16px]'
+
+    >
+    </ArticleList>
+  )
 }
 
 //메인 페이지 - 포탈 공지
 export function PortalNoticePreview() {
-    return;
+  return;
 }
 
 interface BoardArticleListProps {
@@ -229,46 +229,46 @@ export function BoardHotArticleList({ pageSize = 10, query }: BoardArticleListPr
 
 //Board 페이지 - 최근 본 게시글
 export function BoardRecentArticleList() {
-    const [posts, setPosts] = useState([]);
-    useEffect(() => {
-        const fetchData = async() => {
-            const Response = await fetchRecentViewedPosts({pageSize: 5});
-            setPosts(Response.results);
-        }
-        fetchData();
-    }, []);
-    return(
-        <ArticleList
-            posts={posts}  
-            showAttachment={true}
-            showTimeAgo={true}
-            titleFontSize='text-[14px]'       
-        >
-        </ArticleList>
-    )
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchRecentViewedPosts({ pageSize: 5 });
+      setPosts(Response.results);
+    }
+    fetchData();
+  }, []);
+  return (
+    <ArticleList
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      titleFontSize='text-[14px]'
+    >
+    </ArticleList>
+  )
 }
 
 //Board 페이지 - 북마크한 게시글
-export function BoardBookmarkedArticlesList() {    
-    const [posts, setPosts] = useState([]);
-    useEffect(() => {
-        const fetchData = async() => {
-            const Response = await fetchArchives();
-            //@ TODO : 알맞는 타입 추가하기
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const articles = (Response.results || []).map((item: any) => item.parent_article);
-            setPosts(articles);
-        }
-        fetchData();
-    }, []);
-    return(
-        <ArticleList
-            posts={posts}  
-            showAttachment={true}
-            showTimeAgo={true}
-            titleFontSize='text-[14px]'       
-        />
-    )
+export function BoardBookmarkedArticlesList() {
+  const [posts, setPosts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const Response = await fetchArchives();
+      //@ TODO : 알맞는 타입 추가하기
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const articles = (Response.results || []).map((item: any) => item.parent_article);
+      setPosts(articles);
+    }
+    fetchData();
+  }, []);
+  return (
+    <ArticleList
+      posts={posts}
+      showAttachment={true}
+      showTimeAgo={true}
+      titleFontSize='text-[14px]'
+    />
+  )
 }
 
 interface Filters {
@@ -301,7 +301,7 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
     };
     fetchUser();
   }, []);
-  
+
   // 내가 쓴 글 가져오기
   useEffect(() => {
     if (!userId) return;
@@ -338,7 +338,7 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
     fetchData();
   }, [userId, currentPage, filters]);
 
-  
+
   return (
     <ArticleList
       posts={posts}
@@ -462,6 +462,6 @@ export function ProfileBookmarkedArticlesList({ filters }: { filters: Filters })
 }
 
 //Post 페이지 - 하단 글 목록
-export function PostBottomeArticleList () {
-    return;
+export function PostBottomeArticleList() {
+  return;
 }
