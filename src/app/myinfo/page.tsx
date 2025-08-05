@@ -18,7 +18,7 @@ type TabType = typeof TABS[number];
 
 const MyInfo = () => {
   const [tab, setTab] = useState<TabType>('내가 쓴 글');
-  const [pages, setPages] = useState<Record<TabType, number>>({
+  const [, setPages] = useState<Record<TabType, number>>({
     '내가 쓴 글': 1,
     '최근 본 글': 1,
     '담아둔 글': 1,
@@ -77,7 +77,7 @@ const MyInfo = () => {
               </button>
             ))}
           </div>
-          
+
           {/* 검색창 */}
           <div className="flex items-center space-x-2">
             <div className="relative">
@@ -96,7 +96,7 @@ const MyInfo = () => {
             </div>
           </div>
         </div>
-        
+
         <div>
           {tab === '내가 쓴 글' && (
             <ProfileMyArticleList filters={filters} />
