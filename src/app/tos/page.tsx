@@ -31,12 +31,6 @@ export default function TOSPage() {
     if (urlLocale && (urlLocale === 'ko' || urlLocale === 'en')) {
       setLocale(urlLocale)
     }
-
-    // 약관 동의 여부 확인 (예: 로컬 스토리지 사용)
-    const storedAgreement = localStorage.getItem('tosAgreed')
-    if (storedAgreement === 'true') {
-      setAgreed(true)
-    }
   }, [])
 
   // 언어 변경 핸들러
