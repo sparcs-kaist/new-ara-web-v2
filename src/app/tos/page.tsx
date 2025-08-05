@@ -9,7 +9,7 @@ import { updateTos, fetchMe } from '@/lib/api/user'
 export default function TOSPage() {
   // 기본 언어는 한국어로 설정
   const [locale, setLocale] = useState<'ko' | 'en'>('ko')
-  const [agreed, setAgreed] = useState(false) // 약관 동의 여부 상태 추가
+  const [agreed,] = useState(false) // 약관 동의 여부 상태 추가
   const [user, setUser] = useState<number | null>(null)
 
   useEffect(() => {
