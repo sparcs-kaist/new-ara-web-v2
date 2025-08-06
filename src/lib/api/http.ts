@@ -8,7 +8,7 @@ const apiUrl = (() => {
   }
 
   const mode = process.env.NODE_ENV
-  if (mode === 'production') return 'https://newara.sparcs.org'
+  if (mode === 'production') return 'https://newara.dev.sparcs.org'
   if (mode === 'development') return 'https://newara.dev.sparcs.org'
   throw new Error('Unknown NODE_ENV')
 })()
@@ -38,10 +38,10 @@ http.interceptors.response.use(
       const status = error.response.status;
 
       if (typeof window !== 'undefined') {
-        if (status === 401) window.location.href = '/login';
-        else if (status === 404) window.location.href = '/404';
-        else if (status === 418) window.location.href = '/tos';
-        else if (status === 410) window.location.href = '/410';
+        if (status === 401 && window.location.pathname !== '/login') window.location.href = '/login';
+        else if (status === 404 && window.location.pathname !== '/404') window.location.href = '/404';
+        else if (status === 418 && window.location.pathname !== '/tos') window.location.href = '/tos';
+        else if (status === 410 && window.location.pathname !== '/410') window.location.href = '/410';
       }
 
       if (typeof error.response.data === 'object') {

@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import NavBarLogo from "@/components/NavBar/NavBarLogo";
 import NavBarRight from "@/components/NavBar/NavBarRight";
 import NavBarMiddle from "@/components/NavBar/NavBarMiddle";
-import NavBarHamburger from "./NavBarHamburger";
+import NavBarHamburger from "@/components/NavBar/NavBarHamburger";
+
 
 export default function Navbar() {
   const [isMobile, setIsMobile] = useState(false);

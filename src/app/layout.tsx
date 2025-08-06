@@ -1,8 +1,10 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
+import React from "react";
 import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
+import Footer from "@/components/Footer/Footer";
 import "@/i18n";
 import { fetchMe } from "@/lib/api/user";
 
@@ -49,6 +51,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // WebView 페이지 : 기본 NavBar와 Footer를 사용하지 않음.
+  if (pathname.startsWith("/web_view")) {
+    return (
+      <html lang="ko">
+        <head>
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        </head>
+        <body className="h-screen">
+          <main className="h-full">{children}</main>
+        </body>
+      </html>
+    );
+  }
+
+  // 일반 페이지 : NavBar와 Footer포함해서 렌더링
   return (
     <html lang="ko">
       <head>
@@ -57,6 +74,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <NavBar />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );

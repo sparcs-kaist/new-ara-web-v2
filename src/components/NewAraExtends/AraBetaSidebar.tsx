@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import AraBetaButton from "./Floating/AraBetaButton";
 import MealExtensionButton from "./Floating/MealExtensionButton";
-import MealData from "./Floating/MealData"; 
+import MealData from "@/components/Meal/MealData"; 
 
 /*
 지금 프론트가 마이그레이션 중인 관계로 컴포넌트를 Next로 만들되되, 
