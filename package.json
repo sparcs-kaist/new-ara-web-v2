@@ -34,6 +34,7 @@
     "next-translate": "^2.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-easy-crop": "^5.5.0",
     "react-i18next": "^15.4.1",
     "tiptap-extension-resize-image": "^1.2.2"
   },
