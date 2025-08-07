@@ -66,3 +66,54 @@ export function MainPageNotificationPreview() {
         />
     );
 }
+
+// 프로필 페이지에서 사용하는 알림 목록// Profile 페이지 - 내가 받은 알림 목록
+export function ProfileNotificationList() {
+  const [notifications, setNotifications] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetchNotifications(currentPage);
+
+        setNotifications(response.results || []);
+        setTotalPages(response.num_pages || 1);
+      } catch (error) {
+        console.error('알림을 불러오는 중 오류가 발생했습니다:', error);
+      }
+    };
+
+    fetchData();
+  }, [currentPage]);
+
+  const handleItemClick = (notification: any) => {
+    if (notification.article_id) {
+      window.location.href = `/article/${notification.article_id}`;
+    }
+  };
+
+  return (
+    <NotificationList
+      notifications={notifications}
+      showIcon={true}
+      showTag={true}
+      showDetail={true}
+      showContent={true}
+      showReply={false}
+      showTimestamp={true}
+      iconSize={24}
+      verticalSpacing={16}
+      detailFontWeight="font-normal"
+      detailFontSize="text-sm"
+      contentFontSize="text-xs"
+      itemClassName="border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-2 py-3 transition-colors duration-100"
+      onItemClick={handleItemClick}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
+}
