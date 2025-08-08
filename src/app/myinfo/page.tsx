@@ -8,7 +8,7 @@ import Profile from "../../components/MyInfo/Profile";
 import { ProfileRecentArticleList } from "../../containers/ArticleList"
 import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
 import { ProfileMyArticleList } from "../../containers/ArticleList";
-import { BasicNotificationList } from "../../containers/NotificationList";
+import { ProfileNotificationList } from "../../containers/NotificationList";
 
 
 import clsx from 'clsx';
@@ -108,7 +108,7 @@ const MyInfo = () => {
             <ProfileBookmarkedArticlesList filters={filters} />
           )}
           {tab === '알림' && (
-            <BasicNotificationList />
+            <ProfileNotificationList />
           )}
         </div>
       </div>
