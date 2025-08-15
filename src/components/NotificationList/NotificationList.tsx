@@ -144,6 +144,12 @@ export interface NotificationListProps {
   showContent?: boolean;
   showTimestamp?: boolean;
   showReply?: boolean;
+  itemClassName?: string;
+  onItemClick?: (notification: any) => void;
+  pagination?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 // 아이콘 경로를 타입별로 결정하는 함수

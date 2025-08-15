@@ -247,22 +247,22 @@ const Profile = () => {
             <input
               value={newNickname}
               onChange={(e) => setNewNickname(e.target.value)}
-              className="w-[150px] h-[30px] text-[16px] font-normal border border-gray-300 rounded-full p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-[130px] h-[28px] text-[15px] font-normal border border-gray-300 rounded-full px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
             />
-                <div className="flex space-x-2">
-                <button
-                    className="px-3 py-1 border border-red-400 text-red-500 text-sm font-semibold rounded-full bg-white shadow-sm hover:bg-red-50 transition duration-200"
-                    onClick={handleNicknameSave}
-                >
-                    {t('확인')}
-                </button>
-                <button
-                    className="px-3 py-1 border border-gray-300 text-gray-600 text-sm font-semibold rounded-full bg-white shadow-sm hover:bg-gray-100 transition duration-200"
-                    onClick={handleNicknameCancel}
-                >
-                    {t('취소')}
-                </button>
-                </div>
+            <div className="flex space-x-1">
+              <button
+                className="px-3 py-[5px] text-white text-sm font-semibold rounded-full bg-[#E52933] hover:bg-[#cc202b] transition duration-200"
+                onClick={handleNicknameSave}
+              >
+                {t('확인')}
+              </button>
+              <button
+                className="px-3 py-[5px] text-gray-600 text-sm font-semibold rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200"
+                onClick={handleNicknameCancel}
+              >
+                {t('취소')}
+              </button>
+            </div>
           </div>
         )}
         <div className="text-[16px] text-gray-500 font-medium truncate">{ email }</div>
