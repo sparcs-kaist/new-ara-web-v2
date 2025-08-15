@@ -4,24 +4,32 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import { tosContent } from './content'
+import { updateTos, fetchMe } from '@/lib/api/user'
 
 export default function TOSPage() {
   // 기본 언어는 한국어로 설정
   const [locale, setLocale] = useState<'ko' | 'en'>('ko')
-  const [agreed, setAgreed] = useState(false) // 약관 동의 여부 상태 추가
+  const [agreed,] = useState(false) // 약관 동의 여부 상태 추가
+  const [user, setUser] = useState<number | null>(null)
 
+  useEffect(() => {
+    //User 정보 가져오기
+    const fetchUserData = async () => {
+      try {
+        const userData = await fetchMe()
+        setUser(userData.user)
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+      }
+    }
+    fetchUserData()
+  }, [])
   useEffect(() => {
     // URL에서 언어 파라미터 가져오기
     const urlParams = new URLSearchParams(window.location.search)
     const urlLocale = urlParams.get('lang') as 'ko' | 'en'
     if (urlLocale && (urlLocale === 'ko' || urlLocale === 'en')) {
       setLocale(urlLocale)
-    }
-
-    // 약관 동의 여부 확인 (예: 로컬 스토리지 사용)
-    const storedAgreement = localStorage.getItem('tosAgreed')
-    if (storedAgreement === 'true') {
-      setAgreed(true)
     }
   }, [])
 
@@ -32,8 +40,9 @@ export default function TOSPage() {
 
   // 약관 동의 핸들러
   const handleAgree = () => {
-    localStorage.setItem('tosAgreed', 'true')
-    setAgreed(true)
+    if (user) {
+      updateTos(user)
+    }
   }
 
   // 약관 거절 핸들러
@@ -51,16 +60,16 @@ export default function TOSPage() {
         <div className="bg-white rounded-2xl shadow-sm p-8 mb-8 relative">
           {/* 언어 전환 버튼 - 우측 상단 고정 */}
           <div className="absolute top-4 right-4">
-            <LanguageSwitcher 
-              currentLocale={locale} 
+            <LanguageSwitcher
+              currentLocale={locale}
               onLocaleChange={handleLocaleChange}
             />
           </div>
-          
+
           {/* 제목 */}
           <h1 className="text-3xl font-bold text-slate-800 text-center mb-6">
             {currentContent.title}
-          </h1>  
+          </h1>
 
           {/* 본문 내용 스크롤 가능 */}
           <div className="overflow-y-auto max-h-[500px]">
@@ -79,22 +88,22 @@ export default function TOSPage() {
           {/* 하단 버튼 영역 */}
           <div className="flex justify-between items-center mt-8">
             {/* 홈으로 돌아가기 버튼 */}
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors font-medium"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-4 w-4 mr-2" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
               {currentContent.backToHome}
@@ -103,14 +112,14 @@ export default function TOSPage() {
             {/* 약관 동의 및 거절 버튼 */}
             {!agreed ? (
               <div className="flex space-x-4">
-                <button 
-                  onClick={handleAgree} 
+                <button
+                  onClick={handleAgree}
                   className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
                 >
                   동의
                 </button>
-                <button 
-                  onClick={handleDecline} 
+                <button
+                  onClick={handleDecline}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                 >
                   거절
