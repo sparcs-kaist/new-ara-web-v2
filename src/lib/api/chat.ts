@@ -9,7 +9,7 @@ export const fetchChatRoomList = async () => {
 }
 
 //특정 채팅방의 세부 정보 가져오기
-export const fetchChatRoomDetail = async (roomId : number) => {
+export const fetchChatRoomDetail = async (roomId: number) => {
     const { data } = await http.get(`chat/room/${roomId}/`);
     return data;
 }
@@ -84,13 +84,13 @@ export const createGroupDM = async (room_title: string, picture: File | null = n
 }
 
 // 채팅방에 메시지 보내기
-export const sendMessage = async (roomId : number, content : string) => {
+export const sendMessage = async (roomId: number, content: string) => {
     try {
         const { data } = await http.post(`chat/message/`, {
-            message_type : 'TEXT',
+            message_type: 'TEXT',
             message_content: content,
-            chat_room : roomId,
-         });
+            chat_room: roomId,
+        });
         return data;
     } catch (error) {
         const err = error as AxiosError<{ detail?: string }>;
@@ -100,4 +100,16 @@ export const sendMessage = async (roomId : number, content : string) => {
         }
         throw new Error('메시지 전송 중 오류가 발생했습니다.');
     }
+}
+
+// 채팅방에서 하나의 메시지 가져오기 (Socket으로 업데이트 signal 받았을 때)
+export const fetchRecentMessage = async (roomId: number) => {
+    const query = queryBuilder({
+        chat_room: roomId,
+        page: 1,
+        page_size: 1,
+        ordering: '-created_at',
+    });
+    const { data } = await http.get(`chat/message/?${query}`);
+    return data;
 }
