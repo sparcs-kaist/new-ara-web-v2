@@ -1,6 +1,7 @@
-export class ChatSocketClient {
+export class ChatSocketClient3 {
     private socket: WebSocket | null = null;
     private eventListeners: Record<string, Function[]> = {};
+    public currentRoomId: number | null = null;
 
 
     private emit(event: string, ...args: any[]) {
@@ -45,8 +46,8 @@ export class ChatSocketClient {
     }
 
     on(event: string, callback: Function) {
-        if (this.eventListeners[event]) {
-            this.eventListeners[event] = []; //event 리스너 초기화
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
         }
         this.eventListeners[event].push(callback);
     }
@@ -65,6 +66,10 @@ export class ChatSocketClient {
         this.send({ type: 'leave', room_id: roomId });
     }
 
+    isConnected(): boolean {
+        return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+    }
+
 }
 
-export const chatSocket = new ChatSocketClient();
+export const chatSocket = new ChatSocketClient3();

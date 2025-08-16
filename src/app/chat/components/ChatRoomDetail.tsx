@@ -8,6 +8,7 @@ import { fetchChatMessages, sendMessage } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 
+
 // ROOM 타입 정의
 type ChatRoom = {
     id: number;

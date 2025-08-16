@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import ChatRoomList from '../components/ChatRoomList';
 import ChatRoomDetail from '../components/ChatRoomDetail';
 import { fetchChatRoomList, fetchChatMessages } from '@/lib/api/chat';
+import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
 
-// ROOM 타입 정의
 type ChatRoom = {
   id: number;
   room_title: string;
@@ -24,6 +24,8 @@ export default function ChatRoomPage() {
     const id = Array.isArray(params?.room_id) ? params.room_id[0] : params?.room_id;
     return id ? parseInt(id, 10) : null;
   }, [params]);
+
+  const pathname = usePathname(); // 소켓 처리를 위한 pathname 훅 사용
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
@@ -47,29 +49,39 @@ export default function ChatRoomPage() {
       });
   }, [roomId]);
 
+
+  // roomId 값이 변경될 때가 아니라 실제 pathname이 변경될 때만 채팅방 변경 처리
   useEffect(() => {
     if (!roomId) return;
 
-    // 소켓 연결
-    chatSocket.connect('ws://your-server/ws/chat/');
+    // 소켓 연결하기
+    chatSocket.connect(`${SocketUrl}chat/`);
 
-    // 연결 성공 시 채팅방 join
-    const handleConnect = () => {
+    // 연결 상태에서만 join 처리
+    const joinRoom = () => {
+      // 이전 채팅방이 있고 다르다면 떠나기
+      if (chatSocket.currentRoomId && chatSocket.currentRoomId !== roomId) {
+        console.log(`leave room ${chatSocket.currentRoomId}`);
+        chatSocket.leave(chatSocket.currentRoomId);
+      }
+
+      // 새 채팅방 입장
+      console.log(`join room ${roomId}`);
       chatSocket.join(roomId);
-      console.log('join room', roomId);
+      chatSocket.currentRoomId = roomId;
     };
 
-    // 이벤트 리스너 등록
+    // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
+    const handleConnect = () => {
+      joinRoom();
+    };
     chatSocket.on('connect', handleConnect);
 
     return () => {
-      // 채팅방 떠날 때 정리
-      chatSocket.leave(roomId);
       chatSocket.off('connect', handleConnect);
-      chatSocket.disconnect();
-      console.log('leave room', roomId);
+      chatSocket.disconnect();//소켓 연결 해제
     };
-  }, [roomId]);
+  }, [pathname, roomId]); // pathname이 변경될 때만 실행되도록 의존성 추가
 
   if (!roomId) {
     return (
