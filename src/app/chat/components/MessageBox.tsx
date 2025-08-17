@@ -32,6 +32,15 @@ export default function MessageBox({
     const bubbleBase = `${themeStyle.bubble.radius} ${themeStyle.bubble.padding} ${themeStyle.bubble.shadow ?? ''}`;
     const bubbleColor = isMe ? themeStyle.bubble.me : themeStyle.bubble.other;
 
+    const InfoCol = (time || readStatus !== undefined || readCount !== undefined) ? (
+        <div className="flex flex-col text-xs text-gray-500 min-w-[50px]">
+            {readCount !== undefined && (
+                <span className={`${isMe ? 'text-right' : 'text-left'}`}>{readCount}명 읽음</span>
+            )}
+            {time && <span className={`${isMe ? 'text-right' : 'text-left'}`}>{time}</span>}
+        </div>
+    ) : null;
+
     return (
         <div className={`flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end max-w-[80%]`}>
             {/* 프로필/여백: 상대 메시지일 때는 항상 너비 유지, 그룹 중간이면 높이만 0 */}
@@ -47,7 +56,6 @@ export default function MessageBox({
                                 className="rounded-full object-cover"
                             />
                         ) : (
-                            // 이미지가 없을 때도 동일한 공간 확보
                             <div className="w-9 h-9" aria-hidden />
                         )
                     )}
@@ -59,20 +67,13 @@ export default function MessageBox({
                     <div className="text-xs text-gray-600 mb-1">{nickname}</div>
                 ) : null}
 
+                {/* 말풍선 + 시간/읽음: 내 메시지는 시간 칼럼을 왼쪽에 배치 */}
                 <div className="flex items-end gap-1">
-                    {/* 말풍선 적용 */}
+                    {isMe ? InfoCol : null}
                     <div className={`${bubbleBase} ${bubbleColor} whitespace-pre-wrap break-words max-w-[28rem]`}>
                         {children}
                     </div>
-
-                    {(time || readStatus !== undefined || readCount !== undefined) && (
-                        <div className="flex flex-col text-xs text-gray-500 min-w-[50px]">
-                            {readCount !== undefined && (
-                                <span className={`${isMe ? 'text-right' : 'text-left'}`}>{readCount}명 읽음</span>
-                            )}
-                            {time && <span className={`${isMe ? 'text-right' : 'text-left'}`}>{time}</span>}
-                        </div>
-                    )}
+                    {!isMe ? InfoCol : null}
                 </div>
             </div>
         </div>

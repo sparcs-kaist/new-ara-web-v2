@@ -10,14 +10,34 @@ import RoomCreateDialog from './RoomCreateDialog';
 import { fetchChatRoomList, createGroupDM } from '@/lib/api/chat';
 
 // ROOM 타입 정의
+type RecentMessage = {
+    id: number;
+    message_type: 'TEXT' | string;
+    message_content: string;
+    created_by: {
+        id: number;
+        profile?: {
+            picture?: string;
+            nickname?: string;
+            user?: number;
+            is_official?: boolean;
+            is_school_admin?: boolean;
+        };
+    };
+    created_at: string;
+    updated_at?: string;
+    expired_at?: string | null;
+};
+
 type ChatRoom = {
     id: number;
     room_title: string;
     room_type: string;
     chat_name_type: string;
-    picture: string;
-    recent_message_at: string;
-    recent_message: number;
+    picture?: string;
+    recent_message_at?: string;
+    recent_message?: RecentMessage;   // <- 객체로 변경
+    created_at?: string;
 };
 
 interface ChatRoomListProps {
@@ -111,21 +131,27 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                 disabled
             />
             {/* 채팅방 목록 */}
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+            <div className="flex-1 overflow-y-auto divide-y divide-gray-100 no-scrollbar">
                 {rooms.map((room) => {
                     const selected = room.id === selectedRoomId;
+
+                    // 미리보기 텍스트 조합
+                    const previewRaw = room.recent_message?.message_content ?? '';
+                    const sender = room.recent_message?.created_by?.profile?.nickname;
+                    const preview = (sender ? `${sender}: ` : '') + previewRaw;
+                    const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
+
+                    // 시간 표시 (HH:MM)
+                    const timeSrc = room.recent_message_at || room.created_at || '';
+                    const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
+
                     return (
                         <button
                             key={room.id}
-                            className={`w-full flex items-center px-2 py-3 hover:bg-gray-50 transition text-left relative ${selected ? 'bg-gray-50 font-semibold' : 'bg-white'
-                                }`}
-                            onClick={() => {
-                                // 라우팅에 room_id 포함된 경로로 이동
-                                router.push(`/chat/${room.id}`);
-                            }}
+                            className={`w-full flex items-center px-2 py-3 hover:bg-gray-50 transition text-left relative ${selected ? 'bg-gray-50 font-semibold' : 'bg-white'}`}
+                            onClick={() => router.push(`/chat/${room.id}`)}
                             style={{ borderRadius: 0 }}
                         >
-                            {/* 선택된 방에만 Ara_red 바 표시 */}
                             {selected && (
                                 <div
                                     className="absolute left-0 top-0 h-full"
@@ -134,17 +160,21 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                             )}
                             <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
                                 <Image
-                                    src={room.picture}
+                                    src={room.picture || '/default-room.png'}
                                     alt={room.room_title}
                                     fill
                                     className="rounded-full object-cover"
+                                    sizes="36px"
                                 />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-base truncate">{room.room_title}</div>
+                                <div className="text-base truncate mt-[4px] font-medium">{room.room_title}</div>
+                                <div className="text-xs text-gray-500 truncate">
+                                    {previewClamped || '새로운 채팅방'}
+                                </div>
                             </div>
                             <div className="ml-2 text-[10px] text-gray-400 flex-shrink-0">
-                                {room.recent_message_at ? room.recent_message_at.slice(11, 16) : ''}
+                                {timeStr}
                             </div>
                         </button>
                     );

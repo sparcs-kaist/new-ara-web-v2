@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import MessageBox from './MessageBox';
-import { fetchChatMessages, sendMessage } from '@/lib/api/chat';
+import { fetchChatMessages, sendMessage, fetchRecentMessage } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 
@@ -59,87 +59,67 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
 
     // 소켓 이벤트 리스너 추가
     useEffect(() => {
-        // 백엔드 스펙에 맞춘 message_new 이벤트 처리
-        const handleMessageNew = (data: any) => {
-            console.log('새 메시지 수신:', data);
-            if (data.message?.room_id === roomId) {
-                fetchChatMessages(roomId, 1, 1, '-created_at').then(d => {
-                    const latest = d?.results?.[0];
-                    if (!latest) return;
-                    // 이미 있으면 스킵
-                    setMessages(prev =>
-                        prev.some(m => m.id === latest.id) ? prev : [...prev, latest] // 맨 뒤에 추가(최신이 아래)
-                    );
-                });
+        // 최신 1개만 가져와 반영
+        const applyRecent = async () => {
+            const d = await fetchRecentMessage(roomId);
+            const latest = d?.results?.[0];
+            if (!latest) return;
+
+            setMessages(prev => {
+                // id 중복 방지
+                if (prev.some(m => m.id === latest.id)) return prev;
+
+                // 혹시 id가 누락된 케이스 대비(선택): 내용/작성자/분 단위 시간으로 근사 중복 체크
+                const latestMin = latest.created_at?.slice(0, 16);
+                const isNearDup = prev.some(m =>
+                    !m.id &&
+                    m.message_content === latest.message_content &&
+                    m.created_by?.id === latest.created_by?.id &&
+                    m.created_at?.slice(0, 16) === latestMin
+                );
+                if (isNearDup) return prev;
+
+                return [...prev, latest]; // 맨 뒤에 추가(최신 아래)
+            });
+        };
+
+        const handleRoomUpdate = (data: any) => {
+            // 방 일치시만 반영
+            const targetRoomId = data?.message?.room_id ?? data?.room_id ?? roomId;
+            if (targetRoomId === roomId) {
+                applyRecent().catch(console.error);
             }
         };
 
-        // 유저 입장 이벤트 처리
-        const handleUserJoin = (data: any) => {
-            if (data.room_id === roomId) {
-                console.log(`사용자(${data.user}) 입장`);
-                // 필요한 경우 시스템 메시지 추가 또는 상태 업데이트
-            }
-        };
-
-        // 유저 퇴장 이벤트 처리
-        const handleUserLeave = (data: any) => {
-            if (data.room_id === roomId) {
-                console.log(`사용자(${data.user}) 퇴장`);
-                // 필요한 경우 시스템 메시지 추가 또는 상태 업데이트
-            }
-        };
-
-        // 타이핑 이벤트 처리 (필요한 경우)
-        const handleUserTyping = (data: any) => {
-            console.log(`사용자(${data.user}) 타이핑 중`);
-            // 필요한 경우 타이핑 상태 표시
-        };
-
-        // 이벤트 리스너 등록 (백엔드 스펙에 맞게 수정)
-        chatSocket.on('message_new', handleMessageNew);
-        chatSocket.on('user_join', handleUserJoin);
-        chatSocket.on('user_leave', handleUserLeave);
-        chatSocket.on('user_typing', handleUserTyping);
+        chatSocket.on('room_update', handleRoomUpdate);
+        // 백엔드가 message_new를 직접 쏘면 이것도 함께 대응(옵션)
+        chatSocket.on('message_new', handleRoomUpdate);
 
         return () => {
-            // 컴포넌트 언마운트 시 리스너 제거
-            chatSocket.off('message_new', handleMessageNew);
-            chatSocket.off('user_join', handleUserJoin);
-            chatSocket.off('user_leave', handleUserLeave);
-            chatSocket.off('user_typing', handleUserTyping);
+            chatSocket.off('room_update', handleRoomUpdate);
+            chatSocket.off('message_new', handleRoomUpdate);
         };
-    }, [roomId, messages]);    // 메시지 전송
+    }, [roomId]); // messages 의존성 제거: 중복 리스너 방지
+
+    // 메시지 전송
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!input.trim() || !roomId) return;
         try {
-            // 메시지 전송
+            // 서버에 전송(HTTP)
             const newMessageData = await sendMessage(roomId, input);
+            const sentText = input; // 전송 본문 백업
             setInput('');
 
-            console.log('메시지 전송 성공:', newMessageData);
-
-            // 서버에서 최신 메시지 가져오기
-            const recentMessageData = await fetchChatMessages(roomId, 1, 1, '-created_at');
-
-            if (recentMessageData.results && recentMessageData.results.length > 0) {
-                const newMessage = recentMessageData.results[0];
-                console.log('최신 메시지 조회:', newMessage);
-
-                // 중복 방지를 위해 ID로 확인 후 추가
-                if (!messages.some(msg => msg.id === newMessage.id)) {
-                    setMessages(prevMessages => [...prevMessages, newMessage]);
-                }
+            // 최신 1개만 재요청해서 정확한 id로 반영
+            const d = await fetchRecentMessage(roomId);
+            const latest = d?.results?.[0];
+            if (latest) {
+                setMessages(prev => (prev.some(m => m.id === latest.id) ? prev : [...prev, latest]));
             }
 
-            // 백엔드 스펙에 맞게 message_new 이벤트 전송
-            if (!chatSocket.isConnected()) {
-                console.error('소켓이 연결되어 있지 않아 메시지 알림을 보낼 수 없습니다.');
-            } else if (chatSocket.currentRoomId !== roomId) {
-                console.error(`현재 소켓 연결된 방(${chatSocket.currentRoomId})과 메시지 전송 방(${roomId})이 다릅니다.`);
-            } else {
-                console.log('소켓으로 message_new 이벤트 전송...');
+            // 소켓 알림(옵션)
+            if (chatSocket.isConnected() && chatSocket.currentRoomId === roomId) {
                 chatSocket.send({
                     type: 'message_new',
                     message: {
@@ -147,13 +127,11 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         room_id: roomId,
                         sender_id: myId,
                         type: 'text',
-                        preview: input.substring(0, 30) + (input.length > 30 ? '...' : ''),
-                        created_at: new Date().toISOString()
-                    }
+                        preview: sentText.substring(0, 30) + (sentText.length > 30 ? '...' : ''),
+                        created_at: new Date().toISOString(),
+                    },
                 });
             }
-
-            console.log('메시지 업데이트 알림 전송', roomId, newMessageData.id);
         } catch (err: any) {
             alert(err.message || '메시지 전송 실패');
         }
@@ -197,7 +175,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             </div>
 
             {/* 채팅 메시지 영역 */}
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-2 no-scrollbar">
+            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 no-scrollbar">
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (
@@ -209,7 +187,6 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         const readCount = isMe && isGroupRoom ? msg.readCount : undefined;
 
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
-
                         const currentTime = msg.created_at?.slice(11, 16); // HH:MM
 
                         const prevMsg = idx > 0 ? messages[idx - 1] : null;
@@ -220,26 +197,24 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         const nextTime = nextMsg?.created_at?.slice(11, 16);
                         const nextSender = nextMsg?.created_by?.id;
 
-                        // 이전 메시지와 동일 그룹 여부(프로필/닉네임 숨김, 간격 축소)
+                        // 같은 분(HH:MM) + 같은 발신자면 그룹
                         const isGroupedWithPrev =
                             currentTime === prevTime && prevSender === msg.created_by?.id;
-
-                        // 다음 메시지와 동일 그룹 여부(마지막 메시지에만 시간 표시)
                         const isGroupedWithNext =
                             currentTime === nextTime && nextSender === msg.created_by?.id;
 
-                        const messageSpacing = isGroupedWithPrev ? 'mt-1' : 'mt-4';
-                        const showProfile = !isGroupedWithPrev;           // 그룹의 첫 메시지에만 프로필/닉네임
-                        const showTime = !isGroupedWithNext;              // 그룹의 마지막 메시지에만 시간
+                        const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
+                        const showProfile = !isGroupedWithPrev;    // 그룹 첫 메시지에만 프로필/닉네임
+                        const showTime = !isGroupedWithNext;       // 그룹 마지막 메시지에만 시간
 
                         return (
                             <div
                                 key={messageKey}
-                                className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'} ${messageSpacing}`}
+                                className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'} ${messageSpacing} first:mt-0`}
                             >
                                 <MessageBox
                                     isMe={isMe}
-                                    profileImg={showProfile ? msg.created_by?.profile?.picture : undefined}
+                                    profileImg={showProfile ? msg.created_by?.profile?.picture ?? null : null}
                                     nickname={showProfile ? msg.created_by?.profile?.nickname : undefined}
                                     time={showTime ? currentTime : undefined}
                                     theme="ara"

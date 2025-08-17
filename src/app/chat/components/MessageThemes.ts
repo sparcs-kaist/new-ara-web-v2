@@ -28,7 +28,7 @@ export interface CatTheme extends BaseTheme {
 export const messageThemes: Record<MessageTheme, BaseTheme | CatTheme> = {
     ara: {
         bubble: {
-            me: 'bg-emerald-500 text-white',
+            me: 'bg-[#e15858] text-white',
             other: 'bg-gray-100 text-gray-900 border border-gray-200',
             text: 'text-inherit',
             radius: 'rounded-2xl',
