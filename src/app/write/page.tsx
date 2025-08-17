@@ -8,13 +8,14 @@ import Attachments, { UploadObject } from './components/Attachments'
 import type { Node as ProseMirrorNode } from 'prosemirror-model'
 import { createPost } from '@/lib/api/post'
 import { fetchBoardList } from '@/lib/api/board'
+import { makeMarketMetadata } from '@/lib/utils/article_metadata'
 
 export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME'
 
 export default function Write() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<Editor|null>(null);
-  const attachmentsRef = useRef<AttachmentsHandles|null>(null);
+  const editorRef = useRef<Editor | null>(null);
+  const attachmentsRef = useRef<AttachmentsHandles | null>(null);
 
   // 1) BoardList API로 user_writable 게시판만 로드
   type ApiBoard = {
@@ -40,6 +41,9 @@ export default function Write() {
 
   const [boardId, setBoardId] = useState<number>(7); // default : 자유게시판
   const [topicId, setTopicId] = useState<string>('');
+  // 장터 전용 상태
+  const [isMarket, setIsMarket] = useState(false);
+  const [price, setPrice] = useState<string>('');
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -92,11 +96,18 @@ export default function Write() {
   const handleSavePost = async () => {
     if (!editorRef.current) return;
     setSaving(true);
-
-    // HTML 대신 JSON으로 저장 (모든 속성 보존)
     const content = JSON.stringify(editorRef.current.getJSON());
-    
     const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? [];
+
+    // 장터 게시판이면 metadata 구성
+    const metadata = isMarket
+      ? makeMarketMetadata({
+        price,            // 문자열이어도 내부에서 숫자로 정제
+        currency: 'KRW',
+        state: 'onsale',  // 필요시 UI에서 선택값으로 교체
+      })
+      : undefined;
+
     const newArticle = {
       title,
       content,
@@ -106,9 +117,13 @@ export default function Write() {
       is_content_sexual: isSexual,
       is_content_social: isSocial,
       name_type: nameType,
+      // price/price_currency 최상위 전송 제거, metadata로만 전송
+      ...(metadata ? { metadata } : {}),
     };
 
     try {
+      // 디버깅: 실제 보낼 payload 확인
+      // console.log('POST payload', { ...newArticle, parent_board: boardId });
       const result = await createPost({ boardId, newArticle });
       alert(`글이 저장되었습니다 (ID: ${result.id})`);
     } catch (err) {
@@ -118,6 +133,9 @@ export default function Write() {
       setSaving(false);
     }
   };
+
+  // 콤마 포매터
+  const formatPrice = (s: string) => (s ? new Intl.NumberFormat('ko-KR').format(Number(s)) : '');
 
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
@@ -139,13 +157,16 @@ export default function Write() {
             } else {
               setNameType('REGULAR')
             }
+            // 장터 판별: 게시판 이름에 '장터/거래/마켓' 포함 시
+            const market = !!board && /장터|거래|마켓/i.test(board.ko_name ?? '')
+            setIsMarket(market)
           }}
           onChangeCategory={(id) => {
             setTopicId(id ? String(id) : '')
           }}
-           onChangeAnonymous={(anon) => {
-             setNameType(anon ? 'ANONYMOUS' : 'REGULAR')
-           }}
+          onChangeAnonymous={(anon) => {
+            setNameType(anon ? 'ANONYMOUS' : 'REGULAR')
+          }}
           onChangeSocial={(flag) => {
             setIsSocial(flag);
           }}
@@ -161,6 +182,32 @@ export default function Write() {
           onChange={e => setTitle(e.currentTarget.value)}
           className="w-full border border-gray-300 rounded px-4 py-2 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
+
+        {isMarket && (
+          <div className="mb-4 flex items-center gap-3">
+            <label className="text-[16px] text-black font-semibold">가격</label>
+            <div className="flex items-center gap-1">
+              <div className="relative inline-block">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  maxLength={12} // 표시 문자열(콤마 포함) 길이 여유
+                  placeholder="가격을 입력하세요"
+                  value={price === '' ? '' : formatPrice(price)}   // 3자리 콤마 표시
+                  onChange={e => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 8); // 8자리 제한
+                    setPrice(digits);
+                  }}
+                  className="w-48 border border-gray-300 rounded px-3 py-1.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-black">
+                  ₩
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <TextEditor
           editable={true}
@@ -200,4 +247,4 @@ export default function Write() {
       </div>
     </div>
   )
- }
+}

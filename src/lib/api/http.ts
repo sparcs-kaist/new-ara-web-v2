@@ -2,7 +2,7 @@ import axios from 'axios'
 //  import { getCookie } from '../utils/cookie'
 import { errorParser } from '../utils/errorParser'
 
-const apiUrl = (() => {
+export const apiUrl = (() => {
   if (process.env.NEXT_PUBLIC_API_HOST) {
     return process.env.NEXT_PUBLIC_API_HOST
   }
