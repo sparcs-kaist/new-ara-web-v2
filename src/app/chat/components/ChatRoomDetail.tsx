@@ -48,8 +48,12 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     useEffect(() => {
         if (!roomId) return;
         setLoadingMessages(true);
-        fetchChatMessages(roomId)
-            .then(data => setMessages(data.results || []))
+        // 서버는 -created_at로 최신→오래된 순을 반환하므로, UI에서는 역순으로 표시
+        fetchChatMessages(roomId, 1, 50, '-created_at')
+            .then(data => {
+                const list = data?.results ?? [];
+                setMessages(list.slice().reverse()); // 오래된→최신으로 뒤집기
+            })
             .finally(() => setLoadingMessages(false));
     }, [roomId]);
 
@@ -58,22 +62,15 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         // 백엔드 스펙에 맞춘 message_new 이벤트 처리
         const handleMessageNew = (data: any) => {
             console.log('새 메시지 수신:', data);
-
-            // 백엔드 메시지 형식: { type: 'message_new', message: {...}, user: '...' }
             if (data.message?.room_id === roomId) {
-                // 최신 메시지 1개만 가져오기
-                fetchChatMessages(roomId, 1, 1, '-created_at')
-                    .then(data => {
-                        if (data.results && data.results.length > 0) {
-                            const newMessage = data.results[0];
-                            console.log('서버에서 최신 메시지 조회:', newMessage);
-
-                            // 중복 방지를 위해 ID로 확인
-                            if (!messages.some(msg => msg.id === newMessage.id)) {
-                                setMessages(prevMessages => [...prevMessages, newMessage]);
-                            }
-                        }
-                    });
+                fetchChatMessages(roomId, 1, 1, '-created_at').then(d => {
+                    const latest = d?.results?.[0];
+                    if (!latest) return;
+                    // 이미 있으면 스킵
+                    setMessages(prev =>
+                        prev.some(m => m.id === latest.id) ? prev : [...prev, latest] // 맨 뒤에 추가(최신이 아래)
+                    );
+                });
             }
         };
 

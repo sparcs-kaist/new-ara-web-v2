@@ -30,8 +30,8 @@ export const fetchBlockList = async () => {
 export const fetchChatMessages = async (
     roomId: number,
     page: number = 1,
-    pageSize: number = 20,
-    ordering: string = 'created_at'
+    pageSize: number = 100,
+    ordering: string = '-created_at'
 ) => {
     const query = queryBuilder({
         chat_room: roomId,
