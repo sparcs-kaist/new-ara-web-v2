@@ -197,7 +197,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             </div>
 
             {/* 채팅 메시지 영역 */}
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-2">
+            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 space-y-2 no-scrollbar">
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (

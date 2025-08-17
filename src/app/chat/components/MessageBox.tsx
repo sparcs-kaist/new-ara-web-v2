@@ -34,18 +34,23 @@ export default function MessageBox({
 
     return (
         <div className={`flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end max-w-[80%]`}>
-            {/* 프로필: 그룹 중간이면 숨김, 이미지 없으면 렌더 생략 */}
-            {!isMe && !isGrouped && (
-                <div className="flex-shrink-0 mr-2 w-9 h-9">
-                    {profileImg ? (
-                        <Image
-                            src={profileImg}
-                            alt={nickname || ''}
-                            width={36}
-                            height={36}
-                            className="rounded-full object-cover"
-                        />
-                    ) : null}
+            {/* 프로필/여백: 상대 메시지일 때는 항상 너비 유지, 그룹 중간이면 높이만 0 */}
+            {!isMe && (
+                <div className={`flex-shrink-0 mr-2 w-9 ${isGrouped ? 'h-0' : 'h-9'}`}>
+                    {!isGrouped && (
+                        profileImg ? (
+                            <Image
+                                src={profileImg}
+                                alt={nickname || ''}
+                                width={36}
+                                height={36}
+                                className="rounded-full object-cover"
+                            />
+                        ) : (
+                            // 이미지가 없을 때도 동일한 공간 확보
+                            <div className="w-9 h-9" aria-hidden />
+                        )
+                    )}
                 </div>
             )}
 
@@ -60,7 +65,6 @@ export default function MessageBox({
                         {children}
                     </div>
 
-                    {/* 그룹의 마지막 메시지에만 시간/읽음 표시 */}
                     {(time || readStatus !== undefined || readCount !== undefined) && (
                         <div className="flex flex-col text-xs text-gray-500 min-w-[50px]">
                             {readCount !== undefined && (
