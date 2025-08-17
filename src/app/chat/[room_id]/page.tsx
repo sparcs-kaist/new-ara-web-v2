@@ -65,21 +65,37 @@ export default function ChatRoomPage() {
         chatSocket.leave(chatSocket.currentRoomId);
       }
 
-      // 새 채팅방 입장
+      // 새 채팅방 입장 (백엔드 스펙: 'connect_room' 대신 'join' 사용)
       console.log(`join room ${roomId}`);
       chatSocket.join(roomId);
       chatSocket.currentRoomId = roomId;
-    };
 
-    // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
+      // 디버깅: 소켓 연결 확인
+      console.log(`소켓 연결 상태: ${chatSocket.isConnected()}, 현재 방: ${chatSocket.currentRoomId}`);
+    };    // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
+    if (chatSocket.isConnected()) {
+      console.log('소켓 이미 연결됨, 바로 방 입장');
+      joinRoom();
+    } else {
+      console.log('소켓 연결 대기 중');
+    }
+
     const handleConnect = () => {
+      console.log('소켓 연결 이벤트 발생, 방 입장 시도');
       joinRoom();
     };
     chatSocket.on('connect', handleConnect);
 
     return () => {
       chatSocket.off('connect', handleConnect);
-      chatSocket.disconnect();//소켓 연결 해제
+      // 페이지 전환 시 소켓 연결 유지하고 방만 나가기
+      if (chatSocket.currentRoomId === roomId) {
+        console.log(`페이지 언마운트: ${roomId} 방에서 나갑니다.`);
+        // 백엔드 스펙: 'disconnect_room' 대신 'leave' 사용
+        chatSocket.leave(roomId);
+        chatSocket.currentRoomId = null;
+      }
+      // 소켓 연결은 유지 (disconnect 제거)
     };
   }, [pathname, roomId]); // pathname이 변경될 때만 실행되도록 의존성 추가
 

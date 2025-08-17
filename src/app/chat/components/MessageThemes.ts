@@ -7,41 +7,45 @@ export const CAT_COLORS = {
     alabaster: '#F6ECE1',
 };
 
-export type MessageTheme = 'ara' | 'classic' | 'cat' | 'gradient';
+export type MessageTheme = 'ara' | 'default';
 
 export interface BaseTheme {
-    me: string;
-    other: string;
-    readStatusColor?: string; // 읽음 상태 컬러 추가
+    bubble: {
+        me: string;       // 내 말풍선 배경/보더
+        other: string;    // 상대 말풍선 배경/보더
+        text: string;     // 텍스트 색
+        radius: string;   // 둥근 모서리
+        padding: string;  // 패딩
+        shadow?: string;  // 그림자
+    };
+    readStatusColor: string;
 }
 
 export interface CatTheme extends BaseTheme {
     character: string;
-    characterOther: string;
 }
 
 export const messageThemes: Record<MessageTheme, BaseTheme | CatTheme> = {
     ara: {
-        me: 'bg-[#E8443A] text-white',
-        other: 'bg-gray-100 text-gray-900',
-        readStatusColor: '#E8443A',
+        bubble: {
+            me: 'bg-emerald-500 text-white',
+            other: 'bg-gray-100 text-gray-900 border border-gray-200',
+            text: 'text-inherit',
+            radius: 'rounded-2xl',
+            padding: 'px-3 py-2',
+            shadow: 'shadow-sm',
+        },
+        readStatusColor: '#64748b',
     },
-    classic: {
-        me: 'bg-blue-500 text-white',
-        other: 'bg-gray-200 text-gray-800',
-        readStatusColor: '#2563eb',
-    },
-    cat: {
-        // 컬러셋 활용
-        me: `bg-[#EEDDC6] text-black border-2 border-[#77634e] rounded-xl px-3 py-2 relative`,
-        other: `bg-[#F6ECE1] text-black border-2 border-[#C39E6E] rounded-xl px-3 py-2 relative`,
-        character: '/ChatTheme/Cat/mozzi_cat.png',
-        characterOther: '/ChatTheme/Cat/mozzi_cat.png',
-        readStatusColor: '#C39E6E',
-    },
-    gradient: {
-        me: 'bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 text-white rounded-xl px-3 py-2',
-        other: 'bg-gradient-to-r from-gray-200 to-gray-400 text-gray-900 rounded-xl px-3 py-2',
-        readStatusColor: '#a78bfa',
+    default: {
+        bubble: {
+            me: 'bg-blue-500 text-white',
+            other: 'bg-gray-200 text-gray-900',
+            text: 'text-inherit',
+            radius: 'rounded-xl',
+            padding: 'px-3 py-2',
+            shadow: 'shadow-sm',
+        },
+        readStatusColor: '#6b7280',
     },
 };
