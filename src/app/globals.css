@@ -109,8 +109,10 @@ body {
 
 /* Code Style */
 .prose code {
-  background-color: #f3f4f6; /* gray-100 */
-  color: #ec4899;            /* pink-500 */
+  background-color: #f3f4f6;
+  /* gray-100 */
+  color: #ec4899;
+  /* pink-500 */
   border-radius: 0.25rem;
   padding: 0.15em 0.4em;
   font-size: 0.95em;
@@ -119,7 +121,8 @@ body {
 
 .dark .prose code {
   background-color: #23272e;
-  color: #f472b6; /* pink-400 */
+  color: #f472b6;
+  /* pink-400 */
 }
 
 .editor-content p:first-child.is-empty::before {
@@ -154,6 +157,7 @@ body {
   font-size: 0.95rem;
   overflow-x: auto;
 }
+
 .prose pre code {
   color: #111 !important;
   background: transparent !important;
@@ -180,10 +184,12 @@ input[type="color"] {
   border-radius: 9999px;
   overflow: hidden;
 }
+
 input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
   border-radius: 9999px;
 }
+
 input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 9999px;
@@ -193,6 +199,15 @@ input[type="color"]::-webkit-color-swatch {
   color: inherit !important;
 }
 
-.material-symbols-filled {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+/* 스크롤바 숨김(스크롤은 가능) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  /* Chrome/Safari */
+  display: none;
 }

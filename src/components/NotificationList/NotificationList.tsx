@@ -1,3 +1,5 @@
+"use client";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getBoardKoNameById } from "@/lib/types/post";
 import { Notification } from "@/lib/types/notification";
@@ -36,6 +38,7 @@ export function mapNotificationToItemProps(n: Notification): NotificationItemPro
       // reply: 최근 메시지 내용 (API에서 recent_message.message.content로 받아야 함)
       reply: n.related_chat_room.recent_message?.message_content ?? "",
       timestamp,
+      raw: n,
     };
   }
   if ((n.type === "article_commented" || n.type === "comment_commented") && n.related_article) {
@@ -116,6 +119,7 @@ export interface NotificationItemProps {
   iconSize?: number; // 아이콘 사이즈(px)
   
   timestamp?: string;
+  raw?: Notification;
 }
 
 export interface NotificationListProps {
@@ -140,6 +144,12 @@ export interface NotificationListProps {
   showContent?: boolean;
   showTimestamp?: boolean;
   showReply?: boolean;
+  itemClassName?: string;
+  onItemClick?: (notification: any) => void;
+  pagination?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 // 아이콘 경로를 타입별로 결정하는 함수
@@ -279,60 +289,45 @@ export function NotificationItem({
 }
 
 // NotificationList 내부에서 각 표시 옵션을 NotificationItem에 전달하도록 수정
-export default function NotificationList({
-  notifications,
-  listSpacing = 12,
-  titleFontSize = "text-base",
-  contentFontSize = "text-base",
-  detailFontSize = "text-sm",
-  timestampFontSize = "text-sm",
-  replyFontSize = "text-sm",
-  titleFontWeight = "font-bold",
-  contentFontWeight = "font-medium",
-  detailFontWeight = "font-medium",
-  timestampFontWeight = "font-medium",
-  replyFontWeight = "font-medium",
-  verticalSpacing = 8,
-  detailVerticalSpacing = 8,
-  iconSize = 36,
-  showIcon = true,
-  showTag = true,
-  showDetail = true,
-  showContent = true,
-  showTimestamp = true,
-  showReply = true,
-}: NotificationListProps) {
+export default function NotificationList({ ...props }: NotificationListProps) {
+  const {
+    notifications,
+    listSpacing = 12,
+    ...restProps
+  } = props;
+
+  const router = useRouter();
+
   const items = notifications.map(n => ({
     ...mapNotificationToItemProps(n),
-    showIcon,
-    showTag,
-    showDetail,
-    showContent,
-    showTimestamp,
-    showReply,
-    titleFontSize,
-    contentFontSize,
-    detailFontSize,
-    timestampFontSize,
-    replyFontSize,
-    titleFontWeight,
-    contentFontWeight,
-    detailFontWeight,
-    timestampFontWeight,
-    replyFontWeight,
-    verticalSpacing,
-    detailVerticalSpacing,
-    iconSize,
+    raw: n,
+    ...restProps,
   }));
 
+
   return (
-    <div className="flex flex-col rounded-[5px] bg-white overflow-y-auto py-4">
-      <ul className="flex-1 flex flex-col">
-        {items.map((item, idx) => (
-          <li key={idx} style={{ marginBottom: idx < items.length - 1 ? listSpacing : 0 }}>
-            <NotificationItem {...item} />
-          </li>
-        ))}
+    <div className="flex flex-col rounded-[5px] bg-white overflow-y-auto">
+      <ul className="flex-1 flex flex-col divide-y divide-gray-200">
+        {items.map((item, idx) => {
+          const articleId = item.raw?.related_article?.id;
+          const isRead = item.isRead;
+
+          return (
+            <li
+              key={idx}
+              className={`py-4 cursor-pointer px-4 transition-colors hover:bg-gray-50 ${
+                isRead ? "bg-gray-100 text-gray-400" : ""
+              }`}
+              onClick={() => {
+                if (articleId) {
+                  router.push(`/article/${articleId}`);
+                }
+              }}
+            >
+              <NotificationItem {...item} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
