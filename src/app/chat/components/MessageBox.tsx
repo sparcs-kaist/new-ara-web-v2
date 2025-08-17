@@ -35,7 +35,7 @@ export default function MessageBox({
     const InfoCol = (time || readStatus !== undefined || readCount !== undefined) ? (
         <div className="flex flex-col text-xs text-gray-500 min-w-[50px]">
             {readCount !== undefined && (
-                <span className={`${isMe ? 'text-right' : 'text-left'}`}>{readCount}명 읽음</span>
+                <span className={`${isMe ? 'text-right' : 'text-left'} text-[#e15858]`}>{readCount}</span>
             )}
             {time && <span className={`${isMe ? 'text-right' : 'text-left'}`}>{time}</span>}
         </div>

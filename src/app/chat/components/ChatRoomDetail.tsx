@@ -28,17 +28,21 @@ interface ChatRoomDetailProps {
     room?: ChatRoom;
 }
 
-// 참여자 타입
+// 참여자 타입 (API 변경 반영)
 type Member = {
-    id: number;
-    username?: string;
-    profile?: {
-        picture?: string;
-        nickname?: string;
-        user?: number;
-        is_official?: boolean;
-        is_school_admin?: boolean;
+    user: {
+        id: number;
+        username?: string;
+        profile?: {
+            picture?: string;
+            nickname?: string;
+            user?: number;
+            is_official?: boolean;
+            is_school_admin?: boolean;
+        };
     };
+    role?: string;
+    last_seen_at?: string | null;
 };
 
 export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
@@ -74,7 +78,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             .finally(() => setLoadingMessages(false));
     }, [roomId]);
 
-    // 방 상세(참여자) 불러오기
+    // 방 상세(참여자) 불러오기 (API 응답 구조 변경 반영)
     useEffect(() => {
         let alive = true;
         fetchChatRoomDetail(roomId)
@@ -164,6 +168,23 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         }
     };
 
+    // 메시지 기준 미확인(안 읽은) 인원 수 계산
+    const getUnreadCount = (msg: any) => {
+        if (!msg?.created_at) return 0;
+        const msgTime = new Date(msg.created_at).getTime();
+        const senderId = msg?.created_by?.id;
+        // 카운트 기준: (1) 보낸 사람 제외 (2) last_seen_at이 없거나, msgTime 이후인 경우만 읽지 않음으로 간주
+        const unread = members.reduce((acc, m) => {
+            const uid = m.user?.id;
+            if (!uid || uid === senderId) return acc; // 보낸 사람 제외
+            const seenAt = m.last_seen_at ? new Date(m.last_seen_at).getTime() : null;
+            const isUnread = !seenAt || seenAt < msgTime;
+            return acc + (isUnread ? 1 : 0);
+        }, 0);
+
+        return unread;
+    };
+
     // messages가 변경될 때 컨테이너 내부만 스크롤
     useEffect(() => {
         if (messageContainerRef.current) {
@@ -172,7 +193,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     }, [messages]);
 
     return (
-        <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0">
+        <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0 relative overflow-hidden">
             {/* 채팅방 정보 헤더 */}
             <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
                 <div className="relative w-10 h-10 mr-3">
@@ -188,7 +209,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     <div className="text-lg font-bold truncate flex items-center gap-2">
                         <span className="truncate">{room?.room_title ?? `채팅방 #${roomId}`}</span>
                         {/* 참여자 수 표시 */}
-                        <span className="text-sm text-gray-500 flex-shrink-0">({members.length}명)</span>
+                        <span className="text-[20px] text-[#ed3a3a] flex-shrink-0">({members.length})</span>
                     </div>
                     <div className="text-xs text-gray-400">
                         {room?.room_type === 'GROUP' ? '그룹 채팅' : '1:1 채팅'}
@@ -219,12 +240,13 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 ) : (
                     messages.map((msg, idx) => {
                         const isMe = msg.created_by?.id === myId;
-                        let readStatus: 'read' | 'delivered' | 'sending' = 'delivered';
-                        if (isMe && idx === messages.length - 1) readStatus = 'read';
                         const isGroupRoom = room?.room_type === 'GROUP';
-                        const readCount = isMe && isGroupRoom ? msg.readCount : undefined;
 
-                        const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
+                        // 모든 메시지에 대해 '안 읽은 인원 수' 계산
+                        const unreadCount = getUnreadCount(msg);
+                        // 0이면 표시하지 않기 위해 undefined 처리
+                        const readCount = unreadCount > 0 ? unreadCount : undefined;
+
                         const currentTime = msg.created_at?.slice(11, 16); // HH:MM
 
                         const prevMsg = idx > 0 ? messages[idx - 1] : null;
@@ -235,15 +257,14 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         const nextTime = nextMsg?.created_at?.slice(11, 16);
                         const nextSender = nextMsg?.created_by?.id;
 
-                        // 같은 분(HH:MM) + 같은 발신자면 그룹
-                        const isGroupedWithPrev =
-                            currentTime === prevTime && prevSender === msg.created_by?.id;
-                        const isGroupedWithNext =
-                            currentTime === nextTime && nextSender === msg.created_by?.id;
+                        const isGroupedWithPrev = currentTime === prevTime && prevSender === msg.created_by?.id;
+                        const isGroupedWithNext = currentTime === nextTime && nextSender === msg.created_by?.id;
 
                         const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
-                        const showProfile = !isGroupedWithPrev;    // 그룹 첫 메시지에만 프로필/닉네임
-                        const showTime = !isGroupedWithNext;       // 그룹 마지막 메시지에만 시간
+                        const showProfile = !isGroupedWithPrev;
+                        const showTime = !isGroupedWithNext;
+
+                        const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
 
                         return (
                             <div
@@ -252,11 +273,11 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                             >
                                 <MessageBox
                                     isMe={isMe}
-                                    profileImg={showProfile ? msg.created_by?.profile?.picture ?? null : null}
+                                    profileImg={showProfile ? (msg.created_by?.profile?.picture ?? null) : null}
                                     nickname={showProfile ? msg.created_by?.profile?.nickname : undefined}
                                     time={showTime ? currentTime : undefined}
                                     theme="ara"
-                                    readStatus={isMe ? readStatus : undefined}
+                                    readStatus={unreadCount === 0 ? 'read' : 'delivered'}
                                     readCount={readCount}
                                     isGrouped={isGroupedWithPrev}
                                 >
@@ -288,25 +309,19 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 </button>
             </form>
 
-            {/* 오른쪽 슬라이드 패널 (참여자 목록) */}
-            <div className={`fixed inset-0 z-40 ${isPanelOpen ? 'visible' : 'invisible'}`}>
-                {/* 배경 */}
+            {/* 오른쪽 슬라이드 패널 (참여자 목록) - 컴포넌트 영역 내부 */}
+            <div className={`absolute inset-0 z-30 ${isPanelOpen ? '' : 'pointer-events-none'}`}>
                 <div
-                    className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${isPanelOpen ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${isPanelOpen ? 'opacity-100' : 'opacity-0'}`}
                     onClick={() => setIsPanelOpen(false)}
                 />
-                {/* 패널 */}
                 <aside
-                    className={`absolute right-0 top-0 h-full w-[320px] bg-white shadow-xl transform transition-transform duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                    className={`absolute right-0 top-0 h-full w-[320px] bg-white shadow-xl border-l transform transition-transform duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
                     aria-label="참여자 목록"
                 >
                     <div className="flex items-center justify-between px-4 py-3 border-b">
-                        <div className="font-semibold">참여자 {members.length}명</div>
-                        <button
-                            onClick={() => setIsPanelOpen(false)}
-                            className="p-1 rounded hover:bg-gray-100"
-                            aria-label="닫기"
-                        >
+                        <div className="font-semibold">멤버 : {members.length}명</div>
+                        <button onClick={() => setIsPanelOpen(false)} className="p-1 rounded hover:bg-gray-100" aria-label="닫기">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                 <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
@@ -318,11 +333,11 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         ) : (
                             <ul className="space-y-2">
                                 {members.map((m) => (
-                                    <li key={m.id} className="flex items-center gap-3">
+                                    <li key={m.user.id} className="flex items-center gap-3">
                                         <div className="relative w-9 h-9">
                                             <Image
-                                                src={m.profile?.picture || '/default-room.png'}
-                                                alt={m.profile?.nickname || '참여자'}
+                                                src={m.user.profile?.picture || '/default-room.png'}
+                                                alt={m.user.profile?.nickname || '참여자'}
                                                 fill
                                                 className="rounded-full object-cover"
                                                 sizes="36px"
@@ -330,10 +345,10 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-sm text-gray-900 truncate">
-                                                {m.profile?.nickname || `사용자 ${m.id}`}
+                                                {m.user.profile?.nickname || `사용자 ${m.user.id}`}
                                             </div>
                                             <div className="text-xs text-gray-500 truncate">
-                                                ID: {m.id}
+                                                마지막 접속: {m.last_seen_at ? new Date(m.last_seen_at).toLocaleString() : '정보 없음'}
                                             </div>
                                         </div>
                                     </li>
