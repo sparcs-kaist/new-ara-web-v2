@@ -1,5 +1,6 @@
 @import 'highlight.js/styles/github.css';
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -190,4 +191,8 @@ input[type="color"]::-webkit-color-swatch {
 
 .prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   color: inherit !important;
+}
+
+.material-symbols-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
 }
