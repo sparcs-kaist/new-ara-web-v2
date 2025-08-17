@@ -115,3 +115,4 @@ export const fetchRecentMessage = async (roomId: number) => {
     const { data } = await http.get(`chat/message/?${query}`);
     return data;
 }
+

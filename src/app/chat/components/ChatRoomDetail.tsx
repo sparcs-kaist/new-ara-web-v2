@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import MessageBox from './MessageBox';
-import { fetchChatMessages, sendMessage, fetchRecentMessage } from '@/lib/api/chat';
+import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 
@@ -28,6 +28,19 @@ interface ChatRoomDetailProps {
     room?: ChatRoom;
 }
 
+// 참여자 타입
+type Member = {
+    id: number;
+    username?: string;
+    profile?: {
+        picture?: string;
+        nickname?: string;
+        user?: number;
+        is_official?: boolean;
+        is_school_admin?: boolean;
+    };
+};
+
 export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState('');
@@ -35,6 +48,10 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     const [myId, setMyId] = useState<number | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const messageContainerRef = useRef<HTMLDivElement>(null);
+
+    // 추가: 참여자 패널 상태/목록
+    const [members, setMembers] = useState<Member[]>([]);
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     // 내 ID 가져오기
     useEffect(() => {
@@ -55,6 +72,18 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 setMessages(list.slice().reverse()); // 오래된→최신으로 뒤집기
             })
             .finally(() => setLoadingMessages(false));
+    }, [roomId]);
+
+    // 방 상세(참여자) 불러오기
+    useEffect(() => {
+        let alive = true;
+        fetchChatRoomDetail(roomId)
+            .then((data) => {
+                if (!alive) return;
+                setMembers(data?.members ?? []);
+            })
+            .catch(console.error);
+        return () => { alive = false; };
     }, [roomId]);
 
     // 소켓 이벤트 리스너 추가
@@ -93,11 +122,9 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
 
         chatSocket.on('room_update', handleRoomUpdate);
         // 백엔드가 message_new를 직접 쏘면 이것도 함께 대응(옵션)
-        chatSocket.on('message_new', handleRoomUpdate);
 
         return () => {
             chatSocket.off('room_update', handleRoomUpdate);
-            chatSocket.off('message_new', handleRoomUpdate);
         };
     }, [roomId]); // messages 의존성 제거: 중복 리스너 방지
 
@@ -158,20 +185,31 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="text-lg font-bold truncate">
-                        {room?.room_title ?? `채팅방 #${roomId}`}
+                    <div className="text-lg font-bold truncate flex items-center gap-2">
+                        <span className="truncate">{room?.room_title ?? `채팅방 #${roomId}`}</span>
+                        {/* 참여자 수 표시 */}
+                        <span className="text-sm text-gray-500 flex-shrink-0">({members.length}명)</span>
                     </div>
                     <div className="text-xs text-gray-400">
-                        {room?.room_type === 'GROUP'
-                            ? '그룹 채팅'
-                            : '1:1 채팅'}
+                        {room?.room_type === 'GROUP' ? '그룹 채팅' : '1:1 채팅'}
                     </div>
                 </div>
-                <div className="ml-2 text-xs text-gray-400 flex-shrink-0">
-                    {room?.recent_message_at
-                        ? room.recent_message_at.slice(0, 10)
-                        : ''}
-                </div>
+                {/* 우측 상단 슬라이드 패널 토글 버튼 */}
+                <button
+                    type="button"
+                    onClick={() => setIsPanelOpen(true)}
+                    className="ml-3 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-1"
+                    aria-label="참여자 보기"
+                >
+                    {/* 간단한 Users 아이콘 */}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden className="text-gray-600">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <circle cx="10" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M20 8a3 3 0 1 1-6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M22 21v-1a5 5 0 0 0-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    <span className="text-gray-700">참여자</span>
+                </button>
             </div>
 
             {/* 채팅 메시지 영역 */}
@@ -249,6 +287,62 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     <Image src="/Send.svg" alt="전송" width={20} height={20} />
                 </button>
             </form>
+
+            {/* 오른쪽 슬라이드 패널 (참여자 목록) */}
+            <div className={`fixed inset-0 z-40 ${isPanelOpen ? 'visible' : 'invisible'}`}>
+                {/* 배경 */}
+                <div
+                    className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${isPanelOpen ? 'opacity-100' : 'opacity-0'}`}
+                    onClick={() => setIsPanelOpen(false)}
+                />
+                {/* 패널 */}
+                <aside
+                    className={`absolute right-0 top-0 h-full w-[320px] bg-white shadow-xl transform transition-transform duration-300 ${isPanelOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                    aria-label="참여자 목록"
+                >
+                    <div className="flex items-center justify-between px-4 py-3 border-b">
+                        <div className="font-semibold">참여자 {members.length}명</div>
+                        <button
+                            onClick={() => setIsPanelOpen(false)}
+                            className="p-1 rounded hover:bg-gray-100"
+                            aria-label="닫기"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="p-3 overflow-y-auto h-[calc(100%-48px)]">
+                        {members.length === 0 ? (
+                            <div className="text-sm text-gray-500 py-6 text-center">참여자가 없습니다.</div>
+                        ) : (
+                            <ul className="space-y-2">
+                                {members.map((m) => (
+                                    <li key={m.id} className="flex items-center gap-3">
+                                        <div className="relative w-9 h-9">
+                                            <Image
+                                                src={m.profile?.picture || '/default-room.png'}
+                                                alt={m.profile?.nickname || '참여자'}
+                                                fill
+                                                className="rounded-full object-cover"
+                                                sizes="36px"
+                                            />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-sm text-gray-900 truncate">
+                                                {m.profile?.nickname || `사용자 ${m.id}`}
+                                            </div>
+                                            <div className="text-xs text-gray-500 truncate">
+                                                ID: {m.id}
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </aside>
+            </div>
         </div>
     );
 }
