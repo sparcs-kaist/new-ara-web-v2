@@ -1,5 +1,6 @@
 @import 'highlight.js/styles/github.css';
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

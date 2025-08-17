@@ -37,8 +37,8 @@ export default function ReplyEditor({ isNested = true, isEditing = false, id }: 
             />
             <div className="flex flex-col gap-[4px] justify-end">
                 {/* TODO : 여기에 타입 추가 : request type 확인 필요 */}
-                {isNested && <button onClick={() => { setText("") }}>취소</button>}
-                <button onClick={() => { isEditing ? console.log("updated") : console.log("created") }}>등록</button>
+                {isNested && <button className="flex py-2 px-5 rounded-[8px] text-xs bg-[#E9E9E9] whitespace-nowrap hover:bg-[#B5B5B5]" onClick={() => { setText("") }}>취소</button>}
+                <button className="flex py-2 px-5 rounded-[8px] text-xs bg-[#ED3A3A] text-white whitespace-nowrap hover:bg-[#C62626]" onClick={() => { isEditing ? console.log("updated") : console.log("created") }}>등록</button>
             </div>
         </div>
     );
