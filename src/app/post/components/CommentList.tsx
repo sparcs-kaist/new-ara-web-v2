@@ -4,7 +4,7 @@ import { formatDate } from "@/app/post/formatDate";
 import Image from "next/image";
 import { useState } from "react";
 import CommentItem from "./CommentItem";
-import ReplyEditor from "./TextEditor/ReplyEditor";
+import ReplyEditor from "../../../components/TextEditor/ReplyEditor";
 
 interface Comment {
   id: number;

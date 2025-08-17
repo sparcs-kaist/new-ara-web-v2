@@ -9,7 +9,7 @@ import { formatPost } from '../util/getPost';
 import ReplyEditor from '@/components/TextEditor/ReplyEditor';
 import Image from "next/image";
 import { formatDate } from '../formatDate';
-import CommentList from '@/components/CommentList';
+import CommentList from '@/app/post/components/CommentList';
 
 //import { formatDistanceToNow } from 'date-fns';
 //import { ko } from 'date-fns/locale';
