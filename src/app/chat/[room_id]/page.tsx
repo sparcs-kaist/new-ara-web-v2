@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import ChatRoomList from '../components/ChatRoomList';
 import ChatRoomDetail from '../components/ChatRoomDetail';
-import { fetchChatRoomList, fetchChatMessages } from '@/lib/api/chat';
+import { fetchChatRoomList, fetchChatMessages, readChatRoom } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
 
@@ -56,6 +56,7 @@ export default function ChatRoomPage() {
 
     // 소켓 연결하기
     chatSocket.connect(`${SocketUrl}chat/`);
+    readChatRoom(roomId); // 채팅방 읽음 처리
 
     // 연결 상태에서만 join 처리
     const joinRoom = () => {

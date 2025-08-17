@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import MessageBox from './MessageBox';
 import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
+import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 
@@ -99,10 +100,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             if (!latest) return;
 
             setMessages(prev => {
-                // id 중복 방지
                 if (prev.some(m => m.id === latest.id)) return prev;
-
-                // 혹시 id가 누락된 케이스 대비(선택): 내용/작성자/분 단위 시간으로 근사 중복 체크
                 const latestMin = latest.created_at?.slice(0, 16);
                 const isNearDup = prev.some(m =>
                     !m.id &&
@@ -111,45 +109,119 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     m.created_at?.slice(0, 16) === latestMin
                 );
                 if (isNearDup) return prev;
-
-                return [...prev, latest]; // 맨 뒤에 추가(최신 아래)
+                return [...prev, latest];
             });
         };
 
-        const handleRoomUpdate = (data: any) => {
-            // 방 일치시만 반영
-            const targetRoomId = data?.message?.room_id ?? data?.room_id ?? roomId;
-            if (targetRoomId === roomId) {
-                applyRecent().catch(console.error);
+        const refreshMembers = async () => {
+            try {
+                const data = await fetchChatRoomDetail(roomId);
+                setMembers(data?.members ?? []);
+            } catch { }
+        };
+
+        const handleRoomUpdate = async (payload: any) => {
+            // room id can be in different fields: chat_room, room_id, or nested
+            const targetRoomId =
+                payload?.message?.chat_room ??
+                payload?.message?.room_id ??
+                payload?.chat_room ??
+                payload?.room_id ??
+                roomId;
+
+            if (targetRoomId !== roomId) return;
+
+            // 1) 반영: 최근 메시지 동기화
+            await applyRecent();
+
+            // 2) 읽음 처리 + 즉시 내 last_seen_at 낙관 갱신
+            try {
+                await readChatRoom(roomId);
+                setMembers(prev =>
+                    prev.map(m =>
+                        m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m
+                    )
+                );
+            } catch { }
+
+            // 3) 서버가 members를 보내주면 그대로 사용, 아니면 재조회
+            if (Array.isArray(payload?.members)) {
+                setMembers(payload.members);
+            } else {
+                // 약간의 지연 후 재조회(상대 클라이언트의 read 반영 시간 고려)
+                setTimeout(() => {
+                    refreshMembers();
+                }, 300);
+            }
+        };
+
+        // NEW: 유저가 방에 진입했을 때(접속) 처리
+        const handleUserJoin = async (payload: any) => {
+            const targetRoomId =
+                payload?.room_id ?? payload?.chat_room ?? payload?.room?.id ?? roomId;
+            if (targetRoomId !== roomId) return;
+
+            const joinedUserId =
+                typeof payload?.user === 'object' ? payload?.user?.id : payload?.user;
+
+            // 1) 낙관적 업데이트: 해당 유저의 last_seen_at을 지금으로
+            if (joinedUserId) {
+                const nowIso = new Date().toISOString();
+                setMembers(prev => {
+                    const idx = prev.findIndex(m => m.user?.id === joinedUserId);
+                    if (idx === -1) return prev; // 목록에 없으면 서버 동기화만
+                    const next = [...prev];
+                    next[idx] = { ...prev[idx], last_seen_at: nowIso };
+                    return next;
+                });
+            }
+
+            // 2) 내가 입장한 이벤트면 서버에 읽음 처리
+            if (joinedUserId && myId && joinedUserId === myId) {
+                try { await readChatRoom(roomId); } catch { }
+            }
+
+            // 3) 서버 기준으로 재동기화(서버가 members를 보내주면 그대로 사용)
+            if (Array.isArray(payload?.members)) {
+                setMembers(payload.members);
+            } else {
+                setTimeout(() => { refreshMembers(); }, 300);
             }
         };
 
         chatSocket.on('room_update', handleRoomUpdate);
-        // 백엔드가 message_new를 직접 쏘면 이것도 함께 대응(옵션)
-
+        chatSocket.on('user_join', handleUserJoin);
         return () => {
             chatSocket.off('room_update', handleRoomUpdate);
+            chatSocket.off('user_join', handleUserJoin);
         };
-    }, [roomId]); // messages 의존성 제거: 중복 리스너 방지
+    }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
 
     // 메시지 전송
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!input.trim() || !roomId) return;
         try {
-            // 서버에 전송(HTTP)
             const newMessageData = await sendMessage(roomId, input);
-            const sentText = input; // 전송 본문 백업
+            const sentText = input;
             setInput('');
 
-            // 최신 1개만 재요청해서 정확한 id로 반영
             const d = await fetchRecentMessage(roomId);
             const latest = d?.results?.[0];
             if (latest) {
                 setMessages(prev => (prev.some(m => m.id === latest.id) ? prev : [...prev, latest]));
             }
 
-            // 소켓 알림(옵션)
+            // 전송 후 내 읽음 처리 + 내 last_seen_at 낙관 갱신
+            try {
+                await readChatRoom(roomId);
+                setMembers(prev =>
+                    prev.map(m =>
+                        m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m
+                    )
+                );
+            } catch { }
+
             if (chatSocket.isConnected() && chatSocket.currentRoomId === roomId) {
                 chatSocket.send({
                     type: 'message_new',

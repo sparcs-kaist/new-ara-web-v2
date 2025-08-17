@@ -14,6 +14,12 @@ export const fetchChatRoomDetail = async (roomId: number) => {
     return data;
 }
 
+//채팅방 읽음 처리
+//1. 채팅방 진입시, 2. room_update알림 받고 새로운 메시지 업데이트시 필요
+export const readChatRoom = async (roomId: number): Promise<void> => {
+    await http.patch(`chat/room/${roomId}/read/`);
+}
+
 // 받은 초대장 목록 가져오기
 export const fetchInvitationList = async () => {
     const { data } = await http.get('chat/invitation/');
