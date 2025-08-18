@@ -12,7 +12,7 @@ import { fetchChatRoomList, createGroupDM } from '@/lib/api/chat';
 // ROOM 타입 정의
 type RecentMessage = {
     id: number;
-    message_type: 'TEXT' | string;
+    message_type: 'TEXT' | 'IMAGE' | 'FILE' | string;
     message_content: string;
     created_by: {
         id: number;
@@ -137,9 +137,20 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                     const selected = room.id === selectedRoomId;
 
                     // 미리보기 텍스트 조합
-                    const previewRaw = room.recent_message?.message_content ?? '';
-                    const sender = room.recent_message?.created_by?.profile?.nickname;
-                    const preview = (sender ? `${sender}: ` : '') + previewRaw;
+                    const lastMsg = room.recent_message;
+                    const msgType = lastMsg?.message_type;
+
+                    let preview = '';
+                    if (msgType === 'IMAGE') {
+                        preview = '이미지를 보냈습니다.';
+                    } else if (msgType === 'FILE') {
+                        preview = '파일을 보냈습니다.';
+                    } else {
+                        preview = lastMsg?.message_content ?? '';
+                    }
+
+                    const unreadCount = room.unread_count ?? 0;
+
                     const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
 
                     // 시간 표시 (HH:MM)
