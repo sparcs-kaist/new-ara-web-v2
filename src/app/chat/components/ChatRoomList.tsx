@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
-import { fetchChatRoomList, createGroupDM } from '@/lib/api/chat';
+import { fetchChatRoomList, createGroupDM, createDM } from '@/lib/api/chat';
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -72,9 +72,19 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
         }
     };
 
-    const handleSelectUser = (user: { id: number; nickname: string }) => {
-        alert(`${user.nickname}님과 1:1 채팅방을 생성합니다.`);
-        // 실제 DM 생성 로직 연결
+    const handleSelectUser = async (user: { id: number; nickname: string }) => {
+        try {
+            // 1. createDM API를 호출하여 1:1 채팅방 생성을 시도합니다.
+            const newRoom = await createDM(user.id);
+            // 2. 성공하면 검색 다이얼로그를 닫습니다.
+            setShowUserSearch(false);
+            // 3. 생성된 채팅방으로 사용자를 이동시킵니다.
+            router.push(`/chat/${newRoom.id}`);
+        } catch (error: any) {
+            // 4. 에러가 발생하면 (ex: 이미 채팅방이 존재) UserSearchDialog가
+            //    에러 메시지를 alert로 띄워줄 수 있도록 에러를 다시 던집니다.
+            throw error;
+        }
     };
 
     const handleCreateGroupRoom = async ({ title, picture }: { title: string; picture: File | null }) => {
@@ -196,6 +206,8 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                 open={showUserSearch}
                 onClose={() => setShowUserSearch(false)}
                 onSelectUser={handleSelectUser}
+                title="새로운 1:1 채팅"
+                actionText="채팅"
             />
             <RoomCreateDialog
                 open={showRoomCreate}

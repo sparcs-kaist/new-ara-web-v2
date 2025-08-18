@@ -2,38 +2,52 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { searchUser } from '@/lib/api/user';
-import { createDM } from '@/lib/api/chat'; // 추가
+
+type User = {
+    id: number;
+    nickname: string;
+};
 
 type Props = {
     open: boolean;
     onClose: () => void;
-    onSelectUser: (user: { id: number; nickname: string }) => void;
+    onSelectUser: (user: User) => Promise<void>; // Promise를 반환하도록 변경
+    title: string;
+    actionText: string;
 };
 
-export default function UserSearchDialog({ open, onClose, onSelectUser }: Props) {
+export default function UserSearchDialog({ open, onClose, onSelectUser, title, actionText }: Props) {
     const [search, setSearch] = useState('');
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState<number | null>(null); // 제출 중인 사용자 ID
 
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            setSearch('');
+            setUsers([]);
+            return;
+        }
         setLoading(true);
-        searchUser(search)
-            .then(data => {
-                setUsers(data.results || []);
-            })
-            .finally(() => setLoading(false));
+        const timer = setTimeout(() => {
+            searchUser(search)
+                .then(data => {
+                    setUsers(data.results || []);
+                })
+                .finally(() => setLoading(false));
+        }, 300); // Debounce
+        return () => clearTimeout(timer);
     }, [search, open]);
 
-    // DM 생성 및 예외처리
-    const handleSelectUser = async (user: { id: number; nickname: string }) => {
+    const handleSelect = async (user: User) => {
+        if (submitting) return;
+        setSubmitting(user.id);
         try {
-            await createDM(user.id);
-            alert(`DM방이 생성되었습니다! (${user.nickname}, id: ${user.id})`);
-            onSelectUser(user); // 필요하다면 DM방 이동 등 추가
-            onClose();
+            await onSelectUser(user);
         } catch (e: any) {
-            alert(e.message); // "이미 존재합니다", "차단된 사용자입니다" 등 서버 메시지
+            alert(e.message || '작업에 실패했습니다.');
+        } finally {
+            setSubmitting(null);
         }
     };
 
@@ -48,23 +62,21 @@ export default function UserSearchDialog({ open, onClose, onSelectUser }: Props)
                 >
                     ✕
                 </button>
-                <h3 className="text-lg font-bold mb-4">프로필 검색</h3>
+                <h3 className="text-lg font-bold mb-4">{title}</h3>
                 <input
                     className="w-full border rounded px-3 py-2 mb-3"
                     placeholder="닉네임으로 검색"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
-                <div className="max-h-64 min-h-64 overflow-y-auto">
-                    {loading && <div className="text-gray-400 text-sm">검색 중...</div>}
+                <div className="max-h-64 min-h-64 overflow-y-auto no-scrollbar">
+                    {loading && <div className="text-gray-400 text-sm text-center py-4">검색 중...</div>}
                     {!loading && users.length === 0 && (
-                        <div className="text-gray-400 text-sm">검색 결과 없음</div>
+                        <div className="text-gray-400 text-sm text-center py-4">검색 결과가 없습니다.</div>
                     )}
                     {users.map(user => (
                         <div key={user.user} className="relative group">
-                            <button
-                                className="w-full flex items-center text-left px-2 py-2 rounded hover:bg-gray-100"
-                            >
+                            <div className="w-full flex items-center text-left px-2 py-2 rounded">
                                 <Image
                                     src={user.picture}
                                     alt={user.nickname}
@@ -73,20 +85,18 @@ export default function UserSearchDialog({ open, onClose, onSelectUser }: Props)
                                     className="rounded-full object-cover aspect-square mr-2"
                                 />
                                 <span>{user.nickname}</span>
-                            </button>
+                            </div>
                             <div
                                 className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center
                                            opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
                                            transition-all duration-300 translate-x-4 group-hover:translate-x-0"
                             >
                                 <button
-                                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
-                                    onClick={() => handleSelectUser({ id: user.user, nickname: user.nickname })}
+                                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition disabled:bg-gray-400"
+                                    onClick={() => handleSelect({ id: user.user, nickname: user.nickname })}
+                                    disabled={submitting === user.user}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8m0 0l-4-4m4 4l-4 4" />
-                                    </svg>
-                                    DM하기
+                                    <span>{submitting === user.user ? '처리중...' : actionText}</span>
                                 </button>
                             </div>
                         </div>

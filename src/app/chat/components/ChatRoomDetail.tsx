@@ -12,10 +12,11 @@ import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 import { uploadAttachments } from '@/lib/api/post';
 import { sendAttachmentMessage } from '@/lib/api/chat';
-import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM } from '@/lib/api/chat';
+import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM, createInvitation } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
+import UserSearchDialog from './UserSearchDialog'; // 추가
 import { useRouter } from 'next/navigation';
 
 // ROOM 타입 정의
@@ -65,6 +66,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [isInviteDialogOpen, setInviteDialogOpen] = useState(false); // 추가
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
         x: number;
@@ -420,6 +422,20 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
     };
 
+    // 초대장 생성 핸들러
+    const handleCreateInvitation = async (user: { id: number; nickname: string }) => {
+        if (!roomId) return;
+        try {
+            await createInvitation(roomId, user.id);
+            alert(`${user.nickname}님에게 초대장을 보냈습니다.`);
+            // 성공 시 다이얼로그를 닫을 수 있습니다.
+            setInviteDialogOpen(false);
+        } catch (error: any) {
+            // API 함수에서 던진 에러 메시지를 그대로 사용
+            throw new Error(error.message || '초대장 발송에 실패했습니다.');
+        }
+    };
+
     // 채팅방 나가기 핸들러
     const handleLeaveRoom = async () => {
         if (!roomId) return;
@@ -630,6 +646,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 onBlockUser={handleBlockUser}
                 onBlockAndLeave={handleBlockAndLeave}
                 onDeleteRoom={handleDeleteRoom}
+                onInviteClick={() => setInviteDialogOpen(true)} // 추가
             />
 
             {/* 컨텍스트 메뉴 렌더링 */}
@@ -641,6 +658,15 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     onClose={closeContextMenu}
                 />
             )}
+
+            {/* 초대 다이얼로그 렌더링 */}
+            <UserSearchDialog
+                open={isInviteDialogOpen}
+                onClose={() => setInviteDialogOpen(false)}
+                onSelectUser={handleCreateInvitation}
+                title="멤버 초대하기"
+                actionText="초대"
+            />
         </div>
     );
 }

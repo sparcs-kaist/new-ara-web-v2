@@ -20,6 +20,12 @@ export const readChatRoom = async (roomId: number): Promise<void> => {
     await http.patch(`chat/room/${roomId}/read/`);
 }
 
+//초대장 보내기
+export const createInvitation = async (roomId: number, userId: number) => {
+    const { data } = await http.post(`chat/invitation/`, { invited_room: roomId, invitation_to: userId });
+    return data;
+}
+
 // 받은 초대장 목록 가져오기
 export const fetchInvitationList = async () => {
     const { data } = await http.get('chat/invitation/');
