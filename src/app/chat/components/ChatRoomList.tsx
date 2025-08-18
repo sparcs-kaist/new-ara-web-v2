@@ -123,13 +123,14 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                     )}
                 </div>
             </div>
-            {/* 검색창 */}
+            {/* 검색창 
             <input
                 className="mb-4 px-3 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
                 type="text"
                 placeholder="채팅방 검색"
                 disabled
             />
+            */}
             {/* 채팅방 목록 */}
             <div className="flex-1 overflow-y-auto divide-y divide-gray-100 no-scrollbar">
                 {rooms.map((room) => {

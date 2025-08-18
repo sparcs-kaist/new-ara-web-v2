@@ -4,6 +4,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import MessageBox from './MessageBox';
+import ImageMessage from './ImageMessage';
+import FileMessage from './FileMessage';
 import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
 import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
@@ -128,7 +130,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         };
 
         const handleRoomUpdate = async (payload: any) => {
-            console.log('소켓 room_update 이벤트 수신:', payload);
+            console.log('소켓 update 이벤트 수신:', payload);
 
             // payload 필드가 있다면 그것을 사용 (서버 브로드캐스트 구조)
             const serverPayload = payload?.payload || payload;
@@ -144,7 +146,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
 
             if (targetRoomId !== roomId) return;
 
-            console.log('room_update: 현재 방 이벤트 확인됨, 메시지 동기화');
+            console.log('update: 현재 방 이벤트 확인됨, 메시지 동기화');
 
             // 1) 반영: 최근 메시지 동기화
             await applyRecent();
@@ -204,10 +206,10 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             }
         };
 
-        chatSocket.on('room_update', handleRoomUpdate);
+        chatSocket.on('update', handleRoomUpdate);
         chatSocket.on('user_join', handleUserJoin);
         return () => {
-            chatSocket.off('room_update', handleRoomUpdate);
+            chatSocket.off('update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
         };
     }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
@@ -307,7 +309,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                     prev.map(m => (m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m)),
                 );
             } catch { }
-            // 전송 완료 후 room_update 소켓 이벤트 발신
+            // 전송 완료 후 update 소켓 이벤트 발신
             try {
                 if (chatSocket.isConnected?.()) {
                     console.log('소켓 이벤트 전송 시도');
@@ -473,64 +475,69 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
 
                         // 메시지 타입에 따라 내용 구성
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
-                        let contentNode: React.ReactNode = msg.message_content;
-
-                        if (mtype === 'IMAGE') {
-                            const url = getAttachmentUrl(msg);
-                            contentNode = url ? (
-                                <Image
-                                    src={url}
-                                    alt={getAttachmentName(msg) || 'image'}
-                                    width={280}
-                                    height={280}
-                                    className="rounded-md object-cover max-h-72 w-auto"
-                                />
-                            ) : (
-                                <span className="text-sm text-gray-500">이미지를 불러올 수 없습니다.</span>
-                            );
-                        } else if (mtype === 'FILE') {
-                            const url = getAttachmentUrl(msg);
-                            const name = getAttachmentName(msg) || '파일';
-                            contentNode = url ? (
-                                <a
-                                    href={url}
-                                    download
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
-                                >
-                                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
-                                        <path
-                                            d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
-                                    <span className="truncate max-w-[16rem]">{name}</span>
-                                </a>
-                            ) : (
-                                <span className="text-sm text-gray-500">파일을 불러올 수 없습니다.</span>
-                            );
-                        }
 
                         return (
                             <div
                                 key={messageKey}
-                                className={`flex items-end ${isMe ? 'justify-end' : 'justify-start'} ${messageSpacing} first:mt-0`}
+                                className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
                             >
-                                <MessageBox
-                                    isMe={isMe}
-                                    profileImg={showProfile ? (msg.created_by?.profile?.picture ?? null) : null}
-                                    nickname={showProfile ? msg.created_by?.profile?.nickname : undefined}
-                                    time={showTime ? currentTime : undefined}
-                                    theme="ara"
-                                    readStatus={unreadCount === 0 ? 'read' : 'delivered'}
-                                    readCount={readCount}
-                                    isGrouped={isGroupedWithPrev}
-                                >
-                                    {contentNode}
-                                </MessageBox>
+                                {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
+                                {!isMe && (
+                                    <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
+                                        {!isGroupedWithPrev && (
+                                            msg.created_by?.profile?.picture ? (
+                                                <Image
+                                                    src={msg.created_by.profile.picture}
+                                                    alt={msg.created_by.profile?.nickname || ''}
+                                                    width={36}
+                                                    height={36}
+                                                    className="rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-9 h-9" aria-hidden />
+                                            )
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                    {/* 닉네임 (상대방 메시지일 때만) */}
+                                    {!isMe && !isGroupedWithPrev && msg.created_by?.profile?.nickname && (
+                                        <div className="text-xs text-gray-600 mb-1">
+                                            {msg.created_by.profile.nickname}
+                                        </div>
+                                    )}
+
+                                    {/* 메시지 타입별 다른 UI */}
+                                    {mtype === 'IMAGE' ? (
+                                        <ImageMessage
+                                            url={getAttachmentUrl(msg) || msg.message_content}
+                                            alt={getAttachmentName(msg)}
+                                            isMe={isMe}
+                                            time={showTime ? currentTime : undefined}
+                                            readCount={readCount}
+                                        />
+                                    ) : mtype === 'FILE' ? (
+                                        <FileMessage
+                                            url={getAttachmentUrl(msg) || msg.message_content}
+                                            name={getAttachmentName(msg) || '파일'}
+                                            isMe={isMe}
+                                            time={showTime ? currentTime : undefined}
+                                            readCount={readCount}
+                                        />
+                                    ) : (
+                                        <MessageBox
+                                            isMe={isMe}
+                                            time={showTime ? currentTime : undefined}
+                                            theme="ara"
+                                            readStatus={unreadCount === 0 ? 'read' : 'delivered'}
+                                            readCount={readCount}
+                                            isGrouped={isGroupedWithPrev}
+                                        >
+                                            {msg.message_content}
+                                        </MessageBox>
+                                    )}
+                                </div>
                             </div>
                         );
                     })
@@ -695,3 +702,5 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         </div>
     );
 }
+
+

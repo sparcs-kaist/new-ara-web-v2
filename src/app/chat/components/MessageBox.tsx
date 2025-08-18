@@ -42,10 +42,10 @@ export default function MessageBox({
     ) : null;
 
     return (
-        <div className={`flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end max-w-[80%]`}>
+        <div className={`flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end`}>
             {/* 프로필/여백: 상대 메시지일 때는 항상 너비 유지, 그룹 중간이면 높이만 0 */}
             {!isMe && (
-                <div className={`flex-shrink-0 mr-2 w-9 ${isGrouped ? 'h-0' : 'h-9'}`}>
+                <div className={`flex-shrink-0 w-0 ${isGrouped ? 'h-0' : 'h-9'}`}>
                     {!isGrouped && (
                         profileImg ? (
                             <Image
