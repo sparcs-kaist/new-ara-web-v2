@@ -12,6 +12,7 @@ import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 import { uploadAttachments } from '@/lib/api/post';
 import { sendAttachmentMessage } from '@/lib/api/chat';
+import ChatInput from './ChatInput';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -51,7 +52,6 @@ type Member = {
 
 export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     const [messages, setMessages] = useState<any[]>([]);
-    const [input, setInput] = useState('');
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [myId, setMyId] = useState<number | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -60,12 +60,6 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
-
-    // 첨부 파일 대기 상태
-    const [pending, setPending] = useState<null | { id: number; url: string; type: 'IMAGE' | 'FILE'; name?: string }>(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const imageInputRef = useRef<HTMLInputElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 내 ID 가져오기
     useEffect(() => {
@@ -276,87 +270,41 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         };
     }, [roomId, myId]);
 
-    // 메시지 전송
-    const handleSend = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        if (!roomId) return;
+    // 메시지 전송 후 처리
+    const handleMessageSent = async () => {
+        // 최신 1개 동기화
+        const d = await fetchRecentMessage(roomId);
+        const latest = d?.results?.[0];
+        if (latest) {
+            setMessages(prev => (prev.some(m => m.id === latest.id) ? prev : [...prev, latest]));
+        }
 
+        // 읽음 처리
         try {
-            let sentMessage;
+            await readChatRoom(roomId);
+            setMembers(prev =>
+                prev.map(m => (m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m)),
+            );
+        } catch { }
+        // 전송 완료 후 update 소켓 이벤트 발신
+        try {
+            if (chatSocket.isConnected?.()) {
+                console.log('소켓 이벤트 전송 시도');
+                chatSocket.send?.({
+                    type: 'update',
+                    payload: {
+                        room_id: roomId,
+                        message: latest
+                    }
+                });
 
-            if (pending) {
-                const type = pending.type;
-                sentMessage = await sendAttachmentMessage(roomId, type, pending.url, pending.id);
-                setPending(null);
+                console.log('소켓 이벤트 전송 완료');
             } else {
-                if (!input.trim()) return;
-                const sentText = input;
-                sentMessage = await sendMessage(roomId, sentText);
-                setInput('');
+                console.warn('소켓 연결 안됨, 이벤트 전송 실패');
             }
-
-            // 최신 1개 동기화
-            const d = await fetchRecentMessage(roomId);
-            const latest = d?.results?.[0];
-            if (latest) {
-                setMessages(prev => (prev.some(m => m.id === latest.id) ? prev : [...prev, latest]));
-            }
-
-            // 읽음 처리
-            try {
-                await readChatRoom(roomId);
-                setMembers(prev =>
-                    prev.map(m => (m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m)),
-                );
-            } catch { }
-            // 전송 완료 후 update 소켓 이벤트 발신
-            try {
-                if (chatSocket.isConnected?.()) {
-                    console.log('소켓 이벤트 전송 시도');
-                    chatSocket.send?.({
-                        type: 'update',
-                        payload: {
-                            room_id: roomId,
-                            message: sentMessage
-                        }
-                    });
-
-                    console.log('소켓 이벤트 전송 완료');
-                } else {
-                    console.warn('소켓 연결 안됨, 이벤트 전송 실패');
-                }
-            } catch (socketErr) {
-                console.error('Socket event error', socketErr);
-            }
-
-        } catch (err: any) {
-            alert(err.message || '메시지 전송 실패');
+        } catch (socketErr) {
+            console.error('Socket event error', socketErr);
         }
-    };
-
-    // 파일 선택 → 업로드 → 대기(preview) 세팅
-    const pickAndUpload = async (file: File, kind: 'IMAGE' | 'FILE') => {
-        setIsUploading(true);
-        try {
-            const resp = await uploadAttachments(file);
-            const { id, file: url } = Array.isArray(resp) ? resp[0].data : resp.data;
-            setPending({ id, url, type: kind, name: file.name });
-        } catch (e: any) {
-            alert(e?.message || '파일 업로드 실패');
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const f = e.target.files?.[0];
-        if (f) pickAndUpload(f, 'IMAGE');
-        e.target.value = '';
-    };
-    const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const f = e.target.files?.[0];
-        if (f) pickAndUpload(f, 'FILE');
-        e.target.value = '';
     };
 
     // 메시지의 첨부 URL 추출 헬퍼 (message_content에서도 fallback)
@@ -545,110 +493,8 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 <div ref={chatEndRef} />
             </div>
 
-            {/* 첨부 대기 미리보기 */}
-            {pending && (
-                <div className="mb-2 flex items-center gap-2">
-                    {pending.type === 'IMAGE' ? (
-                        <Image
-                            src={pending.url}
-                            alt={pending.name || 'image'}
-                            width={80}
-                            height={80}
-                            className="rounded-md object-cover"
-                        />
-                    ) : (
-                        <div className="px-3 py-2 rounded-md border text-sm flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
-                                <path
-                                    d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                            <span className="truncate max-w-[16rem]">{pending.name || '파일'}</span>
-                        </div>
-                    )}
-                    <button
-                        type="button"
-                        className="text-xs text-red-500 hover:underline"
-                        onClick={() => setPending(null)}
-                    >
-                        취소
-                    </button>
-                </div>
-            )}
-
             {/* 입력창 */}
-            <form onSubmit={handleSend} className="flex items-center gap-2">
-                {/* 이미지/파일 아이콘 → 파일 선택 트리거 */}
-                <button
-                    type="button"
-                    aria-label="이미지 첨부"
-                    title="이미지 첨부"
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition shrink-0"
-                    onClick={() => imageInputRef.current?.click()}
-                    disabled={isUploading}
-                >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor">
-                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" strokeWidth="2" />
-                        <circle cx="9" cy="10" r="2" strokeWidth="2" />
-                        <path d="M21 17l-5-5-4 4-2-2-5 5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </button>
-                <button
-                    type="button"
-                    aria-label="파일 첨부"
-                    title="파일 첨부"
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition shrink-0"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                >
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor">
-                        <path
-                            d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
-                </button>
-
-                <input
-                    className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50"
-                    type="text"
-                    placeholder={pending ? '첨부 파일이 대기 중입니다' : '메시지를 입력하세요...'}
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    disabled={!!pending || isUploading}
-                />
-                <button
-                    type="submit"
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-1 disabled:opacity-50"
-                    aria-label="메시지 전송"
-                    disabled={isUploading || (!input.trim() && !pending)}
-                >
-                    <span className="text-sm font-medium text-gray-700">전송</span>
-                    <Image src="/Send.svg" alt="전송" width={20} height={20} />
-                </button>
-
-                {/* 숨겨진 파일 입력 */}
-                <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onPickImage}
-                />
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    // 글쓰기에서 허용했던 확장자와 동일하게 맞추려면 아래처럼 조합 가능
-                    accept=".txt,.docx,.doc,.pptx,.ppt,.pdf,.hwp,.zip,.7z,.png,.jpg,.jpeg,.gif"
-                    className="hidden"
-                    onChange={onPickFile}
-                />
-            </form>
+            <ChatInput roomId={roomId} onMessageSent={handleMessageSent} />
 
             {/* 오른쪽 슬라이드 패널 (참여자 목록) - 컴포넌트 영역 내부 */}
             <div className={`absolute inset-0 z-30 ${isPanelOpen ? '' : 'pointer-events-none'}`}>
@@ -702,5 +548,3 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         </div>
     );
 }
-
-
