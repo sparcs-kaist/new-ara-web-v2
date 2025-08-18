@@ -149,7 +149,6 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                         preview = lastMsg?.message_content ?? '';
                     }
 
-                    const unreadCount = room.unread_count ?? 0;
 
                     const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
 

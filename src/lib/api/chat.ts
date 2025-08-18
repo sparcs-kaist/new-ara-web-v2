@@ -91,6 +91,25 @@ export const createGroupDM = async (room_title: string, picture: File | null = n
     }
 }
 
+// 채팅방 나가기
+export const leaveChatRoom = async (roomId: number) => {
+    await http.delete(`chat/room/${roomId}/leave/`);
+}
+
+//dm 차단하기
+export const blockDM = async (userId: number) => {
+    // user_id 를 payload에
+    const payload = { user_id: userId };
+    await http.post(`chat/dm/block/`, payload);
+}
+
+//dm 차단하기 해제
+export const unblockDM = async (userId: number) => {
+    // user_id 를 payload에
+    const payload = { user_id: userId };
+    await http.post(`chat/dm/unblock/`, payload);
+}
+
 // 채팅방에 메시지 보내기
 export const sendMessage = async (roomId: number, content: string) => {
     try {
@@ -149,3 +168,15 @@ export const sendAttachmentMessage = async (
     }
 };
 
+//특정 메시지 삭제
+export const deleteMessage = async (messageId: number) => {
+    try {
+        await http.delete(`chat/message/${messageId}/`);
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('메시지 삭제 중 오류가 발생했습니다.');
+    }
+};

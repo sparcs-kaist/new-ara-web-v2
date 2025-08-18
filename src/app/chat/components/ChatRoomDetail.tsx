@@ -12,8 +12,11 @@ import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 import { uploadAttachments } from '@/lib/api/post';
 import { sendAttachmentMessage } from '@/lib/api/chat';
+import { deleteMessage, leaveChatRoom } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
+import MessageContextMenu from './MessageContextMenu';
+import { useRouter } from 'next/navigation';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -52,6 +55,7 @@ type Member = {
 };
 
 export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
+    const router = useRouter();
     const [messages, setMessages] = useState<any[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [myId, setMyId] = useState<number | null>(null);
@@ -61,6 +65,12 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [contextMenu, setContextMenu] = useState<{
+        visible: boolean;
+        x: number;
+        y: number;
+        messageId: number | null;
+    }>({ visible: false, x: 0, y: 0, messageId: null });
 
     // 내 ID 가져오기
     useEffect(() => {
@@ -356,6 +366,54 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         }
     }, [messages]);
 
+    // 메시지 삭제 핸들러
+    const handleDeleteMessage = async () => {
+        if (!contextMenu.messageId) return;
+
+        try {
+            await deleteMessage(contextMenu.messageId);
+            // UI에서 즉시 메시지 제거
+            setMessages(prev => prev.filter(m => m.id !== contextMenu.messageId));
+        } catch (error) {
+            console.error("Failed to delete message:", error);
+            alert("메시지 삭제에 실패했습니다.");
+        } finally {
+            closeContextMenu();
+        }
+    };
+
+    // 컨텍스트 메뉴 핸들러
+    const handleContextMenu = (e: React.MouseEvent, messageId: number) => {
+        e.preventDefault();
+        setContextMenu({
+            visible: true,
+            x: e.pageX,
+            y: e.pageY,
+            messageId: messageId,
+        });
+    };
+
+    const closeContextMenu = () => {
+        setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
+    };
+
+    // 채팅방 나가기 핸들러
+    const handleLeaveRoom = async () => {
+        if (!roomId) return;
+
+        const confirmLeave = window.confirm('정말로 이 채팅방을 나가시겠습니까?');
+        if (confirmLeave) {
+            try {
+                await leaveChatRoom(roomId);
+                alert('채팅방을 나갔습니다.');
+                router.push('/chat'); // 채팅방 목록으로 이동
+            } catch (error) {
+                console.error('Failed to leave room:', error);
+                alert('채팅방을 나가는 데 실패했습니다.');
+            }
+        }
+    };
+
     return (
         <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0 relative overflow-hidden">
             {/* 채팅방 정보 헤더 */}
@@ -426,6 +484,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                             <div
                                 key={messageKey}
                                 className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
+                                onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
                             >
                                 {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
                                 {!isMe && (
@@ -494,7 +553,23 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             {/* 입력창 */}
             <ChatInput roomId={roomId} onMessageSent={handleMessageSent} />
 
-            <MembersPanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} members={members} />
+            <MembersPanel
+                isOpen={isPanelOpen}
+                onClose={() => setIsPanelOpen(false)}
+                members={members}
+                roomType={room?.room_type}
+                onLeaveRoom={handleLeaveRoom}
+            />
+
+            {/* 컨텍스트 메뉴 렌더링 */}
+            {contextMenu.visible && (
+                <MessageContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onDelete={handleDeleteMessage}
+                    onClose={closeContextMenu}
+                />
+            )}
         </div>
     );
 }
