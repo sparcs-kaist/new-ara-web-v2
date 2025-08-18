@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
+import LeaveContextMenu from '@/app/chat/components/LeaveContextMenu';
 
 // 참여자 타입 정의
 type Member = {
@@ -26,7 +27,11 @@ interface MembersPanelProps {
     onClose: () => void;
     members: Member[];
     roomType?: string;
+    myId?: number;
     onLeaveRoom: () => void;
+    onBlockUser: () => void;
+    onBlockAndLeave: () => void;
+    onDeleteRoom: () => void;
 }
 
 // 마지막 접속 시간을 간결하게 포맷하는 함수
@@ -48,7 +53,40 @@ const formatLastSeen = (dateString: string | null): string => {
     return `${seenDate.getFullYear()}.${String(seenDate.getMonth() + 1).padStart(2, '0')}.${String(seenDate.getDate()).padStart(2, '0')}`;
 };
 
-export default function MembersPanel({ isOpen, onClose, members, roomType, onLeaveRoom }: MembersPanelProps) {
+export default function MembersPanel({
+    isOpen,
+    onClose,
+    members,
+    roomType,
+    myId,
+    onLeaveRoom,
+    onBlockUser,
+    onBlockAndLeave,
+    onDeleteRoom,
+}: MembersPanelProps) {
+    const [menu, setMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
+
+    const myRole = members.find(m => m.user.id === myId)?.role;
+    const isOwner = myRole === 'OWNER';
+
+    const handleFooterButtonClick = (e: React.MouseEvent) => {
+        if (roomType === 'DM') {
+            onBlockUser();
+            return;
+        }
+
+        if (roomType === 'GROUP_DM') {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setMenu({
+                visible: true,
+                x: rect.left,
+                y: rect.top - 8, // 8px offset
+            });
+        }
+    };
+
+    const closeMenu = () => setMenu({ ...menu, visible: false });
+
     return (
         <div className={`absolute inset-0 z-30 ${isOpen ? '' : 'pointer-events-none'}`}>
             <div
@@ -115,19 +153,25 @@ export default function MembersPanel({ isOpen, onClose, members, roomType, onLea
                 {/* 채팅방 나가기 버튼 영역 */}
                 <div className="px-3 py-3 border-t">
                     <button
-                        onClick={onLeaveRoom}
+                        onClick={handleFooterButtonClick}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                        aria-label="채팅방 나가기"
+                        aria-label={roomType === 'DM' ? '사용자 차단하기' : '채팅방 나가기 옵션'}
                     >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        <span>채팅방 나가기</span>
+                        <span>{roomType === 'DM' ? '사용자 차단하기' : '채팅방 나가기'}</span>
                     </button>
                 </div>
             </aside>
+            {menu.visible && roomType === 'GROUP_DM' && (
+                <LeaveContextMenu
+                    x={menu.x}
+                    y={menu.y}
+                    onClose={closeMenu}
+                    isOwner={isOwner}
+                    onLeave={onLeaveRoom}
+                    onBlockAndLeave={onBlockAndLeave}
+                    onDelete={onDeleteRoom}
+                />
+            )}
         </div>
     );
 }

@@ -12,7 +12,7 @@ import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
 import { uploadAttachments } from '@/lib/api/post';
 import { sendAttachmentMessage } from '@/lib/api/chat';
-import { deleteMessage, leaveChatRoom } from '@/lib/api/chat';
+import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
@@ -71,6 +71,8 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         y: number;
         messageId: number | null;
     }>({ visible: false, x: 0, y: 0, messageId: null });
+
+    const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user.id !== myId) : null;
 
     // 내 ID 가져오기
     useEffect(() => {
@@ -211,11 +213,22 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             }
         };
 
+        // NEW: 메시지 삭제 이벤트 수신 핸들러
+        const handleMessageDeleted = (payload: any) => {
+            const deletedMessageId = payload?.message_id;
+            if (deletedMessageId) {
+                console.log(`메시지 삭제 이벤트 수신: ${deletedMessageId}`);
+                setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
+            }
+        };
+
         chatSocket.on('room_update', handleRoomUpdate);
         chatSocket.on('user_join', handleUserJoin);
+        chatSocket.on('message_deleted', handleMessageDeleted); // 리스너 추가
         return () => {
             chatSocket.off('room_update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
+            chatSocket.off('message_deleted', handleMessageDeleted); // 리스너 제거
         };
     }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
 
@@ -374,6 +387,16 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             await deleteMessage(contextMenu.messageId);
             // UI에서 즉시 메시지 제거
             setMessages(prev => prev.filter(m => m.id !== contextMenu.messageId));
+
+            // 소켓으로 삭제 이벤트 브로드캐스트
+            if (chatSocket.isConnected?.()) {
+                chatSocket.send?.({
+                    type: 'message_deleted',
+                    message_id: contextMenu.messageId,
+                });
+                console.log(`메시지 삭제 이벤트 전송: ${contextMenu.messageId}`);
+            }
+
         } catch (error) {
             console.error("Failed to delete message:", error);
             alert("메시지 삭제에 실패했습니다.");
@@ -400,16 +423,60 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     // 채팅방 나가기 핸들러
     const handleLeaveRoom = async () => {
         if (!roomId) return;
-
-        const confirmLeave = window.confirm('정말로 이 채팅방을 나가시겠습니까?');
-        if (confirmLeave) {
+        if (window.confirm('정말로 이 채팅방을 나가시겠습니까?')) {
             try {
                 await leaveChatRoom(roomId);
                 alert('채팅방을 나갔습니다.');
-                router.push('/chat'); // 채팅방 목록으로 이동
+                router.push('/chat');
             } catch (error) {
                 console.error('Failed to leave room:', error);
                 alert('채팅방을 나가는 데 실패했습니다.');
+            }
+        }
+    };
+
+    // 사용자 차단 핸들러 (DM용)
+    const handleBlockUser = async () => {
+        if (!dmPartner) return;
+        if (window.confirm(`${dmPartner.user.profile?.nickname || '상대방'}님을 차단하시겠습니까?`)) {
+            try {
+                await blockDM(dmPartner.user.id);
+                alert('사용자를 차단했습니다.');
+                router.push('/chat');
+            } catch (error) {
+                console.error('Failed to block user:', error);
+                alert('사용자 차단에 실패했습니다.');
+            }
+        }
+    };
+
+    // 차단하고 나가기 핸들러 (GROUP_DM용)
+    const handleBlockAndLeave = async () => {
+        if (!roomId) return;
+        if (window.confirm('이 채팅방을 차단하고 나가시겠습니까?')) {
+            try {
+                await blockChatRoom(roomId);
+                await leaveChatRoom(roomId);
+                alert('채팅방을 차단하고 나갔습니다.');
+                router.push('/chat');
+            } catch (error) {
+                console.error('Failed to block and leave room:', error);
+                alert('실패했습니다.');
+            }
+        }
+    };
+
+    // 채팅방 삭제 핸들러 (GROUP_DM 방장용)
+    const handleDeleteRoom = async () => {
+        if (!roomId) return;
+        if (window.confirm('정말로 이 채팅방을 삭제하시겠습니까? 모든 대화 내용이 영구적으로 사라집니다.')) {
+            try {
+                await deleteChatRoom(roomId);
+                alert('채팅방을 삭제했습니다.');
+                router.push('/chat');
+            } catch (error) {
+                console.error('Failed to delete room:', error);
+                alert('채팅방 삭제에 실패했습니다.');
             }
         }
     };
@@ -558,7 +625,11 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 onClose={() => setIsPanelOpen(false)}
                 members={members}
                 roomType={room?.room_type}
+                myId={myId ?? undefined}
                 onLeaveRoom={handleLeaveRoom}
+                onBlockUser={handleBlockUser}
+                onBlockAndLeave={handleBlockAndLeave}
+                onDeleteRoom={handleDeleteRoom}
             />
 
             {/* 컨텍스트 메뉴 렌더링 */}

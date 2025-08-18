@@ -91,9 +91,27 @@ export const createGroupDM = async (room_title: string, picture: File | null = n
     }
 }
 
+// 채팅방 삭제하기 (방장만 가능)
+export const deleteChatRoom = async (roomId: number) => {
+    try {
+        await http.delete(`chat/room/${roomId}/`);
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('채팅방 삭제 중 오류가 발생했습니다.');
+    }
+};
+
 // 채팅방 나가기
 export const leaveChatRoom = async (roomId: number) => {
     await http.delete(`chat/room/${roomId}/leave/`);
+}
+
+// 채팅방 차단하기
+export const blockChatRoom = async (roomId: number) => {
+    await http.patch(`chat/room/${roomId}/block/`);
 }
 
 //dm 차단하기
