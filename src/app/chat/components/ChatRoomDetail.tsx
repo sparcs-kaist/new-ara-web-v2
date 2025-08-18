@@ -206,10 +206,10 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             }
         };
 
-        chatSocket.on('update', handleRoomUpdate);
+        chatSocket.on('room_update', handleRoomUpdate);
         chatSocket.on('user_join', handleUserJoin);
         return () => {
-            chatSocket.off('update', handleRoomUpdate);
+            chatSocket.off('room_update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
         };
     }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
