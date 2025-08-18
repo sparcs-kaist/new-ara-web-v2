@@ -122,3 +122,30 @@ export const fetchRecentMessage = async (roomId: number) => {
     return data;
 }
 
+export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'EMOTICON';
+
+// 첨부 메시지 전송 (IMAGE/FILE) - contentUrl를 message_content로 전송
+export const sendAttachmentMessage = async (
+    roomId: number,
+    type: Exclude<ChatMessageType, 'TEXT' | 'EMOTICON'>,
+    contentUrl: string,
+    attachmentId?: number
+) => {
+    try {
+        const payload: Record<string, unknown> = {
+            message_type: type,
+            message_content: contentUrl,   // URL을 content에 넣음
+            chat_room: roomId,
+        };
+        if (attachmentId) payload.attachment = attachmentId; // 선택적으로 id도 전송
+        const { data } = await http.post('chat/message/', payload);
+        return data;
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('첨부 메시지 전송 중 오류가 발생했습니다.');
+    }
+};
+

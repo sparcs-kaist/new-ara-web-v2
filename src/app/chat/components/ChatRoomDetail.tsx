@@ -8,7 +8,8 @@ import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail
 import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
-
+import { uploadAttachments } from '@/lib/api/post';
+import { sendAttachmentMessage } from '@/lib/api/chat';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -57,6 +58,12 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+    // 첨부 파일 대기 상태
+    const [pending, setPending] = useState<null | { id: number; url: string; type: 'IMAGE' | 'FILE'; name?: string }>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 내 ID 가져오기
     useEffect(() => {
@@ -121,15 +128,23 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         };
 
         const handleRoomUpdate = async (payload: any) => {
-            // room id can be in different fields: chat_room, room_id, or nested
+            console.log('소켓 room_update 이벤트 수신:', payload);
+
+            // payload 필드가 있다면 그것을 사용 (서버 브로드캐스트 구조)
+            const serverPayload = payload?.payload || payload;
+
+            // room id can be in different fields
             const targetRoomId =
-                payload?.message?.chat_room ??
-                payload?.message?.room_id ??
-                payload?.chat_room ??
+                serverPayload?.message?.chat_room ??
+                serverPayload?.message?.room_id ??
+                serverPayload?.chat_room ??
+                serverPayload?.room_id ??
                 payload?.room_id ??
                 roomId;
 
             if (targetRoomId !== roomId) return;
+
+            console.log('room_update: 현재 방 이벤트 확인됨, 메시지 동기화');
 
             // 1) 반영: 최근 메시지 동기화
             await applyRecent();
@@ -197,46 +212,172 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         };
     }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
 
+    // 방 입장/퇴장 구독 처리
+    useEffect(() => {
+        if (!roomId || !myId) return;
+
+        const joinRoom = () => {
+            // join 처리
+            console.log(`join room ${roomId}`);
+            if (chatSocket.join) {
+                chatSocket.join(roomId);
+                chatSocket.currentRoomId = roomId;
+            }
+            try {
+                chatSocket.send?.({
+                    type: 'user_join',
+                    room_id: roomId,
+                    user: myId
+                });
+            } catch (e) {
+                console.error('Socket join error', e);
+            }
+
+            // 디버깅: 소켓 연결 확인
+            console.log(`소켓 연결 상태: ${chatSocket.isConnected?.()}, 현재 방: ${chatSocket.currentRoomId}`);
+        };
+
+        // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
+        if (chatSocket.isConnected?.()) {
+            console.log('소켓 이미 연결됨, 바로 방 입장');
+            joinRoom();
+        } else {
+            console.log('소켓 연결 대기 중');
+        }
+
+        const handleConnect = () => {
+            console.log('소켓 연결 이벤트 발생, 방 입장 시도');
+            joinRoom();
+        };
+        chatSocket.on('connect', handleConnect);
+
+        return () => {
+            chatSocket.off('connect', handleConnect);
+            // 컴포넌트 언마운트 시 방 나가기
+            if (chatSocket.currentRoomId === roomId) {
+                console.log(`컴포넌트 언마운트: ${roomId} 방에서 나갑니다.`);
+                if (chatSocket.leave) {
+                    chatSocket.leave(roomId);
+                    chatSocket.currentRoomId = null;
+                }
+
+                try {
+                    chatSocket.send?.({
+                        type: 'user_leave',
+                        room_id: roomId,
+                        user: myId
+                    });
+                } catch (e) {
+                    console.error('Socket leave error', e);
+                }
+            }
+        };
+    }, [roomId, myId]);
+
     // 메시지 전송
     const handleSend = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!input.trim() || !roomId) return;
-        try {
-            const newMessageData = await sendMessage(roomId, input);
-            const sentText = input;
-            setInput('');
+        if (!roomId) return;
 
+        try {
+            let sentMessage;
+
+            if (pending) {
+                const type = pending.type;
+                sentMessage = await sendAttachmentMessage(roomId, type, pending.url, pending.id);
+                setPending(null);
+            } else {
+                if (!input.trim()) return;
+                const sentText = input;
+                sentMessage = await sendMessage(roomId, sentText);
+                setInput('');
+            }
+
+            // 최신 1개 동기화
             const d = await fetchRecentMessage(roomId);
             const latest = d?.results?.[0];
             if (latest) {
                 setMessages(prev => (prev.some(m => m.id === latest.id) ? prev : [...prev, latest]));
             }
 
-            // 전송 후 내 읽음 처리 + 내 last_seen_at 낙관 갱신
+            // 읽음 처리
             try {
                 await readChatRoom(roomId);
                 setMembers(prev =>
-                    prev.map(m =>
-                        m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m
-                    )
+                    prev.map(m => (m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m)),
                 );
             } catch { }
+            // 전송 완료 후 room_update 소켓 이벤트 발신
+            try {
+                if (chatSocket.isConnected?.()) {
+                    console.log('소켓 이벤트 전송 시도');
+                    chatSocket.send?.({
+                        type: 'update',
+                        payload: {
+                            room_id: roomId,
+                            message: sentMessage
+                        }
+                    });
 
-            if (chatSocket.isConnected() && chatSocket.currentRoomId === roomId) {
-                chatSocket.send({
-                    type: 'message_new',
-                    message: {
-                        id: newMessageData.id,
-                        room_id: roomId,
-                        sender_id: myId,
-                        type: 'text',
-                        preview: sentText.substring(0, 30) + (sentText.length > 30 ? '...' : ''),
-                        created_at: new Date().toISOString(),
-                    },
-                });
+                    console.log('소켓 이벤트 전송 완료');
+                } else {
+                    console.warn('소켓 연결 안됨, 이벤트 전송 실패');
+                }
+            } catch (socketErr) {
+                console.error('Socket event error', socketErr);
             }
+
         } catch (err: any) {
             alert(err.message || '메시지 전송 실패');
+        }
+    };
+
+    // 파일 선택 → 업로드 → 대기(preview) 세팅
+    const pickAndUpload = async (file: File, kind: 'IMAGE' | 'FILE') => {
+        setIsUploading(true);
+        try {
+            const resp = await uploadAttachments(file);
+            const { id, file: url } = Array.isArray(resp) ? resp[0].data : resp.data;
+            setPending({ id, url, type: kind, name: file.name });
+        } catch (e: any) {
+            alert(e?.message || '파일 업로드 실패');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0];
+        if (f) pickAndUpload(f, 'IMAGE');
+        e.target.value = '';
+    };
+    const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0];
+        if (f) pickAndUpload(f, 'FILE');
+        e.target.value = '';
+    };
+
+    // 메시지의 첨부 URL 추출 헬퍼 (message_content에서도 fallback)
+    const getAttachmentUrl = (msg: any): string | undefined => {
+        const byAttachment =
+            msg?.attachment?.file || msg?.attachment_file || msg?.attachment_url || msg?.attachment?.url;
+        if (byAttachment) return byAttachment;
+        if (msg?.message_type === 'IMAGE' || msg?.message_type === 'FILE') {
+            return typeof msg?.message_content === 'string' ? msg.message_content : undefined;
+        }
+        return undefined;
+    };
+
+    const getAttachmentName = (msg: any): string | undefined => {
+        const n = msg?.attachment?.name;
+        if (n) return n;
+        const url = getAttachmentUrl(msg) || (typeof msg?.message_content === 'string' ? msg.message_content : undefined);
+        if (!url) return undefined;
+        try {
+            return decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
+        } catch {
+            const parts = url.split('/');
+            return parts[parts.length - 1];
         }
     };
 
@@ -312,31 +453,66 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 ) : (
                     messages.map((msg, idx) => {
                         const isMe = msg.created_by?.id === myId;
-                        const isGroupRoom = room?.room_type === 'GROUP';
-
-                        // 모든 메시지에 대해 '안 읽은 인원 수' 계산
                         const unreadCount = getUnreadCount(msg);
-                        // 0이면 표시하지 않기 위해 undefined 처리
                         const readCount = unreadCount > 0 ? unreadCount : undefined;
 
-                        const currentTime = msg.created_at?.slice(11, 16); // HH:MM
-
+                        const currentTime = msg.created_at?.slice(11, 16);
                         const prevMsg = idx > 0 ? messages[idx - 1] : null;
                         const prevTime = prevMsg?.created_at?.slice(11, 16);
                         const prevSender = prevMsg?.created_by?.id;
-
                         const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
                         const nextTime = nextMsg?.created_at?.slice(11, 16);
                         const nextSender = nextMsg?.created_by?.id;
 
                         const isGroupedWithPrev = currentTime === prevTime && prevSender === msg.created_by?.id;
                         const isGroupedWithNext = currentTime === nextTime && nextSender === msg.created_by?.id;
-
                         const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
                         const showProfile = !isGroupedWithPrev;
                         const showTime = !isGroupedWithNext;
-
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
+
+                        // 메시지 타입에 따라 내용 구성
+                        const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
+                        let contentNode: React.ReactNode = msg.message_content;
+
+                        if (mtype === 'IMAGE') {
+                            const url = getAttachmentUrl(msg);
+                            contentNode = url ? (
+                                <Image
+                                    src={url}
+                                    alt={getAttachmentName(msg) || 'image'}
+                                    width={280}
+                                    height={280}
+                                    className="rounded-md object-cover max-h-72 w-auto"
+                                />
+                            ) : (
+                                <span className="text-sm text-gray-500">이미지를 불러올 수 없습니다.</span>
+                            );
+                        } else if (mtype === 'FILE') {
+                            const url = getAttachmentUrl(msg);
+                            const name = getAttachmentName(msg) || '파일';
+                            contentNode = url ? (
+                                <a
+                                    href={url}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                >
+                                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
+                                        <path
+                                            d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <span className="truncate max-w-[16rem]">{name}</span>
+                                </a>
+                            ) : (
+                                <span className="text-sm text-gray-500">파일을 불러올 수 없습니다.</span>
+                            );
+                        }
 
                         return (
                             <div
@@ -353,7 +529,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                                     readCount={readCount}
                                     isGrouped={isGroupedWithPrev}
                                 >
-                                    {msg.message_content}
+                                    {contentNode}
                                 </MessageBox>
                             </div>
                         );
@@ -362,23 +538,109 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 <div ref={chatEndRef} />
             </div>
 
+            {/* 첨부 대기 미리보기 */}
+            {pending && (
+                <div className="mb-2 flex items-center gap-2">
+                    {pending.type === 'IMAGE' ? (
+                        <Image
+                            src={pending.url}
+                            alt={pending.name || 'image'}
+                            width={80}
+                            height={80}
+                            className="rounded-md object-cover"
+                        />
+                    ) : (
+                        <div className="px-3 py-2 rounded-md border text-sm flex items-center gap-2">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            </svg>
+                            <span className="truncate max-w-[16rem]">{pending.name || '파일'}</span>
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        className="text-xs text-red-500 hover:underline"
+                        onClick={() => setPending(null)}
+                    >
+                        취소
+                    </button>
+                </div>
+            )}
+
             {/* 입력창 */}
-            <form onSubmit={handleSend} className="flex gap-2">
+            <form onSubmit={handleSend} className="flex items-center gap-2">
+                {/* 이미지/파일 아이콘 → 파일 선택 트리거 */}
+                <button
+                    type="button"
+                    aria-label="이미지 첨부"
+                    title="이미지 첨부"
+                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition shrink-0"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={isUploading}
+                >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor">
+                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2" strokeWidth="2" />
+                        <circle cx="9" cy="10" r="2" strokeWidth="2" />
+                        <path d="M21 17l-5-5-4 4-2-2-5 5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </button>
+                <button
+                    type="button"
+                    aria-label="파일 첨부"
+                    title="파일 첨부"
+                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                >
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor">
+                        <path
+                            d="M21 12.5l-8.5 8.5a6 6 0 01-8.5-8.5L12 4.5a4 4 0 115.7 5.6l-9 9a2 2 0 11-2.8-2.8l8-8"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                </button>
+
                 <input
-                    className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50"
                     type="text"
-                    placeholder="메시지를 입력하세요..."
+                    placeholder={pending ? '첨부 파일이 대기 중입니다' : '메시지를 입력하세요...'}
                     value={input}
                     onChange={e => setInput(e.target.value)}
+                    disabled={!!pending || isUploading}
                 />
                 <button
                     type="submit"
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-1"
+                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-1 disabled:opacity-50"
                     aria-label="메시지 전송"
+                    disabled={isUploading || (!input.trim() && !pending)}
                 >
                     <span className="text-sm font-medium text-gray-700">전송</span>
                     <Image src="/Send.svg" alt="전송" width={20} height={20} />
                 </button>
+
+                {/* 숨겨진 파일 입력 */}
+                <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onPickImage}
+                />
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    // 글쓰기에서 허용했던 확장자와 동일하게 맞추려면 아래처럼 조합 가능
+                    accept=".txt,.docx,.doc,.pptx,.ppt,.pdf,.hwp,.zip,.7z,.png,.jpg,.jpeg,.gif"
+                    className="hidden"
+                    onChange={onPickFile}
+                />
             </form>
 
             {/* 오른쪽 슬라이드 패널 (참여자 목록) - 컴포넌트 영역 내부 */}
