@@ -382,17 +382,14 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                 <button
                     type="button"
                     onClick={() => setIsPanelOpen(true)}
-                    className="ml-3 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center gap-1"
+                    className="ml-3 p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center"
                     aria-label="참여자 보기"
                 >
-                    {/* 간단한 Users 아이콘 */}
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden className="text-gray-600">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        <circle cx="10" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
-                        <path d="M20 8a3 3 0 1 1-6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        <path d="M22 21v-1a5 5 0 0 0-5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    {/* 사람 아이콘 (가운데 정렬 버전) */}
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-gray-600">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4h-8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="text-gray-700">참여자</span>
                 </button>
             </div>
 
