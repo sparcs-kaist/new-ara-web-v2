@@ -33,32 +33,37 @@ const LeaveContextMenu: React.FC<LeaveContextMenuProps> = ({ x, y, onClose, isOw
             style={{ top: y, left: x, transform: 'translateY(-100%)' }}
         >
             <ul>
-                {isOwner && (
+                {isOwner ? (
+                    // 방장일 경우: 삭제 옵션만 표시
                     <li>
                         <button
                             onClick={() => { onDelete(); onClose(); }}
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                         >
-                            <span>🗑️ 채팅방 삭제하기</span>
+                            <span className='font-medium'>채팅방 삭제하기</span>
                         </button>
                     </li>
+                ) : (
+                    // 일반 멤버일 경우: 나가기, 차단하고 나가기 옵션 표시
+                    <>
+                        <li>
+                            <button
+                                onClick={() => { onLeave(); onClose(); }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                                <span className='font-medium'>채팅방 나가기</span>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={() => { onBlockAndLeave(); onClose(); }}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                                <span className='font-medium'>차단하고 나가기</span>
+                            </button>
+                        </li>
+                    </>
                 )}
-                <li>
-                    <button
-                        onClick={() => { onLeave(); onClose(); }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                        <span>🚪 채팅방 나가기</span>
-                    </button>
-                </li>
-                <li>
-                    <button
-                        onClick={() => { onBlockAndLeave(); onClose(); }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                        <span>🚫 차단하고 나가기</span>
-                    </button>
-                </li>
             </ul>
         </div>
     );

@@ -154,7 +154,7 @@ export default function MembersPanel({
                 <div className="px-3 py-3 border-t">
                     <button
                         onClick={handleFooterButtonClick}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         aria-label={roomType === 'DM' ? '사용자 차단하기' : '채팅방 나가기 옵션'}
                     >
                         <span>{roomType === 'DM' ? '사용자 차단하기' : '채팅방 나가기'}</span>
