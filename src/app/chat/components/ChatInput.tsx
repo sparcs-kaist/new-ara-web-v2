@@ -117,16 +117,18 @@ export default function ChatInput({ roomId, onMessageSent }: ChatInputProps) {
                         <button type="button" className="text-xs text-red-500 hover:underline self-start" onClick={() => setPending(null)}>취소</button>
                     </div>
                 )}
-                <TextareaAutosize
-                    className="w-full px-2 py-1.5 focus:outline-none resize-none bg-transparent disabled:bg-gray-100"
-                    placeholder={pending ? '첨부 파일이 대기 중입니다' : '메시지를 입력하세요...'}
-                    value={input}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={!!pending || isUploading}
-                    maxRows={8}
-                    rows={1}
-                />
+                {(!pending) && (
+                    <TextareaAutosize
+                        className="w-full px-2 py-1.5 focus:outline-none resize-none bg-transparent disabled:bg-gray-100"
+                        placeholder={pending ? '' : '메시지를 입력하세요...'}
+                        value={input}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={!!pending || isUploading}
+                        maxRows={8}
+                        rows={1}
+                    />
+                )}
             </div>
 
             <button
