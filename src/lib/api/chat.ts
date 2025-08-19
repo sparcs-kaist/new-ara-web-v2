@@ -26,13 +26,23 @@ export const createInvitation = async (roomId: number, userId: number) => {
     return data;
 }
 
-// 받은 초대장 목록 가져오기
-export const fetchInvitationList = async () => {
-    const { data } = await http.get('chat/invitation/');
+// 받은 초대장 목록 가져오기 (최근 10개)
+export const fetchInvitationList = async (page_size: number = 10, page: number = 1, ordering: string = '-created_at') => {
+    const { data } = await http.get(`chat/invitation/?page_size=${page_size}&page=${page}&ordering=${ordering}`);
     return data;
 }
 
 // 초대장 수락하기
+export const acceptInvitation = async (invitationId: number) => {
+    const { data } = await http.post(`chat/invitation/${invitationId}/accept/`);
+    return data;
+}
+
+//초대장 거절하기
+export const denyInvitation = async (invitationId: number) => {
+    const { data } = await http.delete(`chat/invitation/${invitationId}/deny/`);
+    return data;
+}
 
 // block한 채팅방 목록 가져오기
 export const fetchBlockList = async () => {

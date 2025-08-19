@@ -8,6 +8,7 @@ import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
 import { fetchChatRoomList, createGroupDM, createDM } from '@/lib/api/chat';
+import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -49,12 +50,12 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [showRoomCreate, setShowRoomCreate] = useState(false);
+    const [showInvitationDialog, setShowInvitationDialog] = useState(false); // 상태 추가
     const router = useRouter();
 
-    useEffect(() => {
+    const refreshRoomList = () => {
         fetchChatRoomList()
             .then((data) => {
-                // 정렬: recent_message_at 또는 created_at 중 더 최신인 값 기준 내림차순
                 const sortedRooms = [...(data.results || [])].sort((a, b) => {
                     const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
                     const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
@@ -62,6 +63,10 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                 });
                 setRooms(sortedRooms);
             });
+    };
+
+    useEffect(() => {
+        refreshRoomList();
     }, []);
 
     const handleAddChatRoom = async (type: 'DM' | 'GROUP') => {
@@ -104,10 +109,12 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
         <div className="w-1/4 bg-white rounded-lg shadow-md p-6 flex flex-col relative">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">💬채팅방</h2>
-                <div className="relative">
+                <div className="flex items-center gap-2">
+                    {/* 초대장 목록 버튼 */}
                     <button
                         className="bg-white rounded-full hover:bg-gray-100 transition p-1"
-                        onClick={() => setShowTypePopover((v) => !v)}
+                        onClick={() => setShowInvitationDialog(true)}
+                        aria-label="초대장 목록 보기"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -115,22 +122,45 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            strokeWidth={2}
                         >
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                                stroke="black"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             />
                         </svg>
                     </button>
-                    {showTypePopover && (
-                        <ChatTypePopover
-                            onSelect={handleAddChatRoom}
-                            onClose={() => setShowTypePopover(false)}
-                        />
-                    )}
+
+                    {/* 채팅방 추가 버튼 */}
+                    <div className="relative">
+                        <button
+                            className="bg-white rounded-full hover:bg-gray-100 transition p-1"
+                            onClick={() => setShowTypePopover((v) => !v)}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 4v16m8-8H4"
+                                    stroke="black"
+                                />
+                            </svg>
+                        </button>
+                        {showTypePopover && (
+                            <ChatTypePopover
+                                onSelect={handleAddChatRoom}
+                                onClose={() => setShowTypePopover(false)}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
             {/* 검색창 
@@ -213,6 +243,12 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                 open={showRoomCreate}
                 onClose={() => setShowRoomCreate(false)}
                 onCreate={handleCreateGroupRoom}
+            />
+            {/* 새로 추가된 초대장 다이얼로그 */}
+            <InvitationListDialog
+                open={showInvitationDialog}
+                onClose={() => setShowInvitationDialog(false)}
+                onActionComplete={refreshRoomList}
             />
         </div>
     );
