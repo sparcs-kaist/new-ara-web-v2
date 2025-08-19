@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, usePathname } from 'next/navigation';
 import ChatRoomList from '../components/ChatRoomList';
 import ChatRoomDetail from '../components/ChatRoomDetail';
-import { fetchChatRoomList, fetchChatMessages } from '@/lib/api/chat';
+import { fetchChatRoomList, fetchChatMessages, readChatRoom } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
 
@@ -29,6 +29,7 @@ export default function ChatRoomPage() {
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
+  const [isListPanelOpen, setListPanelOpen] = useState(false); // 채팅방 목록 패널 상태
 
   // 채팅방 목록 및 현재 방 정보 로드
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function ChatRoomPage() {
 
     // 소켓 연결하기
     chatSocket.connect(`${SocketUrl}chat/`);
+    readChatRoom(roomId); // 채팅방 읽음 처리
 
     // 연결 상태에서만 join 처리
     const joinRoom = () => {
@@ -64,6 +66,7 @@ export default function ChatRoomPage() {
         console.log(`leave room ${chatSocket.currentRoomId}`);
         chatSocket.leave(chatSocket.currentRoomId);
       }
+
 
       // 새 채팅방 입장 (백엔드 스펙: 'connect_room' 대신 'join' 사용)
       console.log(`join room ${roomId}`);
@@ -108,12 +111,32 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-gray-100 flex px-20 py-8">
-      {/* 왼쪽 박스 (채팅방 목록) */}
-      <ChatRoomList selectedRoomId={roomId} />
+    // 외부 컨테이너: 데스크톱에서는 패딩을 여기에 적용
+    <div className="h-[calc(100vh-80px)] bg-white flex lg:p-8">
+      {/* 
+        내부 컨테이너: 데스크톱에서는 마진 제거하고 패딩 대신 외부 컨테이너의 패딩 사용
+      */}
+      <div className="relative w-full h-full bg-white lg:rounded-lg lg:shadow-lg flex overflow-hidden">
 
-      {/* 오른쪽 박스 (상세 채팅) */}
-      <ChatRoomDetail roomId={roomId} room={currentRoom} />
+        {/* 왼쪽: 채팅방 목록 (데스크톱에서는 고정, 모바일에서는 패널) */}
+        <ChatRoomList
+          selectedRoomId={roomId}
+          isPanelOpen={isListPanelOpen}
+          onClose={() => setListPanelOpen(false)}
+        />
+
+        {/* 구분선 (데스크톱에서만 보임) */}
+        <div className="hidden lg:flex py-4">
+          <div className="w-px bg-gray-200 h-full"></div>
+        </div>
+
+        {/* 오른쪽: 상세 채팅 */}
+        <ChatRoomDetail
+          roomId={roomId}
+          room={currentRoom}
+          onMenuClick={() => setListPanelOpen(true)}
+        />
+      </div>
     </div>
   );
 }

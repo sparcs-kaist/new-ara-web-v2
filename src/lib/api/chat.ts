@@ -14,13 +14,35 @@ export const fetchChatRoomDetail = async (roomId: number) => {
     return data;
 }
 
-// 받은 초대장 목록 가져오기
-export const fetchInvitationList = async () => {
-    const { data } = await http.get('chat/invitation/');
+//채팅방 읽음 처리
+//1. 채팅방 진입시, 2. room_update알림 받고 새로운 메시지 업데이트시 필요
+export const readChatRoom = async (roomId: number): Promise<void> => {
+    await http.patch(`chat/room/${roomId}/read/`);
+}
+
+//초대장 보내기
+export const createInvitation = async (roomId: number, userId: number) => {
+    const { data } = await http.post(`chat/invitation/`, { invited_room: roomId, invitation_to: userId });
+    return data;
+}
+
+// 받은 초대장 목록 가져오기 (최근 10개)
+export const fetchInvitationList = async (page_size: number = 10, page: number = 1, ordering: string = '-created_at') => {
+    const { data } = await http.get(`chat/invitation/?page_size=${page_size}&page=${page}&ordering=${ordering}`);
     return data;
 }
 
 // 초대장 수락하기
+export const acceptInvitation = async (invitationId: number) => {
+    const { data } = await http.post(`chat/invitation/${invitationId}/accept/`);
+    return data;
+}
+
+//초대장 거절하기
+export const denyInvitation = async (invitationId: number) => {
+    const { data } = await http.delete(`chat/invitation/${invitationId}/deny/`);
+    return data;
+}
 
 // block한 채팅방 목록 가져오기
 export const fetchBlockList = async () => {
@@ -85,6 +107,43 @@ export const createGroupDM = async (room_title: string, picture: File | null = n
     }
 }
 
+// 채팅방 삭제하기 (방장만 가능)
+export const deleteChatRoom = async (roomId: number) => {
+    try {
+        await http.delete(`chat/room/${roomId}/`);
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('채팅방 삭제 중 오류가 발생했습니다.');
+    }
+};
+
+// 채팅방 나가기
+export const leaveChatRoom = async (roomId: number) => {
+    await http.post(`chat/room/${roomId}/leave/`);
+}
+
+// 채팅방 차단하기
+export const blockChatRoom = async (roomId: number) => {
+    await http.patch(`chat/room/${roomId}/block/`);
+}
+
+//dm 차단하기
+export const blockDM = async (userId: number) => {
+    // user_id 를 payload에
+    const payload = { user_id: userId };
+    await http.post(`chat/dm/block/`, payload);
+}
+
+//dm 차단하기 해제
+export const unblockDM = async (userId: number) => {
+    // user_id 를 payload에
+    const payload = { user_id: userId };
+    await http.post(`chat/dm/unblock/`, payload);
+}
+
 // 채팅방에 메시지 보내기
 export const sendMessage = async (roomId: number, content: string) => {
     try {
@@ -116,3 +175,42 @@ export const fetchRecentMessage = async (roomId: number) => {
     return data;
 }
 
+export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'EMOTICON';
+
+// 첨부 메시지 전송 (IMAGE/FILE) - contentUrl를 message_content로 전송
+export const sendAttachmentMessage = async (
+    roomId: number,
+    type: Exclude<ChatMessageType, 'TEXT' | 'EMOTICON'>,
+    contentUrl: string,
+    attachmentId?: number
+) => {
+    try {
+        const payload: Record<string, unknown> = {
+            message_type: type,
+            message_content: contentUrl,   // URL을 content에 넣음
+            chat_room: roomId,
+        };
+        if (attachmentId) payload.attachment = attachmentId; // 선택적으로 id도 전송
+        const { data } = await http.post('chat/message/', payload);
+        return data;
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('첨부 메시지 전송 중 오류가 발생했습니다.');
+    }
+};
+
+//특정 메시지 삭제
+export const deleteMessage = async (messageId: number) => {
+    try {
+        await http.delete(`chat/message/${messageId}/`);
+    } catch (error) {
+        const err = error as AxiosError<{ detail?: string }>;
+        if (err.response?.data?.detail) {
+            throw new Error(err.response.data.detail);
+        }
+        throw new Error('메시지 삭제 중 오류가 발생했습니다.');
+    }
+};
