@@ -96,7 +96,7 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
                         <div className="text-gray-400 text-sm text-center py-4">받은 초대가 없습니다.</div>
                     )}
                     {invitations.map(inv => (
-                        <div key={inv.id} className="p-3 border rounded-lg flex items-center justify-between">
+                        <div key={inv.id} className="p-3 flex items-center justify-between">
                             <div className="flex items-center gap-3 min-w-0">
                                 <Image
                                     src={inv.invited_room_data.picture}
@@ -106,7 +106,7 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
                                     className="rounded-full object-cover aspect-square"
                                 />
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium truncate" title={inv.invited_room_data.room_title}>
+                                    <p className="text-base font-medium truncate" title={inv.invited_room_data.room_title}>
                                         {inv.invited_room_data.room_title}
                                     </p>
                                     <p className="text-xs text-gray-500 truncate">
@@ -114,20 +114,29 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-0 flex-shrink-0">
+                                {/* 수락 버튼: 배경 없는 아이콘으로 변경 */}
                                 <button
                                     onClick={() => handleAccept(inv.id)}
                                     disabled={!!submitting}
-                                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:bg-gray-400"
+                                    className="w-8 h-8 flex items-center justify-center text-[#e15858] rounded-full hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    aria-label="초대 수락"
                                 >
-                                    {submitting === inv.id ? '...' : '수락'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
                                 </button>
+                                {/* 거절 버튼: 배경 없는 아이콘으로 변경 */}
                                 <button
                                     onClick={() => handleDecline(inv.id)}
                                     disabled={!!submitting}
-                                    className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition disabled:bg-gray-400"
+                                    className="w-8 h-8 flex items-center justify-center text-black rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    aria-label="초대 거절"
                                 >
-                                    {submitting === inv.id ? '...' : '거절'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
                                 </button>
                             </div>
                         </div>

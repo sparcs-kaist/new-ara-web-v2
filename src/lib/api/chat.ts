@@ -122,7 +122,7 @@ export const deleteChatRoom = async (roomId: number) => {
 
 // 채팅방 나가기
 export const leaveChatRoom = async (roomId: number) => {
-    await http.delete(`chat/room/${roomId}/leave/`);
+    await http.post(`chat/room/${roomId}/leave/`);
 }
 
 // 채팅방 차단하기

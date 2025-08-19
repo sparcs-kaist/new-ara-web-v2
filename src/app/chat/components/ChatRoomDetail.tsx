@@ -216,6 +216,23 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             }
         };
 
+        // NEW: 유저가 방을 나갔을 때(연결 종료) 처리
+        const handleUserLeave = (payload: any) => {
+            const userId = payload?.user;
+            if (userId) {
+                // 만약 나간 유저가 입력 중이었다면, 목록에서 즉시 제거
+                setTypingUsers(prev => {
+                    if (!prev.has(userId)) {
+                        return prev; // 변경 없음
+                    }
+                    const newMap = new Map(prev);
+                    newMap.delete(userId);
+                    console.log(`User ${userId} left, removing from typing list.`);
+                    return newMap;
+                });
+            }
+        };
+
         // NEW: 메시지 삭제 이벤트 수신 핸들러
         const handleMessageDeleted = (payload: any) => {
             const deletedMessageId = payload?.message_id;
@@ -249,15 +266,17 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
 
         chatSocket.on('room_update', handleRoomUpdate);
         chatSocket.on('user_join', handleUserJoin);
+        chatSocket.on('user_leave', handleUserLeave); // 리스너 추가
         chatSocket.on('message_deleted', handleMessageDeleted);
-        chatSocket.on('user_typing_start', handleTypingStart); // 리스너 추가
-        chatSocket.on('user_typing_stop', handleTypingStop);   // 리스너 추가
+        chatSocket.on('user_typing_start', handleTypingStart);
+        chatSocket.on('user_typing_stop', handleTypingStop);
         return () => {
             chatSocket.off('room_update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
+            chatSocket.off('user_leave', handleUserLeave); // 리스너 제거
             chatSocket.off('message_deleted', handleMessageDeleted);
-            chatSocket.off('user_typing_start', handleTypingStart); // 리스너 제거
-            chatSocket.off('user_typing_stop', handleTypingStop);   // 리스너 제거
+            chatSocket.off('user_typing_start', handleTypingStart);
+            chatSocket.off('user_typing_stop', handleTypingStop);
         };
     }, [roomId, myId, members]); // members 의존성 추가
 
@@ -502,7 +521,6 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         if (window.confirm('이 채팅방을 차단하고 나가시겠습니까?')) {
             try {
                 await blockChatRoom(roomId);
-                await leaveChatRoom(roomId);
                 alert('채팅방을 차단하고 나갔습니다.');
                 router.push('/chat');
             } catch (error) {
@@ -558,7 +576,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         <span className="text-[20px] text-[#ed3a3a] flex-shrink-0">({members.length})</span>
                     </div>
                     <div className="text-xs text-gray-400">
-                        {room?.room_type === 'GROUP' ? '그룹 채팅' : '1:1 채팅'}
+                        {room?.room_type === 'GROUP_DM' ? '그룹 채팅' : '1:1 채팅'}
                     </div>
                 </div>
                 {/* 우측 상단 슬라이드 패널 토글 버튼 */}
@@ -577,7 +595,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             </div>
 
             {/* 채팅 메시지 영역 */}
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-4 no-scrollbar">
+            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-2 no-scrollbar">
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (
