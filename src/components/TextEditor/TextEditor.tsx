@@ -91,9 +91,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
     return (
       <div
-        className={`editor relative transition-shadow ${
-          editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
-        } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
+        className={`editor relative transition-shadow ${editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
+          } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
       >
         {/** view 모드에서 이미지 로드 에러만 보여줌 */}
         {!editable && imgError && (
@@ -109,33 +108,29 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         {editable && (
           <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('bold') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('bold') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBold().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_bold</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('italic') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('italic') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleItalic().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_italic</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('strike') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('strike') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleStrike().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_strikethrough</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('underline') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('underline') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleUnderline().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_underline</i>
@@ -162,9 +157,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
             {/* Link */}
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('link') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('link') ? 'bg-gray-300' : ''
+                }`}
               onClick={showLinkDialog}
             >
               <i className="material-icons text-xl text-gray-600">link</i>
@@ -178,41 +172,36 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('code') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('code') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleCode().run()}
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-                >
-                <span className="font-bold text-lg mr-1">H1</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+            >
+              <span className="font-bold text-lg mr-1">H1</span>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-                >
-                <span className="font-bold text-base mr-1">H2</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+            >
+              <span className="font-bold text-base mr-1">H2</span>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-                >
-                <span className="font-bold text-sm mr-1">H3</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+            >
+              <span className="font-bold text-sm mr-1">H3</span>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('bulletList') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('bulletList') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBulletList().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -220,9 +209,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('orderedList') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('orderedList') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleOrderedList().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -230,9 +218,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('blockquote') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('blockquote') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBlockquote().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -240,9 +227,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('codeBlock') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('codeBlock') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
             >
               <i className="material-icons text-xl text-gray-600">terminal</i>
@@ -270,8 +256,10 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
           editor={editor}
-          className="editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none"
+          className={`editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none ${editable ? 'p-4' : ''
+            }`}
         />
+
 
         {/** 링크 대화상자 */}
         <TextEditorLinkDialog
