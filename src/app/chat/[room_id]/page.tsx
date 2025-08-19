@@ -66,6 +66,7 @@ export default function ChatRoomPage() {
         chatSocket.leave(chatSocket.currentRoomId);
       }
 
+
       // 새 채팅방 입장 (백엔드 스펙: 'connect_room' 대신 'join' 사용)
       console.log(`join room ${roomId}`);
       chatSocket.join(roomId);
@@ -109,12 +110,20 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-gray-100 flex px-20 py-8">
-      {/* 왼쪽 박스 (채팅방 목록) */}
-      <ChatRoomList selectedRoomId={roomId} />
+    <div className="h-[calc(100vh-80px)] bg-gray-100 flex p-8">
+      {/* 전체 채팅 창을 감싸는 흰색 컨테이너 */}
+      <div className="w-full h-full bg-white rounded-lg shadow-lg flex overflow-hidden">
+        {/* 왼쪽 박스 (채팅방 목록) */}
+        <ChatRoomList selectedRoomId={roomId} />
 
-      {/* 오른쪽 박스 (상세 채팅) */}
-      <ChatRoomDetail roomId={roomId} room={currentRoom} />
+        {/* 구분선을 감싸는 컨테이너에 수직 패딩 적용 */}
+        <div className="py-4">
+          <div className="w-px bg-gray-200 h-full"></div>
+        </div>
+
+        {/* 오른쪽 박스 (상세 채팅) */}
+        <ChatRoomDetail roomId={roomId} room={currentRoom} />
+      </div>
     </div>
   );
 }

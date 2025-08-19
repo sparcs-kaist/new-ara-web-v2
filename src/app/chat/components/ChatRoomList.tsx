@@ -106,7 +106,7 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
     };
 
     return (
-        <div className="w-1/4 bg-white rounded-lg shadow-md p-6 flex flex-col relative">
+        <div className="w-1/4 bg-white rounded-lg p-6 flex flex-col relative">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">💬채팅방</h2>
                 <div className="flex items-center gap-2">

@@ -557,7 +557,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     }
 
     return (
-        <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0 relative overflow-hidden">
+        <div className="w-3/4 bg-white rounded-lg p-6 flex flex-col min-h-0 relative overflow-hidden">
             {/* 채팅방 정보 헤더 */}
             <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
                 <div className="relative w-10 h-10 mr-3">
