@@ -3,6 +3,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams, notFound } from 'next/navigation'; // notFound 추가
 import { fetchPost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
@@ -20,12 +21,12 @@ export interface PostData {
   content: string;
   negative_vote_count: number;
   positive_vote_count: number;
-  my_vote : boolean | null;
-  created_by :
+  my_vote: boolean | null;
+  created_by:
   {
     id: number;
     username: string;
-    profile : 
+    profile:
     {
       picture: string;
       nickname: string;
@@ -35,7 +36,7 @@ export interface PostData {
     };
     is_blocked: boolean;
   };
-  parent_topic: 
+  parent_topic:
   {
     id: number;
     slug: string;
@@ -50,7 +51,7 @@ export interface PostData {
     en_name: string;
     is_readonly: boolean;
     name_type: number;
-    group: 
+    group:
     {
       id: number;
       ko_name: string;
@@ -71,20 +72,20 @@ export interface PostData {
       my_vote: boolean | null;
       is_mine: boolean;
       content: string;
-      created_by :
+      created_by:
+      {
+        id: number;
+        username: string;
+        profile:
         {
-          id: number;
-          username: string;
-          profile : 
-          {
-            picture: string;
-            nickname: string;
-            user: number;
-            is_official: boolean;
-            is_school_admin: boolean;
-          };
-          is_blocked: boolean;
+          picture: string;
+          nickname: string;
+          user: number;
+          is_official: boolean;
+          is_school_admin: boolean;
         };
+        is_blocked: boolean;
+      };
       positive_vote_count: number;
       negative_vote_count: number;
       created_at: string;
@@ -95,20 +96,20 @@ export interface PostData {
           my_vote: boolean | null;
           is_mine: boolean;
           content: string;
-          created_by :
+          created_by:
+          {
+            id: number;
+            username: string;
+            profile:
             {
-              id: number;
-              username: string;
-              profile : 
-              {
-                picture: string;
-                nickname: string;
-                user: number;
-                is_official: boolean;
-                is_school_admin: boolean;
-              };
-              is_blocked: boolean;
+              picture: string;
+              nickname: string;
+              user: number;
+              is_official: boolean;
+              is_school_admin: boolean;
             };
+            is_blocked: boolean;
+          };
           positive_vote_count: number;
           negative_vote_count: number;
           created_at: string;
@@ -119,14 +120,12 @@ export interface PostData {
 }
 
 export default function PostDetailPage() {
-  const url = new URL(window.location.href);
-  const path = url.pathname; // "/post/259668"
-
-  // postId를 null로 둘 수 없어서, matching이 안되면 0으로 보내서 자동으로 404로 라우팅
-  const match = path.match(/\/post\/(\d+)/);
-  const postId = match ? parseInt(match[1], 10) : 0;
+  // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
+  const params = useParams();
+  const postId = params?.id ? parseInt(params.id as string, 10) : null;
 
   const [post, setPost] = useState<PostData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 요거 Article List에도 동일하게 사용되는데 util로 빼는게 좋을지두
   /*
@@ -142,20 +141,36 @@ export default function PostDetailPage() {
   */
 
   useEffect(() => {
-    fetchPost({ 
-      postId: postId,
+    // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
+    if (!postId || isNaN(postId) || postId <= 0) {
+      notFound(); // Next.js의 404 페이지로 리다이렉트
+    }
+
+    setIsLoading(true);
+    fetchPost({
+      postId,
       fromView: 'all',
       current: 3,
       overrideHidden: true,
     })
       .then(data => {
-        setPost(formatPost({data}));
+        setPost(formatPost({ data }));
       })
-      .catch(console.error);
-  }, []);
+      .catch(error => {
+        console.error("게시물 로딩 실패:", error);
+        notFound(); // API 요청 실패 시에도 404 페이지로 리다이렉트
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [postId]);
+
+  if (isLoading) {
+    return <div className="p-8 text-center">로딩 중…</div>;
+  }
 
   if (!post) {
-    return <div className="p-8 text-center">로딩 중…</div>;
+    return null; // 로딩이 끝났는데 post가 null이면 이미 notFound()가 호출된 상태
   }
 
   return (
@@ -165,34 +180,34 @@ export default function PostDetailPage() {
         <div className="flex flex-col gap-[8px]">
           <div className="text-[18px] font-bold text-black leading-[25.2px]">{post.title}</div>
           <div className='flex flex-row w-full h-fit justify-between items-center'>
-            <div className='flex flex-row gap-[4px] cursor-pointer text-[#333333] items-center' onClick={() => {}}>
-              <img src={post.created_by.profile.picture} alt="example" width={20}/>
+            <div className='flex flex-row gap-[4px] cursor-pointer text-[#333333] items-center' onClick={() => { }}>
+              <img src={post.created_by.profile.picture} alt="example" width={20} />
               {post.created_by.profile.nickname}
               <Image src="/Chevron.svg" alt="" width={20} height={20} />
             </div>
-             <div className='flex text-[#B5B5B5] text-sm' onClick={() => {}}>
+            <div className='flex text-[#B5B5B5] text-sm' onClick={() => { }}>
               {`${formatDate(post.created_at)}  ·  조회 ${post.hit_count}`}
-             </div>
+            </div>
           </div>
           <div className="w-full h-[1px] bg-[#B5B5B5]" />
         </div>
         {/* 본문 */}
         <div className='flex flex-col gap-[40px]'>
           <TextEditor
-            content={post.content} 
-            editable={false} 
+            content={post.content}
+            editable={false}
           />
           <div className='flex flex-row w-full h-fit justify-between items-center'>
             <div className='flex flex-row gap-[12px]'>
-              <div className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] items-center' onClick={() => {}}>
-                {post.my_vote == true 
+              <div className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] items-center' onClick={() => { }}>
+                {post.my_vote == true
                   ? <Image src="/LikeFill.svg" alt="" width={30} height={30} />
                   : <Image src="/Like.svg" alt="" width={30} height={30} />
                 }
                 {post.positive_vote_count}
               </div>
-              <div className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] items-center' onClick={()=> {}}>
-                {post.my_vote == false 
+              <div className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] items-center' onClick={() => { }}>
+                {post.my_vote == false
                   ? <Image src="/DislikeFill.svg" alt="" width={30} height={30} />
                   : <Image src="/Dislike.svg" alt="" width={30} height={30} />
                 }
