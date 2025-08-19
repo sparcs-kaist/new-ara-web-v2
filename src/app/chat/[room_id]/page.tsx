@@ -111,11 +111,12 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-white flex">
+    // 외부 컨테이너: 데스크톱에서는 패딩을 여기에 적용
+    <div className="h-[calc(100vh-80px)] bg-white flex lg:p-8">
       {/* 
-        전체 채팅 창 컨테이너. 
+        내부 컨테이너: 데스크톱에서는 마진 제거하고 패딩 대신 외부 컨테이너의 패딩 사용
       */}
-      <div className="relative w-full h-full bg-white lg:rounded-lg lg:shadow-lg flex overflow-hidden lg:my-8 lg:mx-16">
+      <div className="relative w-full h-full bg-white lg:rounded-lg lg:shadow-lg flex overflow-hidden">
 
         {/* 왼쪽: 채팅방 목록 (데스크톱에서는 고정, 모바일에서는 패널) */}
         <ChatRoomList
@@ -133,7 +134,7 @@ export default function ChatRoomPage() {
         <ChatRoomDetail
           roomId={roomId}
           room={currentRoom}
-          onMenuClick={() => setListPanelOpen(true)} // 메뉴 클릭 핸들러 전달
+          onMenuClick={() => setListPanelOpen(true)}
         />
       </div>
     </div>

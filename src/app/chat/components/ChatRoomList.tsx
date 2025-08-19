@@ -108,10 +108,11 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
     };
 
     return (
-        // 반응형 컨테이너
+        // 반응형 컨테이너 - 수정된 부분
         <div className={`
-            absolute lg:static inset-0 z-40 
-            ${isPanelOpen ? '' : 'pointer-events-none'}
+            lg:static lg:w-1/4 lg:pointer-events-auto
+            ${!isPanelOpen && 'pointer-events-none'} 
+            ${isPanelOpen ? 'absolute inset-0 z-40' : 'absolute inset-0 z-40 lg:relative lg:inset-auto'}
         `}>
             {/* 배경 (모바일 패널 모드에서만 보임) */}
             <div
@@ -123,12 +124,12 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                 onClick={onClose}
             />
 
-            {/* 채팅방 목록 본문 */}
+            {/* 채팅방 목록 본문 - 수정된 부분 */}
             <aside className={`
-                w-full max-w-[320px] lg:w-auto lg:max-w-none
                 h-full bg-white flex flex-col relative
-                lg:translate-x-0 transition-transform duration-300
-                ${isPanelOpen ? 'translate-x-0' : '-translate-x-full'}
+                w-full max-w-[320px] lg:w-full lg:max-w-none
+                transition-transform duration-300
+                ${isPanelOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 lg:p-6 border-b lg:border-none">
