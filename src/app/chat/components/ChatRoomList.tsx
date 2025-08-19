@@ -43,9 +43,11 @@ type ChatRoom = {
 
 interface ChatRoomListProps {
     selectedRoomId?: number | null;
+    isPanelOpen?: boolean; // 패널 상태 prop 추가
+    onClose?: () => void;   // 패널 닫기 함수 prop 추가
 }
 
-export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
+export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: ChatRoomListProps) {
     const [rooms, setRooms] = useState<ChatRoom[]>([]);
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
@@ -106,37 +108,37 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
     };
 
     return (
-        <div className="w-1/4 bg-white rounded-lg p-6 flex flex-col relative">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold">💬채팅방</h2>
-                <div className="flex items-center gap-2">
-                    {/* 초대장 목록 버튼 */}
-                    <button
-                        className="bg-white rounded-full hover:bg-gray-100 transition p-1"
-                        onClick={() => setShowInvitationDialog(true)}
-                        aria-label="초대장 목록 보기"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            />
-                        </svg>
-                    </button>
+        // 반응형 컨테이너
+        <div className={`
+            absolute lg:static inset-0 z-40 
+            ${isPanelOpen ? '' : 'pointer-events-none'}
+        `}>
+            {/* 배경 (모바일 패널 모드에서만 보임) */}
+            <div
+                className={`
+                    absolute lg:hidden inset-0 bg-black bg-opacity-30
+                    transition-opacity duration-300 
+                    ${isPanelOpen ? 'opacity-100' : 'opacity-0'}
+                `}
+                onClick={onClose}
+            />
 
-                    {/* 채팅방 추가 버튼 */}
-                    <div className="relative">
+            {/* 채팅방 목록 본문 */}
+            <aside className={`
+                w-full max-w-[320px] lg:w-auto lg:max-w-none
+                h-full bg-white flex flex-col relative
+                lg:translate-x-0 transition-transform duration-300
+                ${isPanelOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                {/* 헤더 */}
+                <div className="flex items-center justify-between p-4 lg:p-6 border-b lg:border-none">
+                    <h2 className="text-lg font-bold">💬채팅방</h2>
+                    <div className="flex items-center gap-2">
+                        {/* 초대장 목록 버튼 */}
                         <button
                             className="bg-white rounded-full hover:bg-gray-100 transition p-1"
-                            onClick={() => setShowTypePopover((v) => !v)}
+                            onClick={() => setShowInvitationDialog(true)}
+                            aria-label="초대장 목록 보기"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -144,112 +146,128 @@ export default function ChatRoomList({ selectedRoomId }: ChatRoomListProps) {
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
+                                strokeWidth={2}
                             >
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 4v16m8-8H4"
-                                    stroke="black"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                 />
                             </svg>
                         </button>
-                        {showTypePopover && (
-                            <ChatTypePopover
-                                onSelect={handleAddChatRoom}
-                                onClose={() => setShowTypePopover(false)}
-                            />
-                        )}
-                    </div>
-                </div>
-            </div>
-            {/* 검색창 
-            <input
-                className="mb-4 px-3 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                type="text"
-                placeholder="채팅방 검색"
-                disabled
-            />
-            */}
-            {/* 채팅방 목록 */}
-            <div className="flex-1 overflow-y-auto divide-y divide-gray-100 no-scrollbar">
-                {rooms.map((room) => {
-                    const selected = room.id === selectedRoomId;
 
-                    // 미리보기 텍스트 조합
-                    const lastMsg = room.recent_message;
-                    const msgType = lastMsg?.message_type;
-
-                    let preview = '';
-                    if (msgType === 'IMAGE') {
-                        preview = '이미지를 보냈습니다.';
-                    } else if (msgType === 'FILE') {
-                        preview = '파일을 보냈습니다.';
-                    } else {
-                        preview = lastMsg?.message_content ?? '';
-                    }
-
-
-                    const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
-
-                    // 시간 표시 (HH:MM)
-                    const timeSrc = room.recent_message_at || room.created_at || '';
-                    const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
-
-                    return (
-                        <button
-                            key={room.id}
-                            className={`w-full flex items-center px-2 py-3 hover:bg-gray-50 transition text-left relative ${selected ? 'bg-gray-50 font-semibold' : 'bg-white'}`}
-                            onClick={() => router.push(`/chat/${room.id}`)}
-                            style={{ borderRadius: 0 }}
-                        >
-                            {selected && (
-                                <div
-                                    className="absolute left-0 top-0 h-full"
-                                    style={{ width: '4px', background: '#E8443A', borderRadius: '2px' }}
+                        {/* 채팅방 추가 버튼 */}
+                        <div className="relative">
+                            <button
+                                className="bg-white rounded-full hover:bg-gray-100 transition p-1"
+                                onClick={() => setShowTypePopover((v) => !v)}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 4v16m8-8H4"
+                                        stroke="black"
+                                    />
+                                </svg>
+                            </button>
+                            {showTypePopover && (
+                                <ChatTypePopover
+                                    onSelect={handleAddChatRoom}
+                                    onClose={() => setShowTypePopover(false)}
                                 />
                             )}
-                            <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
-                                <Image
-                                    src={room.picture || '/default-room.png'}
-                                    alt={room.room_title}
-                                    fill
-                                    className="rounded-full object-cover"
-                                    sizes="36px"
-                                />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-base truncate mt-[4px] font-medium">{room.room_title}</div>
-                                <div className="text-xs text-gray-500 truncate">
-                                    {previewClamped || '새로운 채팅방'}
-                                </div>
-                            </div>
-                            <div className="ml-2 text-[10px] text-gray-400 flex-shrink-0">
-                                {timeStr}
-                            </div>
-                        </button>
-                    );
-                })}
-            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <UserSearchDialog
-                open={showUserSearch}
-                onClose={() => setShowUserSearch(false)}
-                onSelectUser={handleSelectUser}
-                title="새로운 1:1 채팅"
-                actionText="채팅"
-            />
-            <RoomCreateDialog
-                open={showRoomCreate}
-                onClose={() => setShowRoomCreate(false)}
-                onCreate={handleCreateGroupRoom}
-            />
-            {/* 새로 추가된 초대장 다이얼로그 */}
-            <InvitationListDialog
-                open={showInvitationDialog}
-                onClose={() => setShowInvitationDialog(false)}
-                onActionComplete={refreshRoomList}
-            />
+                {/* 채팅방 목록 */}
+                <div className="flex-1 overflow-y-auto divide-y divide-gray-100 no-scrollbar p-2 lg:p-0">
+                    {rooms.map((room) => {
+                        const selected = room.id === selectedRoomId;
+
+                        // 미리보기 텍스트 조합
+                        const lastMsg = room.recent_message;
+                        const msgType = lastMsg?.message_type;
+
+                        let preview = '';
+                        if (msgType === 'IMAGE') {
+                            preview = '이미지를 보냈습니다.';
+                        } else if (msgType === 'FILE') {
+                            preview = '파일을 보냈습니다.';
+                        } else {
+                            preview = lastMsg?.message_content ?? '';
+                        }
+
+
+                        const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
+
+                        // 시간 표시 (HH:MM)
+                        const timeSrc = room.recent_message_at || room.created_at || '';
+                        const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
+
+                        return (
+                            <button
+                                key={room.id}
+                                className={`w-full flex items-center px-2 py-3 hover:bg-gray-50 transition text-left relative ${selected ? 'bg-gray-50 font-semibold' : 'bg-white'}`}
+                                onClick={() => router.push(`/chat/${room.id}`)}
+                                style={{ borderRadius: 0 }}
+                            >
+                                {selected && (
+                                    <div
+                                        className="absolute left-0 top-0 h-full"
+                                        style={{ width: '4px', background: '#E8443A', borderRadius: '2px' }}
+                                    />
+                                )}
+                                <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
+                                    <Image
+                                        src={room.picture || '/default-room.png'}
+                                        alt={room.room_title}
+                                        fill
+                                        className="rounded-full object-cover"
+                                        sizes="36px"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-base truncate mt-[4px] font-medium">{room.room_title}</div>
+                                    <div className="text-xs text-gray-500 truncate">
+                                        {previewClamped || '새로운 채팅방'}
+                                    </div>
+                                </div>
+                                <div className="ml-2 text-[10px] text-gray-400 flex-shrink-0">
+                                    {timeStr}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <UserSearchDialog
+                    open={showUserSearch}
+                    onClose={() => setShowUserSearch(false)}
+                    onSelectUser={handleSelectUser}
+                    title="새로운 1:1 채팅"
+                    actionText="채팅"
+                />
+                <RoomCreateDialog
+                    open={showRoomCreate}
+                    onClose={() => setShowRoomCreate(false)}
+                    onCreate={handleCreateGroupRoom}
+                />
+                {/* 새로 추가된 초대장 다이얼로그 */}
+                <InvitationListDialog
+                    open={showInvitationDialog}
+                    onClose={() => setShowInvitationDialog(false)}
+                    onActionComplete={refreshRoomList}
+                />
+            </aside>
         </div>
     );
 }

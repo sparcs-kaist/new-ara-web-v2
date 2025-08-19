@@ -29,6 +29,7 @@ export default function ChatRoomPage() {
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
+  const [isListPanelOpen, setListPanelOpen] = useState(false); // 채팅방 목록 패널 상태
 
   // 채팅방 목록 및 현재 방 정보 로드
   useEffect(() => {
@@ -110,19 +111,30 @@ export default function ChatRoomPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] bg-gray-100 flex p-8">
-      {/* 전체 채팅 창을 감싸는 흰색 컨테이너 */}
-      <div className="w-full h-full bg-white rounded-lg shadow-lg flex overflow-hidden">
-        {/* 왼쪽 박스 (채팅방 목록) */}
-        <ChatRoomList selectedRoomId={roomId} />
+    <div className="h-[calc(100vh-80px)] bg-white flex">
+      {/* 
+        전체 채팅 창 컨테이너. 
+      */}
+      <div className="relative w-full h-full bg-white lg:rounded-lg lg:shadow-lg flex overflow-hidden lg:my-8 lg:mx-16">
 
-        {/* 구분선을 감싸는 컨테이너에 수직 패딩 적용 */}
-        <div className="py-4">
+        {/* 왼쪽: 채팅방 목록 (데스크톱에서는 고정, 모바일에서는 패널) */}
+        <ChatRoomList
+          selectedRoomId={roomId}
+          isPanelOpen={isListPanelOpen}
+          onClose={() => setListPanelOpen(false)}
+        />
+
+        {/* 구분선 (데스크톱에서만 보임) */}
+        <div className="hidden lg:flex py-4">
           <div className="w-px bg-gray-200 h-full"></div>
         </div>
 
-        {/* 오른쪽 박스 (상세 채팅) */}
-        <ChatRoomDetail roomId={roomId} room={currentRoom} />
+        {/* 오른쪽: 상세 채팅 */}
+        <ChatRoomDetail
+          roomId={roomId}
+          room={currentRoom}
+          onMenuClick={() => setListPanelOpen(true)} // 메뉴 클릭 핸들러 전달
+        />
       </div>
     </div>
   );

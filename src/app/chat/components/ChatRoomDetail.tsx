@@ -36,6 +36,7 @@ const DEFAULT_ROOM_IMAGE = '/default-room.png';
 interface ChatRoomDetailProps {
     roomId: number;
     room?: ChatRoom;
+    onMenuClick?: () => void; // 메뉴 클릭 핸들러 prop 추가
 }
 
 // 참여자 타입 (API 변경 반영)
@@ -55,7 +56,7 @@ type Member = {
     last_seen_at?: string | null;
 };
 
-export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
+export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDetailProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<any[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -557,9 +558,23 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     }
 
     return (
-        <div className="w-3/4 bg-white rounded-lg p-6 flex flex-col min-h-0 relative overflow-hidden">
+        // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
+        <div className="w-full lg:w-3/4 bg-white p-4 lg:p-6 flex flex-col min-h-0 relative overflow-hidden">
             {/* 채팅방 정보 헤더 */}
             <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
+                {/* 모바일용 메뉴 버튼 (햄버거 아이콘) */}
+                <button
+                    onClick={onMenuClick}
+                    className="lg:hidden mr-3 p-2 rounded-full hover:bg-gray-100"
+                    aria-label="채팅방 목록 보기"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
                 <div className="relative w-10 h-10 mr-3">
                     <Image
                         src={room?.picture || DEFAULT_ROOM_IMAGE}
