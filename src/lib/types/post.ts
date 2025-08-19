@@ -3,6 +3,60 @@ type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH' | 'FILE'
 type ReadStatus = 'N' | '-'
 
 
+// --- 추가된 공통 타입 정의 ---
+
+export interface Author {
+  id: number;
+  username: string;
+  profile: {
+    picture: string;
+    nickname: string;
+    user: number;
+    is_official: boolean;
+    is_school_admin: boolean;
+  };
+  is_blocked: boolean;
+}
+
+export interface CommentNested {
+  id: number;
+  is_hidden: boolean;
+  my_vote: boolean | null;
+  is_mine: boolean;
+  content: string;
+  created_by: Author;
+  positive_vote_count: number;
+  negative_vote_count: number;
+  created_at: string;
+}
+
+export interface Comment extends CommentNested {
+  comments: CommentNested[];
+}
+
+export interface PostData {
+  id: number;
+  title: string;
+  content: any; // 에디터 컨텐츠는 객체 또는 문자열일 수 있음
+  negative_vote_count: number;
+  positive_vote_count: number;
+  my_vote: boolean | null;
+  created_by: Author;
+  parent_board: {
+    id: number;
+    slug: string;
+    ko_name: string;
+    en_name: string;
+  };
+  created_at: string;
+  hit_count: number;
+  comments: Comment[];
+  // API 응답의 다른 필드들도 필요에 따라 추가할 수 있습니다.
+}
+
+
+// --- 기존 타입 정의 ---
+
 export const enum NameType {
   NICKNAME = 1,
   ANONYMOUS = 2,
@@ -14,31 +68,31 @@ export const enum NameType {
 }
 
 export type ResponseParentTopic = {
-  id : number;
-  slug : string;
-  ko_name : string;
-  en_name : string;
+  id: number;
+  slug: string;
+  ko_name: string;
+  en_name: string;
 }
 
 export type ResponseBoardGroup = {
-  id : number;
-  ko_name : string;
-  en_name : string;
-  slug : string;
+  id: number;
+  ko_name: string;
+  en_name: string;
+  slug: string;
 }
 
 export type ResponseParentBoard = {
-  id : number;
-  slug : string;
-  ko_name : string;
-  en_name : string;
-  is_read_only : boolean;
-  name_type : number;
-  group : ResponseBoardGroup;
-  banner_image : string;
-  ko_board_description : string;
-  en_board_description : string;
-  top_threshold : number;
+  id: number;
+  slug: string;
+  ko_name: string;
+  en_name: string;
+  is_read_only: boolean;
+  name_type: number;
+  group: ResponseBoardGroup;
+  banner_image: string;
+  ko_board_description: string;
+  en_board_description: string;
+  top_threshold: number;
 }
 
 export type ResponsePost = {
@@ -80,8 +134,8 @@ export type ResponsePost = {
 }
 
 export type ResponsePostList = {
-  num_pages : number;
-  num_items : number;
+  num_pages: number;
+  num_items: number;
   current: number;
   previous: string | null;
   next: string | null;

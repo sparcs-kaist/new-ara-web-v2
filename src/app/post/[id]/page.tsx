@@ -3,121 +3,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound } from 'next/navigation'; // notFound 추가
-import { fetchPost } from '@/lib/api/post';
+import { useParams, notFound } from 'next/navigation';
+import { fetchPost, votePost, voteComment } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
 import ReplyEditor from '@/components/TextEditor/ReplyEditor';
 import Image from "next/image";
 import { formatDate } from '../formatDate';
 import CommentList from '@/app/post/components/CommentList';
-
-//import { formatDistanceToNow } from 'date-fns';
-//import { ko } from 'date-fns/locale';
-
-export interface PostData {
-  id: number;
-  title: string;
-  content: string;
-  negative_vote_count: number;
-  positive_vote_count: number;
-  my_vote: boolean | null;
-  created_by:
-  {
-    id: number;
-    username: string;
-    profile:
-    {
-      picture: string;
-      nickname: string;
-      user: number;
-      is_official: boolean;
-      is_school_admin: boolean;
-    };
-    is_blocked: boolean;
-  };
-  parent_topic:
-  {
-    id: number;
-    slug: string;
-    ko_name: string;
-    en_name: string;
-  };
-  parent_board:
-  {
-    id: number;
-    slug: string;
-    ko_name: string;
-    en_name: string;
-    is_readonly: boolean;
-    name_type: number;
-    group:
-    {
-      id: number;
-      ko_name: string;
-      en_name: string;
-      slug: string;
-    };
-    banner_image: string;
-    ko_banner_description: string;
-    en_banner_description: string;
-    top_threshold: number;
-  };
-  created_at: string;
-  hit_count: number;
-  comments: [
-    {
-      id: number;
-      is_hidden: boolean;
-      my_vote: boolean | null;
-      is_mine: boolean;
-      content: string;
-      created_by:
-      {
-        id: number;
-        username: string;
-        profile:
-        {
-          picture: string;
-          nickname: string;
-          user: number;
-          is_official: boolean;
-          is_school_admin: boolean;
-        };
-        is_blocked: boolean;
-      };
-      positive_vote_count: number;
-      negative_vote_count: number;
-      created_at: string;
-      comments: [
-        {
-          id: number;
-          is_hidden: boolean;
-          my_vote: boolean | null;
-          is_mine: boolean;
-          content: string;
-          created_by:
-          {
-            id: number;
-            username: string;
-            profile:
-            {
-              picture: string;
-              nickname: string;
-              user: number;
-              is_official: boolean;
-              is_school_admin: boolean;
-            };
-            is_blocked: boolean;
-          };
-          positive_vote_count: number;
-          negative_vote_count: number;
-          created_at: string;
-        }
-      ];
-    }
-  ];
-}
+import { type PostData } from '@/lib/types/post'; // <<< 공용 타입 가져오기
 
 export default function PostDetailPage() {
   // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
@@ -127,23 +21,11 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 요거 Article List에도 동일하게 사용되는데 util로 빼는게 좋을지두
-  /*
-  const formatTimeAgo = (dateString: string) => {
-    try {
-      const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, '');
-    } catch (e) {
-      console.error("시간 포맷팅 오류:", e);
-      return '';
-    }
-  };
-  */
-
   useEffect(() => {
     // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
     if (!postId || isNaN(postId) || postId <= 0) {
       notFound(); // Next.js의 404 페이지로 리다이렉트
+      return; // useEffect 종료
     }
 
     setIsLoading(true);
@@ -172,6 +54,161 @@ export default function PostDetailPage() {
   if (!post) {
     return null; // 로딩이 끝났는데 post가 null이면 이미 notFound()가 호출된 상태
   }
+  // 투표 후 게시물 상태 업데이트 함수 (로컬 계산 방식)
+  const updatePostAfterVote = (action: 'vote_positive' | 'vote_negative' | 'vote_cancel') => {
+    setPost(prev => {
+      if (!prev) return null;
+
+      const currentVote = prev.my_vote;
+      let newVote = currentVote;
+      let posCount = prev.positive_vote_count;
+      let negCount = prev.negative_vote_count;
+
+      if (action === 'vote_positive') {
+        newVote = true;
+        posCount += 1;
+        if (currentVote === false) negCount -= 1; // 싫어요 -> 좋아요
+      } else if (action === 'vote_negative') {
+        newVote = false;
+        negCount += 1;
+        if (currentVote === true) posCount -= 1; // 좋아요 -> 싫어요
+      } else if (action === 'vote_cancel') {
+        if (currentVote === true) posCount -= 1; // 좋아요 취소
+        if (currentVote === false) negCount -= 1; // 싫어요 취소
+        newVote = null;
+      }
+
+      return {
+        ...prev,
+        positive_vote_count: posCount,
+        negative_vote_count: negCount,
+        my_vote: newVote,
+      };
+    });
+  };
+
+  // 투표 후 댓글 상태 업데이트 함수 (로컬 계산 방식)
+  const updateCommentAfterVote = (commentId: number, action: 'vote_positive' | 'vote_negative' | 'vote_cancel') => {
+    setPost(prev => {
+      if (!prev) return null;
+
+      const updateCommentInList = (comments: any[]): any[] => {
+        return comments.map(comment => {
+          if (comment.id === commentId) {
+            const currentVote = comment.my_vote;
+            let newVote = currentVote;
+            let posCount = comment.positive_vote_count;
+            let negCount = comment.negative_vote_count;
+
+            if (action === 'vote_positive') {
+              newVote = true;
+              posCount += 1;
+              if (currentVote === false) negCount -= 1;
+            } else if (action === 'vote_negative') {
+              newVote = false;
+              negCount += 1;
+              if (currentVote === true) posCount -= 1;
+            } else if (action === 'vote_cancel') {
+              if (currentVote === true) posCount -= 1;
+              if (currentVote === false) negCount -= 1;
+              newVote = null;
+            }
+
+            return {
+              ...comment,
+              positive_vote_count: posCount,
+              negative_vote_count: negCount,
+              my_vote: newVote,
+            };
+          }
+
+          if (comment.comments && comment.comments.length > 0) {
+            return { ...comment, comments: updateCommentInList(comment.comments) };
+          }
+          return comment;
+        });
+      };
+
+      return { ...prev, comments: updateCommentInList(prev.comments) };
+    });
+  };
+
+  // 게시물 좋아요 핸들러
+  const article_positive_vote_handler = async () => {
+    if (!post) return;
+    try {
+      const action = post.my_vote === true ? 'vote_cancel' : 'vote_positive';
+      await votePost(post.id, action); // API 호출 (응답은 기다리지 않음)
+      updatePostAfterVote(action); // 로컬 상태 즉시 업데이트
+    } catch (error) {
+      console.error("게시물 투표 오류:", error);
+      alert("투표 처리 중 오류가 발생했습니다.");
+      // TODO: 에러 발생 시 원래 상태로 되돌리는 로직 추가 가능
+    }
+  };
+
+  // 게시물 싫어요 핸들러
+  const article_negative_vote_handler = async () => {
+    if (!post) return;
+    try {
+      const action = post.my_vote === false ? 'vote_cancel' : 'vote_negative';
+      await votePost(post.id, action);
+      updatePostAfterVote(action);
+    } catch (error) {
+      console.error("게시물 투표 오류:", error);
+      alert("투표 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 댓글 좋아요 핸들러
+  const comment_positive_vote_handler = async (commentId: number) => {
+    try {
+      const findComment = (comments: any[]): any => {
+        for (const comment of comments) {
+          if (comment.id === commentId) return comment;
+          if (comment.comments) {
+            const found = findComment(comment.comments);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const comment = findComment(post?.comments || []);
+      if (!comment) return;
+
+      const action = comment.my_vote === true ? 'vote_cancel' : 'vote_positive';
+      await voteComment(commentId, action);
+      updateCommentAfterVote(commentId, action);
+    } catch (error) {
+      console.error("댓글 투표 오류:", error);
+      alert("투표 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 댓글 싫어요 핸들러
+  const comment_negative_vote_handler = async (commentId: number) => {
+    try {
+      const findComment = (comments: any[]): any => {
+        for (const comment of comments) {
+          if (comment.id === commentId) return comment;
+          if (comment.comments) {
+            const found = findComment(comment.comments);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const comment = findComment(post?.comments || []);
+      if (!comment) return;
+
+      const action = comment.my_vote === false ? 'vote_cancel' : 'vote_negative';
+      await voteComment(commentId, action);
+      updateCommentAfterVote(commentId, action);
+    } catch (error) {
+      console.error("댓글 투표 오류:", error);
+      alert("투표 처리 중 오류가 발생했습니다.");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
@@ -199,15 +236,21 @@ export default function PostDetailPage() {
           />
           <div className='flex flex-row w-full h-fit justify-between items-center'>
             <div className='flex flex-row gap-[12px]'>
-              <div className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] items-center' onClick={() => { }}>
-                {post.my_vote == true
+              <div
+                className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] items-center'
+                onClick={article_positive_vote_handler}
+              >
+                {post.my_vote === true
                   ? <Image src="/LikeFill.svg" alt="" width={30} height={30} />
                   : <Image src="/Like.svg" alt="" width={30} height={30} />
                 }
                 {post.positive_vote_count}
               </div>
-              <div className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] items-center' onClick={() => { }}>
-                {post.my_vote == false
+              <div
+                className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] items-center'
+                onClick={article_negative_vote_handler}
+              >
+                {post.my_vote === false
                   ? <Image src="/DislikeFill.svg" alt="" width={30} height={30} />
                   : <Image src="/Dislike.svg" alt="" width={30} height={30} />
                 }
@@ -234,7 +277,12 @@ export default function PostDetailPage() {
         {/* 댓글 부분 */}
         {
           post.comments.map((val, idx) =>
-            <CommentList comment={val} key={idx} />
+            <CommentList
+              comment={val}
+              key={idx}
+              onPositiveVote={comment_positive_vote_handler}
+              onNegativeVote={comment_negative_vote_handler}
+            />
           )
         }
         <ReplyEditor isNested={false} />
