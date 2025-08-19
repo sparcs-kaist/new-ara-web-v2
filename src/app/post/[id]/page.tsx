@@ -138,11 +138,13 @@ export default function PostDetailPage() {
     if (!post) return;
     try {
       const action = post.my_vote === true ? 'vote_cancel' : 'vote_positive';
-      await votePost(post.id, action); // API 호출 (응답은 기다리지 않음)
-      updatePostAfterVote(action); // 로컬 상태 즉시 업데이트
-    } catch (error) {
+      await votePost(post.id, action);
+      updatePostAfterVote(action);
+    } catch (error: any) {
       console.error("게시물 투표 오류:", error);
-      alert("투표 처리 중 오류가 발생했습니다.");
+      // 서버에서 온 에러 메시지가 있으면 사용하고, 없으면 기본 메시지 사용
+      const errorMessage = error.response?.data?.message || "투표 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
       // TODO: 에러 발생 시 원래 상태로 되돌리는 로직 추가 가능
     }
   };
@@ -154,9 +156,10 @@ export default function PostDetailPage() {
       const action = post.my_vote === false ? 'vote_cancel' : 'vote_negative';
       await votePost(post.id, action);
       updatePostAfterVote(action);
-    } catch (error) {
+    } catch (error: any) {
       console.error("게시물 투표 오류:", error);
-      alert("투표 처리 중 오류가 발생했습니다.");
+      const errorMessage = error.response?.data?.message || "투표 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
     }
   };
 
@@ -179,9 +182,10 @@ export default function PostDetailPage() {
       const action = comment.my_vote === true ? 'vote_cancel' : 'vote_positive';
       await voteComment(commentId, action);
       updateCommentAfterVote(commentId, action);
-    } catch (error) {
+    } catch (error: any) {
       console.error("댓글 투표 오류:", error);
-      alert("투표 처리 중 오류가 발생했습니다.");
+      const errorMessage = error.response?.data?.message || "투표 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
     }
   };
 
@@ -204,9 +208,10 @@ export default function PostDetailPage() {
       const action = comment.my_vote === false ? 'vote_cancel' : 'vote_negative';
       await voteComment(commentId, action);
       updateCommentAfterVote(commentId, action);
-    } catch (error) {
+    } catch (error: any) {
       console.error("댓글 투표 오류:", error);
-      alert("투표 처리 중 오류가 발생했습니다.");
+      const errorMessage = error.response?.data?.message || "투표 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
     }
   };
 
