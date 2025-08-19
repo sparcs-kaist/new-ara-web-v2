@@ -67,6 +67,7 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isInviteDialogOpen, setInviteDialogOpen] = useState(false); // 추가
+    const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map()); // [userId, nickname]
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
         x: number;
@@ -224,15 +225,44 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
             }
         };
 
+        // NEW: 타이핑 시작 이벤트 수신 핸들러
+        const handleTypingStart = (payload: any) => {
+            const userId = payload?.user;
+            if (userId && userId !== myId) {
+                const userProfile = members.find(m => m.user.id === userId)?.user.profile;
+                const nickname = userProfile?.nickname || `사용자 ${userId}`;
+                setTypingUsers(prev => new Map(prev).set(userId, nickname));
+            }
+        };
+
+        // NEW: 타이핑 종료 이벤트 수신 핸들러
+        const handleTypingStop = (payload: any) => {
+            const userId = payload?.user;
+            if (userId) {
+                setTypingUsers(prev => {
+                    const newMap = new Map(prev);
+                    newMap.delete(userId);
+                    return newMap;
+                });
+            }
+        };
+
         chatSocket.on('room_update', handleRoomUpdate);
         chatSocket.on('user_join', handleUserJoin);
-        chatSocket.on('message_deleted', handleMessageDeleted); // 리스너 추가
+        chatSocket.on('message_deleted', handleMessageDeleted);
+        chatSocket.on('user_typing_start', handleTypingStart); // 리스너 추가
+        chatSocket.on('user_typing_stop', handleTypingStop);   // 리스너 추가
         return () => {
             chatSocket.off('room_update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
-            chatSocket.off('message_deleted', handleMessageDeleted); // 리스너 제거
+            chatSocket.off('message_deleted', handleMessageDeleted);
+            chatSocket.off('user_typing_start', handleTypingStart); // 리스너 제거
+            chatSocket.off('user_typing_stop', handleTypingStop);   // 리스너 제거
         };
-    }, [roomId, myId]); // messages 의존성 제거: 중복 리스너 방지
+    }, [roomId, myId, members]); // members 의존성 추가
+
+    // "입력 중" 표시가 나타날 때 자동으로 스크롤하던 로직은 제거합니다.
+    // 새 UI는 스크롤 영역 밖에 위치하므로 더 이상 필요하지 않습니다.
 
     // 방 입장/퇴장 구독 처리
     useEffect(() => {
@@ -497,6 +527,17 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
         }
     };
 
+    // 타이핑 중인 사용자 닉네임 목록 생성
+    const typingUserNicknames = Array.from(typingUsers.values());
+    let typingText = '';
+    if (typingUserNicknames.length === 1) {
+        typingText = `${typingUserNicknames[0]} 님이 입력 중`;
+    } else if (typingUserNicknames.length === 2) {
+        typingText = `${typingUserNicknames[0]}님과 ${typingUserNicknames[1]}님이 입력 중`;
+    } else if (typingUserNicknames.length > 2) {
+        typingText = '여러 명이 입력 중';
+    }
+
     return (
         <div className="w-3/4 bg-white rounded-lg shadow-md p-6 ml-4 flex flex-col min-h-0 relative overflow-hidden">
             {/* 채팅방 정보 헤더 */}
@@ -630,11 +671,27 @@ export default function ChatRoomDetail({ roomId, room }: ChatRoomDetailProps) {
                         );
                     })
                 )}
+                {/* "입력 중..." 표시는 이 위치에서 제거합니다. */}
+
                 <div ref={chatEndRef} />
             </div>
 
+            {/* 입력창 바로 위에 표시될 "입력 중..." 텍스트 영역 */}
+            <div className="h-6 px-1 text-sm text-gray-500 flex items-center transition-opacity duration-300">
+                {typingUsers.size > 0 && (
+                    <div className="flex items-center gap-1.5">
+                        <span>{typingText}</span>
+                        <div className="flex items-center gap-1 ml-1">
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* 입력창 */}
-            <ChatInput roomId={roomId} onMessageSent={handleMessageSent} />
+            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} />
 
             <MembersPanel
                 isOpen={isPanelOpen}

@@ -6,21 +6,62 @@ import Image from 'next/image';
 import TextareaAutosize from 'react-textarea-autosize';
 import { sendMessage, sendAttachmentMessage } from '@/lib/api/chat';
 import { uploadAttachments } from '@/lib/api/post';
+import { chatSocket } from '@/lib/socket/chat';
 
 interface ChatInputProps {
     roomId: number;
+    myId: number | null; // myId prop 추가
     onMessageSent: () => void;
 }
 
-export default function ChatInput({ roomId, onMessageSent }: ChatInputProps) {
+export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProps) {
     const [input, setInput] = useState('');
     const [pending, setPending] = useState<null | { id: number; url: string; type: 'IMAGE' | 'FILE'; name?: string }>(null);
     const [isUploading, setIsUploading] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hasSentTypingStartRef = useRef(false);
+
+    // 소켓으로 타이핑 이벤트 전송
+    const sendTypingEvent = (type: 'typing_start' | 'typing_stop') => {
+        if (chatSocket.isConnected?.() && myId) { // myId가 있을 때만 전송
+            chatSocket.send?.({ type, user_id: myId });
+        }
+    };
+
+    // 입력값이 변경될 때마다 타이핑 상태 관리
+    useEffect(() => {
+        if (input.trim().length > 0 && !hasSentTypingStartRef.current) {
+            sendTypingEvent('typing_start');
+            hasSentTypingStartRef.current = true;
+        }
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+            if (hasSentTypingStartRef.current) {
+                sendTypingEvent('typing_stop');
+                hasSentTypingStartRef.current = false;
+            }
+        }, 3000); // 3초 후 '입력 중' 상태 해제
+
+        return () => {
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        };
+    }, [input, myId]); // 의존성 배열에 myId 추가
 
     const handleSend = async () => {
         if (!roomId || (input.trim() === '' && !pending)) return;
+
+        // 메시지 전송 시 즉시 '입력 중' 상태 해제
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (hasSentTypingStartRef.current) {
+            sendTypingEvent('typing_stop');
+            hasSentTypingStartRef.current = false;
+        }
 
         try {
             if (pending) {
