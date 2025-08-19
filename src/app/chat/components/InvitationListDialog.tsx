@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { createPortal } from 'react-dom'; // React DOM에서 createPortal 임포트
 import { fetchInvitationList, acceptInvitation, denyInvitation } from '@/lib/api/chat';
 
 // API 응답에 따른 타입 정의
@@ -31,6 +32,12 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState<number | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
 
     useEffect(() => {
         if (open) {
@@ -78,9 +85,10 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
         }
     };
 
-    if (!open) return null;
+    if (!open || !mounted) return null;
 
-    return (
+    // 다이얼로그 내용을 정의
+    const dialog = (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
             <div className="bg-white rounded-lg shadow-lg p-6 w-96 relative">
                 <button
@@ -145,4 +153,7 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
             </div>
         </div>
     );
+
+    // Portal을 사용하여 body에 직접 렌더링
+    return createPortal(dialog, document.body);
 }

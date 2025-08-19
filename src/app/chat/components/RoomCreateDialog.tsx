@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom"; // React DOM에서 createPortal 임포트
 
 interface RoomCreateDialogProps {
   open: boolean;
@@ -25,9 +26,15 @@ const RoomCreateDialog: React.FC<RoomCreateDialogProps> = ({
   const [picture, setPicture] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>(getRandomDefaultImage());
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!open) return null;
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!open || !mounted) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,9 +70,10 @@ const RoomCreateDialog: React.FC<RoomCreateDialogProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-xs">
+  // 다이얼로그 내용을 정의
+  const dialog = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
         <h2 className="text-lg font-bold mb-4">채팅방 만들기</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-2">
@@ -139,6 +147,9 @@ const RoomCreateDialog: React.FC<RoomCreateDialogProps> = ({
       </div>
     </div>
   );
+
+  // Portal을 사용하여 body에 직접 렌더링
+  return createPortal(dialog, document.body);
 };
 
 export default RoomCreateDialog;
