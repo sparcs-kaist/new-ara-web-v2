@@ -11,6 +11,7 @@ import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/Article
 import SmallMyInfo from '@/components/SmallMyinfo/SmallMyInfo';
 import MyChatRooms from '@/components/MyChatRoom/MyChatRooms';
 import MarketPreview from "@/components/MarketPreview/MarketPreview";
+import PosterCarousel from "@/components/PosterPreview/PosterCarousel";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -104,6 +105,11 @@ export default function Home() {
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <RecentPreview />
+              </section>
+
+              {/* 3행: 포스터 - 전체 10열 span */}
+              <section className="col-span-10 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+                <PosterCarousel />
               </section>
             </div>
 
