@@ -154,10 +154,13 @@ export const createNestedComment = async ({
 // 댓글 수정
 export const updateComment = async (
   commentId: number,
-  newComment: Record<string, unknown>
+  newComment: string,
+  name_type: number,
 ) => {
   const { data } = await http.patch(`comments/${commentId}/`, {
-    ...newComment,
+    content: newComment,
+    name_type: name_type,
+    is_mine: true,
   });
   return data;
 };
