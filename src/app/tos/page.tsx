@@ -9,7 +9,7 @@ import { updateTos, fetchMe } from '@/lib/api/user'
 export default function TOSPage() {
   // 기본 언어는 한국어로 설정
   const [locale, setLocale] = useState<'ko' | 'en'>('ko')
-  const [agreed,] = useState(false) // 약관 동의 여부 상태 추가
+  const [agreed, setAgreed] = useState(false) // 약관 동의 여부 상태 추가
   const [user, setUser] = useState<number | null>(null)
 
   useEffect(() => {
@@ -18,6 +18,7 @@ export default function TOSPage() {
       try {
         const userData = await fetchMe()
         setUser(userData.user)
+        setAgreed(userData.agree_terms_of_service_at != null) // 사용자 약관 동의 상태 설정
       } catch (error) {
         console.error("Error fetching user data:", error)
       }
