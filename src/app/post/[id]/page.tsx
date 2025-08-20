@@ -3,7 +3,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound, useRouter } from 'next/navigation'; // useRouter import
+import { useParams, notFound, useRouter } from 'next/navigation';
 import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment, deletePost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
@@ -15,8 +15,7 @@ import ReplyEditor from '@/app/post/components/ReplyEditor';
 import ReportDialog from '@/app/post/components/ReportDialog'; // ReportDialog import
 
 export default function PostDetailPage() {
-  const router = useRouter(); // useRouter 훅 사용
-  // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
+  const router = useRouter();
   const params = useParams();
   const postId = params?.id ? parseInt(params.id as string, 10) : null;
 
@@ -25,6 +24,7 @@ export default function PostDetailPage() {
   const [newCommentContent, setNewCommentContent] = useState('');
   const [selectedNameType, setSelectedNameType] = useState(1);
   const [reportingCommentId, setReportingCommentId] = useState<number | null>(null);
+  const [isPostReportVisible, setIsPostReportVisible] = useState(false); // 게시글 신고 다이얼로그 상태
 
   useEffect(() => {
     // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
@@ -399,10 +399,13 @@ export default function PostDetailPage() {
                 </>
               ) : (
                 <>
-                  <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition">
+                  <button
+                    onClick={() => setIsPostReportVisible(true)}
+                    className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition"
+                  >
                     <Image src="/Alert.svg" alt="" width={15} height={15} />
                     신고
-                  </div>
+                  </button>
                   <div
                     className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:shadow-md transition"
                     onClick={handleShare} // 공유 핸들러 연결
@@ -455,10 +458,21 @@ export default function PostDetailPage() {
           />
         </div>
       </div>
-      {/* 신고 다이얼로그 (페이지 최상단에서 렌더링) */}
+
+      {/* 게시글 신고 다이얼로그 */}
+      {isPostReportVisible && postId && (
+        <ReportDialog
+          targetId={postId}
+          targetType="post"
+          onClose={() => setIsPostReportVisible(false)}
+        />
+      )}
+
+      {/* 댓글 신고 다이얼로그 */}
       {reportingCommentId && (
         <ReportDialog
-          commentId={reportingCommentId}
+          targetId={reportingCommentId}
+          targetType="comment"
           onClose={() => setReportingCommentId(null)}
         />
       )}

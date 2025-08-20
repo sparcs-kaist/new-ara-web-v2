@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { reportComment } from '@/lib/api/post';
+import { reportComment, reportPost } from '@/lib/api/post'; // reportPost import
 
 const reportReasons = {
     '혐오 발언': 'hate_speech',
@@ -13,11 +13,12 @@ const reportReasons = {
 };
 
 interface ReportDialogProps {
-    commentId: number;
+    targetId: number;
+    targetType: 'post' | 'comment'; // 'commentId'를 대체
     onClose: () => void;
 }
 
-export default function ReportDialog({ commentId, onClose }: ReportDialogProps) {
+export default function ReportDialog({ targetId, targetType, onClose }: ReportDialogProps) {
     const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
 
     const handleCheckboxChange = (reason: string) => {
@@ -35,22 +36,26 @@ export default function ReportDialog({ commentId, onClose }: ReportDialogProps) 
         }
         try {
             const reasonString = selectedReasons.join(',');
-            await reportComment(commentId, 'others', reasonString);
+
+            // targetType에 따라 다른 API 호출
+            if (targetType === 'post') {
+                await reportPost(targetId, 'others', reasonString);
+            } else {
+                await reportComment(targetId, 'others', reasonString);
+            }
+
             alert('신고가 접수되었습니다.');
             onClose();
         } catch (error: any) {
             console.error('신고 처리 중 오류 발생:', error);
 
             let errorMessage = '신고 처리 중 오류가 발생했습니다.';
-            // API 에러 응답의 data 필드를 직접 확인
             const rawData = error.response?.data;
 
             if (rawData) {
-                // 응답 데이터 자체가 배열인 경우 (e.g., ["이미 신고한 글입니다."])
                 if (Array.isArray(rawData) && rawData.length > 0) {
                     errorMessage = rawData[0];
                 }
-                // 응답 데이터가 객체이고 message 속성을 가지는 경우 (기존 로직)
                 else if (rawData.message) {
                     const rawMessage = rawData.message;
                     if (Array.isArray(rawMessage) && rawMessage.length > 0) {
@@ -59,7 +64,6 @@ export default function ReportDialog({ commentId, onClose }: ReportDialogProps) 
                         errorMessage = rawMessage;
                     }
                 }
-                // 응답 데이터 자체가 문자열인 경우
                 else if (typeof rawData === 'string') {
                     errorMessage = rawData;
                 }
