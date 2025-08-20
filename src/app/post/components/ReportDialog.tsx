@@ -40,7 +40,32 @@ export default function ReportDialog({ commentId, onClose }: ReportDialogProps) 
             onClose();
         } catch (error: any) {
             console.error('신고 처리 중 오류 발생:', error);
-            alert(error.response?.data?.message || '신고 처리 중 오류가 발생했습니다.');
+
+            let errorMessage = '신고 처리 중 오류가 발생했습니다.';
+            // API 에러 응답의 data 필드를 직접 확인
+            const rawData = error.response?.data;
+
+            if (rawData) {
+                // 응답 데이터 자체가 배열인 경우 (e.g., ["이미 신고한 글입니다."])
+                if (Array.isArray(rawData) && rawData.length > 0) {
+                    errorMessage = rawData[0];
+                }
+                // 응답 데이터가 객체이고 message 속성을 가지는 경우 (기존 로직)
+                else if (rawData.message) {
+                    const rawMessage = rawData.message;
+                    if (Array.isArray(rawMessage) && rawMessage.length > 0) {
+                        errorMessage = rawMessage[0];
+                    } else if (typeof rawMessage === 'string') {
+                        errorMessage = rawMessage;
+                    }
+                }
+                // 응답 데이터 자체가 문자열인 경우
+                else if (typeof rawData === 'string') {
+                    errorMessage = rawData;
+                }
+            }
+
+            alert(errorMessage);
         }
     };
 
