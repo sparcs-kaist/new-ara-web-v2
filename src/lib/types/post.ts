@@ -187,6 +187,7 @@ export function getBoardKoNameById(boardId: number): string {
     case 14: return "학교에게 전합니다";
     case 17: return "카이스트 뉴스";
     case 18: return "외부 업체 홍보";
+    case 19: return "포스터";
     default: return "알 수 없음";
   }
 }
