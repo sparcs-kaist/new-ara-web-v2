@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 
 export default function ReplyEditor({
     isNested = true,
@@ -31,10 +31,11 @@ export default function ReplyEditor({
                     rounded-[8px]
                     focus:outline-none
                     focus:ring-0
+                    no-scrollbar 
                 "
                 style={{
                     height: "auto",
-                    minHeight: isNested ? "72px" : "40px", // 답글일 때와 아닐 때 최소 높이 조절
+                    minHeight: isNested ? "72px" : "40px",
                 }}
                 onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;

@@ -6,18 +6,18 @@ import { fetchBoardList } from "@/lib/api/board";
 
 // 화살표 아이콘을 컴포넌트
 const DropdownArrow = ({ isOpen, isHovered }: { isOpen: boolean, isHovered: boolean }) => (
-  <svg 
-    width="12" 
-    height="12" 
-    viewBox="0 0 12 12" 
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 12 12"
     className={`transition-all duration-200 ${isOpen ? 'rotate-180' : ''}`}
   >
-    <path 
+    <path
       d="M3 5l3 3 3-3" //화살표
       stroke={isHovered ? '#DC2626' : '#666'} // ara_red 색상으로 변경
-      strokeWidth="1.5" 
-      fill="none" 
-      strokeLinecap="round" 
+      strokeWidth="1.5"
+      fill="none"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
   </svg>
@@ -66,7 +66,7 @@ export default function NavBarMiddle() {
       <Link href="/board" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">전체보기</Link>
 
       {/* 소식 드롭다운 */}
-      <div 
+      <div
         className="relative"
         onMouseEnter={() => handleMouseEnter('news')}
         onMouseLeave={handleMouseLeave}
@@ -91,19 +91,19 @@ export default function NavBarMiddle() {
                 href={getBoardSlug("입주 업체 공지") ? `/board?board=${getBoardSlug("입주 업체 공지")}` : "#"}
                 className="block px-5 py-1 text-md text-black font-medium hover:bg-gray-100 rounded-xl mx-2"
               >입주업체</Link>
-              
+
               {/* 구분선 */}
               <hr className="border-gray-200 my-2 mx-3" />
-              
+
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">뉴스</div>
               <Link
                 href={getBoardSlug("카이스트 뉴스") ? `/board?board=${getBoardSlug("카이스트 뉴스")}` : "#"}
                 className="block px-5 py-1 text-md hover:bg-gray-100 rounded-xl mx-2"
               >카이스트 신문</Link>
-              
+
               {/* 구분선 */}
               <hr className="border-gray-200 my-2 mx-3" />
-              
+
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">홍보</div>
               <Link
                 href={getBoardSlug("외부 업체 홍보") ? `/board?board=${getBoardSlug("외부 업체 홍보")}` : "#"}
@@ -115,7 +115,7 @@ export default function NavBarMiddle() {
       </div>
 
       {/* 거래 드롭다운 */}
-      <div 
+      <div
         className="relative"
         onMouseEnter={() => handleMouseEnter('market')}
         onMouseLeave={handleMouseLeave}
@@ -145,7 +145,7 @@ export default function NavBarMiddle() {
       </div>
 
       {/* 소통 드롭다운 */}
-      <div 
+      <div
         className="relative"
         onMouseEnter={() => handleMouseEnter('communication')}
         onMouseLeave={handleMouseLeave}
@@ -162,10 +162,10 @@ export default function NavBarMiddle() {
                 href={getBoardSlug("학교에게 전합니다") ? `/board?board=${getBoardSlug("학교에게 전합니다")}` : "#"}
                 className="block px-5 py-1 text-md text-black font-medium hover:bg-gray-100 rounded-xl mx-2"
               >학교에게 전합니다</Link>
-              
+
               {/* 구분선 */}
               <hr className="border-gray-200 my-2 mx-3" />
-              
+
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">단체</div>
               <Link
                 href={getBoardSlug("학생 단체") ? `/board?board=${getBoardSlug("학생 단체")}` : "#"}
@@ -175,10 +175,10 @@ export default function NavBarMiddle() {
                 href={getBoardSlug("동아리") ? `/board?board=${getBoardSlug("동아리")}` : "#"}
                 className="block px-5 py-1 text-md text-black font-medium hover:bg-gray-100 rounded-xl mx-2"
               >동아리</Link>
-              
+
               {/* 구분선 */}
               <hr className="border-gray-200 my-2 mx-3" />
-              
+
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">피드백</div>
               <Link
                 href={getBoardSlug("아라 피드백") ? `/board?board=${getBoardSlug("아라 피드백")}` : "#"}
@@ -193,7 +193,7 @@ export default function NavBarMiddle() {
         )}
       </div>
 
-      <Link href="/board?board=popular" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">인기글</Link>
+      <Link href="/chat" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">채팅</Link>
     </div>
   );
 }

@@ -103,7 +103,10 @@ const CommentList = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
           </div>
         </div>
         <div className="flex flex-col w-full gap-[8px] pl-[24px]">
-          {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
+          {/* whitespace-pre-wrap 클래스 추가 */}
+          <div className="whitespace-pre-wrap">
+            {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
+          </div>
           {!isDeleted && (
             <>
               <div className='flex flex-row w-full h-fit gap-[8px]'>
