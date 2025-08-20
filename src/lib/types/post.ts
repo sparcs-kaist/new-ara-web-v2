@@ -50,6 +50,7 @@ export interface Scrap {
 
 export interface PostData {
   id: number;
+  is_mine: boolean; // is_mine 필드 추가
   title: string;
   content: any;
   name_type: number; // 게시물의 이름 규칙

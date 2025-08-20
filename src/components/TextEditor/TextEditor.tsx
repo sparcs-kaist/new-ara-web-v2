@@ -69,15 +69,34 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         }),
         Bold,
       ],
-      content,
+      // 'content' prop은 초기 렌더링에만 사용되므로,
+      // 비동기 로딩을 위해 빈 상태로 시작하고 useEffect에서 설정합니다.
+      content: '',
     });
 
-    // view 모드일 땐 content만 갱신
+    // content prop이 변경될 때마다 에디터의 내용을 갱신합니다.
     useEffect(() => {
-      if (editor && !editable) {
-        editor.commands.setContent(content);
+      if (!editor || !content) {
+        return;
       }
-    }, [content, editable, editor]);
+
+      // 현재 에디터의 내용과 새로 받은 내용이 동일하면 업데이트를 건너뜁니다.
+      // 이렇게 하면 사용자가 편집하는 도중에 내용이 덮어쓰이는 것을 방지할 수 있습니다.
+      try {
+        const currentContent = editor.getJSON();
+        // 에디터가 비어있거나(초기 상태) 내용이 다를 때만 업데이트
+        if (editor.isEmpty || JSON.stringify(currentContent) !== content) {
+          const parsedContent = JSON.parse(content);
+          editor.commands.setContent(parsedContent, false);
+        }
+      } catch (e) {
+        // JSON 파싱에 실패하면 일반 텍스트로 처리 (하위 호환성)
+        if (editor.getText() !== content) {
+          editor.commands.setContent(content, false);
+        }
+        console.error("Failed to parse content as JSON, treating as plain text:", e);
+      }
+    }, [content, editor]);
 
     // Expose editor to parent
     useImperativeHandle(ref, () => editor as Editor, [editor]);

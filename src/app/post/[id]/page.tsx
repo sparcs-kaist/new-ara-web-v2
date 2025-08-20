@@ -3,8 +3,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, notFound } from 'next/navigation';
-import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment } from '@/lib/api/post';
+import { useParams, notFound, useRouter } from 'next/navigation'; // useRouter import
+import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment, deletePost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
 import Image from "next/image";
@@ -15,6 +15,7 @@ import ReplyEditor from '@/app/post/components/ReplyEditor';
 import ReportDialog from '@/app/post/components/ReportDialog'; // ReportDialog import
 
 export default function PostDetailPage() {
+  const router = useRouter(); // useRouter 훅 사용
   // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
   const params = useParams();
   const postId = params?.id ? parseInt(params.id as string, 10) : null;
@@ -311,6 +312,26 @@ export default function PostDetailPage() {
     }
   };
 
+  // 게시물 수정 핸들러
+  const handleEdit = () => {
+    router.push(`/write?edit=${postId}`);
+  };
+
+  // 게시물 삭제 핸들러
+  const handleDelete = async () => {
+    if (window.confirm('정말로 이 게시물을 삭제하시겠습니까?')) {
+      try {
+        await deletePost(postId!);
+        alert('게시물이 삭제되었습니다.');
+        router.push('/'); // 삭제 후 홈으로 이동
+      } catch (error: any) {
+        console.error("게시물 삭제 실패:", error);
+        const errorMessage = error.response?.data?.message || "게시물 삭제에 실패했습니다.";
+        alert(errorMessage);
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="p-8 text-center">로딩 중…</div>;
   }
@@ -367,26 +388,39 @@ export default function PostDetailPage() {
               </div>
             </div>
             <div className='flex flex-row gap-[4px]'>
-              <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition">
-                <Image src="/Alert.svg" alt="" width={15} height={15} />
-                신고
-              </div>
-              <div
-                className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:shadow-md transition"
-                onClick={handleShare} // 공유 핸들러 연결
-              >
-                <Image src="/Share.svg" alt="" width={15} height={15} />
-                공유
-              </div>
-              {/* 담아두기 버튼 */}
-              <div
-                className={`p-2 flex flex-row gap-2 cursor-pointer border rounded text-sm leading-snug hover:shadow-md transition ${post.my_scrap ? 'border-[#ED3A3A] bg-[#ed3a3a] text-white' : 'border-[#E9E9E9] text-[#666666]'
-                  }`}
-                onClick={handleScrap}
-              >
-                <BookmarkIcon isFilled={!!post.my_scrap} />
-                담아두기
-              </div>
+              {post.is_mine ? (
+                <>
+                  <button onClick={handleEdit} className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition">
+                    수정
+                  </button>
+                  <button onClick={handleDelete} className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#ED3A3A] rounded text-sm leading-snug hover:bg-gray-100 transition">
+                    삭제
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition">
+                    <Image src="/Alert.svg" alt="" width={15} height={15} />
+                    신고
+                  </div>
+                  <div
+                    className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:shadow-md transition"
+                    onClick={handleShare} // 공유 핸들러 연결
+                  >
+                    <Image src="/Share.svg" alt="" width={15} height={15} />
+                    공유
+                  </div>
+                  {/* 담아두기 버튼 */}
+                  <div
+                    className={`p-2 flex flex-row gap-2 cursor-pointer border rounded text-sm leading-snug hover:shadow-md transition ${post.my_scrap ? 'border-[#ED3A3A] bg-[#ed3a3a] text-white' : 'border-[#E9E9E9] text-[#666666]'
+                      }`}
+                    onClick={handleScrap}
+                  >
+                    <BookmarkIcon isFilled={!!post.my_scrap} />
+                    담아두기
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="w-full h-[1px] bg-[#B5B5B5]" />
