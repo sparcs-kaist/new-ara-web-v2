@@ -8,7 +8,8 @@ import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
-import SmallMyInfo from '@/components/SmallMyInfo';
+import SmallMyInfo from '@/components/SmallMyinfo/SmallMyInfo';
+import MyChatRooms from '@/components/MyChatRoom/MyChatRooms';
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -69,27 +70,27 @@ export default function Home() {
             {/* 왼쪽 영역 (비율 조정된 그리드 구조) */}
             <div className="w-[70%] grid grid-cols-5 gap-3 auto-rows-auto"> {/* 5열 그리드로 변경 */}
               {/* 1행 1열: 지금 핫한 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
+              <section className="col-span-3 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow"> {/* 3/5 너비 */}
                 <Link href="/board/hot" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🔥 지금 핫한 글</h2>
+                  <h2 className="text-[20px] font-bold">🔥 지금 핫한 글</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <HotPreview />
               </section>
 
               {/* 1행 2열: 학교에게 전합니다 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
+              <section className="col-span-2 w-full p-3 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow"> {/* 2/5 너비 */}
                 <Link href="/board/school" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🏫 학교에게 전합니다</h2>
+                  <h2 className="text-[20px] font-bold">🏫 학교에게 전합니다</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <ToSchoolPreview />
               </section>
 
               {/* 2행 1열: 나의 시간표 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
+              <section className="col-span-2 w-full p-3 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow"> {/* 2/5 너비 */}
                 <Link href="/timetable" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">📆 나의 시간표</h2>
+                  <h2 className="text-[20px] font-bold">📆 나의 시간표</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <div className="h-[180px] flex items-center justify-center text-gray-500">
@@ -98,9 +99,9 @@ export default function Home() {
               </section>
 
               {/* 2행 2열: 방금 올라온 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
+              <section className="col-span-3 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow"> {/* 3/5 너비 */}
                 <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🕑 방금 올라온 글</h2>
+                  <h2 className="text-[20px] font-bold">🕑 방금 올라온 글</h2>
                   <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <RecentPreview />
@@ -108,11 +109,12 @@ export default function Home() {
             </div>
 
             {/* 오른쪽 영역 (세로로 배치된 컴포넌트) */}
-            <div className="w-[30%] flex flex-col gap-4"> {/* 너비 추가 감소, 갭 추가 감소 */}
+            <div className="w-[30%] flex flex-col gap-4">
               {/* 미니 프로필 정보 */}
-              <div>
-                <SmallMyInfo />
-              </div>
+              <SmallMyInfo />
+
+              {/* 나의 채팅방 */}
+              <MyChatRooms />
 
               {/* 오늘의 식단 - 높이 확장 */}
               {/*

@@ -46,7 +46,7 @@ const SmallMyInfo = () => {
     }
 
     return (
-        <div className="p-4 bg-white rounded-lg shadow border border-gray-200">
+        <div className="p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
             <div className="flex items-center gap-3 mb-3">
                 <Image
                     src={userData.picture || '/user.png'}
@@ -57,24 +57,32 @@ const SmallMyInfo = () => {
                 />
                 <div>
                     <p className="font-bold text-lg">{userData.nickname}</p>
-                    <p className="text-sm text-gray-500">
-                        게시글 {userData.num_articles} 댓글 {userData.num_comments} 공감 {userData.num_positive_votes}
-                    </p>
+                    {/* 활동 내역을 flex 컨테이너로 변경 */}
+                    <div className="flex gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                            <span className="text-gray-500">게시글</span>
+                            <span className="font-medium text-gray-800">{userData.num_articles}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-gray-500">댓글</span>
+                            <span className="font-medium text-gray-800">{userData.num_comments}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-gray-500">공감</span>
+                            <span className="font-medium text-gray-800">{userData.num_positive_votes}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-around items-center text-center">
-                    <button className="text-gray-400 hover:text-gray-600">
-                        <Image src="/NewAraExtendIcons/caret-left-fill.svg" alt="left" width={16} height={16} />
-                    </button>
                     <Link href="https://mail.kaist.ac.kr" target="_blank" className="text-black font-medium hover:underline">메일</Link>
                     <div className="h-4 w-px bg-gray-300" />
                     <Link href="https://klms.kaist.ac.kr" target="_blank" className="text-black font-medium hover:underline">KLMS</Link>
                     <div className="h-4 w-px bg-gray-300" />
                     <Link href="https://portal.kaist.ac.kr" target="_blank" className="text-black font-medium hover:underline">포탈</Link>
-                    <button className="text-gray-400 hover:text-gray-600">
-                        <Image src="/NewAraExtendIcons/caret-right-fill.svg" alt="right" width={16} height={16} />
-                    </button>
+                    <div className="h-4 w-px bg-gray-300" />
+                    <Link href="https://erp.kaist.ac.kr" target="_blank" className="text-black font-medium hover:underline">ERP</Link>
                 </div>
             </div>
         </div>

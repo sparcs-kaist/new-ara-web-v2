@@ -211,3 +211,9 @@ input[type="color"]::-webkit-color-swatch {
   /* Chrome/Safari */
   display: none;
 }
+
+/* 메인 페이지 컴포넌트들의 그림자 */
+.main-page-block-shadow {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.10);
+}
