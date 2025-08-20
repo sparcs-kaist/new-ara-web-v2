@@ -51,6 +51,7 @@ export default function Write() {
   const [price, setPrice] = useState<string>('');
   const [isEditMode, setIsEditMode] = useState(false); // 수정 모드 상태
   const [initialContent, setInitialContent] = useState(''); // 수정 시 초기 콘텐츠
+  const [initialAttachments, setInitialAttachments] = useState<UploadObject[]>([]); // 수정 시 초기 첨부파일
 
   // 수정 모드일 때 기존 게시물 데이터 로드
   useEffect(() => {
@@ -79,6 +80,19 @@ export default function Write() {
         setIsSexual(data.is_content_sexual);
         setIsSocial(data.is_content_social);
         // --- 여기까지 ---
+
+        // 첨부파일 초기화 (편집 모드)
+        if (Array.isArray(data.attachments)) {
+          const mapped: UploadObject[] = data.attachments.map((att: any) => ({
+            key: String(att.id ?? att.pk ?? att.key ?? att.attachment ?? att.file),
+            name: att.filename ?? att.name ?? att.file?.split('/').pop() ?? 'attachment',
+            type: (att.mimetype ?? att.type ?? 'file').startsWith('image') ? 'image' : 'file',
+            uploaded: true,
+            url: att.file ?? att.url,
+            blobUrl: att.file ?? att.url,
+          }));
+          setInitialAttachments(mapped);
+        }
 
       }).catch(err => {
         console.error("게시물 로드 실패:", err);
@@ -281,6 +295,7 @@ export default function Write() {
         <Attachments
           ref={attachmentsRef}
           onDelete={handleAttachmentDelete}
+          initialFiles={initialAttachments}
         />
 
         {/* 저장 버튼 */}

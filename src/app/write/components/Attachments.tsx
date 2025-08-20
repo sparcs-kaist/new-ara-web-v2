@@ -36,17 +36,18 @@ export interface AttachmentsProps {
   onAdd?: (files: UploadObject[]) => void;
   onDelete?: (file: UploadObject) => void;
   accepted?: string; // ex) ".png,.jpg"
+  initialFiles?: UploadObject[]; // Edit mode: preload existing attachments
 }
 
 const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref) => {
-  const { multiple = false, onAdd, onDelete, accepted } = props;
+  const { multiple = false, onAdd, onDelete, accepted, initialFiles } = props;
 
   const [files, setFiles] = useState<UploadObject[]>([]);
   const [dropzoneEnabled, setDropzoneEnabled] = useState(false);
 
   //자식 요소위에서도 drag state를 관리하기 위해 counter 사용
   //자식 요소까지 완전히 벗어났을 때 (counter = 0) 되었을 때만 dropzone 비활성화
-  const [ , setDragCounter] = useState(0);
+  const [, setDragCounter] = useState(0);
 
   const [dropzoneFailedReason, setDropzoneFailedReason] = useState<string | null>(null);
 
@@ -82,6 +83,19 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
       });
     };
   }, [files]);
+
+  // Merge initial files from parent (edit mode)
+  useEffect(() => {
+    if (!initialFiles || initialFiles.length === 0) return;
+    setFiles(prev => {
+      const existing = new Set(prev.map(f => f.key));
+      const merged = [...prev];
+      initialFiles.forEach(f => {
+        if (!existing.has(f.key)) merged.push(f);
+      });
+      return merged;
+    });
+  }, [initialFiles]);
 
   // 파일 업로드 처리
   const handleUpload = async (fileList: FileList | File[]) => {
@@ -123,7 +137,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
       }, 1500);
     }
     //upload to server
-    const response = await uploadAttachments(success.map(u=> u.file!));
+    const response = await uploadAttachments(success.map(u => u.file!));
     const result = Array.isArray(response) ? response : [response];
 
     // 서버에서 받은 id·url을 포함한 최종 배열 생성
@@ -149,7 +163,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
   };
 
   //drag enter/leave 이벤트 헨들러
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) =>  {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setDragCounter(c => c + 1)
     if (e.dataTransfer.items.length > 0) {
@@ -247,9 +261,8 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
         onDragLeave={handleDragLeave}
       >
         <label
-          className={`attachments__dropzone absolute inset-0 z-10 cursor-pointer ${
-            dropzoneEnabled ? 'pointer-events-auto' : 'pointer-events-none'
-          }`}
+          className={`attachments__dropzone absolute inset-0 z-10 cursor-pointer ${dropzoneEnabled ? 'pointer-events-auto' : 'pointer-events-none'
+            }`}
           onDrop={handleDropUpload}
         >
           <input
@@ -289,11 +302,16 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>((props, ref
                 />
               )}
 
-              <div className="flex justify-between items-center pointer-events-auto">
-                <span>{file.name}</span>
+              <div className="flex justify-between items-center pointer-events-auto gap-3">
+                <span
+                  className="flex-1 min-w-0 truncate"
+                  title={file.name}
+                >
+                  {file.name}
+                </span>
                 <button
                   type="button"
-                  className="bg-transparent font-normal text-[#ed3a3a] rounded-full px-3 py-0.5
+                  className="bg-transparent font-normal text-[#ed3a3a] rounded-full px-3 py-0.5 shrink-0
                   hover:bg-[#ed3a3a] hover:text-white transition-colors duration-200"
                   onClick={() => deleteFile(file)}
                 >
