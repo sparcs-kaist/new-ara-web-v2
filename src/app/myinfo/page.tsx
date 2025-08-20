@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import SmallBoardMyInfo from "../../components/MyInfo/SmallBoardMyInfo";
-import { MyActivity } from "../../components/MyInfo/MyActivity";
-import PostSetting from "../../components/MyInfo/PostSetting";
-import BlockedUser from "../../components/MyInfo/BlockedUser";
-import Profile from "../../components/MyInfo/Profile";
+import SmallBoardMyInfo from "@/app/myinfo/components/SmallBoardMyInfo";
+import { MyActivity } from "@/app/myinfo/components/MyActivity";
+import PostSetting from "@/app/myinfo/components/PostSetting";
+import BlockedUser from "@/app/myinfo/components/BlockedUser";
+import Profile from "@/app/myinfo/components/Profile";
 import { ProfileRecentArticleList } from "../../containers/ArticleList"
 import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
 import { ProfileMyArticleList } from "../../containers/ArticleList";
@@ -77,7 +77,7 @@ const MyInfo = () => {
               </button>
             ))}
           </div>
-          
+
           {/* 검색창 */}
           <div className="flex items-center space-x-2">
             <div className="relative">
@@ -96,7 +96,7 @@ const MyInfo = () => {
             </div>
           </div>
         </div>
-        
+
         <div>
           {tab === '내가 쓴 글' && (
             <ProfileMyArticleList filters={filters} search={currentSearch} />
