@@ -51,7 +51,8 @@ const CommentItem = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
   };
 
   return (
-    <div className="flex flex-col w-full gap-[12px]">
+    // 최상위 div에 border-b와 padding 추가
+    <div className="flex flex-col w-full gap-[12px] border-b border-gray-100 py-2 last:border-b-0">
       <div className="flex flex-col w-full gap-[4px]">
         <div className='flex flex-row w-full h-fit justify-between items-center'>
           <div className='flex flex-row gap-[4px] items-center font-medium'>
