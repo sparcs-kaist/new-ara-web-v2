@@ -2,12 +2,14 @@ import React from "react";
 
 export default function ReplyEditor({
     isNested = true,
+    isEditing = false, // 수정 모드 prop 추가
     content,
     onContentChange,
     onSubmit,
     onCancel,
 }: {
     isNested?: boolean;
+    isEditing?: boolean; // prop 타입 추가
     content: string;
     onContentChange: (text: string) => void;
     onSubmit: () => void;
@@ -35,7 +37,7 @@ export default function ReplyEditor({
                 "
                 style={{
                     height: "auto",
-                    minHeight: isNested ? "72px" : "40px",
+                    minHeight: (isNested || isEditing) ? "72px" : "40px",
                 }}
                 onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -49,9 +51,10 @@ export default function ReplyEditor({
                     className="flex py-2 px-5 rounded-[8px] text-xs bg-[#ED3A3A] text-white whitespace-nowrap hover:bg-[#C62626]"
                     onClick={onSubmit}
                 >
-                    등록
+                    {isEditing ? "수정" : "등록"}
                 </button>
-                {isNested && onCancel && (
+                {/* 수정 모드일 때도 취소 버튼이 보이도록 조건 변경 */}
+                {(isNested || isEditing) && onCancel && (
                     <button
                         className="flex py-2 px-5 rounded-[8px] text-xs bg-[#E9E9E9] whitespace-nowrap hover:bg-[#B5B5B5]"
                         onClick={onCancel}

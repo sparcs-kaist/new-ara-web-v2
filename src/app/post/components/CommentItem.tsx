@@ -6,8 +6,9 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { formatDate } from "@/app/post/formatDate";
 import { type CommentNested, type Author } from '@/lib/types/post';
-import { deleteComment } from "@/lib/api/post";
+import { deleteComment, updateComment } from "@/lib/api/post"; // updateComment import
 import CommentMenuPopover from "./CommentMenuPopover";
+import ReplyEditor from "./ReplyEditor"; // ReplyEditor import
 
 interface CommentItemProps {
   comment: CommentNested;
@@ -26,6 +27,10 @@ const CommentItem = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
   const postId = parseInt(params.id as string, 10);
 
   const isDeleted = comment.is_hidden && comment.why_hidden?.includes("DELETED_CONTENT");
+
+  // 수정 관련 상태 추가
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
 
   useEffect(() => {
     if (postNameType & 1) setSelectedReplyNameType(1);
@@ -47,7 +52,28 @@ const CommentItem = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
   };
 
   const handleEdit = () => {
-    alert('수정 기능은 준비 중입니다.');
+    setEditContent(comment.content);
+    setIsEditing(true);
+    setMenuVisible(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleUpdateSubmit = async () => {
+    if (!editContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+    try {
+      await updateComment(comment.id, editContent, comment.name_type);
+      alert("댓글이 수정되었습니다.");
+      window.location.reload();
+    } catch (error: any) {
+      console.error('댓글 수정 실패:', error);
+      alert(error.response?.data?.message || '댓글 수정에 실패했습니다.');
+    }
   };
 
   return (
@@ -80,32 +106,45 @@ const CommentItem = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
           </div>
         </div>
         <div className="flex flex-col w-full gap-[8px] pl-[24px] max-w-full">
-          <div className="whitespace-pre-wrap">
-            {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
-          </div>
-          {!isDeleted && (
-            <div className='flex flex-row w-full h-fit gap-[8px]'>
-              <div
-                className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] text-xs items-center'
-                onClick={() => onPositiveVote(comment.id)}
-              >
-                {comment.my_vote === true
-                  ? <Image src="/LikeFill.svg" alt="" width={24} height={24} />
-                  : <Image src="/Like.svg" alt="" width={24} height={24} />
-                }
-                {comment.positive_vote_count}
+          {isEditing ? (
+            <ReplyEditor
+              isEditing={true}
+              isNested={true}
+              content={editContent}
+              onContentChange={setEditContent}
+              onSubmit={handleUpdateSubmit}
+              onCancel={handleCancelEdit}
+            />
+          ) : (
+            <>
+              <div className="whitespace-pre-wrap">
+                {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
               </div>
-              <div
-                className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] text-xs items-center'
-                onClick={() => onNegativeVote(comment.id)}
-              >
-                {comment.my_vote === false
-                  ? <Image src="/DislikeFill.svg" alt="" width={24} height={24} />
-                  : <Image src="/Dislike.svg" alt="" width={24} height={24} />
-                }
-                {comment.negative_vote_count}
-              </div>
-            </div>
+              {!isDeleted && (
+                <div className='flex flex-row w-full h-fit gap-[8px]'>
+                  <div
+                    className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] text-xs items-center'
+                    onClick={() => onPositiveVote(comment.id)}
+                  >
+                    {comment.my_vote === true
+                      ? <Image src="/LikeFill.svg" alt="" width={24} height={24} />
+                      : <Image src="/Like.svg" alt="" width={24} height={24} />
+                    }
+                    {comment.positive_vote_count}
+                  </div>
+                  <div
+                    className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] text-xs items-center'
+                    onClick={() => onNegativeVote(comment.id)}
+                  >
+                    {comment.my_vote === false
+                      ? <Image src="/DislikeFill.svg" alt="" width={24} height={24} />
+                      : <Image src="/Dislike.svg" alt="" width={24} height={24} />
+                    }
+                    {comment.negative_vote_count}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

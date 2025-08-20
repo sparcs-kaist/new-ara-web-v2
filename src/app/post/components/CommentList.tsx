@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { formatDate } from "@/app/post/formatDate";
 import { type Comment, type Author } from '@/lib/types/post';
-import { createNestedComment, deleteComment } from "@/lib/api/post";
+import { createNestedComment, deleteComment, updateComment } from "@/lib/api/post"; // updateComment import
 import CommentItem from "./CommentItem";
 import ReplyEditor from '@/app/post/components/ReplyEditor';
 import CommentMenuPopover from "./CommentMenuPopover";
@@ -24,6 +24,10 @@ const CommentList = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
   const [replyContent, setReplyContent] = useState('');
   const [selectedReplyNameType, setSelectedReplyNameType] = useState(1);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  // 수정 관련 상태 추가
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
 
   const isDeleted = comment.is_hidden && comment.why_hidden?.includes("DELETED_CONTENT");
 
@@ -70,11 +74,31 @@ const CommentList = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
   };
 
   const handleEdit = () => {
-    alert('수정 기능은 준비 중입니다.');
+    setEditContent(comment.content); // 수정 시작 시 현재 댓글 내용으로 초기화
+    setIsEditing(true);
+    setMenuVisible(false); // 메뉴 닫기
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleUpdateSubmit = async () => {
+    if (!editContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+    try {
+      await updateComment(comment.id, editContent, comment.name_type);
+      alert("댓글이 수정되었습니다.");
+      window.location.reload();
+    } catch (error: any) {
+      console.error('댓글 수정 실패:', error);
+      alert(error.response?.data?.message || '댓글 수정에 실패했습니다.');
+    }
   };
 
   return (
-    // 최상위 div에 border-b와 padding 추가
     <div className="flex flex-col w-full gap-[12px] border-b border-gray-200 py-2">
       <div className="flex flex-col w-full gap-[4px]">
         <div className='flex flex-row w-full h-fit justify-between items-center'>
@@ -103,48 +127,60 @@ const CommentList = ({ comment, postNameType, myCommentProfile, onPositiveVote, 
           </div>
         </div>
         <div className="flex flex-col w-full gap-[8px] pl-[24px]">
-          {/* whitespace-pre-wrap 클래스 추가 */}
-          <div className="whitespace-pre-wrap">
-            {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
-          </div>
-          {!isDeleted && (
+          {isEditing ? (
+            <ReplyEditor
+              isEditing={true}
+              isNested={true}
+              content={editContent}
+              onContentChange={setEditContent}
+              onSubmit={handleUpdateSubmit}
+              onCancel={handleCancelEdit}
+            />
+          ) : (
             <>
-              <div className='flex flex-row w-full h-fit gap-[8px]'>
-                <div className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] text-xs items-center' onClick={() => onPositiveVote(comment.id)}>
-                  {comment.my_vote === true
-                    ? <Image src="/LikeFill.svg" alt="" width={24} height={24} />
-                    : <Image src="/Like.svg" alt="" width={24} height={24} />
-                  }
-                  {comment.positive_vote_count}
-                </div>
-                <div className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] text-xs items-center' onClick={() => onNegativeVote(comment.id)}>
-                  {comment.my_vote === false
-                    ? <Image src="/DislikeFill.svg" alt="" width={24} height={24} />
-                    : <Image src="/Dislike.svg" alt="" width={24} height={24} />
-                  }
-                  {comment.negative_vote_count}
-                </div>
-                <div className='flex flex-row gap-[4px] cursor-pointer text-[#666666] text-xs items-center' onClick={() => setReplyVisible(!isReplyVisible)}>
-                  <Image src="/corner-down-right.svg" alt="" width={15} height={15} />
-                  답글
-                </div>
+              <div className="whitespace-pre-wrap">
+                {isDeleted ? <span className="text-gray-500">삭제된 댓글입니다.</span> : comment.content}
               </div>
-              {isReplyVisible && (
-                <div className="mt-2">
-                  {myCommentProfile && (
-                    <div className='flex flex-row gap-2 items-center px-2 mb-2'>
-                      <img src={myCommentProfile.profile.picture} alt="my profile" width={24} height={24} className="rounded-full" />
-                      <span className="font-medium text-md">{myCommentProfile.profile.nickname}</span>
+              {!isDeleted && (
+                <>
+                  <div className='flex flex-row w-full h-fit gap-[8px]'>
+                    <div className='flex flex-row gap-[4px] cursor-pointer text-[#ED3A3A] text-xs items-center' onClick={() => onPositiveVote(comment.id)}>
+                      {comment.my_vote === true
+                        ? <Image src="/LikeFill.svg" alt="" width={24} height={24} />
+                        : <Image src="/Like.svg" alt="" width={24} height={24} />
+                      }
+                      {comment.positive_vote_count}
+                    </div>
+                    <div className='flex flex-row gap-[4px] cursor-pointer text-[#5B9CDE] text-xs items-center' onClick={() => onNegativeVote(comment.id)}>
+                      {comment.my_vote === false
+                        ? <Image src="/DislikeFill.svg" alt="" width={24} height={24} />
+                        : <Image src="/Dislike.svg" alt="" width={24} height={24} />
+                      }
+                      {comment.negative_vote_count}
+                    </div>
+                    <div className='flex flex-row gap-[4px] cursor-pointer text-[#666666] text-xs items-center' onClick={() => setReplyVisible(!isReplyVisible)}>
+                      <Image src="/corner-down-right.svg" alt="" width={15} height={15} />
+                      답글
+                    </div>
+                  </div>
+                  {isReplyVisible && (
+                    <div className="mt-2">
+                      {myCommentProfile && (
+                        <div className='flex flex-row gap-2 items-center px-2 mb-2'>
+                          <img src={myCommentProfile.profile.picture} alt="my profile" width={24} height={24} className="rounded-full" />
+                          <span className="font-medium text-md">{myCommentProfile.profile.nickname}</span>
+                        </div>
+                      )}
+                      <ReplyEditor
+                        isNested={true}
+                        content={replyContent}
+                        onContentChange={setReplyContent}
+                        onSubmit={handleReplySubmit}
+                        onCancel={handleReplyCancel}
+                      />
                     </div>
                   )}
-                  <ReplyEditor
-                    isNested={true}
-                    content={replyContent}
-                    onContentChange={setReplyContent}
-                    onSubmit={handleReplySubmit}
-                    onCancel={handleReplyCancel}
-                  />
-                </div>
+                </>
               )}
             </>
           )}
