@@ -69,6 +69,15 @@ export interface PostData {
   created_at: string;
   hit_count: number;
   comments: Comment[];
+  attachments: Array<{
+    id: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    file: string;
+    size: number;
+    mimetype: string;
+  }>;
   // API 응답의 다른 필드들도 필요에 따라 추가할 수 있습니다.
 }
 

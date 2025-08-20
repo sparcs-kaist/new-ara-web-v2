@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { formatDate } from "@/app/post/formatDate";
+import { formatDate } from "@/app/post/util/formatDate";
 import { type Comment, type Author } from '@/lib/types/post';
 import { createNestedComment, deleteComment, updateComment } from "@/lib/api/post"; // updateComment import
 import CommentItem from "./CommentItem";
