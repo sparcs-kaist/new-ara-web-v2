@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'next/navigation'; // useSearchParams import
+import { useSearchParams, useRouter } from 'next/navigation'; // useRouter import
 import type { Editor } from '@tiptap/react'
 import type { AttachmentsHandles } from './components/Attachments'
 import TextEditor from '../../components/TextEditor/TextEditor'
@@ -14,8 +14,9 @@ import { makeMarketMetadata } from '@/lib/utils/article_metadata'
 export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME'
 
 export default function Write() {
-  const searchParams = useSearchParams(); // searchParams 훅 사용
-  const editPostId = searchParams.get('edit'); // 'edit' 쿼리 파라미터 가져오기
+  const router = useRouter(); // useRouter 훅 사용
+  const searchParams = useSearchParams();
+  const editPostId = searchParams.get('edit');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -127,30 +128,34 @@ export default function Write() {
       ? makeMarketMetadata({ price, currency: 'KRW', state: 'onsale' })
       : undefined;
 
-    const articleData = {
-      title,
-      content,
-      attachments: attachmentIds,
-      ...(metadata ? { metadata } : {}),
-    };
-
     try {
-      if (isEditMode) {
+      if (isEditMode && editPostId) {
         // 수정 모드
+        const articleData = {
+          title,
+          content,
+          attachments: attachmentIds,
+          ...(metadata ? { metadata } : {}),
+        };
         await updatePost({ postId: Number(editPostId), newArticle: articleData });
         alert('글이 수정되었습니다.');
+        router.push(`/post/${editPostId}`); // 수정된 게시글로 이동
       } else {
         // 생성 모드
         const newArticle = {
-          ...articleData,
+          title,
+          content,
+          attachments: attachmentIds,
           parent_board: boardId,
           parent_topic: topicId,
           is_content_sexual: isSexual,
           is_content_social: isSocial,
           name_type: nameType,
+          ...(metadata ? { metadata } : {}),
         };
-        const result = await createPost({ boardId, newArticle });
-        alert(`글이 저장되었습니다 (ID: ${result.id})`);
+        const result = await createPost({ boardId: boardId!, newArticle });
+        alert(`글이 저장되었습니다.`);
+        router.push(`/post/${result.id}`); // 생성된 게시글로 이동
       }
     } catch (err) {
       console.error(err);
