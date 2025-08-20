@@ -1,7 +1,7 @@
 //PostOptionBar.tsx
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // useEffect import
 import Image from 'next/image'
 import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
 
@@ -22,6 +22,7 @@ interface PostOptionBarProps {
   onChangeSocial: (isSocial: boolean) => void
   onChangeSexual: (isSexual: boolean) => void
   disabled?: boolean
+  isEditMode?: boolean
 }
 
 const PostOptionBar: React.FC<PostOptionBarProps> = ({
@@ -34,6 +35,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
   onChangeSocial,
   onChangeSexual,
   disabled = false,
+  isEditMode = false,
 }) => {
   // boards[0]가 로드되기 전까지 빈 상태 방지
   const [selectedBoardId, setSelectedBoardId] = useState<number | null>(
@@ -41,13 +43,26 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
     defaultBoardId ?? boards[0]?.id ?? null
   );
   const currentBoard = boards.find(b => b.id === selectedBoardId) ?? null;
-  // 말머리 선택: null 이면 “말머리 없음”
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     // defaultCategoryId가 '' 이면 null, 숫자문자열이면 그 숫자로
     defaultCategoryId === '' || defaultCategoryId == null
       ? null
       : Number(defaultCategoryId)
   );
+
+  useEffect(() => {
+    if (defaultBoardId) {
+      setSelectedBoardId(defaultBoardId);
+    }
+  }, [defaultBoardId]);
+
+  useEffect(() => {
+    setSelectedCategoryId(
+      defaultCategoryId === '' || defaultCategoryId == null
+        ? null
+        : Number(defaultCategoryId)
+    );
+  }, [defaultCategoryId]);
 
   // boolean toggles
   const [political, setPolitical] = useState(false);
@@ -108,13 +123,13 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
     <div className="flex items-center gap-4 mb-6">
       <div className="relative">
         <select
-          className={`appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black ${disabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+          className={`appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
             }`}
           value={selectedBoardId ?? ''}
           onChange={handleBoardChange}
           onFocus={handleBoardFocus}
           onBlur={handleBoardBlur}
-          disabled={disabled}
+          disabled={isEditMode || disabled}
         >
           {boards.map(b => (
             <option key={b.id} value={b.id}>
@@ -138,14 +153,14 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
       <div className="relative">
         <select
           className={`appearance-none px-4 py-2 pr-8 border rounded ${selectedCategoryId === null
-              ? 'text-gray-500'
-              : 'text-black'
-            } ${disabled ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
+            ? 'text-gray-500'
+            : 'text-black'
+            } ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
           value={selectedCategoryId ?? ''}
           onChange={handleCategoryChange}
           onFocus={handleCategoryFocus}
           onBlur={handleCategoryBlur}
-          disabled={disabled}
+          disabled={isEditMode || disabled}
         >
           {/* 항상 첫 번째에 “말머리 없음” */}
           <option value="">말머리 없음</option>

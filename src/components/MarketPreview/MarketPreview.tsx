@@ -63,7 +63,7 @@ const MarketPreview = () => {
                     </div>
                     <h3 className="font-medium text-sm truncate group-hover:underline">{article.title}</h3>
                     <p className="font-bold text-sm text-[#ed3a3a]">
-                        {article.metadata?.price ? `${formatPrice(article.metadata.price)}원` : '가격 정보 없음'}
+                        {article.metadata?.price ? `${formatPrice(article.metadata.price)}￦` : '가격 정보 없음'}
                     </p>
                 </Link>
             ))}

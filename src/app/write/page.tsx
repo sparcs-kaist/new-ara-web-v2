@@ -59,10 +59,27 @@ export default function Write() {
       fetchPost({ postId: Number(editPostId) }).then(data => {
         setTitle(data.title);
         setInitialContent(data.content); // JSON 문자열 그대로 저장
-        // ... 기타 상태 설정
+
+        // --- 수정된 부분 ---
+        // 게시판, 말머리, 가격, 익명/실명, 소셜/성인글 상태 설정
         setBoardId(data.parent_board.id);
+        setTopicId(data.parent_topic?.id ? String(data.parent_topic.id) : '');
+
+        // 장터 게시판인 경우 가격 설정
+        if (data.parent_board.slug === 'market' && data.metadata?.price) {
+          setIsMarket(true);
+          setPrice(String(data.metadata.price));
+        }
+
+        // 익명/실명 여부 설정
+        if (data.name_type === 3) setNameType('ANONYMOUS');
+        else if (data.parent_board.name_type === 4) setNameType('REALNAME');
+        else setNameType('REGULAR');
+
         setIsSexual(data.is_content_sexual);
         setIsSocial(data.is_content_social);
+        // --- 여기까지 ---
+
       }).catch(err => {
         console.error("게시물 로드 실패:", err);
         alert("수정할 게시물을 불러오는 데 실패했습니다.");
@@ -206,7 +223,8 @@ export default function Write() {
           onChangeSexual={(flag) => {
             setIsSexual(flag);
           }}
-          disabled={isEditMode} // 수정 모드일 때 비활성화
+          isEditMode={isEditMode}
+          disabled={saving}
         />
 
         <input
@@ -215,6 +233,7 @@ export default function Write() {
           value={title}
           onChange={e => setTitle(e.currentTarget.value)}
           className="w-full border border-gray-300 rounded px-4 py-2 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+          disabled={saving}
         />
 
         {isMarket && (
@@ -234,6 +253,7 @@ export default function Write() {
                     setPrice(digits);
                   }}
                   className="w-48 border border-gray-300 rounded px-3 py-1.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  disabled={saving}
                 />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-black">
                   ₩
