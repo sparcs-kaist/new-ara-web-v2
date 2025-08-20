@@ -4,14 +4,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import { fetchPost, votePost, voteComment } from '@/lib/api/post';
+import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
-import ReplyEditor from '@/components/TextEditor/ReplyEditor';
 import Image from "next/image";
 import { formatDate } from '../formatDate';
 import CommentList from '@/app/post/components/CommentList';
-import { type PostData } from '@/lib/types/post'; // <<< 공용 타입 가져오기
+import { type PostData, type Scrap, type Author } from '@/lib/types/post';
+import ReplyEditor from '@/app/post/components/ReplyEditor';
 
 export default function PostDetailPage() {
   // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
@@ -20,6 +20,8 @@ export default function PostDetailPage() {
 
   const [post, setPost] = useState<PostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [newCommentContent, setNewCommentContent] = useState('');
+  const [selectedNameType, setSelectedNameType] = useState(1);
 
   useEffect(() => {
     // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
@@ -47,13 +49,14 @@ export default function PostDetailPage() {
       });
   }, [postId]);
 
-  if (isLoading) {
-    return <div className="p-8 text-center">로딩 중…</div>;
-  }
+  // post 데이터가 로드되면 기본 name_type 설정
+  useEffect(() => {
+    if (post) {
+      if (post.name_type & 1) setSelectedNameType(1); // 닉네임 사용 가능하면 기본값
+      else if (post.name_type & 2) setSelectedNameType(2); // 익명만 가능하면 기본값
+    }
+  }, [post]);
 
-  if (!post) {
-    return null; // 로딩이 끝났는데 post가 null이면 이미 notFound()가 호출된 상태
-  }
   // 투표 후 게시물 상태 업데이트 함수 (로컬 계산 방식)
   const updatePostAfterVote = (action: 'vote_positive' | 'vote_negative' | 'vote_cancel') => {
     setPost(prev => {
@@ -215,6 +218,105 @@ export default function PostDetailPage() {
     }
   };
 
+  // 공유하기 핸들러
+  const handleShare = async () => {
+    try {
+      // 현재 페이지의 URL을 클립보드에 복사
+      await navigator.clipboard.writeText(window.location.href);
+      alert("URL이 복사되었습니다.");
+    } catch (err) {
+      console.error('클립보드 복사 실패:', err);
+      alert("URL 복사에 실패했습니다.");
+    }
+  };
+
+  // 담아두기(스크랩) 핸들러
+  const handleScrap = async () => {
+    if (!post) return;
+
+    try {
+      if (post.my_scrap) {
+        // 이미 스크랩된 경우 -> 스크랩 취소
+        await unarchivePost(post.my_scrap.id);
+        setPost(prev => prev ? { ...prev, my_scrap: null } : null);
+      } else {
+        // 스크랩되지 않은 경우 -> 스크랩
+        const newScrap: Scrap = await archivePost(post.id);
+        // API 응답 전체를 my_scrap 상태로 설정
+        setPost(prev => prev ? { ...prev, my_scrap: newScrap } : null);
+      }
+    } catch (error: any) {
+      console.error("스크랩 처리 오류:", error);
+      const errorMessage = error.response?.data?.message || "스크랩 처리 중 오류가 발생했습니다.";
+      alert(errorMessage);
+    }
+  };
+
+  // SVG 아이콘 컴포넌트 정의
+  const BookmarkIcon = ({ isFilled }: { isFilled: boolean }) => {
+    // 스크랩 상태일 때: 버튼 배경이 빨간색이므로 아이콘은 흰색으로 채움
+    // 스크랩 아닐 때: 기본 아이콘 (테두리만 회색)
+    const color = isFilled ? 'white' : '#666666';
+    const fill = isFilled ? 'white' : 'none';
+
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill={fill}>
+        <path d="M12.6666 14.5L7.99992 11.1667L3.33325 14.5V3.83333C3.33325 3.47971 3.47373 3.14057 3.72378 2.89052C3.97382 
+        2.64048 4.31296 2.5 4.66659 2.5H11.3333C11.6869 2.5 12.026 2.64048 12.2761 2.89052C12.5261 3.14057 
+        12.6666 3.47971 12.6666 3.83333V14.5Z" stroke={color} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
+  // 이름 타입 선택 UI 컴포넌트
+  const NameTypeSelector = ({ postNameType, selected, onChange }: { postNameType: number, selected: number, onChange: (type: number) => void }) => {
+    const canUseNickname = (postNameType & 1) > 0;
+    const canUseAnonymous = (postNameType & 2) > 0;
+
+    if (!(canUseNickname && canUseAnonymous)) return null; // 닉네임/익명 동시 사용 불가 시 숨김
+
+    return (
+      <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+        <input
+          type="checkbox"
+          className="cursor-pointer"
+          checked={selected === 2} // 익명이 선택되었을 때 체크
+          onChange={(e) => onChange(e.target.checked ? 2 : 1)}
+        />
+        익명
+      </label>
+    );
+  };
+
+  // 댓글 등록 핸들러
+  const handleCommentSubmit = async () => {
+    if (!postId || !newCommentContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+    try {
+      await createComment({
+        parent_article_id: postId,
+        commentContent: newCommentContent,
+        name_type: selectedNameType,
+      });
+      alert("댓글이 등록되었습니다.");
+      window.location.reload();
+    } catch (error: any) {
+      console.error("댓글 작성 실패:", error);
+      const errorMessage = error.response?.data?.message || "댓글 작성 중 오류가 발생했습니다.";
+      alert(errorMessage);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">로딩 중…</div>;
+  }
+
+  if (!post) {
+    return null; // 로딩이 끝났는데 post가 null이면 이미 notFound()가 호출된 상태
+  }
+
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
       <div className="flex flex-col w-[70vw] max-w-7xl gap-[20px]">
@@ -263,16 +365,24 @@ export default function PostDetailPage() {
               </div>
             </div>
             <div className='flex flex-row gap-[4px]'>
-              <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug">
+              <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:bg-gray-100 transition">
                 <Image src="/Alert.svg" alt="" width={15} height={15} />
                 신고
               </div>
-              <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug">
+              <div
+                className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug hover:shadow-md transition"
+                onClick={handleShare} // 공유 핸들러 연결
+              >
                 <Image src="/Share.svg" alt="" width={15} height={15} />
                 공유
               </div>
-              <div className="p-2 flex flex-row gap-2 cursor-pointer border border-[#E9E9E9] text-[#666666] rounded text-sm leading-snug">
-                <Image src="/Bookmark.svg" alt="" width={15} height={15} />
+              {/* 담아두기 버튼 */}
+              <div
+                className={`p-2 flex flex-row gap-2 cursor-pointer border rounded text-sm leading-snug hover:shadow-md transition ${post.my_scrap ? 'border-[#ED3A3A] bg-[#ed3a3a] text-white' : 'border-[#E9E9E9] text-[#666666]'
+                  }`}
+                onClick={handleScrap}
+              >
+                <BookmarkIcon isFilled={!!post.my_scrap} />
                 담아두기
               </div>
             </div>
@@ -285,12 +395,28 @@ export default function PostDetailPage() {
             <CommentList
               comment={val}
               key={idx}
+              postNameType={post.name_type}
+              myCommentProfile={post.my_comment_profile}
               onPositiveVote={comment_positive_vote_handler}
               onNegativeVote={comment_negative_vote_handler}
             />
           )
         }
-        <ReplyEditor isNested={false} />
+        {/* 댓글 입력 섹션 */}
+        <div className="flex flex-col gap-1 mt-4">
+          {post.my_comment_profile && (
+            <div className='flex flex-row gap-2 items-center px-2 mb-2'>
+              <img src={post.my_comment_profile.profile.picture} alt="my profile" width={24} height={24} className="rounded-full" />
+              <span className="font-medium text-md">{post.my_comment_profile.profile.nickname}</span>
+            </div>
+          )}
+          <ReplyEditor
+            isNested={false}
+            content={newCommentContent}
+            onContentChange={setNewCommentContent}
+            onSubmit={handleCommentSubmit}
+          />
+        </div>
       </div>
     </div>
   );

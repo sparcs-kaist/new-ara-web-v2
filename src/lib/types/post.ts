@@ -34,13 +34,26 @@ export interface Comment extends CommentNested {
   comments: CommentNested[];
 }
 
+// 스크랩 객체 타입을 명확하게 정의
+export interface Scrap {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+  parent_article: number;
+  scrapped_by: number;
+}
+
 export interface PostData {
   id: number;
   title: string;
-  content: any; // 에디터 컨텐츠는 객체 또는 문자열일 수 있음
+  content: any;
+  name_type: number; // 게시물의 이름 규칙
   negative_vote_count: number;
   positive_vote_count: number;
   my_vote: boolean | null;
+  my_scrap: Scrap | null;
+  my_comment_profile: Author | null; // 내 댓글 프로필 정보
   created_by: Author;
   parent_board: {
     id: number;
