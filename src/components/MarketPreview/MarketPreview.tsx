@@ -20,6 +20,7 @@ interface MarketArticle {
 const MarketPreview = () => {
     const [articles, setArticles] = useState<MarketArticle[]>([]);
     const [loading, setLoading] = useState(true);
+    const [errorIndexes, setErrorIndexes] = useState<number[]>([]);
 
     useEffect(() => {
         const getMarketData = async () => {
@@ -50,16 +51,27 @@ const MarketPreview = () => {
 
     return (
         <div className="grid grid-cols-3 gap-3 h-full">
-            {articles.map((article) => (
+            {articles.map((article, idx) => (
                 <Link key={article.id} href={`/post/${article.id}`} className="group flex flex-col">
-                    <div className="relative w-full aspect-square mb-2 overflow-hidden rounded-lg">
-                        <Image
-                            src={article.attachments[0]?.file || '/default-product-image.png'} // 기본 이미지 경로
-                            alt={article.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-200"
-                            sizes="(max-width: 768px) 50vw, 25vw"
-                        />
+                    <div className="relative w-full aspect-square mb-2 overflow-hidden rounded-lg flex items-center justify-center bg-gray-100">
+                        {errorIndexes.includes(idx) ? (
+                            <Image
+                                src="/Service_Logo_Simple.svg"
+                                alt="기본 이미지"
+                                fill
+                                className="object-contain p-8"
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                            />
+                        ) : (
+                            <Image
+                                src={article.attachments[0]?.file || '/default-product-image.png'}
+                                alt={article.title}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-200"
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                onError={() => setErrorIndexes(prev => [...prev, idx])}
+                            />
+                        )}
                     </div>
                     <h3 className="font-medium text-sm truncate group-hover:underline">{article.title}</h3>
                     <p className="font-bold text-sm text-[#ed3a3a]">
