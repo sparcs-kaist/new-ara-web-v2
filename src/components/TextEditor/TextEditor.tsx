@@ -21,9 +21,10 @@ import Italic from '@tiptap/extension-italic';
 import AttachmentImage from './components/AttachmentImage';
 import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
 import TextEditorLinkDialog from '@/components/TextEditor/components/TextEditorLinkDialog';
+import { cleanJsonString } from '@/components/TextEditor/utils/cleanJsonString';
 
 interface TextEditorProps {
-  content?: string;
+  content?: string | object; // string 또는 object 타입을 모두 받을 수 있도록 수정
   editable?: boolean;
   onOpenImageUpload?: () => void;
 }
@@ -80,21 +81,34 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         return;
       }
 
-      // 현재 에디터의 내용과 새로 받은 내용이 동일하면 업데이트를 건너뜁니다.
-      // 이렇게 하면 사용자가 편집하는 도중에 내용이 덮어쓰이는 것을 방지할 수 있습니다.
+      let parsedContent: object | null = null;
+
       try {
-        const currentContent = editor.getJSON();
-        // 에디터가 비어있거나(초기 상태) 내용이 다를 때만 업데이트
-        if (editor.isEmpty || JSON.stringify(currentContent) !== content) {
-          const parsedContent = JSON.parse(content);
-          editor.commands.setContent(parsedContent, false);
+        // 1. content가 문자열인 경우, 정리하고 파싱합니다.
+        if (typeof content === 'string') {
+          const cleanedString = cleanJsonString(content);
+          parsedContent = JSON.parse(cleanedString);
+        }
+        // 2. content가 이미 객체인 경우, 그대로 사용합니다.
+        else if (typeof content === 'object' && content !== null) {
+          parsedContent = content;
+        }
+
+        if (parsedContent) {
+          const currentContentStr = JSON.stringify(editor.getJSON());
+          const newContentStr = JSON.stringify(parsedContent);
+
+          // 에디터가 비어있거나 내용이 다를 때만 업데이트하여 커서 점프를 방지합니다.
+          if (editor.isEmpty || currentContentStr !== newContentStr) {
+            editor.commands.setContent(parsedContent, false);
+          }
         }
       } catch (e) {
-        // JSON 파싱에 실패하면 일반 텍스트로 처리 (하위 호환성)
-        if (editor.getText() !== content) {
+        // 3. 모든 파싱 시도가 실패하면, 원본 content를 일반 텍스트로 처리합니다.
+        if (typeof content === 'string' && editor.getText() !== content) {
           editor.commands.setContent(content, false);
         }
-        console.error("Failed to parse content as JSON, treating as plain text:", e);
+        console.error("Failed to parse content, treating as plain text:", e);
       }
     }, [content, editor]);
 
