@@ -69,15 +69,34 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         }),
         Bold,
       ],
-      content,
+      // 'content' prop은 초기 렌더링에만 사용되므로,
+      // 비동기 로딩을 위해 빈 상태로 시작하고 useEffect에서 설정합니다.
+      content: '',
     });
 
-    // view 모드일 땐 content만 갱신
+    // content prop이 변경될 때마다 에디터의 내용을 갱신합니다.
     useEffect(() => {
-      if (editor && !editable) {
-        editor.commands.setContent(content);
+      if (!editor || !content) {
+        return;
       }
-    }, [content, editable, editor]);
+
+      // 현재 에디터의 내용과 새로 받은 내용이 동일하면 업데이트를 건너뜁니다.
+      // 이렇게 하면 사용자가 편집하는 도중에 내용이 덮어쓰이는 것을 방지할 수 있습니다.
+      try {
+        const currentContent = editor.getJSON();
+        // 에디터가 비어있거나(초기 상태) 내용이 다를 때만 업데이트
+        if (editor.isEmpty || JSON.stringify(currentContent) !== content) {
+          const parsedContent = JSON.parse(content);
+          editor.commands.setContent(parsedContent, false);
+        }
+      } catch (e) {
+        // JSON 파싱에 실패하면 일반 텍스트로 처리 (하위 호환성)
+        if (editor.getText() !== content) {
+          editor.commands.setContent(content, false);
+        }
+        console.error("Failed to parse content as JSON, treating as plain text:", e);
+      }
+    }, [content, editor]);
 
     // Expose editor to parent
     useImperativeHandle(ref, () => editor as Editor, [editor]);
@@ -91,9 +110,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
     return (
       <div
-        className={`editor relative transition-shadow ${
-          editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
-        } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
+        className={`editor relative transition-shadow ${editable ? 'border border-gray-300 rounded-xl hover:shadow-md' : ''
+          } ${editor?.isFocused ? 'shadow-md' : ''} mb-6`}
       >
         {/** view 모드에서 이미지 로드 에러만 보여줌 */}
         {!editable && imgError && (
@@ -109,33 +127,29 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         {editable && (
           <div className="sticky top-0 z-10 flex flex-wrap gap-x-4 gap-y-2 bg-gray-100 p-4 border-b border-gray-300 items-center">
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('bold') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('bold') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBold().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_bold</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('italic') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('italic') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleItalic().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_italic</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('strike') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('strike') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleStrike().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_strikethrough</i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('underline') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('underline') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleUnderline().run()}
             >
               <i className="material-icons text-xl text-gray-600">format_underline</i>
@@ -162,9 +176,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
             {/* Link */}
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('link') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('link') ? 'bg-gray-300' : ''
+                }`}
               onClick={showLinkDialog}
             >
               <i className="material-icons text-xl text-gray-600">link</i>
@@ -178,41 +191,36 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('code') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('code') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleCode().run()}
             >
               <i className="material-icons text-xl text-gray-600">code</i>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 1 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-                >
-                <span className="font-bold text-lg mr-1">H1</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+            >
+              <span className="font-bold text-lg mr-1">H1</span>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 2 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-                >
-                <span className="font-bold text-base mr-1">H2</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+            >
+              <span className="font-bold text-base mr-1">H2</span>
             </button>
             <button
-                className={`h-auto p-0 flex items-center justify-center ${
-                    editor?.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('heading', { level: 3 }) ? 'bg-gray-300' : ''
                 }`}
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-                >
-                <span className="font-bold text-sm mr-1">H3</span>
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+            >
+              <span className="font-bold text-sm mr-1">H3</span>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('bulletList') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('bulletList') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBulletList().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -220,9 +228,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('orderedList') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('orderedList') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleOrderedList().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -230,9 +237,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('blockquote') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('blockquote') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleBlockquote().run()}
             >
               <i className="material-icons text-xl text-gray-600">
@@ -240,9 +246,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
               </i>
             </button>
             <button
-              className={`h-auto p-0 flex items-center justify-center ${
-                editor?.isActive('codeBlock') ? 'bg-gray-300' : ''
-              }`}
+              className={`h-auto p-0 flex items-center justify-center ${editor?.isActive('codeBlock') ? 'bg-gray-300' : ''
+                }`}
               onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
             >
               <i className="material-icons text-xl text-gray-600">terminal</i>
@@ -270,8 +275,10 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
           editor={editor}
-          className="editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none"
+          className={`editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none ${editable ? 'p-4' : ''
+            }`}
         />
+
 
         {/** 링크 대화상자 */}
         <TextEditorLinkDialog

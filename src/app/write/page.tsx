@@ -1,18 +1,23 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'; // useRouter import
 import type { Editor } from '@tiptap/react'
 import type { AttachmentsHandles } from './components/Attachments'
 import TextEditor from '../../components/TextEditor/TextEditor'
 import PostOptionBar from './components/PostOptionBar'
 import Attachments, { UploadObject } from './components/Attachments'
 import type { Node as ProseMirrorNode } from 'prosemirror-model'
-import { createPost } from '@/lib/api/post'
+import { createPost, updatePost, fetchPost } from '@/lib/api/post'; // updatePost, fetchPost import
 import { fetchBoardList } from '@/lib/api/board'
 import { makeMarketMetadata } from '@/lib/utils/article_metadata'
 
 export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME'
 
 export default function Write() {
+  const router = useRouter(); // useRouter 훅 사용
+  const searchParams = useSearchParams();
+  const editPostId = searchParams.get('edit');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const attachmentsRef = useRef<AttachmentsHandles | null>(null);
@@ -44,6 +49,26 @@ export default function Write() {
   // 장터 전용 상태
   const [isMarket, setIsMarket] = useState(false);
   const [price, setPrice] = useState<string>('');
+  const [isEditMode, setIsEditMode] = useState(false); // 수정 모드 상태
+  const [initialContent, setInitialContent] = useState(''); // 수정 시 초기 콘텐츠
+
+  // 수정 모드일 때 기존 게시물 데이터 로드
+  useEffect(() => {
+    if (editPostId) {
+      setIsEditMode(true);
+      fetchPost({ postId: Number(editPostId) }).then(data => {
+        setTitle(data.title);
+        setInitialContent(data.content); // JSON 문자열 그대로 저장
+        // ... 기타 상태 설정
+        setBoardId(data.parent_board.id);
+        setIsSexual(data.is_content_sexual);
+        setIsSocial(data.is_content_social);
+      }).catch(err => {
+        console.error("게시물 로드 실패:", err);
+        alert("수정할 게시물을 불러오는 데 실패했습니다.");
+      });
+    }
+  }, [editPostId]);
 
   // TextEditor가 이미지 업로드 요청 시 호출
   const handleOpenImageUpload = () => {
@@ -92,43 +117,49 @@ export default function Write() {
     );
   };
 
-  // 게시글 저장 API 호출 핸들러
+  // 게시글 저장/수정 API 호출 핸들러
   const handleSavePost = async () => {
     if (!editorRef.current) return;
     setSaving(true);
     const content = JSON.stringify(editorRef.current.getJSON());
     const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? [];
 
-    // 장터 게시판이면 metadata 구성
     const metadata = isMarket
-      ? makeMarketMetadata({
-        price,            // 문자열이어도 내부에서 숫자로 정제
-        currency: 'KRW',
-        state: 'onsale',  // 필요시 UI에서 선택값으로 교체
-      })
+      ? makeMarketMetadata({ price, currency: 'KRW', state: 'onsale' })
       : undefined;
 
-    const newArticle = {
-      title,
-      content,
-      attachments: attachmentIds,
-      parent_board: boardId,
-      parent_topic: topicId,
-      is_content_sexual: isSexual,
-      is_content_social: isSocial,
-      name_type: nameType,
-      // price/price_currency 최상위 전송 제거, metadata로만 전송
-      ...(metadata ? { metadata } : {}),
-    };
-
     try {
-      // 디버깅: 실제 보낼 payload 확인
-      // console.log('POST payload', { ...newArticle, parent_board: boardId });
-      const result = await createPost({ boardId, newArticle });
-      alert(`글이 저장되었습니다 (ID: ${result.id})`);
+      if (isEditMode && editPostId) {
+        // 수정 모드
+        const articleData = {
+          title,
+          content,
+          attachments: attachmentIds,
+          ...(metadata ? { metadata } : {}),
+        };
+        await updatePost({ postId: Number(editPostId), newArticle: articleData });
+        alert('글이 수정되었습니다.');
+        router.push(`/post/${editPostId}`); // 수정된 게시글로 이동
+      } else {
+        // 생성 모드
+        const newArticle = {
+          title,
+          content,
+          attachments: attachmentIds,
+          parent_board: boardId,
+          parent_topic: topicId,
+          is_content_sexual: isSexual,
+          is_content_social: isSocial,
+          name_type: nameType,
+          ...(metadata ? { metadata } : {}),
+        };
+        const result = await createPost({ boardId: boardId!, newArticle });
+        alert(`글이 저장되었습니다.`);
+        router.push(`/post/${result.id}`); // 생성된 게시글로 이동
+      }
     } catch (err) {
       console.error(err);
-      alert('글 저장에 실패했습니다.');
+      alert(isEditMode ? '글 수정에 실패했습니다.' : '글 저장에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -140,7 +171,9 @@ export default function Write() {
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
       <div className="w-[70vw] max-w-7xl">
-        <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">게시물 작성하기</p>
+        <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">
+          {isEditMode ? '게시물 수정하기' : '게시물 작성하기'}
+        </p>
         <hr className="border-t border-gray-300 mb-6" />
         <PostOptionBar
           boards={boards}
@@ -173,6 +206,7 @@ export default function Write() {
           onChangeSexual={(flag) => {
             setIsSexual(flag);
           }}
+          disabled={isEditMode} // 수정 모드일 때 비활성화
         />
 
         <input
@@ -213,6 +247,7 @@ export default function Write() {
           editable={true}
           onOpenImageUpload={handleOpenImageUpload}
           ref={editorRef}
+          content={initialContent}
         />
 
         <input
@@ -241,7 +276,7 @@ export default function Write() {
             "
             disabled={saving}
           >
-            {saving ? '게시글 등록중...' : '게시글 등록하기'}
+            {saving ? (isEditMode ? '수정 중...' : '등록 중...') : (isEditMode ? '게시글 수정하기' : '게시글 등록하기')}
           </button>
         </div>
       </div>

@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react';
 import { fetchPost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
-
-interface PostData {
-  id: number;
-  title: string;
-  content: string;
-}
+import { type PostData } from '@/lib/types/post'; // <<< 타입 가져오기
 
 // JSON 문자열 정리 함수
 const cleanJsonString = (jsonStr: string): string => {
@@ -34,7 +29,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostData | null>(null);
 
   useEffect(() => {
-    fetchPost({ 
+    fetchPost({
       postId: 12032,
       fromView: 'all',
       current: 3,
@@ -44,13 +39,13 @@ export default function PostDetailPage() {
         console.log('Post data:', data);
         console.log('Content type:', typeof data.content);
         console.log('Content value:', data.content);
-        
+
         // content 타입에 따라 처리
         let processedContent = data.content;
-        
+
         if (typeof data.content === 'string') {
           const trimmed = data.content.trim();
-          
+
           // JSON 형태인지 확인 ('{' 로 시작)
           if (trimmed.startsWith('{')) {
             try {
@@ -83,11 +78,11 @@ export default function PostDetailPage() {
           console.log('Content is already parsed JSON object');
           processedContent = data.content;
         }
-         
-         setPost({
-           ...data,
-           content: processedContent
-         });
+
+        setPost({
+          ...data,
+          content: processedContent
+        });
       })
       .catch(console.error);
   }, []);
@@ -101,9 +96,9 @@ export default function PostDetailPage() {
       <div className="w-[70vw] max-w-7xl">
         <h1 className="text-3xl font-bold mb-6 text-[#ed3a3a]">{post.title}</h1>
         <hr className="border-t border-gray-300 mb-6" />
-        <TextEditor 
-          content={post.content} 
-          editable={false} 
+        <TextEditor
+          content={post.content}
+          editable={false}
         />
       </div>
     </div>
