@@ -8,8 +8,7 @@ import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
-//import MealData from "@/components/Meal/MealData";
-import OtherServices from "@/components/UserMenu/OtherServices";
+import SmallMyInfo from '@/components/SmallMyInfo';
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -110,9 +109,9 @@ export default function Home() {
 
             {/* 오른쪽 영역 (세로로 배치된 컴포넌트) */}
             <div className="w-[30%] flex flex-col gap-4"> {/* 너비 추가 감소, 갭 추가 감소 */}
-              {/* 기타 서비스 */}
+              {/* 미니 프로필 정보 */}
               <div>
-                <OtherServices />
+                <SmallMyInfo />
               </div>
 
               {/* 오늘의 식단 - 높이 확장 */}
