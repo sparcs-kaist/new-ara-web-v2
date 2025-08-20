@@ -12,6 +12,7 @@ import { formatDate } from '../formatDate';
 import CommentList from '@/app/post/components/CommentList';
 import { type PostData, type Scrap, type Author } from '@/lib/types/post';
 import ReplyEditor from '@/app/post/components/ReplyEditor';
+import ReportDialog from '@/app/post/components/ReportDialog'; // ReportDialog import
 
 export default function PostDetailPage() {
   // useParams를 사용하여 URL 파라미터에서 id 직접 가져오기
@@ -22,6 +23,7 @@ export default function PostDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [newCommentContent, setNewCommentContent] = useState('');
   const [selectedNameType, setSelectedNameType] = useState(1);
+  const [reportingCommentId, setReportingCommentId] = useState<number | null>(null);
 
   useEffect(() => {
     // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
@@ -399,6 +401,7 @@ export default function PostDetailPage() {
               myCommentProfile={post.my_comment_profile}
               onPositiveVote={comment_positive_vote_handler}
               onNegativeVote={comment_negative_vote_handler}
+              onReport={setReportingCommentId} // 신고 핸들러 전달
             />
           )
         }
@@ -418,6 +421,13 @@ export default function PostDetailPage() {
           />
         </div>
       </div>
+      {/* 신고 다이얼로그 (페이지 최상단에서 렌더링) */}
+      {reportingCommentId && (
+        <ReportDialog
+          commentId={reportingCommentId}
+          onClose={() => setReportingCommentId(null)}
+        />
+      )}
     </div>
   );
 }

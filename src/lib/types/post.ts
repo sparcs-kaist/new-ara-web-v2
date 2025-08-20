@@ -20,14 +20,18 @@ export interface Author {
 
 export interface CommentNested {
   id: number;
-  is_hidden: boolean;
-  my_vote: boolean | null;
-  is_mine: boolean;
   content: string;
   created_by: Author;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+  name_type: number;
+  is_mine: boolean;
+  my_vote: boolean | null;
   positive_vote_count: number;
   negative_vote_count: number;
-  created_at: string;
+  is_hidden?: boolean;
+  why_hidden?: string[];
 }
 
 export interface Comment extends CommentNested {

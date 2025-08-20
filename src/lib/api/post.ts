@@ -171,7 +171,7 @@ export const voteComment = async (commentId: number, action: VoteAction) => {
 // 댓글 신고
 export const reportComment = async (
   commentId: number,
-  typeReport: string,
+  typeReport: string = 'others',
   reasonReport: string
 ) => {
   const { data } = await http.post('reports/', {
