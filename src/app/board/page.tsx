@@ -121,9 +121,8 @@ export default function Board() {
                     {topicList.length > 0 && (
                       <div className="relative flex-shrink-0">
                         <select
-                          className={`rounded-xl pl-7 pr-3 py-1.5 text-sm appearance-none transition-colors w-auto ${
-                            selectedTopicId === '' ? 'bg-gray-100 text-gray-500' : 'bg-[#fdf0f0] text-ara_red'
-                          }`}
+                          className={`rounded-xl pl-7 pr-3 py-1.5 text-sm appearance-none transition-colors w-auto ${selectedTopicId === '' ? 'bg-gray-100 text-gray-500' : 'bg-[#fdf0f0] text-ara_red'
+                            }`}
                           value={selectedTopicId}
                           onChange={(e) => setSelectedTopicId(e.target.value)}
                           style={{
@@ -193,7 +192,7 @@ export default function Board() {
 
                   <button
                     className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0"
-                    onClick={() => router.push(`/write?board=${selectedBoard?.id ?? ''}`)}
+                    onClick={() => router.push(`/write`)}
                     disabled={!selectedBoard?.user_writable}
                   >
                     게시물 작성하기
