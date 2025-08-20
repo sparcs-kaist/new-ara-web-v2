@@ -84,12 +84,18 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
       let parsedContent: object | null = null;
 
       try {
-        // 1. content가 문자열인 경우, 정리하고 파싱합니다.
         if (typeof content === 'string') {
-          const cleanedString = cleanJsonString(content);
-          parsedContent = JSON.parse(cleanedString);
+          try {
+            // 1. 먼저 직접 파싱을 시도합니다.
+            parsedContent = JSON.parse(content);
+          } catch (directParseException) {
+            // 2. 직접 파싱이 실패하면, 문자열을 정리하고 다시 파싱합니다.
+            console.log("Direct JSON parsing failed, attempting to clean and re-parse...");
+            const cleanedString = cleanJsonString(content);
+            parsedContent = JSON.parse(cleanedString);
+          }
         }
-        // 2. content가 이미 객체인 경우, 그대로 사용합니다.
+        // 3. content가 이미 객체인 경우, 그대로 사용합니다.
         else if (typeof content === 'object' && content !== null) {
           parsedContent = content;
         }
@@ -104,11 +110,11 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
           }
         }
       } catch (e) {
-        // 3. 모든 파싱 시도가 실패하면, 원본 content를 일반 텍스트로 처리합니다.
+        // 4. 모든 파싱 시도가 실패하면, 원본 content를 일반 텍스트로 처리합니다.
         if (typeof content === 'string' && editor.getText() !== content) {
           editor.commands.setContent(content, false);
         }
-        console.error("Failed to parse content, treating as plain text:", e);
+        console.error("Failed to parse content even after cleaning, treating as plain text:", e);
       }
     }, [content, editor]);
 
