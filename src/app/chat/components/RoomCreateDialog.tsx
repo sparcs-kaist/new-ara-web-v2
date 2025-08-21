@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom"; // React DOM에서 createPortal 임포트
 

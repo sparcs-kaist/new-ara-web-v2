@@ -100,7 +100,7 @@ const Profile = () => {
     }
   };
 
-  const onCropComplete = useCallback((_, croppedAreaPixels) => {
+  const onCropComplete = useCallback((croppedArea: { x: number, y: number, width: number, height: number }, croppedAreaPixels: { x: number, y: number, width: number, height: number }) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
@@ -169,23 +169,23 @@ const Profile = () => {
   return (
     <div className="flex flex-col items-center mb-[24px]">
       <div className="relative mb-[24px]">
-        <Image 
-          src={profileImage} 
-          width={128} 
-          height={128} 
+        <Image
+          src={profileImage}
+          width={128}
+          height={128}
           style={{ objectFit: "cover", borderRadius: "50%" }} // 원형 유지
           alt="Profile Image"
           onClick={handlePictureClick}
           className="cursor-pointer"
         />
-        <input 
-          type="file" 
-          className="hidden" 
+        <input
+          type="file"
+          className="hidden"
           ref={fileInputRef}
           accept="image/*"
           onChange={handlePictureChange}
         />
-        <a 
+        <a
           className="absolute bottom-0 right-0 flex items-center justify-center w-[2rem] h-[2rem] rounded-full bg-white cursor-pointer"
           onClick={handlePictureClick}
         >
@@ -235,8 +235,8 @@ const Profile = () => {
             <div className="text-[20px] font-extrabold truncate inline-block">
               {nickname}
             </div>
-            <a 
-              className="ml-1 flex items-center cursor-pointer" 
+            <a
+              className="ml-1 flex items-center cursor-pointer"
               onClick={() => setIsNicknameEditable(true)}
             >
               <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">create</i>
@@ -265,7 +265,7 @@ const Profile = () => {
             </div>
           </div>
         )}
-        <div className="text-[16px] text-gray-500 font-medium truncate">{ email }</div>
+        <div className="text-[16px] text-gray-500 font-medium truncate">{email}</div>
       </div>
     </div>
   );
