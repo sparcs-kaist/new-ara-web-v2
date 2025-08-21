@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 "use client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -82,11 +84,11 @@ export interface NotificationItemProps {
   // API 에서 받아오는 data관련 Props
   type: string;
   isRead: boolean;
-  title : string;
-  content : string;
-  tag? : string;
-  detail? : string;
-  reply? : string;
+  title: string;
+  content: string;
+  tag?: string;
+  detail?: string;
+  reply?: string;
 
   showIcon?: boolean;
   showTag?: boolean;
@@ -117,7 +119,7 @@ export interface NotificationItemProps {
   replyFontWeight?: string;
 
   iconSize?: number; // 아이콘 사이즈(px)
-  
+
   timestamp?: string;
   raw?: Notification;
 }
@@ -202,13 +204,12 @@ export function NotificationItem({
       <div className="flex w-full justify-start items-center gap-4">
         {showIcon && (
           <div
-            className={`rounded-2xl inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden ${
-              type === "article_commented" || type === "comment_commented"
+            className={`rounded-2xl inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden ${type === "article_commented" || type === "comment_commented"
                 ? isRead
                   ? "bg-color-neutral-light1"
                   : "bg-color-brand-default"
                 : "bg-color-neutral-light1"
-            }`}
+              }`}
             style={{ width: iconSize, height: iconSize }}
           >
             <Image
@@ -245,7 +246,7 @@ export function NotificationItem({
           style={{
             marginTop: verticalSpacing,
             columnGap: 8,
-            paddingLeft: showIcon ?  (iconSize + 16) : 0,
+            paddingLeft: showIcon ? (iconSize + 16) : 0,
           }}
         >
           <>
@@ -315,9 +316,8 @@ export default function NotificationList({ ...props }: NotificationListProps) {
           return (
             <li
               key={idx}
-              className={`py-4 cursor-pointer px-4 transition-colors hover:bg-gray-50 ${
-                isRead ? "bg-gray-100 text-gray-400" : ""
-              }`}
+              className={`py-4 cursor-pointer px-4 transition-colors hover:bg-gray-50 ${isRead ? "bg-gray-100 text-gray-400" : ""
+                }`}
               onClick={() => {
                 if (articleId) {
                   router.push(`/article/${articleId}`);

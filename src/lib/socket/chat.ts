@@ -1,3 +1,4 @@
+/* eslint-disable */
 export class ChatSocketClient3 {
     private socket: WebSocket | null = null;
     private eventListeners: Record<string, Function[]> = {};

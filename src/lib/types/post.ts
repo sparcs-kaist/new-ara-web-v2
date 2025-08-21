@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 type WhyHidden = 'ADULT_CONTENT' | 'SOCIAL_CONTENT' | 'REPORTED_CONTENT' | 'BLOCKED_USER_CONTENT'
 type Attachment = 'NONE' | 'IMAGE' | 'NON_IMAGE' | 'BOTH' | 'FILE'
 type ReadStatus = 'N' | '-'

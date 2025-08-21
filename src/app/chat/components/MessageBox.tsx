@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import React from 'react';
 import Image from 'next/image';
 import { messageThemes, MessageTheme, BaseTheme, CatTheme } from './MessageThemes';

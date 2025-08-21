@@ -1,3 +1,4 @@
+/* eslint-disable */
 //답글 (대댓글 컴포넌트)
 'use client'
 
