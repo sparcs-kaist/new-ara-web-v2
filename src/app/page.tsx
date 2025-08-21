@@ -24,8 +24,10 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const hotResponse = await fetchTopArticles({ pageSize: 3 });
-        const recentResponse = await fetchArticles({ pageSize: 3, ordering: '-created_at' });
+        const [hotResponse, recentResponse] = await Promise.all([
+          fetchTopArticles({ pageSize: 3 }),
+          fetchArticles({ pageSize: 3, ordering: '-created_at' })
+        ]);
 
         setHotArticles(hotResponse.results);
         setRecentArticles(recentResponse.results);
