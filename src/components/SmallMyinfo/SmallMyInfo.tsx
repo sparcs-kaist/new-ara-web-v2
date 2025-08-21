@@ -11,6 +11,9 @@ interface UserData {
     num_articles: number;
     num_comments: number;
     num_positive_votes: number;
+    email?: string;
+    created_at?: string;
+    sso_user_info?: { email?: string };
 }
 
 const SmallMyInfo = () => {
@@ -44,6 +47,15 @@ const SmallMyInfo = () => {
             </div>
         );
     }
+
+    const emailToShow = userData.email || userData.sso_user_info?.email || '';
+    const formatLocalYYYYMMDD = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+    const joinedDateText = userData.created_at ? formatLocalYYYYMMDD(new Date(userData.created_at)) : '';
 
     return (
         <div className="p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">

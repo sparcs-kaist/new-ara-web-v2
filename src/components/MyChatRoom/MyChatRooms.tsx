@@ -55,13 +55,13 @@ const MyChatRooms = () => {
     }
 
     return (
-        <section className="w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow flex flex-col">
-            <Link href="/chat" className="flex items-center space-x-2 mb-[10px]">
+        <section className="w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow flex flex-col flex-1">
+            <Link href="/chat" className="flex items-center space-x-2 mb-[16px]">
                 <h2 className="text-[20px] font-bold">💬 나의 채팅방</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
             </Link>
             <div className="flex-grow">
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                     {rooms.map(room => (
                         <li key={room.id}>
                             <Link href={`/chat/${room.id}`} className="flex items-center p-2 -m-2 rounded-lg hover:bg-gray-50 transition">

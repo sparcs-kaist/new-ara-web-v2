@@ -151,10 +151,10 @@ export default function PosterCarousel() {
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-[20px] font-bold">📌 포스터</h2>
-                <Link href="/board/poster" className="text-sm text-gray-500 hover:underline">더보기</Link>
-            </div>
+            <Link href="/chat" className="flex items-center space-x-2 mb-[16px]">
+                <h2 className="text-[20px] font-bold">📌 Zabo</h2>
+                <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+            </Link>
             <div className="overflow-hidden">
                 <div
                     ref={trackRef}
