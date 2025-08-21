@@ -44,7 +44,7 @@ export default function Home() {
       {/* 상단 그라데이션 배경 적용 */}
       <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
 
-      <div className="h-[110px] w-full flex justify-center items-center pt-4 relative">
+      <div className="h-[110px] w-full flex justify-center items-center pb-4 relative">
         <form
           className="w-full max-w-[600px] mx-auto flex justify-center"
           onSubmit={e => {
