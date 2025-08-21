@@ -9,7 +9,8 @@ import Attachments, { UploadObject } from './components/Attachments'
 import type { Node as ProseMirrorNode } from 'prosemirror-model'
 import { createPost, updatePost, fetchPost } from '@/lib/api/post'; // updatePost, fetchPost import
 import { fetchBoardList } from '@/lib/api/board'
-import { makeMarketMetadata } from '@/lib/utils/article_metadata'
+import { makeMarketMetadata, makePosterMetadata } from '@/lib/utils/article_metadata'
+import Calendar from './components/Calendar/Calendar';
 
 export type NameType = 'REGULAR' | 'ANONYMOUS' | 'REALNAME'
 
@@ -21,6 +22,7 @@ export default function Write() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const attachmentsRef = useRef<AttachmentsHandles | null>(null);
+  const expirePopoverRef = useRef<HTMLDivElement>(null);
 
   // 1) BoardList API로 user_writable 게시판만 로드
   type ApiBoard = {
@@ -51,6 +53,12 @@ export default function Write() {
   const [price, setPrice] = useState<string>('');
   const [isEditMode, setIsEditMode] = useState(false); // 수정 모드 상태
   const [initialContent, setInitialContent] = useState(''); // 수정 시 초기 콘텐츠
+  const [initialAttachments, setInitialAttachments] = useState<UploadObject[]>([]); // 수정 시 초기 첨부파일
+  const [expireAt, setExpireAt] = useState<Date | null>(null);
+  const [expirePopoverOpen, setExpirePopoverOpen] = useState(false);
+
+  const isPosterBoard = boards.find(b => b.id === boardId)?.ko_name === '포스터';
+  const today = new Date();
 
   // 수정 모드일 때 기존 게시물 데이터 로드
   useEffect(() => {
@@ -59,10 +67,40 @@ export default function Write() {
       fetchPost({ postId: Number(editPostId) }).then(data => {
         setTitle(data.title);
         setInitialContent(data.content); // JSON 문자열 그대로 저장
-        // ... 기타 상태 설정
+
+        // --- 수정된 부분 ---
+        // 게시판, 말머리, 가격, 익명/실명, 소셜/성인글 상태 설정
         setBoardId(data.parent_board.id);
+        setTopicId(data.parent_topic?.id ? String(data.parent_topic.id) : '');
+
+        // 장터 게시판인 경우 가격 설정
+        if (data.parent_board.slug === 'market' && data.metadata?.price) {
+          setIsMarket(true);
+          setPrice(String(data.metadata.price));
+        }
+
+        // 익명/실명 여부 설정
+        if (data.name_type === 3) setNameType('ANONYMOUS');
+        else if (data.parent_board.name_type === 4) setNameType('REALNAME');
+        else setNameType('REGULAR');
+
         setIsSexual(data.is_content_sexual);
         setIsSocial(data.is_content_social);
+        // --- 여기까지 ---
+
+        // 첨부파일 초기화 (편집 모드)
+        if (Array.isArray(data.attachments)) {
+          const mapped: UploadObject[] = data.attachments.map((att: any) => ({
+            key: String(att.id ?? att.pk ?? att.key ?? att.attachment ?? att.file),
+            name: att.filename ?? att.name ?? att.file?.split('/').pop() ?? 'attachment',
+            type: (att.mimetype ?? att.type ?? 'file').startsWith('image') ? 'image' : 'file',
+            uploaded: true,
+            url: att.file ?? att.url,
+            blobUrl: att.file ?? att.url,
+          }));
+          setInitialAttachments(mapped);
+        }
+
       }).catch(err => {
         console.error("게시물 로드 실패:", err);
         alert("수정할 게시물을 불러오는 데 실패했습니다.");
@@ -117,16 +155,38 @@ export default function Write() {
     );
   };
 
+  // 로컬 타임존 기준 YYYY-MM-DD 포맷터
+  const formatLocalYYYYMMDD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   // 게시글 저장/수정 API 호출 핸들러
   const handleSavePost = async () => {
     if (!editorRef.current) return;
+    const attachmentFiles = attachmentsRef.current?.files ?? [];
+    if (isPosterBoard) {
+      const imageCount = attachmentFiles.filter(f => f.type === 'image').length;
+      if (imageCount < 1) {
+        alert('포스터 게시판에는 이미지 첨부가 1개 이상 필요합니다.');
+        return;
+      }
+      if (!expireAt) {
+        alert('만료일을 선택해 주세요.');
+        return;
+      }
+    }
     setSaving(true);
     const content = JSON.stringify(editorRef.current.getJSON());
-    const attachmentIds = attachmentsRef.current?.files.map(f => f.key) ?? [];
-
-    const metadata = isMarket
-      ? makeMarketMetadata({ price, currency: 'KRW', state: 'onsale' })
-      : undefined;
+    const metadata =
+      isMarket
+        ? makeMarketMetadata({ price, currency: 'KRW', state: 'onsale' })
+        : isPosterBoard && expireAt
+          // 날짜만 문자열로 전달(타임존 영향 제거)
+          ? makePosterMetadata({ expire_at: formatLocalYYYYMMDD(expireAt) })
+          : undefined;
 
     try {
       if (isEditMode && editPostId) {
@@ -134,7 +194,7 @@ export default function Write() {
         const articleData = {
           title,
           content,
-          attachments: attachmentIds,
+          attachments: attachmentFiles.map(f => f.key),
           ...(metadata ? { metadata } : {}),
         };
         await updatePost({ postId: Number(editPostId), newArticle: articleData });
@@ -145,7 +205,7 @@ export default function Write() {
         const newArticle = {
           title,
           content,
-          attachments: attachmentIds,
+          attachments: attachmentFiles.map(f => f.key),
           parent_board: boardId,
           parent_topic: topicId,
           is_content_sexual: isSexual,
@@ -167,6 +227,21 @@ export default function Write() {
 
   // 콤마 포매터
   const formatPrice = (s: string) => (s ? new Intl.NumberFormat('ko-KR').format(Number(s)) : '');
+
+  // 팝오버 바깥 클릭 시 닫힘 처리
+  useEffect(() => {
+    if (!expirePopoverOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        expirePopoverRef.current &&
+        !expirePopoverRef.current.contains(e.target as Node)
+      ) {
+        setExpirePopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [expirePopoverOpen]);
 
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
@@ -206,7 +281,8 @@ export default function Write() {
           onChangeSexual={(flag) => {
             setIsSexual(flag);
           }}
-          disabled={isEditMode} // 수정 모드일 때 비활성화
+          isEditMode={isEditMode}
+          disabled={saving}
         />
 
         <input
@@ -215,6 +291,7 @@ export default function Write() {
           value={title}
           onChange={e => setTitle(e.currentTarget.value)}
           className="w-full border border-gray-300 rounded px-4 py-2 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+          disabled={saving}
         />
 
         {isMarket && (
@@ -234,12 +311,62 @@ export default function Write() {
                     setPrice(digits);
                   }}
                   className="w-48 border border-gray-300 rounded px-3 py-1.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  disabled={saving}
                 />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-black">
                   ₩
                 </span>
               </div>
             </div>
+          </div>
+        )}
+
+        {isPosterBoard && (
+          <div className="mb-4 relative flex items-center gap-3">
+            <span className="text-[16px] text-black font-semibold">만료일 :</span>
+            <span className="text-sm text-gray-800 font-medium">
+              {expireAt ? formatLocalYYYYMMDD(expireAt) : '미설정'}
+            </span>
+            <button
+              type="button"
+              className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-100 transition"
+              onClick={() => setExpirePopoverOpen(o => !o)}
+            >
+              설정
+            </button>
+            {expirePopoverOpen && (
+              <div
+                ref={expirePopoverRef}
+                className="absolute left-0 top-full mt-2 z-30 bg-white border border-gray-300 rounded shadow-lg p-4"
+              >
+                <Calendar
+                  size="md"
+                  existDates={[today]}
+                  eventPeriods={[]}
+                  selectedDates={expireAt ? [expireAt] : []}
+                  onDateClick={date => {
+                    // 선택된 날짜를 로컬 자정으로 고정
+                    const selected = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(0, 0, 0, 0);
+                    const maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + 60);
+                    maxDate.setHours(0, 0, 0, 0);
+
+                    if (selected >= tomorrow && selected <= maxDate) {
+                      setExpireAt(selected);
+                      setExpirePopoverOpen(false);
+                    } else {
+                      alert('만료일은 최소 내일, 최대 60일 뒤까지 설정 가능합니다.');
+                    }
+                  }}
+                />
+                <div className="text-xs text-gray-500 mt-2">
+                  만료일은 최소 내일, 최대 60일 뒤까지 선택할 수 있습니다.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -261,6 +388,7 @@ export default function Write() {
         <Attachments
           ref={attachmentsRef}
           onDelete={handleAttachmentDelete}
+          initialFiles={initialAttachments}
         />
 
         {/* 저장 버튼 */}

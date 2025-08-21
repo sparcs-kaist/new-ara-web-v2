@@ -2,15 +2,15 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment, deletePost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
 import Image from "next/image";
-import { formatDate } from '../formatDate';
+import { formatDate } from '../util/formatDate';
 import CommentList from '@/app/post/components/CommentList';
-import { type PostData, type Scrap, type Author } from '@/lib/types/post';
+import { type PostData, type Scrap, type Author, type ArticleMetadata } from '@/lib/types/post';
 import ReplyEditor from '@/app/post/components/ReplyEditor';
 import ReportDialog from '@/app/post/components/ReportDialog'; // ReportDialog import
 
@@ -25,6 +25,29 @@ export default function PostDetailPage() {
   const [selectedNameType, setSelectedNameType] = useState(1);
   const [reportingCommentId, setReportingCommentId] = useState<number | null>(null);
   const [isPostReportVisible, setIsPostReportVisible] = useState(false); // 게시글 신고 다이얼로그 상태
+  const mappedAttachments = post?.attachments?.map(att => ({
+    key: String(att.id),
+    name: att.file?.split('/').pop() ?? 'attachment',
+    url: att.file,
+    type: att.mimetype.startsWith('image') ? 'image' : (att.mimetype.includes('pdf') ? 'pdf' : 'file'),
+  })) ?? [];
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // 팝오버 바깥 클릭 시 닫힘 처리
+  useEffect(() => {
+    if (!popoverOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        setPopoverOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [popoverOpen]);
 
   useEffect(() => {
     // postId가 유효한 숫자가 아니면 404 페이지로 리다이렉트
@@ -342,10 +365,30 @@ export default function PostDetailPage() {
 
   return (
     <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
-      <div className="flex flex-col w-[70vw] max-w-7xl gap-[20px]">
+      <div className="w-[70vw] max-w-7xl">
         {/* 제목 부분 */}
         <div className="flex flex-col gap-[8px]">
           <div className="text-[18px] font-bold text-black leading-[25.2px]">{post.title}</div>
+
+          {/* 메타데이터 표시 영역 (포스터 만료일 또는 장터 가격) */}
+          {post.metadata && (
+            <div className="mt-1">
+              {/* 포스터 만료일 표시 */}
+              {post.metadata.expire_at && typeof post.metadata.expire_at === 'string' && (
+                <p className="text-sm text-black">
+                  만료일: {post.metadata.expire_at}
+                </p>
+              )}
+
+              {/* 장터 가격 표시 */}
+              {post.metadata.price !== undefined && post.metadata.price !== null && (
+                <p className="text-lg font-bold text-[#ed3a3a]">
+                  {Number(post.metadata.price).toLocaleString()}￦
+                </p>
+              )}
+            </div>
+          )}
+
           <div className='flex flex-row w-full h-fit justify-between items-center'>
             <div className='flex flex-row gap-[4px] cursor-pointer text-[#333333] items-center' onClick={() => { }}>
               <img src={post.created_by.profile.picture} alt="example" width={20} />
@@ -357,6 +400,49 @@ export default function PostDetailPage() {
             </div>
           </div>
           <div className="w-full h-[1px] bg-[#B5B5B5]" />
+        </div>
+        {/* 중간 첨부파일 */}
+        <div className="flex flex-col items-end">
+          <div className="flex justify-end relative">
+            <span
+              className="text-md text-gray-700 font-medium cursor-pointer hover:text-red-500 px-2 py-1 bg-white rounded"
+              onClick={() => mappedAttachments.length > 0 && setPopoverOpen(o => !o)}
+            >
+              {mappedAttachments.length > 0 ? `첨부파일 모아보기 (${mappedAttachments.length})` : ' '}
+            </span>
+            {popoverOpen && mappedAttachments.length > 0 && (
+              <div
+                ref={popoverRef}
+                className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-300 rounded shadow-lg p-3 space-y-2 z-30"
+              >
+                {mappedAttachments.map(att => (
+                  <div
+                    key={att.key}
+                    className="flex items-center gap-3 rounded px-2 py-1"
+                  >
+                    <span className="shrink-0">
+                      {att.type === 'image' ? '🖼️' : att.type === 'pdf' ? '📄' : '📎'}
+                    </span>
+                    <span
+                      className="flex-1 min-w-0 truncate text-xs text-gray-800"
+                      title={att.name}
+                    >
+                      {att.name}
+                    </span>
+                    <a
+                      href={att.url}
+                      download={att.name}
+                      className="px-2 py-0.5 text-xs bg-white rounded hover:text-red-500 transition"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      다운로드
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {/* 본문 */}
         <div className='flex flex-col gap-[40px]'>

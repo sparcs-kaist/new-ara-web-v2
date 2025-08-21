@@ -194,6 +194,7 @@ export default function NavBarMiddle() {
       </div>
 
       <Link href="/chat" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">채팅</Link>
+      <Link href="/board?board=poster" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">포스터</Link>
     </div>
   );
 }

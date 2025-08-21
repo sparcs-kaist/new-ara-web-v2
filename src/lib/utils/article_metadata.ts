@@ -38,3 +38,16 @@ export function makeMarketMetadata(params: {
 
     return Object.keys(out).length ? out : undefined;
 }
+
+// 포스터 게시판용 metadata
+export function makePosterMetadata(params: {
+    expire_at: string // yyyy-mm-dd format
+}): ArticleMetadata | undefined {
+    const out: ArticleMetadata = {};
+
+    if (params.expire_at) {
+        out.expire_at = params.expire_at;
+    }
+
+    return Object.keys(out).length ? out : undefined;
+}

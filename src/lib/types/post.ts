@@ -48,11 +48,20 @@ export interface Scrap {
   scrapped_by: number;
 }
 
+// 게시글 메타데이터 타입 정의
+export interface ArticleMetadata {
+  price?: number;
+  currency?: string;
+  state?: 'onsale' | 'reserved' | 'soldout';
+  expire_at?: string;
+}
+
 export interface PostData {
   id: number;
   is_mine: boolean; // is_mine 필드 추가
   title: string;
   content: any;
+  metadata: ArticleMetadata | null; // {} 대신 구체적인 타입 적용
   name_type: number; // 게시물의 이름 규칙
   negative_vote_count: number;
   positive_vote_count: number;
@@ -69,6 +78,15 @@ export interface PostData {
   created_at: string;
   hit_count: number;
   comments: Comment[];
+  attachments: Array<{
+    id: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    file: string;
+    size: number;
+    mimetype: string;
+  }>;
   // API 응답의 다른 필드들도 필요에 따라 추가할 수 있습니다.
 }
 
@@ -178,6 +196,7 @@ export function getBoardKoNameById(boardId: number): string {
     case 14: return "학교에게 전합니다";
     case 17: return "카이스트 뉴스";
     case 18: return "외부 업체 홍보";
+    case 19: return "포스터";
     default: return "알 수 없음";
   }
 }

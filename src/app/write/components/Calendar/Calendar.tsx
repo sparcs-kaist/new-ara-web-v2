@@ -1,3 +1,4 @@
+// This component is from Clubs. Thanks for 'ava' !
 
 import {
   addDays,
@@ -9,10 +10,10 @@ import {
 } from "date-fns";
 import React, { useState } from "react";
 
-import { CalendarDateProps } from "@/components/Calendar/_atomic/CalendarDate";
-import CalendarWeek, { CalendarSizeProps } from "@/components/Calendar/_atomic/CalendarWeek";
-import CalendarWeekdays from "@/components/Calendar/_atomic/CalendarWeekdays";
-import MonthNavigator from "@/components/Calendar/_atomic/MonthNavigator";
+import { CalendarDateProps } from "@/app/write/components/Calendar/_atomic/CalendarDate";
+import CalendarWeek, { CalendarSizeProps } from "@/app/write/components/Calendar/_atomic/CalendarWeek";
+import CalendarWeekdays from "@/app/write/components/Calendar/_atomic/CalendarWeekdays";
+import MonthNavigator from "@/app/write/components/Calendar/_atomic/MonthNavigator";
 
 interface EventPeriod {
   start: Date;
@@ -33,7 +34,7 @@ const Calendar: React.FC<CalendarProps> = ({
   existDates,
   eventPeriods,
   selectedDates,
-  onDateClick = () => {},
+  onDateClick = () => { },
 }) => {
   const [currentDate, setCurrentDate] = useState(
     eventPeriods[0]?.start || new Date(),

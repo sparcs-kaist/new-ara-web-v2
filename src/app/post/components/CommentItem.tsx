@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { formatDate } from "@/app/post/formatDate";
+import { formatDate } from "@/app/post/util/formatDate";
 import { type CommentNested, type Author } from '@/lib/types/post';
 import { deleteComment, updateComment } from "@/lib/api/post"; // updateComment import
 import CommentMenuPopover from "./CommentMenuPopover";
