@@ -48,11 +48,20 @@ export interface Scrap {
   scrapped_by: number;
 }
 
+// 게시글 메타데이터 타입 정의
+export interface ArticleMetadata {
+  price?: number;
+  currency?: string;
+  state?: 'onsale' | 'reserved' | 'soldout';
+  expire_at?: string;
+}
+
 export interface PostData {
   id: number;
   is_mine: boolean; // is_mine 필드 추가
   title: string;
   content: any;
+  metadata: ArticleMetadata | null; // {} 대신 구체적인 타입 적용
   name_type: number; // 게시물의 이름 규칙
   negative_vote_count: number;
   positive_vote_count: number;

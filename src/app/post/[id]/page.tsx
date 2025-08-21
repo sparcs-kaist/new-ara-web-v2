@@ -10,7 +10,7 @@ import { formatPost } from '../util/getPost';
 import Image from "next/image";
 import { formatDate } from '../util/formatDate';
 import CommentList from '@/app/post/components/CommentList';
-import { type PostData, type Scrap, type Author } from '@/lib/types/post';
+import { type PostData, type Scrap, type Author, type ArticleMetadata } from '@/lib/types/post';
 import ReplyEditor from '@/app/post/components/ReplyEditor';
 import ReportDialog from '@/app/post/components/ReportDialog'; // ReportDialog import
 
@@ -369,6 +369,26 @@ export default function PostDetailPage() {
         {/* 제목 부분 */}
         <div className="flex flex-col gap-[8px]">
           <div className="text-[18px] font-bold text-black leading-[25.2px]">{post.title}</div>
+
+          {/* 메타데이터 표시 영역 (포스터 만료일 또는 장터 가격) */}
+          {post.metadata && (
+            <div className="mt-1">
+              {/* 포스터 만료일 표시 */}
+              {post.metadata.expire_at && typeof post.metadata.expire_at === 'string' && (
+                <p className="text-sm text-black">
+                  만료일: {post.metadata.expire_at}
+                </p>
+              )}
+
+              {/* 장터 가격 표시 */}
+              {post.metadata.price !== undefined && post.metadata.price !== null && (
+                <p className="text-lg font-bold text-[#ed3a3a]">
+                  {Number(post.metadata.price).toLocaleString()}￦
+                </p>
+              )}
+            </div>
+          )}
+
           <div className='flex flex-row w-full h-fit justify-between items-center'>
             <div className='flex flex-row gap-[4px] cursor-pointer text-[#333333] items-center' onClick={() => { }}>
               <img src={post.created_by.profile.picture} alt="example" width={20} />
