@@ -94,7 +94,7 @@ export default function Home() {
               {/* 2행: lg 이하는 세로, lg 이상은 가로 그리드 */}
               <div className="flex flex-col lg:grid lg:grid-cols-10 gap-3">
                 <section className="lg:col-span-5 w-full p-3 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
-                  <Link href="/board/market" className="flex items-center space-x-2 mb-[10px]">
+                  <Link href="/board?board=market" className="flex items-center space-x-2 mb-[10px]">
                     <h2 className="text-[20px] font-bold">🛍️ 장터</h2>
                     <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                   </Link>
