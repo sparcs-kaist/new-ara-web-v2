@@ -1,10 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import NavBarProfile from "@/components/NavBar/NavBarProfile";
+import { logout, fetchMe } from '@/lib/api/user'
 
-export default function NavBarMore({onClose}: {onClose: () => void}) {
+export default function NavBarMore({ onClose }: { onClose: () => void }) {
+  const [userId, setUserId] = useState<number | string>('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user_data = await fetchMe();
+      setUserId(user_data.user);
+    };
+    fetchUser();
+  }, []);
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({
     notice: false,
     clubs: false,
@@ -18,9 +28,14 @@ export default function NavBarMore({onClose}: {onClose: () => void}) {
     }));
   };
 
+  const LogoutHandler = async (userId: number | string) => {
+    await logout(userId);
+    window.location.href = '/login'; // 로그아웃 후 로그인 페이지로 이동 @Todo : 원래 SSO_logout API가 잘 안되는 것 같은데 확인하기
+  }
+
   return (
     <div className="w-screen bg-white absolute top-[77px] left-0 shadow-md">
-      <ul className="py-4 space-y-[14px]" style={{paddingLeft: "clamp(20px, 5vw, 150px)"}}>
+      <ul className="py-4 space-y-[14px]" style={{ paddingLeft: "clamp(20px, 5vw, 150px)" }}>
         {/* 공지 */}
         <li>
           <button
@@ -103,23 +118,15 @@ export default function NavBarMore({onClose}: {onClose: () => void}) {
             인기글 게시판
           </Link>
         </li>
-
-        {/*언어 변경*/}
-        <li>
-          <button className="w-full text-left px-4 py-2">
-           English 
-          </button>
-        </li>
-
         {/*프로필*/}
         <div className="w-full px-4 py-2" onClick={onClose}>
           <NavBarProfile />
         </div>
-        
+
         {/*로그아웃*/}
         <li >
-          <button className="w-full text-left px-4 py-2" onClick={onClose}>
-           로그아웃
+          <button className="w-full text-left px-4 py-2" onClick={() => LogoutHandler(userId)}>
+            로그아웃
           </button>
         </li>
 
