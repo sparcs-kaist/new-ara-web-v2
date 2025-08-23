@@ -77,7 +77,7 @@ export default function Home() {
               {/* 1행: lg 이하는 세로, lg 이상은 가로 그리드 */}
               <div className="flex flex-col lg:grid lg:grid-cols-10 gap-3">
                 <section className="lg:col-span-6 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
-                  <Link href="/board/hot" className="flex items-center space-x-2 mb-[10px]">
+                  <Link href="/board?board=popular" className="flex items-center space-x-2 mb-[10px]">
                     <h2 className="text-[20px] font-bold">🔥 지금 핫한 글</h2>
                     <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                   </Link>
