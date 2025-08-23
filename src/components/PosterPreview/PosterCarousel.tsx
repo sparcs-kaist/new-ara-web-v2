@@ -152,7 +152,7 @@ export default function PosterCarousel() {
 
     return (
         <div className="w-full">
-            <Link href="/chat" className="flex items-center space-x-2 mb-[16px]">
+            <Link href="/board?board=poster" className="flex items-center space-x-2 mb-[16px]">
                 <h2 className="text-[20px] font-bold">📌 Zabo</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
             </Link>
