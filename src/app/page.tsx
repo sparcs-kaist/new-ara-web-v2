@@ -101,7 +101,7 @@ export default function Home() {
                   <MarketPreview />
                 </section>
                 <section className="lg:col-span-5 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
-                  <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
+                  <Link href="/board" className="flex items-center space-x-2 mb-[10px]">
                     <h2 className="text-[20px] font-bold">🕑 방금 올라온 글</h2>
                     <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                   </Link>
