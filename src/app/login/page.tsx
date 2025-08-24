@@ -4,9 +4,6 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import LoginPageButton from './components/LoginPageButton'
 
-import NewAraLogo from '@/assets/ServiceAra.svg'
-import LoginIcon from '@/assets/Icon/login.svg'
-
 export default function LoginPage() {
   const [loginUrl, setLoginUrl] = useState<string | null>(null)
 
@@ -24,7 +21,7 @@ export default function LoginPage() {
     <div className="flex flex-col lg:flex-row lg:h-full">
       {/* 좌측 영역 */}
       <div className="flex flex-col justify-center items-center w-full h-[250px] bg-[#fbf2f1] lg:w-[30%] lg:h-full lg:min-w-[320px]">
-        <Image src={NewAraLogo} alt="NewAraLogo" className="h-[82px] w-[154px] mb-[15px]" />
+        <Image src="/Logo/ServiceAra.svg" alt="NewAraLogo" className="h-[82px] w-[154px] mb-[15px]" />
         <p className="text-center text-[#ed3a3a] font-semibold text-[21px] lg:text-[32px]">가장 정확한 정보를</p>
         <p className="text-center text-[#ed3a3a] font-semibold text-[21px] lg:text-[32px]">가장 신속하게</p>
       </div>
@@ -52,7 +49,7 @@ export default function LoginPage() {
               <LoginPageButton
                 redirectUrl={loginUrl}
                 fontSize={18}
-                icon={<Image src={LoginIcon} alt="로그인 아이콘" />}
+                icon={<Image src={"/Icon/login.svg"} alt="로그인 아이콘" />}
               >
                 SPARCS SSO로 로그인
               </LoginPageButton>

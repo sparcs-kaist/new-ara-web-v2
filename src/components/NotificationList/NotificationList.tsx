@@ -157,15 +157,15 @@ export interface NotificationListProps {
 // 아이콘 경로를 타입별로 결정하는 함수
 function getNotificationIcon(type: string, isRead: boolean): string {
   if (type === "article_commented") {
-    return isRead ? "/notification/comment_read.svg" : "/notification/comment.svg";
+    return isRead ? "/Notification/comment_read.svg" : "/Notification/comment.svg";
   }
   if (type === "comment_commented") {
-    return isRead ? "/notification/recomment_read.svg" : "/notification/recomment.svg";
+    return isRead ? "/Notification/recomment_read.svg" : "/Notification/recomment.svg";
   }
   if (type === "chat_message") {
-    return isRead ? "/notification/comment_read.svg" : "/notification/comment.svg";
+    return isRead ? "/Notification/comment_read.svg" : "/Notification/comment.svg";
   }
-  return "/notification/comment.svg";
+  return "/Notification/comment.svg";
 }
 
 export function NotificationItem({
@@ -205,10 +205,10 @@ export function NotificationItem({
         {showIcon && (
           <div
             className={`rounded-2xl inline-flex flex-col justify-center items-center gap-2.5 overflow-hidden ${type === "article_commented" || type === "comment_commented"
-                ? isRead
-                  ? "bg-color-neutral-light1"
-                  : "bg-color-brand-default"
-                : "bg-color-neutral-light1"
+              ? isRead
+                ? "bg-color-neutral-light1"
+                : "bg-color-brand-default"
+              : "bg-color-neutral-light1"
               }`}
             style={{ width: iconSize, height: iconSize }}
           >
