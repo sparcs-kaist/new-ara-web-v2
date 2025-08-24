@@ -1,14 +1,16 @@
+/* eslint-disable */
+
 'use client';
 import React, { useState } from 'react';
-import SmallBoardMyInfo from "../../components/MyInfo/SmallBoardMyInfo";
-import { MyActivity } from "../../components/MyInfo/MyActivity";
-import PostSetting from "../../components/MyInfo/PostSetting";
-import BlockedUser from "../../components/MyInfo/BlockedUser";
-import Profile from "../../components/MyInfo/Profile";
+import SmallBoardMyInfo from "@/app/myinfo/components/SmallBoardMyInfo";
+import { MyActivity } from "@/app/myinfo/components/MyActivity";
+import PostSetting from "@/app/myinfo/components/PostSetting";
+import BlockedUser from "@/app/myinfo/components/BlockedUser";
+import Profile from "@/app/myinfo/components/Profile";
 import { ProfileRecentArticleList } from "../../containers/ArticleList"
 import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
 import { ProfileMyArticleList } from "../../containers/ArticleList";
-import { BasicNotificationList } from "../../containers/NotificationList";
+import { ProfileNotificationList } from "../../containers/NotificationList";
 
 
 import clsx from 'clsx';
@@ -18,7 +20,7 @@ type TabType = typeof TABS[number];
 
 const MyInfo = () => {
   const [tab, setTab] = useState<TabType>('내가 쓴 글');
-  const [, setPages] = useState<Record<TabType, number>>({
+  const [pages, setPages] = useState<Record<TabType, number>>({
     '내가 쓴 글': 1,
     '최근 본 글': 1,
     '담아둔 글': 1,
@@ -99,16 +101,16 @@ const MyInfo = () => {
 
         <div>
           {tab === '내가 쓴 글' && (
-            <ProfileMyArticleList filters={filters} />
+            <ProfileMyArticleList filters={filters} search={currentSearch} />
           )}
           {tab === '최근 본 글' && (
-            <ProfileRecentArticleList filters={filters} />
+            <ProfileRecentArticleList filters={filters} search={currentSearch} />
           )}
           {tab === '담아둔 글' && (
-            <ProfileBookmarkedArticlesList filters={filters} />
+            <ProfileBookmarkedArticlesList filters={filters} search={currentSearch} />
           )}
           {tab === '알림' && (
-            <BasicNotificationList />
+            <ProfileNotificationList search={currentSearch} />
           )}
         </div>
       </div>

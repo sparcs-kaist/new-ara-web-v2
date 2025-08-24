@@ -10,7 +10,13 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ['sparcs-newara-dev.s3.amazonaws.com'],
+    domains: ['sparcs-newara-dev.s3.amazonaws.com',
+      'sparcs-newara.s3.amazonaws.com',
+      'newara.dev.sparcs.org',
+      'newara.sparcs.org',
+      'newara-front.dev.sparcs.org'
+    ],
+    unoptimized: true,// newara-front.dev는 로컬 개발용
   },
   webpack(config) {
     config.module.rules.push({

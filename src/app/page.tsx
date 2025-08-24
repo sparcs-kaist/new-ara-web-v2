@@ -8,8 +8,11 @@ import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
-//import MealData from "@/components/Meal/MealData";
-import OtherServices from "@/components/UserMenu/OtherServices";
+import SmallMyInfo from '@/components/SmallMyinfo/SmallMyInfo';
+import MyChatRooms from '@/components/MyChatRoom/MyChatRooms';
+import MarketPreview from "@/components/MarketPreview/MarketPreview";
+import PosterCarousel from "@/components/PosterPreview/PosterCarousel";
+import SparcsNotice from "@/components/SparcsNotice/SparcsNotice";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -21,8 +24,10 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const hotResponse = await fetchTopArticles({ pageSize: 3 });
-        const recentResponse = await fetchArticles({ pageSize: 3, ordering: '-created_at' });
+        const [hotResponse, recentResponse] = await Promise.all([
+          fetchTopArticles({ pageSize: 3 }),
+          fetchArticles({ pageSize: 3, ordering: '-created_at' })
+        ]);
 
         setHotArticles(hotResponse.results);
         setRecentArticles(recentResponse.results);
@@ -41,7 +46,7 @@ export default function Home() {
       {/* 상단 그라데이션 배경 적용 */}
       <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
 
-      <div className="h-[110px] w-full flex justify-center items-center pt-4 relative">
+      <div className="h-[110px] w-full flex justify-center items-center pb-4 relative">
         <form
           className="w-full max-w-[600px] mx-auto flex justify-center"
           onSubmit={e => {
@@ -61,70 +66,72 @@ export default function Home() {
         </form>
       </div>
 
-      {/* 실제 메인 페이지 컨텐츠 */}
-      <main className="flex gap-4 px-1">
+      {/* 실제 메인 페이지 컨텐츠 - Grid 레이아웃, 좌우 여백(padding) 추가 */}
+      <main className="grid grid-cols-10 gap-3 xl:px-1 md:px-16 sm:px-12 px-8">
         {loading ? (
-          <div className="text-center py-8 w-full">데이터를 불러오는 중...</div>
+          <div className="col-span-10 text-center py-8">데이터를 불러오는 중...</div>
         ) : (
           <>
-            {/* 왼쪽 영역 (비율 조정된 그리드 구조) */}
-            <div className="w-[70%] grid grid-cols-5 gap-3 auto-rows-auto"> {/* 5열 그리드로 변경 */}
-              {/* 1행 1열: 지금 핫한 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
-                <Link href="/board/hot" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🔥 지금 핫한 글</h2>
-                  <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
-                </Link>
-                <HotPreview />
-              </section>
-
-              {/* 1행 2열: 학교에게 전합니다 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
-                <Link href="/board/school" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🏫 학교에게 전합니다</h2>
-                  <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
-                </Link>
-                <ToSchoolPreview />
-              </section>
-
-              {/* 2행 1열: 나의 시간표 (넓어짐) */}
-              <section className="col-span-2 w-full p-3 bg-white rounded-lg shadow border border-gray-200"> {/* 2/5 너비 */}
-                <Link href="/timetable" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">📆 나의 시간표</h2>
-                  <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
-                </Link>
-                <div className="h-[180px] flex items-center justify-center text-gray-500">
-                  시간표 미리보기
-                </div>
-              </section>
-
-              {/* 2행 2열: 방금 올라온 글 (약간 줄어듦) */}
-              <section className="col-span-3 w-full p-4 bg-white rounded-lg shadow border border-gray-200"> {/* 3/5 너비 */}
-                <Link href="/board/recent" className="flex items-center space-x-2 mb-[10px]">
-                  <h2 className="text-[20px] font-semibold">🕑 방금 올라온 글</h2>
-                  <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
-                </Link>
-                <RecentPreview />
-              </section>
+            {/* --- 상단 왼쪽 영역 (1, 2행) --- */}
+            <div className="col-span-10 xl:col-span-7 flex flex-col gap-3">
+              {/* 1행: lg 이하는 세로, lg 이상은 가로 그리드 */}
+              <div className="flex flex-col lg:grid lg:grid-cols-10 gap-3">
+                <section className="lg:col-span-6 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+                  <Link href="/board?board=popular" className="flex items-center space-x-2 mb-[10px]">
+                    <h2 className="text-[20px] font-bold">🔥 지금 핫한 글</h2>
+                    <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+                  </Link>
+                  <HotPreview />
+                </section>
+                <section className="lg:col-span-4 w-full p-3 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+                  <Link href="/board?board=with-school" className="flex items-center space-x-2 mb-[10px]">
+                    <h2 className="text-[20px] font-bold">🏫 학교에게 전합니다</h2>
+                    <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+                  </Link>
+                  <ToSchoolPreview />
+                </section>
+              </div>
+              {/* 2행: lg 이하는 세로, lg 이상은 가로 그리드 */}
+              <div className="flex flex-col lg:grid lg:grid-cols-10 gap-3">
+                <section className="lg:col-span-5 w-full p-3 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+                  <Link href="/board?board=market" className="flex items-center space-x-2 mb-[10px]">
+                    <h2 className="text-[20px] font-bold">🛍️ 장터</h2>
+                    <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+                  </Link>
+                  <MarketPreview />
+                </section>
+                <section className="lg:col-span-5 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+                  <Link href="/board" className="flex items-center space-x-2 mb-[10px]">
+                    <h2 className="text-[20px] font-bold">🕑 방금 올라온 글</h2>
+                    <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+                  </Link>
+                  <RecentPreview />
+                </section>
+              </div>
             </div>
 
-            {/* 오른쪽 영역 (세로로 배치된 컴포넌트) */}
-            <div className="w-[30%] flex flex-col gap-4"> {/* 너비 추가 감소, 갭 추가 감소 */}
-              {/* 기타 서비스 */}
-              <div>
-                <OtherServices />
-              </div>
+            {/* --- 상단 오른쪽 영역 (내 정보, 채팅방) --- */}
+            {/* xl보다 작아지면 숨김 */}
+            <div className="hidden xl:flex col-span-3 flex-col gap-3">
+              <SmallMyInfo />
+              <MyChatRooms /> {/* flex-1 속성으로 남은 공간을 모두 채움 */}
+            </div>
 
-              {/* 오늘의 식단 - 높이 확장 */}
-              {/*
-              <div className="flex-grow">
-                <MealData />
-              </div>
-              */}
+            {/* --- 하단 왼쪽 영역 (포스터) --- */}
+            {/* xl보다 작아지면 전체 너비 차지 */}
+            <section className="col-span-10 xl:col-span-7 w-full p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
+              <PosterCarousel />
+            </section>
+
+            {/* --- 하단 오른쪽 영역 (SPARCS 공지) --- */}
+            {/* xl보다 작아지면 숨김 */}
+            <div className="hidden xl:flex col-span-3">
+              <SparcsNotice className="h-full w-full" />
             </div>
           </>
         )}
       </main>
+      {/* 포스터는 왼쪽 그리드 내부 3행에 배치됨 */}
     </div>
   );
 }

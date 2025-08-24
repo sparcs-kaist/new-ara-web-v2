@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
 import { fetchMe } from "@/lib/api/user";
-
+import { debounce } from "lodash";
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -282,12 +282,11 @@ function isPostHidden(post: any, filters: Filters) {
   return false;
 }
 
-//Profile 페이지 - 내가 쓴 글
-export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolean; seeSocial: boolean } }) {
+export function ProfileMyArticleList({ filters, search }: { filters: Filters, search: string }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [userId, setUserId] = useState<number | null>(null); // userId → username
+  const [userId, setUserId] = useState<number | null>(null);
 
   // 유저 정보 가져오기
   useEffect(() => {
@@ -302,11 +301,11 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
     fetchUser();
   }, []);
 
-  // 내가 쓴 글 가져오기
+  // 내가 쓴 글 가져오기 (debounce 적용)
   useEffect(() => {
     if (!userId) return;
 
-    const fetchData = async () => {
+    const fetchData = async (searchTerm: string) => {
       try {
         const response = await fetchArticles({
           pageSize: 10,
@@ -314,20 +313,24 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
           userId: Number(userId),
         });
 
-        const filteredPosts = response.results.map((post: any) => {
+        let filteredPosts = response.results.map((post: any) => {
           if (isPostHidden(post, filters)) {
             const newPost = { ...post };
             newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-            if (post.isSexual && !filters.seeSexual) {
-              newPost.why_hidden.push('ADULT_CONTENT');
-            }
-            if (post.isSocial && !filters.seeSocial) {
-              newPost.why_hidden.push('SOCIAL_CONTENT');
-            }
+            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
             return newPost;
           }
           return post;
         });
+
+        if (searchTerm) {
+          const lowerSearch = searchTerm.toLowerCase();
+          filteredPosts = filteredPosts.filter((post: any) =>
+            post.title?.toLowerCase().includes(lowerSearch) ||
+            post.content?.toLowerCase().includes(lowerSearch)
+          );
+        }
 
         setPosts(filteredPosts);
         setTotalPages(response.num_pages || 1);
@@ -335,9 +338,14 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
         console.error("게시글을 불러오는 데 실패했습니다.", error);
       }
     };
-    fetchData();
-  }, [userId, currentPage, filters]);
 
+    const debouncedFetch = debounce(fetchData, 300);
+    debouncedFetch(search);
+
+    return () => {
+      debouncedFetch.cancel(); // cleanup
+    };
+  }, [userId, currentPage, filters, search]);
 
   return (
     <ArticleList
@@ -360,44 +368,62 @@ export function ProfileMyArticleList({ filters }: { filters: { seeSexual: boolea
   );
 }
 
-
-//Profile 페이지 - 최근 본 글
-export function ProfileRecentArticleList({ filters }: { filters: Filters }) {
+export function ProfileRecentArticleList({ filters, search }: { filters: Filters, search: string }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+    let debounceTimer: NodeJS.Timeout;
 
-      const filteredPosts = response.results.map((post: any) => {
-        if (isPostHidden(post, filters)) {
-          const newPost = { ...post };
-          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
-          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
-          return newPost;
+    const fetchData = async (searchTerm: string) => {
+      try {
+        const response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+
+        let filteredPosts = response.results.map((post: any) => {
+          if (isPostHidden(post, filters)) {
+            const newPost = { ...post };
+            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+            return newPost;
+          }
+          return post;
+        });
+
+        if (searchTerm) {
+          const lowerSearch = searchTerm.toLowerCase();
+          filteredPosts = filteredPosts.filter((post: any) =>
+            post.title?.toLowerCase().includes(lowerSearch) ||
+            post.content?.toLowerCase().includes(lowerSearch)
+          );
         }
-        return post;
-      });
 
-      setPosts(filteredPosts);
-      setTotalPages(response.num_pages || 1);
+        setPosts(filteredPosts);
+        setTotalPages(response.num_pages || 1);
+      } catch (error) {
+        console.error("최근 본 게시글을 불러오는 데 실패했습니다.", error);
+      }
     };
-    fetchData();
-  }, [currentPage, filters]);
+
+    // 300ms debounce
+    debounceTimer = setTimeout(() => {
+      fetchData(search);
+    }, 300);
+
+    return () => clearTimeout(debounceTimer); // cleanup
+  }, [currentPage, filters, search]);
 
   return (
     <ArticleList
       posts={posts}
-      showAttachment={true}
-      showTimeAgo={true}
-      showWriter={true}
-      showProfile={true}
-      showHit={true}
-      showStatus={true}
-      pagination={true}
+      showAttachment
+      showTimeAgo
+      showWriter
+      showProfile
+      showHit
+      showStatus
+      pagination
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={setCurrentPage}
@@ -409,47 +435,64 @@ export function ProfileRecentArticleList({ filters }: { filters: Filters }) {
   );
 }
 
-//Profile 페이지 - 북마크 한 글
-export function ProfileBookmarkedArticlesList({ filters }: { filters: Filters }) {
+// Profile 페이지 - 북마크 한 글
+export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Filters, search: string }) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetchArchives({ pageSize: 10, page: currentPage });
+    let debounceTimer: NodeJS.Timeout;
 
-      const articles = (response.results || [])
-        .map((item: any) => item?.parent_article)
-        .filter((article: any) => article && article.id && article.title);
+    const fetchData = async (searchTerm: string) => {
+      try {
+        const response = await fetchArchives({ pageSize: 10, page: currentPage });
 
-      const filteredPosts = articles.map((post: any) => {
-        if (isPostHidden(post, filters)) {
-          const newPost = { ...post };
-          newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-          if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
-          if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
-          return newPost;
+        const articles = (response.results || [])
+          .map((item: any) => item?.parent_article)
+          .filter((article: any) => article && article.id && article.title);
+
+        let filteredPosts = articles.map((post: any) => {
+          if (isPostHidden(post, filters)) {
+            const newPost = { ...post };
+            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
+            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+            return newPost;
+          }
+          return post;
+        });
+
+        if (searchTerm) {
+          const lowerSearch = searchTerm.toLowerCase();
+          filteredPosts = filteredPosts.filter((post: any) =>
+            post.title?.toLowerCase().includes(lowerSearch) ||
+            post.content?.toLowerCase().includes(lowerSearch)
+          );
         }
-        return post;
-      });
 
-      setPosts(filteredPosts);
-      setTotalPages(response.num_pages || 1);
+        setPosts(filteredPosts);
+        setTotalPages(response.num_pages || 1);
+      } catch (error) {
+        console.error("북마크 게시글을 불러오는 데 실패했습니다.", error);
+      }
     };
-    fetchData();
-  }, [currentPage, filters]);
+
+    debounceTimer = setTimeout(() => fetchData(search), 300); // 300ms debounce
+
+    return () => clearTimeout(debounceTimer); // cleanup
+  }, [currentPage, filters, search]);
 
   return (
     <ArticleList
       posts={posts}
-      showAttachment={true}
-      showTimeAgo={true}
-      showWriter={true}
-      showProfile={true}
-      showHit={true}
-      showStatus={true}
-      pagination={true}
+      showAttachment
+      showTimeAgo
+      showWriter
+      showProfile
+      showHit
+      showStatus
+      pagination
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={setCurrentPage}
@@ -461,7 +504,7 @@ export function ProfileBookmarkedArticlesList({ filters }: { filters: Filters })
   );
 }
 
-//Post 페이지 - 하단 글 목록
+// Post 페이지 - 하단 글 목록 (아직 구현 X)
 export function PostBottomeArticleList() {
-  return;
+  return null;
 }
