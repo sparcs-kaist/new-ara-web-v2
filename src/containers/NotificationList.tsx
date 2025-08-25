@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import NotificationList from '@/components/NotificationList/NotificationList';
 import { fetchNotifications } from "@/lib/api/notification";
+import { Notification } from "@/lib/types/notification";
 
 // 기본적인 Notification List 컴포넌트
 export function BasicNotificationList() {
@@ -68,8 +69,9 @@ export function MainPageNotificationPreview() {
 }
 
 // Profile 페이지 - 내가 받은 알림 목록
+
 export function ProfileNotificationList({ search }: { search: string }) {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -82,32 +84,41 @@ export function ProfileNotificationList({ search }: { search: string }) {
 
         let filtered = response.results || [];
 
-        // 검색어 필터링
         if (searchTerm) {
           const lowerSearch = searchTerm.toLowerCase();
-          filtered = filtered.filter(
-            (n: any) =>
-              n.detail?.toLowerCase().includes(lowerSearch) ||
-              n.content?.toLowerCase().includes(lowerSearch)
-          );
+
+          filtered = filtered.filter((n: Notification) => {
+            const inArticle = n.related_article?.title?.toLowerCase().includes(lowerSearch);
+            const inComment = n.related_comment?.content?.toLowerCase().includes(lowerSearch);
+            const inChat =
+              n.related_chat_room?.recent_message?.message_content
+                ?.toLowerCase()
+                .includes(lowerSearch);
+
+            return inArticle || inComment || inChat;
+          });
         }
 
         setNotifications(filtered);
         setTotalPages(response.num_pages || 1);
       } catch (error) {
-        console.error('알림을 불러오는 중 오류가 발생했습니다:', error);
+        console.error("알림을 불러오는 중 오류가 발생했습니다:", error);
       }
     };
 
-    // 300ms debounce
     debounceTimer = setTimeout(() => fetchData(search), 300);
 
-    return () => clearTimeout(debounceTimer); // cleanup
+    return () => clearTimeout(debounceTimer);
   }, [currentPage, search]);
 
-  const handleItemClick = (notification: any) => {
-    if (notification.article_id) {
-      window.location.href = `/article/${notification.article_id}`;
+  const handleItemClick = (notification: Notification) => {
+    if (notification.related_article?.id) {
+      window.location.href = `/article/${notification.related_article.id}`;
+      return;
+    }
+    if (notification.related_comment?.parent_article) {
+      window.location.href = `/article/${notification.related_comment.parent_article}`;
+      return;
     }
   };
 

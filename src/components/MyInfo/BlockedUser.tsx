@@ -44,7 +44,6 @@ const BlockedUser = () => {
   if (blockedUsers.length === 0) {
     return <div className="p-[10px] text-sm">{t('차단한 유저가 없습니다.')}</div>;
   }
-
   return (
     <div>
       <ul className="px-2 py-0 text-sm w-full">
@@ -58,7 +57,7 @@ const BlockedUser = () => {
                 className="mr-[0.5rem] object-cover rounded-full"
                 alt={block.user.username || "Blocked User Image"}
               />
-              <span className="truncate">{block.user.username || "Unknown"}</span>
+              <span className="truncate">{block.user.profile?.nickname || block.user.username || "Unknown"}</span>
               <a
                 onClick={() => deleteBlockedUser(block.id)}
                 className="ml-auto flex items-center justify-center cursor-pointer"

@@ -11,7 +11,7 @@ interface SmallBoardMyInfoProps {
 const SmallBoardMyInfo = ({title, children}: SmallBoardMyInfoProps) => {
     const { t } = useTranslation();
     return (
-        <div>
+        <div className="mr-auto">
             <div className="text-[18px] font-bold mb-[10px] text-black">{t(title)}</div>
             <div className="bg-gray-50 p-[10px] w-[270px] mb-[12px] rounded-2xl flex flex-col text-black">
                 {children}
