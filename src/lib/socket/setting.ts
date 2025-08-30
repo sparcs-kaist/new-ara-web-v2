@@ -4,7 +4,7 @@ export const SocketUrl = (() => {
     }
 
     const mode = process.env.NODE_ENV
-    if (mode === 'production') return 'wss://newara.dev.sparcs.org/api/ws/'
+    if (mode === 'production') return 'wss://newara.sparcs.org/api/ws/'
     if (mode === 'development') return 'wss://newara.dev.sparcs.org/api/ws/'
     throw new Error('Unknown NODE_ENV')
 })()

@@ -8,7 +8,7 @@ export const apiUrl = (() => {
   }
 
   const mode = process.env.NODE_ENV
-  if (mode === 'production') return 'https://newara.dev.sparcs.org'
+  if (mode === 'production') return 'https://newara.sparcs.org'
   if (mode === 'development') return 'https://newara.dev.sparcs.org'
   throw new Error('Unknown NODE_ENV')
 })()
