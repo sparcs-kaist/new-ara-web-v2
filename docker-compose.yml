@@ -2,10 +2,7 @@ version: '3'
 
 services:
   newarawebv2:
-    image: newarawebv2
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: ghcr.io/sparcs-kaist/new-ara-web-v2:latest
     environment:
       NODE_ENV: production
     expose:
