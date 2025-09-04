@@ -103,6 +103,12 @@ export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProp
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // Ignore Enter while composing (macOS IME, etc.)
+        // Safari/mac can also report composition on nativeEvent
+        // @ts-expect-error - React types don't include nativeEvent.isComposing
+        const composing = e.isComposing || e.nativeEvent?.isComposing;
+        if (composing) return;
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -112,8 +118,8 @@ export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProp
     return (
         <form
             onSubmit={(e) => {
+                // Prevent native form submit to avoid double-send on Enter (macOS/Safari)
                 e.preventDefault();
-                handleSend();
             }}
             className="flex items-end gap-2 pt-2 border-t"
         >
@@ -173,9 +179,10 @@ export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProp
             </div>
 
             <button
-                type="submit"
+                type="button"
                 className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-1 disabled:opacity-50 self-end"
                 aria-label="메시지 전송"
+                onClick={handleSend}
                 disabled={isUploading || (!input.trim() && !pending)}
             >
                 <span className="text-sm font-medium text-gray-700">전송</span>
