@@ -33,29 +33,11 @@ export function BasicNotificationList() {
 }
 
 // 메인 화면 알림 미리보기 컴포넌트
-export function MainPageNotificationPreview() {
-  const [notifications, setNotifications] = useState([]);
-  const [, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchNotifications(); //기본 : 3개만
-        setNotifications(response.results);
-      } catch (error) {
-        console.error('알림을 불러오는 중 오류가 발생했습니다:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+// NavBar에서 먼저 noti_data를 prefetch 해서 사용
+export function MainPageNotificationPreview({ noti_data }: { noti_data: [] }) {
   return (
     <NotificationList
-      notifications={notifications}
+      notifications={noti_data || []}
       showIcon={true}
       showTag={false}
       showDetail={false}
