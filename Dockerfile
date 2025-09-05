@@ -3,7 +3,7 @@ WORKDIR /usr/src/app
 COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
 RUN npm install --silent
 COPY . .
-RUN npm run build
+RUN npm run build:server
 
 FROM node:lts-alpine AS runner
 ENV NODE_ENV=production

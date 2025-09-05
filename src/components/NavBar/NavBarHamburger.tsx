@@ -14,19 +14,19 @@ export default function NavBarHamburger() {
 
   return (
     <div
-    style={{marginRight: "clamp(20px, 5vw, 150px"}}
-    className="flex justify-center items-center space-x-[10px]">
+      style={{ marginRight: "clamp(20px, 5vw, 150px" }}
+      className="flex justify-center items-center space-x-[10px] z-50"> {/*z-50 : 최상단*/}
       {/*글쓰기 버튼*/}
       <Link href="/write">
-        <Image src="/write.png" width ={24} height={24} alt="글쓰기"/>
+        <Image src="/write.png" width={24} height={24} alt="글쓰기" />
       </Link>
-      
+
       {/*메뉴 버튼*/}
       <div>
         <button onClick={() => setIsOpen(!isOpen)} className="p-2">
-          <Image src={isOpen ? "/NavBarClose.png" : "/NavBarHamburger.png"}  width={24} height={24} alt="Menu" />
+          <Image src={isOpen ? "/NavBarClose.png" : "/NavBarHamburger.png"} width={24} height={24} alt="Menu" />
         </button>
-        {isOpen && (<NavBarMore onClose={() => setIsOpen(false)}/>)}
+        {isOpen && (<NavBarMore onClose={() => setIsOpen(false)} />)}
       </div>
     </div>
   );

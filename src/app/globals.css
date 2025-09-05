@@ -1,5 +1,6 @@
 @import 'highlight.js/styles/github.css';
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -108,8 +109,10 @@ body {
 
 /* Code Style */
 .prose code {
-  background-color: #f3f4f6; /* gray-100 */
-  color: #ec4899;            /* pink-500 */
+  background-color: #f3f4f6;
+  /* gray-100 */
+  color: #ec4899;
+  /* pink-500 */
   border-radius: 0.25rem;
   padding: 0.15em 0.4em;
   font-size: 0.95em;
@@ -118,7 +121,8 @@ body {
 
 .dark .prose code {
   background-color: #23272e;
-  color: #f472b6; /* pink-400 */
+  color: #f472b6;
+  /* pink-400 */
 }
 
 .editor-content p:first-child.is-empty::before {
@@ -153,6 +157,7 @@ body {
   font-size: 0.95rem;
   overflow-x: auto;
 }
+
 .prose pre code {
   color: #111 !important;
   background: transparent !important;
@@ -179,10 +184,12 @@ input[type="color"] {
   border-radius: 9999px;
   overflow: hidden;
 }
+
 input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
   border-radius: 9999px;
 }
+
 input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 9999px;
@@ -190,4 +197,23 @@ input[type="color"]::-webkit-color-swatch {
 
 .prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   color: inherit !important;
+}
+
+/* 스크롤바 숨김(스크롤은 가능) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  /* Chrome/Safari */
+  display: none;
+}
+
+/* 메인 페이지 컴포넌트들의 그림자 */
+.main-page-block-shadow {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.10);
 }

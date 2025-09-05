@@ -19,12 +19,12 @@ export const fetchPost = async ({
   const baseUrl = context
     ? `articles/${postId}/${context}/`
     : `articles/${postId}/`;
-  
+
   const params = new URLSearchParams();
   if (fromView) params.append('from_view', fromView);
   if (current !== undefined) params.append('current', current.toString());
   if (overrideHidden !== undefined) params.append('override_hidden', overrideHidden.toString());
-  
+
   const url = params.toString() ? `${baseUrl}?${params}` : baseUrl;
   const { data } = await http.get(url);
   return data;
@@ -113,21 +113,54 @@ export const fetchComment = async ({
 };
 
 // 댓글 작성
-export const createComment = async (newComment: Record<string, unknown>) => {
+export const createComment = async ({
+  commentContent,
+  parent_article_id,
+  name_type
+}: {
+  commentContent: string;
+  parent_article_id: number;
+  name_type: number;
+}) => {
   const { data } = await http.post('comments/', {
-    ...newComment,
+    content: commentContent,
+    parent_article: parent_article_id,
+    name_type: name_type,
     attachment: null,
-  });
-  return data;
-};
+  })
+  return data; // return 추가
+}
+
+
+//대댓글 작성
+export const createNestedComment = async ({
+  commentContent,
+  parent_comment_id,
+  name_type
+}: {
+  commentContent: string;
+  parent_comment_id: number;
+  name_type: number;
+}) => {
+  const { data } = await http.post('comments/', {
+    content: commentContent,
+    parent_comment: parent_comment_id,
+    name_type: name_type,
+    attachment: null,
+  })
+  return data; // return 추가
+}
 
 // 댓글 수정
 export const updateComment = async (
   commentId: number,
-  newComment: Record<string, unknown>
+  newComment: string,
+  name_type: number,
 ) => {
   const { data } = await http.patch(`comments/${commentId}/`, {
-    ...newComment,
+    content: newComment,
+    name_type: name_type,
+    is_mine: true,
   });
   return data;
 };
@@ -141,7 +174,7 @@ export const voteComment = async (commentId: number, action: VoteAction) => {
 // 댓글 신고
 export const reportComment = async (
   commentId: number,
-  typeReport: string,
+  typeReport: string = 'others',
   reasonReport: string
 ) => {
   const { data } = await http.post('reports/', {

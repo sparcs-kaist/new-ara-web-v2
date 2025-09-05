@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable */
 
 import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';

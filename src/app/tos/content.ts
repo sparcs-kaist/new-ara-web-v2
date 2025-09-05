@@ -16,7 +16,7 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
     title: '이용약관',
     main: '가장 정확한 정보를 가장 신속하게.',
     backToHome: '홈으로 돌아가기',
-    lastUpdated: '마지막 업데이트: 2020년 9월 26일',
+    lastUpdated: '마지막 업데이트: 2025년 8월 21일',
     tos: [
       {
         title: '제 1 조 (아라의 목적)',
@@ -32,11 +32,11 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
       },
       {
         title: '제 4 조 (게시물에 대한 권리)',
-        content: '1. 회원이 아라 내에 올린 게시물의 저작권은 게시한 회원에게 귀속됩니다.\n\n2. 서비스의 게시물 또는 내용물이 위의 약관에 위배될 경우 사전 통지나 동의 없이 삭제될 수 있습니다.\n\n3. 제 3조 회원의 의무에 따라, 아라를 이용하여 얻은 정보를 원작자나 아라 운영진의 사전 승낙 없이 복사, 복제, 변경, 번역, 출판, 방송, 기타의 방법으로 사용하거나, 영리목적으로 활용하거나, 이를 타인에게 제공하는 행위는 금지됩니다.'
+        content: '1. 회원이 아라 내에 올린 게시물의 저작권은 게시한 회원에게 귀속됩니다.단, SPARCS는 서비스 운영, 기능 개선, 이벤트, 통계, 연구, 인공지능(AI) 학습 및 개발 등 비영리 목적을 포함한 범위에서 별도의 허락 없이 해당 게시물을 무상으로 이용·가공·저장·분석할 수 있으며, 제3자에게 제공할 수 있습니다.\n\n2. 서비스의 게시물 또는 내용물이 위의 약관에 위배될 경우 사전 통지나 동의 없이 삭제될 수 있습니다.\n\n3. 제 3조 회원의 의무에 따라, 아라를 이용하여 얻은 정보를 원작자나 아라 운영진의 사전 승낙 없이 복사, 복제, 변경, 번역, 출판, 방송, 기타의 방법으로 사용하거나, 영리목적으로 활용하거나, 이를 타인에게 제공하는 행위는 금지됩니다. 다만, 제4조 제1항에 따라 SPARCS가 정한 범위에서의 활용은 예외로 합니다.'
       },
       {
         title: '제 5 조 (책임의 제한)',
-        content: '1. SPARCS는 다음의 사유로 서비스 제공을 중지하는 것에 대해 책임을 지지 않습니다.\n  - 설비의 보수 등을 위해 부득이한 경우\n  - KAIST가 전기통신서비스를 중지하는 경우\n  - 천재지변, 정전 및 전시 상황인 경우\n  - 기타 본 서비스를 제공할 수 없는 사유가 발생한 경우\n\n2. SPARCS는 다음의 사항에 대해 책임을 지지 않습니다.\n  - 개재된 회원들의 글에 대한 신뢰도, 정확도\n  - 아라를 매개로 회원 상호 간 및 회원과 제 3자 간에 발생한 분쟁\n  - 기타 아라 사용 중 발생한 피해 및 분쟁\n\n3. 법적 수사 요청이 있는 경우, SPARCS는 수사기관에 회원 개인정보를 제공할 수 있습니다.'
+        content: '1. SPARCS는 다음의 사유로 서비스 제공을 중지하는 것에 대해 책임을 지지 않습니다.\n  - 설비의 보수 등을 위해 부득이한 경우\n  - KAIST가 전기통신서비스를 중지하는 경우\n  - 천재지변, 정전 및 전시 상황인 경우\n  - 기타 본 서비스를 제공할 수 없는 사유가 발생한 경우\n\n2. SPARCS는 다음의 사항에 대해 책임을 지지 않습니다.\n  - 개재된 회원들의 글에 대한 신뢰도, 정확도\n  - 아라를 매개로 회원 상호 간 및 회원과 제 3자 간에 발생한 분쟁\n  - 기타 아라 사용 중 발생한 피해 및 분쟁\n\n3. 법령에 따른 적법한 절차에 의한 경우, SPARCS는 수사기관·사법기관 등 권한 있는 기관에 회원 개인정보 및 게시물·채팅 등 서비스 내 활동 정보를 제공할 수 있습니다.'
       },
       {
         title: '제 6 조 (문의 및 제보)',
@@ -44,7 +44,11 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
       },
       {
         title: '제 7 조 (게시, 개정 및 해석)',
-        content: '1. 아라 운영진은 본 약관에 대해 아라 회원가입시 회원의 동의를 받습니다.\n\n2. 아라 운영진은 약관의규제에관한법률, 정보통신망이용촉진및정보보호등에관한법률 등 관련법을 위배하지 않는 범위에서 본 약관을 개정할 수 있습니다.\n\n3. 본 약관을 개정하는 경우 적용일자, 개정 내용 및 사유를 명시하여 개정 약관의 적용일자 7일 전부터 적용일자 전일까지 아라의 \'뉴아라 공지\' 게시판을 통해 공지합니다.\n\n4. 회원은 개정약관이 공지된 지 7일 내에 개정약관에 대한 거부의 의사표시를 할 수 있습니다. 이 경우 회원은 아라 운영진에게 메일을 발송하여 즉시 사용 중인 모든 지원 서비스를 해지하고 본 서비스에서 회원 탈퇴할 수 있습니다.\n\n5. 아라 운영진은 개정약관이 공지된 지 7일 내에 거부의 의사표시를 하지 않은 회원에 대해 개정약관에 대해 동의한 것으로 간주합니다.\n\n6. 본 약관의 해석은 아라 운영진이 담당하며, 분쟁이 있을 경우 민법 등 관계 법률과 관례에 따릅니다.'
+        content: '1. 아라 운영진은 본 약관에 대해 아라 회원가입시 회원의 동의를 받습니다.\n\n2. 아라 운영진은 「약관의 규제에 관한 법률」, 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」, 「개인정보 보호법」, 「저작권법」 등 대한민국 관련 법령을 위배하지 않는 범위에서 본 약관을 개정할 수 있습니다.\n\n3. 본 약관을 개정하는 경우 적용일자, 개정 내용 및 사유를 명시하여 개정 약관의 적용일자 7일 전부터 적용일자 전일까지 아라의 \'뉴아라 공지\' 게시판을 통해 공지합니다.\n\n4. 회원은 개정약관이 공지된 지 7일 내에 개정약관에 대한 거부의 의사표시를 할 수 있습니다. 이 경우 회원은 아라 운영진에게 메일을 발송하여 즉시 사용 중인 모든 지원 서비스를 해지하고 본 서비스에서 회원 탈퇴할 수 있습니다.\n\n5. 아라 운영진은 개정약관이 공지된 지 7일 내에 거부의 의사표시를 하지 않은 회원에 대해 개정약관에 대해 동의한 것으로 간주합니다.\n\n6. 본 약관의 해석은 아라 운영진이 담당하며, 분쟁이 있을 경우 민법 등 관계 법률과 관례에 따릅니다.'
+      },
+      {
+        title: '제 8 조 (채팅 서비스)',
+        content: '1. 아라는 게시판 외에 회원 간의 원활한 의사소통을 위해 채팅 서비스를 제공합니다.\n\n2. 회원은 채팅 서비스를 이용함에 있어 타인의 권리를 침해하거나 불법정보·유해정보를 전송해서는 안 되며, 이를 위반할 경우 이용 제한 등 조치가 취해질 수 있습니다.\n\n3. SPARCS는 채팅 서비스의 안정적 제공 및 법령 준수를 위하여 필요한 경우 채팅 내용을 보관·검토할 수 있으며, 관련 법령에 따라 수사기관 등 권한 있는 기관의 요청이 있을 시 해당 정보를 제공할 수 있습니다.\n\n4.채팅 서비스는 기술적 사정, 보안, 운영정책에 따라 사전 고지 후 변경되거나 중단될 수 있습니다.'
       }
     ]
   },
@@ -52,7 +56,7 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
     title: 'Terms of Service',
     main: 'The fastest delivery of the most accurate information',
     backToHome: 'Back to Home',
-    lastUpdated: 'Last Updated: September 26, 2020',
+    lastUpdated: 'Last Updated: August 21, 2025', // Updated date
     tos: [
       {
         title: 'Article 1 (Purpose of Ara)',
@@ -68,11 +72,11 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
       },
       {
         title: 'Article 4 (Rights to Posts)',
-        content: '1. The copyright of posts uploaded by members within Ara belongs to the posting member.\n\n2. Posts or content in the service may be deleted without prior notice or consent if they violate the above terms.\n\n3. In accordance with Article 3 (Obligations of Members), it is prohibited to use information obtained through Ara by copying, reproducing, modifying, translating, publishing, broadcasting, or other methods, utilizing it for commercial purposes, or providing it to others without prior consent of the original author or Ara administrators.'
+        content: '1. The copyright of posts uploaded by members within Ara belongs to the posting member. However, SPARCS may, free of charge, use, process, store, and analyze the post without separate permission within a scope that includes non-profit purposes such as service operation, feature improvement, events, statistics, research, and artificial intelligence (AI) learning and development, and may provide it to third parties.\n\n2. Posts or content in the service may be deleted without prior notice or consent if they violate the above terms.\n\n3. In accordance with Article 3 (Obligations of Members), it is prohibited to use information obtained through Ara by copying, reproducing, modifying, translating, publishing, broadcasting, or other methods, utilizing it for commercial purposes, or providing it to others without prior consent of the original author or Ara administrators. However, usage within the scope defined by SPARCS according to Article 4, Paragraph 1 is an exception.'
       },
       {
         title: 'Article 5 (Limitation of Liability)',
-        content: '1. SPARCS is not responsible for suspending service provision for the following reasons:\n  - When it is unavoidable for equipment maintenance, etc.\n  - When KAIST suspends telecommunications services\n  - In case of natural disasters, power outages, and war situations\n  - When other reasons arise that make it impossible to provide this service\n\n2. SPARCS is not responsible for the following:\n  - Reliability and accuracy of members\' posts\n  - Disputes between members and between members and third parties mediated by Ara\n  - Other damages and disputes that occur during the use of Ara\n\n3. In case of legal investigation requests, SPARCS may provide member personal information to investigating authorities.'
+        content: '1. SPARCS is not responsible for suspending service provision for the following reasons:\n  - When it is unavoidable for equipment maintenance, etc.\n  - When KAIST suspends telecommunications services\n  - In case of natural disasters, power outages, and war situations\n  - When other reasons arise that make it impossible to provide this service\n\n2. SPARCS is not responsible for the following:\n  - Reliability and accuracy of members\' posts\n  - Disputes between members and between members and third parties mediated by Ara\n  - Other damages and disputes that occur during the use of Ara\n\n3. In case of a lawful procedure according to the law, SPARCS may provide member personal information and service activity information such as posts and chats to authorized institutions such as investigative and judicial agencies.'
       },
       {
         title: 'Article 6 (Inquiries and Reports)',
@@ -80,7 +84,11 @@ export const tosContent: Record<'ko' | 'en', TOSContent> = {
       },
       {
         title: 'Article 7 (Posting, Revision, and Interpretation)',
-        content: '1. Ara administrators obtain members\' consent to these terms when they register for Ara.\n\n2. Ara administrators may revise these terms within the scope that does not violate the Act on the Regulation of Terms and Conditions, the Act on Promotion of Information and Communications Network Utilization and Information Protection, and other related laws.\n\n3. When revising these terms, the application date, revised content, and reasons will be specified and announced through Ara\'s \'New Ara Notice\' board from 7 days before the application date of the revised terms until the day before the application date.\n\n4. Members can express their refusal of the revised terms within 7 days after the revised terms are announced. In this case, members can send an email to Ara administrators to immediately terminate all support services in use and withdraw from this service.\n\n5. Ara administrators consider members who do not express their refusal within 7 days after the revised terms are announced to have agreed to the revised terms.\n\n6. The interpretation of these terms is the responsibility of Ara administrators, and in case of disputes, it follows the Civil Act and other related laws and customs.'
+        content: '1. Ara administrators obtain members\' consent to these terms when they register for Ara.\n\n2. Ara administrators may revise these terms within the scope that does not violate the Act on the Regulation of Terms and Conditions, the Act on Promotion of Information and Communications Network Utilization and Information Protection, the Personal Information Protection Act, the Copyright Act, and other relevant laws of the Republic of Korea.\n\n3. When revising these terms, the application date, revised content, and reasons will be specified and announced through Ara\'s \'New Ara Notice\' board from 7 days before the application date of the revised terms until the day before the application date.\n\n4. Members can express their refusal of the revised terms within 7 days after the revised terms are announced. In this case, members can send an email to Ara administrators to immediately terminate all support services in use and withdraw from this service.\n\n5. Ara administrators consider members who do not express their refusal within 7 days after the revised terms are announced to have agreed to the revised terms.\n\n6. The interpretation of these terms is the responsibility of Ara administrators, and in case of disputes, it follows the Civil Act and other related laws and customs.'
+      },
+      {
+        title: 'Article 8 (Chatting Service)',
+        content: '1. In addition to the bulletin board, Ara provides a chatting service for smooth communication between members.\n\n2. Members must not infringe on the rights of others or transmit illegal/harmful information when using the chatting service. Violations may result in measures such as usage restrictions.\n\n3. SPARCS may store and review chat content as necessary for stable service provision and legal compliance, and may provide such information to authorized institutions, such as investigative agencies, upon request in accordance with relevant laws.\n\n4. The chatting service may be changed or suspended after prior notice due to technical reasons, security, or operational policies.'
       }
     ]
   }
