@@ -1,8 +1,6 @@
+import { redirect } from 'next/navigation';
+
 export default function Notifications() {
-    return (
-      <div>
-        <h1>알람더보기 프로필 페이지의 알람 보기와 통합합니다.</h1>
-      </div>
-    );
-  }
-  
+  // /notifications는 /myinfo의 알림 탭으로 라우팅 통합
+  redirect('/myinfo?tab=notification');
+}

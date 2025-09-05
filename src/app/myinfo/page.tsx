@@ -1,7 +1,8 @@
 /* eslint-disable */
 
 'use client';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import SmallBoardMyInfo from "@/app/myinfo/components/SmallBoardMyInfo";
 import { MyActivity } from "@/app/myinfo/components/MyActivity";
 import PostSetting from "@/app/myinfo/components/PostSetting";
@@ -19,7 +20,17 @@ const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'] as 
 type TabType = typeof TABS[number];
 
 const MyInfo = () => {
-  const [tab, setTab] = useState<TabType>('내가 쓴 글');
+  const searchParams = useSearchParams();
+  const initialTab: TabType = useMemo(() => {
+    const q = (searchParams?.get('tab') || '').toLowerCase();
+    if (q === 'notification' || q === '알림') return '알림';
+    if (q === 'recent' || q === '최근' || q === 'recent-view') return '최근 본 글';
+    if (q === 'bookmark' || q === 'bookmarked' || q === '담아둔 글') return '담아둔 글';
+    if (q === 'mine' || q === 'my' || q === '내가 쓴 글') return '내가 쓴 글';
+    return '내가 쓴 글';
+  }, [searchParams]);
+
+  const [tab, setTab] = useState<TabType>(initialTab);
   const [pages, setPages] = useState<Record<TabType, number>>({
     '내가 쓴 글': 1,
     '최근 본 글': 1,
