@@ -1,3 +1,5 @@
+//@typescript-eslint/no-explicit-any
+
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import NotiDetail from './NotiDetail';
