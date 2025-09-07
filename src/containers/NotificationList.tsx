@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import NotificationList from '@/components/NotificationList/NotificationList';
 import { fetchNotifications } from "@/lib/api/notification";
+import { readAllNotification } from '@/lib/api/user';
 
 // 기본적인 Notification List 컴포넌트
 export function BasicNotificationList() {
@@ -27,7 +28,7 @@ export function BasicNotificationList() {
       iconSize={24}
       verticalSpacing={16}
       detailFontWeight="font-normal"
-      detailFontSize="text-xs"
+      detailFontSize="text-sm"
     />
   );
 }
@@ -56,12 +57,26 @@ export function ProfileNotificationList({ search }: { search: string }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // 컴포넌트 마운트시 읽음 처리
+  useEffect(() => {
+    const markAllAsRead = async () => {
+      try {
+        await readAllNotification();
+      } catch (error) {
+        console.error('알림 읽음 처리 중 오류가 발생했습니다:', error);
+      }
+    };
+    markAllAsRead();
+  }, []);
+
+  //
   useEffect(() => {
     let debounceTimer: NodeJS.Timeout;
 
     const fetchData = async (searchTerm: string) => {
       try {
-        const response = await fetchNotifications(currentPage);
+        // 1페이지 10개 fetch
+        const response = await fetchNotifications(currentPage, 5);
 
         let filtered = response.results || [];
 
@@ -101,13 +116,13 @@ export function ProfileNotificationList({ search }: { search: string }) {
       showTag
       showDetail
       showContent
-      showReply={false}
+      showReply={true}
       showTimestamp
-      iconSize={24}
-      verticalSpacing={16}
+      iconSize={40}
+      verticalSpacing={8}
       detailFontWeight="font-normal"
       detailFontSize="text-sm"
-      contentFontSize="text-xs"
+      contentFontSize="text-base"
       itemClassName="border-b border-gray-200 cursor-pointer hover:bg-gray-50 px-2 py-3 transition-colors duration-100"
       onItemClick={handleItemClick}
       pagination
