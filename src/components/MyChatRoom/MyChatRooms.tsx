@@ -51,8 +51,8 @@ const MyChatRooms = () => {
 
     // 비로그인 상태에서는 이 컴포넌트를 렌더링하지 않거나, 다른 내용을 보여줄 수 있습니다.
     // 여기서는 비로그인 시 아무것도 표시하지 않도록 처리합니다.
-    if (loading || rooms.length === 0) {
-        return null; // 로딩 중이거나, 채팅방이 없거나, 비로그인 상태일 때 아무것도 표시하지 않음
+    if (loading) {
+        return null;
     }
 
     return (

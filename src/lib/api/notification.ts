@@ -4,3 +4,8 @@ export const fetchNotifications = async (page: number = 1, pageSize: number = 3)
     const { data } = await http.get(`notifications/?page=${page}&page_size=${pageSize}`);
     return data;
 }
+
+export const readAllNotifications = async () => {
+    const { data } = await http.post(`notifications/read_all/`);
+    return data;
+}

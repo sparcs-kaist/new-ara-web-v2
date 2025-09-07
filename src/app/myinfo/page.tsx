@@ -58,9 +58,9 @@ const MyInfo = () => {
   const currentSearch = searches[tab];
 
   return (
-    <div className="flex flex-col lg:flex-row px-[150px] py-4 gap-10">
+    <div className="flex flex-col lg:flex-row px-8 lg:px-[120px] py-4 gap-10">
       {/* 좌측 프로필 + 설정 */}
-      <div className="flex flex-col w-full lg:w-[270px] flex-shrink-0 gap-4 items-center">
+      <div className="hidden lg:flex lg:flex-col lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />
         <SmallBoardMyInfo title="활동 기록"><MyActivity /></SmallBoardMyInfo>
         <SmallBoardMyInfo title="설정"><PostSetting onSettingChange={setFilters} /></SmallBoardMyInfo>
@@ -76,7 +76,7 @@ const MyInfo = () => {
               <button
                 key={t}
                 className={clsx(
-                  'relative pb-2 text-sm font-semibold transition-colors duration-200',
+                  'relative pb-1  text-md font-semibold transition-colors duration-200',
                   tab === t ? 'text-red-600' : 'text-black hover:text-red-500'
                 )}
                 onClick={() => setTab(t)}
@@ -91,7 +91,7 @@ const MyInfo = () => {
             ))}
           </div>
 
-          {/* 검색창 */}
+          {/* 검색창 임시 disable 
           <div className="flex items-center space-x-2">
             <div className="relative">
               <input
@@ -108,6 +108,7 @@ const MyInfo = () => {
               </span>
             </div>
           </div>
+          */}
         </div>
 
         <div>
