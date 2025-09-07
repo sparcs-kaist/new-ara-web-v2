@@ -1,7 +1,6 @@
 FROM node:lts-alpine AS builder
 WORKDIR /usr/src/app
 COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
-ENV NODE_ENV=production
 RUN npm install --silent
 COPY . .
 RUN npm run build:server
