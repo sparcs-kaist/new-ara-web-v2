@@ -10,7 +10,7 @@ export const apiUrl = (() => {
   const mode = process.env.NEXT_PUBLIC_APP_ENV
   if (mode === 'production') return 'https://newara.sparcs.org'
   if (mode === 'development') return 'https://newara.dev.sparcs.org'
-  throw new Error('Unknown NODE_ENV')
+  throw new Error('Unknown NEXT_PUBLIC_APP_ENV')
 })()
 
 const baseApiAddress = `${apiUrl}/api`
