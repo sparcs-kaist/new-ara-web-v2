@@ -1,0 +1,6 @@
+module.exports = {
+    async rewrites() {
+        return [{ source: '/api/:path*', destination: 'https://newara.sparcs.org/api/:path*' }];
+    },
+    images: { unoptimized: false },
+};
