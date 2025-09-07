@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import LoginPageButton from './components/LoginPageButton'
+import { apiUrl } from '@/lib/api/http'
 
 export default function LoginPage() {
   const [loginUrl, setLoginUrl] = useState<string | null>(null)
@@ -11,7 +12,7 @@ export default function LoginPage() {
     const origin = window.location.origin
     const handler = `${origin}/auth-handler`
     const next = `${origin}/`
-    const fullUrl = `https://newara.dev.sparcs.org/api/users/sso_login?handler=${encodeURIComponent(
+    const fullUrl = `${apiUrl}/users/sso_login?handler=${encodeURIComponent(
       handler
     )}&next=${encodeURIComponent(next)}`
     setLoginUrl(fullUrl)
