@@ -1,10 +1,10 @@
 services:
   ara-dev-front-migration:
-    image: ara-dev-front-migration
+    image: ara-front
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: ./Dockerfile.dev
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
     ports:
       - 15022:3000
