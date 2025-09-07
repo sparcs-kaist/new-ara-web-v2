@@ -39,11 +39,11 @@
     "react-easy-crop": "^5.5.0",
     "react-i18next": "^15.4.1",
     "react-textarea-autosize": "^8.5.9",
+    "@svgr/webpack": "^8.1.0",
     "tiptap-extension-resize-image": "^1.2.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@svgr/webpack": "^8.1.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/lodash": "^4.17.20",
     "@types/node": "^20",
