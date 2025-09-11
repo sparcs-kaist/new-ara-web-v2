@@ -12,7 +12,7 @@ export default function LoginPage() {
     const origin = window.location.origin
     const handler = `${origin}/auth-handler`
     const next = `${origin}/`
-    const fullUrl = `${apiUrl}/users/sso_login?handler=${encodeURIComponent(
+    const fullUrl = `${apiUrl}/api/users/sso_login?handler=${encodeURIComponent(
       handler
     )}&next=${encodeURIComponent(next)}`
     setLoginUrl(fullUrl)
@@ -50,7 +50,7 @@ export default function LoginPage() {
               <LoginPageButton
                 redirectUrl={loginUrl}
                 fontSize={18}
-                icon={<Image src={"/Icon/login.svg"} alt="로그인 아이콘" />}
+                icon={<Image src={"/Icon/login.svg"} alt="로그인 아이콘" width={16} height={16} />}
               >
                 SPARCS SSO로 로그인
               </LoginPageButton>
