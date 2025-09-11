@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:server": "NEXT_DISABLE_ESLINT=1 next build"
+    "build:server": "next build"
   },
   "dependencies": {
     "@material-tailwind/react": "^2.1.10",
