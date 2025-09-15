@@ -34,7 +34,7 @@ export default function WebViewPostFrame() {
     return (
         <article className="w-full h-full bg-white">
             {/* 본문 */}
-            <div className="px-4 py-3">
+            <div className="p-0">
                 <TextEditor content={post.content} editable={false} />
             </div>
         </article>
