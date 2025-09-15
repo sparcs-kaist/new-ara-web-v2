@@ -44,6 +44,7 @@ export default function TOSPage() {
     if (user) {
       updateTos(user)
     }
+    window.location.href = '/' // 약관 동의 후 홈으로 redirect
   }
 
   // 약관 거절 핸들러
