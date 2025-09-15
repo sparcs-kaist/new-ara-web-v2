@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react'
 import { useParams, notFound } from 'next/navigation'
 import { fetchPost } from '@/lib/api/post'
 import { formatPost } from '@/app/post/util/getPost'
-import { formatDate } from '@/app/post/util/formatDate'
-import Image from 'next/image'
 import TextEditor from '@/components/TextEditor/TextEditor'
 import type { PostData } from '@/lib/types/post'
 
@@ -21,7 +19,6 @@ export default function WebViewPostFrame() {
     useEffect(() => {
         if (!postId || isNaN(postId) || postId <= 0) {
             notFound()
-            return
         }
 
         setIsLoading(true)
