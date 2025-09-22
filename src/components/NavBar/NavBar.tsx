@@ -10,7 +10,7 @@ import NavBarHamburger from "@/components/NavBar/NavBarHamburger";
 
 export default function Navbar() {
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 900);
@@ -22,9 +22,9 @@ export default function Navbar() {
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
+
   return (
-    <nav className="flex w-full mx-auto items-center justify-between h-[77px] p-5">
+    <nav className="flex w-full mx-auto items-center justify-between md:h-[77px] h-[60px] md:p-5 sm:p-2">
       <NavBarLogo />
       <NavBarMiddle />
       {isMobile ? <NavBarHamburger /> : <NavBarRight />}

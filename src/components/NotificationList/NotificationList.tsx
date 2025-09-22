@@ -306,6 +306,7 @@ export default function NotificationList({ ...props }: NotificationListProps) {
       <ul className="flex-1 flex flex-col divide-y divide-gray-200">
         {items.map((item, idx) => {
           const articleId = item.raw?.related_article?.id;
+          const chatRoomId = item.raw?.related_chat_room?.id;
           const isRead = item.isRead;
 
           return (
@@ -315,7 +316,10 @@ export default function NotificationList({ ...props }: NotificationListProps) {
                 }`}
               onClick={() => {
                 if (articleId) {
-                  router.push(`/article/${articleId}`);
+                  router.push(`/post/${articleId}`);
+                }
+                if (chatRoomId) {
+                  router.push(`/chat/${chatRoomId}`);
                 }
               }}
             >

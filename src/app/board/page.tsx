@@ -107,10 +107,10 @@ export default function Board() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-20 py-0">
+      <div className="container mx-auto md:px-20 sm:px-12 xs:px-8 px-4 py-0">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="lg:w-2/3 xl:w-3/4">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm md:p-6 sm:p-3">
               <div className="mb-3">
                 <h3 className="text-xl font-semibold text-black">{getCurrentTitle()}</h3>
               </div>
@@ -191,7 +191,7 @@ export default function Board() {
                   </div>
 
                   <button
-                    className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0"
+                    className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0 hidden sm:block"
                     onClick={() => router.push(`/write`)}
                     disabled={!selectedBoard?.user_writable}
                   >

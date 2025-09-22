@@ -24,9 +24,9 @@ const MakerCard: React.FC<MakerCardProps> = ({
   const isPM = position?.includes('Project Manager');
   if (isProject) {
     return (
-      <div 
+      <div
         className={`
-          w-full max-w-[200px] h-[100px] rounded-[10px] bg-white flex flex-col items-center justify-center
+          w-full h-[100px] rounded-[10px] bg-white flex flex-col items-center justify-center
           relative hover:shadow-lg transition-shadow duration-300 ease-in-out
           ${active ? 'shadow-md' : 'shadow-sm'}
           cursor-pointer
@@ -34,7 +34,7 @@ const MakerCard: React.FC<MakerCardProps> = ({
         `}
         onClick={onClick}
       >
-        <span className="text-[16px] font-bold leading-[1.47] sm:text-center px-2">
+        <span className="text-[16px] font-bold leading-[1.47] text-center px-2">
           {title}
         </span>
         <span className="mt-[12px] text-[12px] font-medium leading-[1.44] text-gray-400">
@@ -51,7 +51,7 @@ const MakerCard: React.FC<MakerCardProps> = ({
   if (isPM) {
     return (
       <div className={`
-        w-full max-w-[220px] h-[140px] py-0 px-[30px] rounded-[10px] 
+        w-full h-[140px] py-0 px-[30px] rounded-[10px] 
         bg-gradient-to-br from-[#fff3d1] to-white
         shadow-sm
         flex flex-row items-center justify-between
@@ -60,7 +60,7 @@ const MakerCard: React.FC<MakerCardProps> = ({
         sm:w-full sm:max-w-none
       `}>
         <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden rounded-[10px]">
-          <div 
+          <div
             style={{
               position: 'absolute',
               top: '0',
@@ -80,10 +80,10 @@ const MakerCard: React.FC<MakerCardProps> = ({
           </span>
           <div className="mt-[4px] flex flex-row items-center">
             <div className="w-[13px] h-[20px] overflow-hidden mr-1 flex-shrink-0">
-              <Image 
-                src="/SparcsLogo.svg" 
-                alt="Sparcs Logo" 
-                width={70} 
+              <Image
+                src="/SparcsLogo.svg"
+                alt="Sparcs Logo"
+                width={70}
                 height={20}
                 className="w-[70px] max-w-none [filter:invert(74%)_sepia(56%)_saturate(1094%)_hue-rotate(347deg)_brightness(97%)_contrast(92%)]"
               />
@@ -93,13 +93,13 @@ const MakerCard: React.FC<MakerCardProps> = ({
             </span>
           </div>
         </div>
-        
+
         <div className="z-[2] self-center flex-shrink-0 flex flex-col items-end">
           <span className="text-[12px] font-semibold leading-[1.4] text-[#eba12a] mb-1">
             {position?.match(/\d{4}/)?.[0] || ''}
           </span>
           <span className="text-[12px] font-bold leading-[1.4] text-[#eba12a] text-right">
-            Project Manager
+            PM
           </span>
         </div>
 
@@ -130,7 +130,7 @@ const MakerCard: React.FC<MakerCardProps> = ({
 
   return (
     <div className={`
-      w-full max-w-[220px] h-[140px] py-0 px-[30px] rounded-[10px] shadow-sm bg-white
+      w-full h-[140px] py-0 px-[30px] rounded-[10px] shadow-sm bg-white
       flex flex-row items-center justify-between
       hover:shadow-md transition-shadow duration-300 ease-in-out
       sm:w-full sm:max-w-none
@@ -141,10 +141,10 @@ const MakerCard: React.FC<MakerCardProps> = ({
         </span>
         <div className="mt-[4px] flex flex-row items-center">
           <div className="w-[13px] h-[20px] overflow-hidden mr-1 flex-shrink-0">
-            <Image 
-              src="/SparcsLogo.svg" 
-              alt="Sparcs Logo" 
-              width={70} 
+            <Image
+              src="/SparcsLogo.svg"
+              alt="Sparcs Logo"
+              width={70}
               height={20}
               className="w-[70px] max-w-none [filter:invert(74%)_sepia(56%)_saturate(1094%)_hue-rotate(347deg)_brightness(97%)_contrast(92%)]"
             />

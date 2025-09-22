@@ -246,12 +246,12 @@ export default function Write() {
   }, [expirePopoverOpen]);
 
   return (
-    <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
-      <div className="w-[70vw] max-w-7xl">
+    <div className="flex flex-col items-center bg-white sm:p-8 p-4 w-full min-h-screen">
+      <div className="sm:w-[70vw] w-full max-w-7xl">
         <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">
           {isEditMode ? '게시물 수정하기' : '게시물 작성하기'}
         </p>
-        <hr className="border-t border-gray-300 mb-6" />
+        <hr className="border-t border-gray-300 sm:mb-6 mb-4" />
         <PostOptionBar
           boards={boards}
           defaultBoardId={boardId}
@@ -292,7 +292,7 @@ export default function Write() {
           placeholder="제목을 입력하세요"
           value={title}
           onChange={e => setTitle(e.currentTarget.value)}
-          className="w-full border border-gray-300 rounded px-4 py-2 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
+          className="w-full border border-gray-300 rounded px-4 py-2 sm:mb-6 mb-2 text-lg focus:outline-none focus:ring-2 focus:ring-primary-400"
           disabled={saving}
         />
 
