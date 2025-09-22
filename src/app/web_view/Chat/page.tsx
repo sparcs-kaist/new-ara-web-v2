@@ -19,7 +19,7 @@ type ChatRoom = {
 };
 
 export default function WebViewChatListPage() {
-    const [_, setRooms] = useState<ChatRoom[]>([]);
+    const [, setRooms] = useState<ChatRoom[]>([]);
     const router = useRouter();
 
     useEffect(() => {
