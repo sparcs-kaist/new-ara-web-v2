@@ -364,8 +364,8 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="flex flex-col items-center bg-white p-8 w-full min-h-screen">
-      <div className="w-[70vw] max-w-7xl">
+    <div className="flex flex-col items-center bg-white md:p-8 p-4 w-full min-h-screen">
+      <div className="sm:w-[70vw] w-full max-w-7xl">
         {/* 제목 부분 */}
         <div className="flex flex-col gap-[8px]">
           <div className="text-[18px] font-bold text-black leading-[25.2px]">{post.title}</div>

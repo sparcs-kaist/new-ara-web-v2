@@ -178,7 +178,7 @@ const projects: Project[] = [
       또한 아라의 아이덴티티가 잘 드러나도록 홈페이지 디자인을 개선하였습니다.`,
     members: {
       PM: [
-        ['killerwhale:박승범', '2025~'], ['hyooyh:권효진', '2024'], ['yuwol:황인준', '2022~2023' ],
+        ['killerwhale:박승범', '2025~'], ['hyooyh:권효진', '2024'], ['yuwol:황인준', '2022~2023'],
         ['jessie:윤지수', '2021'], ['victory:김주연', '2020'], ['leo:정진우', '2019'],
         ['yujingaya:김유진', '2018'], ['swan:지수환', '2018'], ['raon:김강인', '2017']
       ],
@@ -239,12 +239,12 @@ export default function Makers() {
   };
 
   return (
-    <div className="max-w-[1280px] w-[80%] mx-auto px-4 py-8 bg-[#fafafa]">
-      <h1 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
+    <div className="max-w-[1280px] md:w-[80%] w-full mx-auto px-4 py-8 bg-[#fafafa]">
+      <h1 className="text-[20px] font-bold leading-[1.45] mb-[18px] lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
         Project
       </h1>
-      
-      <div className="grid gap-[15px] justify-center mb-[48px] grid-cols-6 lg:grid-cols-5 md:grid-cols-4 sm:grid-cols-2 xs:grid-cols-1">
+
+      <div className="grid gap-[15px] justify-center mb-[48px] xl:grid-cols-6 lg:grid-cols-5 md:grid-cols-4 grid-cols-2 lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
         {projects.map((project, index) => (
           <MakerCard
             key={project.name}
@@ -259,10 +259,10 @@ export default function Makers() {
       </div>
       {projects[selected]?.description && (
         <div className="flex w-full flex-col justify-center my-[48px]">
-          <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
+          <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
             Description
           </h2>
-          <div className="rounded-[10px] shadow-sm bg-white p-[22px_64px] mt-[30px] mx-[90px] md:mx-0 sm:mx-[50px] sm:p-[22px_22px] xs:mx-[20px]">
+          <div className="rounded-[10px] shadow-sm bg-white md:p-[22px_64px] p-[22px_22px] mt-[30px] lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
             <p className="text-[16px] font-normal leading-[1.47] text-left">
               {projects[selected].description}
             </p>
@@ -270,10 +270,10 @@ export default function Makers() {
         </div>
       )}
 
-      <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] mx-[90px] md:mx-0 sm:mx-[50px] xs:mx-[20px]">
+      <h2 className="text-[20px] font-bold leading-[1.45] mb-[18px] lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
         Member
       </h2>
-      <div className="grid gap-[15px] justify-center mt-[48px] mb-[10px] grid-cols-5 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1">
+      <div className="grid gap-[15px] justify-center mt-[48px] mb-[10px] xl:grid-cols-5 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 lg:mx-[50px] md:mx-0 sm:mx-[30px] mx-[10px]">
         {positions.map(position =>
           projects[selected].members[position]?.map((member) => (
             <MakerCard

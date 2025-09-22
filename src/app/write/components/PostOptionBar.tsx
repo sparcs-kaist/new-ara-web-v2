@@ -120,10 +120,10 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
   const handleCategoryBlur = () => setIsCategoryOpen(false);
 
   return (
-    <div className="flex items-center gap-4 mb-6">
-      <div className="relative">
+    <div className="flex items-center gap-x-4 gap-y-2 sm:mb-6 mb-2 flex-wrap">
+      <div className="relative flex-shrink-0">
         <select
-          className={`appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+          className={`appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black whitespace-nowrap ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
             }`}
           value={selectedBoardId ?? ''}
           onChange={handleBoardChange}
@@ -145,14 +145,14 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
               : "translateY(-50%) rotate(0deg)",
           }}
         >
-          <Image src={"/Icon/dropdown-arrow-down.svg"} alt="arrow" className="w-4 h-4" />
+          <Image src={"/Icon/dropdown-arrow-down.svg"} alt="arrow" width={16} height={16} className="w-4 h-4" />
         </span>
       </div>
 
       { /* topic dropdown */}
-      <div className="relative">
+      <div className="relative flex-shrink-0">
         <select
-          className={`appearance-none px-4 py-2 pr-8 border rounded ${selectedCategoryId === null
+          className={`appearance-none px-4 py-2 pr-8 border rounded whitespace-nowrap ${selectedCategoryId === null
             ? 'text-gray-500'
             : 'text-black'
             } ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
@@ -162,7 +162,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
           onBlur={handleCategoryBlur}
           disabled={isEditMode || disabled}
         >
-          {/* 항상 첫 번째에 “말머리 없음” */}
+          {/* 항상 첫 번째에 "말머리 없음" */}
           <option value="">말머리 없음</option>
           {currentBoard?.topics.map(t => (
             <option key={t.id} value={t.id}>
@@ -182,46 +182,48 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
         </span>
       </div>
 
-      {currentBoard && currentBoard.name_type === 3 && (
-        <label className="flex items-center gap-1 text-sm">
+      <div className="flex items-center gap-x-3 gap-y- px-2 flex-wrap">
+        {currentBoard && currentBoard.name_type === 3 && (
+          <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={anonymous}
+              onChange={handleAnonymousChange}
+              className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
+              disabled={disabled}
+            />
+            익명
+          </label>
+        )}
+
+        <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
           <input
             type="checkbox"
-            checked={anonymous}
-            onChange={handleAnonymousChange}
-            className={`accent-red-500 ${disabled ? 'cursor-not-allowed' : ''}`}
+            checked={political}
+            onChange={handlePoliticalChange}
+            className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
             disabled={disabled}
           />
-          익명
+          정치글
         </label>
-      )}
 
-      <label className="flex items-center gap-1 text-sm">
-        <input
-          type="checkbox"
-          checked={political}
-          onChange={handlePoliticalChange}
-          className={`accent-red-500 ${disabled ? 'cursor-not-allowed' : ''}`}
-          disabled={disabled}
-        />
-        정치글
-      </label>
+        <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
+          <input
+            type="checkbox"
+            checked={adult}
+            onChange={handleAdultChange}
+            className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
+            disabled={disabled}
+          />
+          성인글
+        </label>
 
-      <label className="flex items-center gap-1 text-sm">
-        <input
-          type="checkbox"
-          checked={adult}
-          onChange={handleAdultChange}
-          className={`accent-red-500 ${disabled ? 'cursor-not-allowed' : ''}`}
-          disabled={disabled}
-        />
-        성인글
-      </label>
-
-      {currentBoard && currentBoard.name_type === 4 && (
-        <span className="text-xs text-red-500 font-semibold">
-          실명제 게시판입니다
-        </span>
-      )}
+        {currentBoard && currentBoard.name_type === 4 && (
+          <span className="text-xs text-red-500 font-semibold whitespace-nowrap flex-shrink-0">
+            실명제 게시판입니다
+          </span>
+        )}
+      </div>
     </div>
   );
 };

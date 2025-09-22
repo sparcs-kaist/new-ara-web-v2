@@ -28,6 +28,9 @@ export default {
       animation: {
         shine: "shine 3s ease-in-out infinite",
       },
+      screens: {
+        'xs': '480px',
+      },
     },
   },
   plugins: [require("@tailwindcss/typography")],
