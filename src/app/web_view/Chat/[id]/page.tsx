@@ -56,7 +56,8 @@ export default function WebViewChatRoomPage() {
         if (!visualViewport) return; // unsuported
         const handleResize = () => {
             if (containerRef.current) {
-                containerRef.current.style.height = `${visualViewport.height}px`;
+                // 뷰포트 높이를 CSS 변수로 설정
+                containerRef.current.style.setProperty('--viewport-height', `${visualViewport.height}px`);
             }
         }
 
@@ -100,7 +101,11 @@ export default function WebViewChatRoomPage() {
     }
 
     return (
-        <div className=" bg-white flex h-dvh relative overflow-hidden" style={{ height: '100dvh' }} ref={containerRef}>
+        <div
+            className="bg-white flex flex-col relative overflow-hidden"
+            style={{ height: 'var(--viewport-height, 100dvh)' }}
+            ref={containerRef}
+        >
             <ChatRoomDetail
                 roomId={roomId}
                 room={currentRoom}
