@@ -7,7 +7,6 @@ import ChatRoomDetail from '@/app/chat/components/ChatRoomDetail';
 import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
-import { vi } from 'date-fns/locale';
 
 type ChatRoom = {
     id: number;
