@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ChatRoomDetail from '@/app/chat/components/ChatRoomDetail';
 import { fetchChatRoomList } from '@/lib/api/chat';
@@ -27,8 +27,6 @@ export default function WebViewChatRoomPage() {
         return id ? parseInt(id, 10) : null;
     }, [params]);
 
-    const containerRef = useRef<HTMLDivElement>(null);
-
     const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
 
     useEffect(() => {
@@ -47,24 +45,6 @@ export default function WebViewChatRoomPage() {
         // 언마운트 될 때 다시 scroll enable
         return () => {
             document.body.style.overflow = 'auto';
-        };
-    }, []);
-
-    // for web_view : 동적 화면 조정 handler
-    useEffect(() => {
-        const visualViewport = window.visualViewport;
-        if (!visualViewport) return; // unsuported
-        const handleResize = () => {
-            if (containerRef.current) {
-                // 뷰포트 높이를 CSS 변수로 설정
-                containerRef.current.style.setProperty('--viewport-height', `${visualViewport.height}px`);
-            }
-        }
-
-        handleResize();
-        visualViewport.addEventListener('resize', handleResize);
-        return () => {
-            visualViewport.removeEventListener('resize', handleResize);
         };
     }, []);
 
@@ -96,15 +76,19 @@ export default function WebViewChatRoomPage() {
         };
     }, [roomId]);
 
+
     if (!roomId) {
         return <div>유효하지 않은 채팅방입니다.</div>;
     }
 
     return (
         <div
-            className="bg-white flex flex-col relative overflow-hidden"
-            style={{ height: 'var(--viewport-height, 100dvh)' }}
-            ref={containerRef}
+            className="bg-white"
+            style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                // 키보드 높이만큼 하단 여백을 확보하여 스크롤을 방지
+                paddingBottom: 'env(keyboard-inset-height, 0px)',
+            }}
         >
             <ChatRoomDetail
                 roomId={roomId}
