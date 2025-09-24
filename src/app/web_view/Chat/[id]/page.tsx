@@ -40,7 +40,17 @@ export default function WebViewChatRoomPage() {
         }
     }, [roomId]);
 
-    // for web_view : 동적 화면 조저정 handler
+    //for web_view : 최상단 프레임 스크롤 방지
+    useEffect(() => {
+        // 마운트 될 때 scroll disable
+        document.body.style.overflow = 'hidden';
+        // 언마운트 될 때 다시 scroll enable
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, []);
+
+    // for web_view : 동적 화면 조정 handler
     useEffect(() => {
         const visualViewport = window.visualViewport;
         if (!visualViewport) return; // unsuported
