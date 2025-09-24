@@ -183,6 +183,7 @@ const projects: Project[] = [
         ['yujingaya:김유진', '2018'], ['swan:지수환', '2018'], ['raon:김강인', '2017']
       ],
       DV: [
+        'platypus:오승빈', 'davin:이다빈',
         'casio:임가은', 'soom:이수민', 'edge:정재현', 'hyuk:장승혁',
         'king:김세종', 'roul:신도윤', 'default:김현수', 'phenol:권영완',
         'arcticfox:고예준', 'alvin:김상오', 'retro:최상아', 'ina:송인화',
@@ -194,6 +195,7 @@ const projects: Project[] = [
         'leesia:강현우', 'seol:설윤아', 'youns:최윤서', 'appleseed:강찬규'
       ],
       DS: [
+        'cheese:서인성',
         'yumyum:조유민', 'nine:배세윤', 'cheddar:최다은',
         'stitch:이채영', 'zero:임현정', 'luny:김나영'
       ]
