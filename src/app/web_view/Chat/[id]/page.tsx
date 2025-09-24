@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ChatRoomDetail from '@/app/chat/components/ChatRoomDetail';
 import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
+import { vi } from 'date-fns/locale';
 
 type ChatRoom = {
     id: number;
@@ -27,6 +28,8 @@ export default function WebViewChatRoomPage() {
         return id ? parseInt(id, 10) : null;
     }, [params]);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+
     const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
 
     useEffect(() => {
@@ -37,6 +40,23 @@ export default function WebViewChatRoomPage() {
             });
         }
     }, [roomId]);
+
+    // for web_view : 동적 화면 조저정 handler
+    useEffect(() => {
+        const visualViewport = window.visualViewport;
+        if (!visualViewport) return; // unsuported
+        const handleResize = () => {
+            if (containerRef.current) {
+                containerRef.current.style.height = `${visualViewport.height}px`;
+            }
+        }
+
+        handleResize();
+        visualViewport.addEventListener('resize', handleResize);
+        return () => {
+            visualViewport.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     useEffect(() => {
         if (!roomId) return;
@@ -71,7 +91,7 @@ export default function WebViewChatRoomPage() {
     }
 
     return (
-        <div className=" bg-white flex h-dvh relative overflow-hidden">
+        <div className=" bg-white flex h-dvh relative overflow-hidden" style={{ height: '100dvh' }} ref={containerRef}>
             <ChatRoomDetail
                 roomId={roomId}
                 room={currentRoom}
