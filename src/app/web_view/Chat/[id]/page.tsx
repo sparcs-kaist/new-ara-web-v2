@@ -83,10 +83,13 @@ export default function WebViewChatRoomPage() {
 
     return (
         <div
-            className="bg-white"
+            className="bg-white flex flex-col" // flex와 flex-col 추가
             style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                // 키보드 높이만큼 하단 여백을 확보하여 스크롤을 방지
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 paddingBottom: 'env(keyboard-inset-height, 0px)',
             }}
         >
