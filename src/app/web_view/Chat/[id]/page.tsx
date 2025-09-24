@@ -71,7 +71,7 @@ export default function WebViewChatRoomPage() {
     }
 
     return (
-        <div className=" bg-white flex h-full relative overflow-hidden">
+        <div className=" bg-white flex h-dvh relative overflow-hidden">
             <ChatRoomDetail
                 roomId={roomId}
                 room={currentRoom}
