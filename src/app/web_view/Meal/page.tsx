@@ -8,19 +8,15 @@ import MealHeader from "./components/MealHeader";
 import RestaurantNavigator from "./components/RestaurantNavigator";
 import MenuList from "./components/MenuList";
 
-import { fetchMeal } from "@/lib/api/meal";
+import { fetchMeal } from '@/lib/api/meal';
 import {
   MealResponse,
-  RestaurantId,
-  MealTime,
-  MealType,
   Course,
   CafeteriaMenu,
   getRestaurantIdFromDisplayName,
   getMenuTypeFromRestaurantName,
   timeStringToMealType,
-  RESTAURANT_DISPLAY_NAMES_ARRAY
-} from "@/lib/types/meal";
+} from '@/lib/types/meal';
 
 // WebView용 뒤로가기 기능 Handler
 const handleClick = () => {
@@ -41,18 +37,6 @@ function convertDateFormat(dateStr: string): string {
   return dateStr.replace(/-/g, '');
 }
 
-// 학식 정보를 가져올 날짜 배열 생성
-function getNextNDays(n: number): string[] {
-  const dates = [];
-  const today = new Date();
-  for (let i = 0; i < n; i++) {
-    const date = new Date();
-    date.setDate(today.getDate() + i);
-    dates.push(formatDate(date));
-  }
-  return dates;
-}
-
 export default function MealPage() {
   // 학식 정보 - 캐시 역할 (key: "날짜-식당ID-식사시간")
   const [mealData, setMealData] = useState<Record<string, MealResponse>>({});
@@ -64,10 +48,6 @@ export default function MealPage() {
   const [selectedTime, setSelectedTime] = useState<string>('점심');
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
 
-  // 현재 데이터와 메뉴 타입
-  const formattedSelectedDate = convertDateFormat(selectedDate);
-  const currentKey = `${formattedSelectedDate}-${getRestaurantIdFromDisplayName(selectedRestaurant)}-${timeStringToMealType(selectedTime)}`;
-  const currentData = mealData[currentKey];
   // 메뉴 타입은 식당 이름으로 결정 (카페테리아가 포함되어 있으면 cafeteria)
   const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
 
@@ -108,6 +88,7 @@ export default function MealPage() {
     };
 
     fetchCurrentData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, selectedRestaurant, selectedTime, selectedAllergies]);
 
   // 날짜 변경 핸들러
