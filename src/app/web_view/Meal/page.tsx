@@ -3,20 +3,23 @@
 
 import React, { useEffect, useState } from 'react';
 
-import DateNavigator from "./components/DateNavigator"; 
+import DateNavigator from "./components/DateNavigator";
 import MealHeader from "./components/MealHeader";
 import RestaurantNavigator from "./components/RestaurantNavigator";
 import MenuList from "./components/MenuList";
 
-import { fetchCafeteriaMenu, fetchCourseMenu } from "@/lib/api/meal";
-import { 
-  CafeteriaMenuResponse, 
-  CourseMenuResponse,
+import { fetchMeal } from "@/lib/api/meal";
+import {
+  MealResponse,
   RestaurantId,
   MealTime,
-  CourseMenuItem,
-  MenuItem,
-  RESTAURANT_DISPLAY_NAMES
+  MealType,
+  Course,
+  CafeteriaMenu,
+  getRestaurantIdFromDisplayName,
+  getMenuTypeFromRestaurantName,
+  timeStringToMealType,
+  RESTAURANT_DISPLAY_NAMES_ARRAY
 } from "@/lib/types/meal";
 
 // WebView용 뒤로가기 기능 Handler
@@ -24,9 +27,18 @@ const handleClick = () => {
   (window as any).FlutterChannel?.postMessage('BackFromMeal');
 };
 
-// 날짜 formatting 함수 : convert into YYYY-MM-DD
+// 날짜 formatting 함수 : convert into YYYYMMDD
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+}
+
+// YYYY-MM-DD를 YYYYMMDD로 변환
+function convertDateFormat(dateStr: string): string {
+  // YYYY-MM-DD 형식이면 대시 제거
+  return dateStr.replace(/-/g, '');
 }
 
 // 학식 정보를 가져올 날짜 배열 생성
@@ -41,30 +53,10 @@ function getNextNDays(n: number): string[] {
   return dates;
 }
 
-function getRestaurantIdFromName(name: string): RestaurantId {
-  const entries = Object.entries(RESTAURANT_DISPLAY_NAMES);
-  const found = entries.find(([, displayName]) => displayName === name);
-  
-  if (found) {
-    return found[0] as RestaurantId;
-  }
-  return 'fclt';
-}
-
-function getMealTimeKey(time: string): MealTime {
-  const lowerTime = time.toLowerCase();
-  
-  if (lowerTime === '아침') return MealTime.MORNING;
-  if (lowerTime === '점심') return MealTime.LUNCH;
-  if (lowerTime === '저녁') return MealTime.DINNER;
-  
-  return MealTime.LUNCH; //default value
-}
-
 export default function MealPage() {
-  // 학식 정보
-  const [courseMenuData, setCourseMenuData] = useState<Record<string, CourseMenuResponse>>({});
-  const [cafeteriaMenuData, setCafeteriaMenuData] = useState<Record<string, CafeteriaMenuResponse>>({});
+  // 학식 정보 - 캐시 역할 (key: "날짜-식당ID-식사시간")
+  const [mealData, setMealData] = useState<Record<string, MealResponse>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // 현재 선택된 날짜와 식당
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
@@ -72,107 +64,94 @@ export default function MealPage() {
   const [selectedTime, setSelectedTime] = useState<string>('점심');
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
 
-  const menuType = selectedRestaurant.includes('카페테리아') ? 'cafeteria' : 'course';
+  // 현재 데이터와 메뉴 타입
+  const formattedSelectedDate = convertDateFormat(selectedDate);
+  const currentKey = `${formattedSelectedDate}-${getRestaurantIdFromDisplayName(selectedRestaurant)}-${timeStringToMealType(selectedTime)}`;
+  const currentData = mealData[currentKey];
+  // 메뉴 타입은 식당 이름으로 결정 (카페테리아가 포함되어 있으면 cafeteria)
+  const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
 
+  // 선택된 옵션이 바뀔 때마다 해당 데이터만 가져오기
   useEffect(() => {
-    const fetchData = async () => {
-      const dates = getNextNDays(7);
-      
+    const fetchCurrentData = async () => {
+      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
+      const mealType = timeStringToMealType(selectedTime);
+      // 날짜를 YYYYMMDD 형식으로 변환
+      const formattedDate = convertDateFormat(selectedDate);
+      const key = `${formattedDate}-${restaurantId}-${mealType}`;
+
+      // 이미 캐시에 있으면 다시 가져오지 않음
+      if (mealData[key]) {
+        console.log('Using cached data for:', key);
+        return;
+      }
+
+      setIsLoading(true);
       try {
-        // 병렬로 모든 날짜의 데이터를 가져오기 위한 Promise 배열 생성
-        const coursePromises = dates.map(date => fetchCourseMenu(date));
-        const cafeteriaPromises = dates.map(date => fetchCafeteriaMenu(date));
-        
-        const courseResults = await Promise.allSettled(coursePromises);
-        const newCourseData: Record<string, CourseMenuResponse> = {};
-        
-        courseResults.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            newCourseData[dates[index]] = result.value;
-          }
-        });
-        setCourseMenuData(newCourseData);
-        
-        // 모든 카페테리아 메뉴 데이터 가져오기
-        const cafeteriaResults = await Promise.allSettled(cafeteriaPromises);
-        const newCafeteriaData: Record<string, CafeteriaMenuResponse> = {};
-        
-        cafeteriaResults.forEach((result, index) => {
-          // 성공한 요청만 데이터에 추가
-          if (result.status === 'fulfilled') {
-            newCafeteriaData[dates[index]] = result.value;
-          }
-        });
-        setCafeteriaMenuData(newCafeteriaData);
+        const allergyCodes = selectedAllergies.length > 0
+          ? selectedAllergies.join(',')
+          : undefined;
+
+        console.log('Fetching meal data:', { date: formattedDate, restaurantId, mealType, allergyCodes });
+        const data = await fetchMeal(formattedDate, restaurantId, mealType, allergyCodes);
+        console.log('Received data:', data);
+
+        setMealData(prev => ({
+          ...prev,
+          [key]: data
+        }));
       } catch (error) {
-        console.error("error:", error);
+        console.error(`Error fetching ${key}:`, error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
-    fetchData();
-  }, []);
+
+    fetchCurrentData();
+  }, [selectedDate, selectedRestaurant, selectedTime, selectedAllergies]);
 
   // 날짜 변경 핸들러
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
   };
-  
+
   // 식당 변경 핸들러
   const handleRestaurantChange = (restaurant: string) => {
     setSelectedRestaurant(restaurant);
   };
-  
+
   // 아침, 점심, 저녁 변경 핸들러
   const handleMealTimeChange = (mealTime: string) => {
     setSelectedTime(mealTime);
   };
-  
+
   // 알러지 필터
   const handleAllergyChange = (allergies: string[]) => {
     setSelectedAllergies(allergies);
   };
-  
+
   // 현재 Option에 맞는 Data 가져오기
-  const getCurrentMenuData = (): CourseMenuItem[] | MenuItem[] => {
+  const getCurrentMenuData = (): Course[] | CafeteriaMenu[] => {
     try {
-      const restaurantId = getRestaurantIdFromName(selectedRestaurant);
-      const mealTime = getMealTimeKey(selectedTime);
-      
-      // 타입 안전한 접근 방식으로 변경
-      if (menuType === 'cafeteria') {
-        const cafeteriaData = cafeteriaMenuData[selectedDate];
-        if (!cafeteriaData) return [];
-        
-        // 명시적 switch 문으로 타입 안전성 확보
-        switch (mealTime) {
-          case MealTime.MORNING:
-            return cafeteriaData[restaurantId]?.morning_menu || [];
-          case MealTime.LUNCH:
-            return cafeteriaData[restaurantId]?.lunch_menu || [];
-          case MealTime.DINNER:
-            return cafeteriaData[restaurantId]?.dinner_menu || [];
-          default:
-            return [];
-        }
+      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
+      const mealType = timeStringToMealType(selectedTime);
+      const formattedDate = convertDateFormat(selectedDate);
+      const key = `${formattedDate}-${restaurantId}-${mealType}`;
+
+      const data = mealData[key];
+      if (!data) return [];
+
+      // 식당 이름으로 메뉴 타입 결정
+      const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
+
+      if (menuType === 'course') {
+        return data.courses || [];
       } else {
-        const courseData = courseMenuData[selectedDate];
-        if (!courseData) return [];
-        
-        // 명시적 switch 문으로 타입 안전성 확보
-        switch (mealTime) {
-          case MealTime.MORNING:
-            return courseData[restaurantId]?.morning_menu || [];
-          case MealTime.LUNCH:
-            return courseData[restaurantId]?.lunch_menu || [];
-          case MealTime.DINNER:
-            return courseData[restaurantId]?.dinner_menu || [];
-          default:
-            return [];
-        }
+        return data.cafeteria_menus || [];
       }
     } catch (error) {
       console.error("error:", error);
-      return []; 
+      return [];
     }
   };
 
@@ -180,26 +159,30 @@ export default function MealPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-white">
-      <MealHeader 
+      <MealHeader
         onBackClick={handleClick}
         onAllergyChange={handleAllergyChange}
       />
-      
-      <DateNavigator 
-        selectedDate={selectedDate} 
+
+      <DateNavigator
+        selectedDate={selectedDate}
         onDateChange={handleDateChange}
       />
-      
-      <RestaurantNavigator 
+
+      <RestaurantNavigator
         selectedRestaurant={selectedRestaurant}
         selectedMealTime={selectedTime}
         onRestaurantChange={handleRestaurantChange}
         onMealTimeChange={handleMealTimeChange}
       />
 
-      <div className = "px-[15px] py-1 w-full">
+      <div className="px-[15px] py-1 w-full">
         {/* 로딩 상태 표시 */}
-        {!courseMenuData[selectedDate] && !cafeteriaMenuData[selectedDate] ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center h-40">
+            <span className="text-gray-500">로딩 중...</span>
+          </div>
+        ) : currentMenuData.length === 0 ? (
           <div className="flex justify-center items-center h-40">
             <span className="text-gray-500">해당 시간의 학식 정보를 찾을 수 없습니다.</span>
           </div>

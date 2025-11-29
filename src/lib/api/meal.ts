@@ -1,15 +1,28 @@
 import httpNoRedicrect from '@/lib/api/httpNoRedirect';
+import { MealResponse } from '@/lib/types/meal';
 
-type MealDate = string; // "YYYY-MM-DD" 형태 문자열
+type MealDate = string; // "YYYYMMDD" 형태 문자열 (ex: 20251128)
+export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER';
 
-// 급식 메뉴 조회
-export const fetchCafeteriaMenu = async (date: MealDate) => {
-  const { data } = await httpNoRedicrect.get(`meals/${date}/cafeteria_menu/`);
-  return data;
-};
+export const fetchMeal = async (
+  date: MealDate,
+  restaurantId: number,
+  mealType: MealType,
+  allergyCodes?: string
+): Promise<MealResponse> => {
+  const params = new URLSearchParams({
+    date,
+    restaurant_id: restaurantId.toString(),
+    meal_time: mealType,
+  });
 
-// 코스 메뉴 조회
-export const fetchCourseMenu = async (date: MealDate) => {
-  const { data } = await httpNoRedicrect.get(`meals/${date}/course_menu/`);
+  if (allergyCodes) {
+    params.append('allergy_codes', allergyCodes);
+  }
+
+  const { data } = await httpNoRedicrect.get<MealResponse>(
+    `meal/?${params.toString()}`
+  );
+
   return data;
 };
