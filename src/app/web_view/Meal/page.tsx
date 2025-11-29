@@ -16,12 +16,31 @@ import {
   getRestaurantIdFromDisplayName,
   getMenuTypeFromRestaurantName,
   timeStringToMealType,
+  ALLERGEN_MAP,
 } from '@/lib/types/meal';
 
 // WebView용 뒤로가기 기능 Handler
 const handleClick = () => {
-  (window as any).FlutterChannel?.postMessage('BackFromMeal');
+  // Flutter WebView로 시그널 전송
+  (window as any).FlutterChannel?.postMessage('meal_page_exit');
 };
+
+// 알러지 이름을 ID로 변환하는 함수
+function getAllergyIdsFromNames(allergyNames: string[]): string {
+  // ALLERGEN_MAP을 역으로 매핑 (이름 -> ID)
+  const nameToIdMap: Record<string, number> = {};
+  Object.entries(ALLERGEN_MAP).forEach(([id, name]) => {
+    nameToIdMap[name] = parseInt(id);
+  });
+
+  // 알러지 이름들을 ID로 변환
+  const ids = allergyNames
+    .map(name => nameToIdMap[name])
+    .filter(id => id !== undefined);
+
+  // 쉼표로 구분된 문자열로 반환
+  return ids.join(',');
+}
 
 // 날짜 formatting 함수 : convert into YYYYMMDD
 function formatDate(date: Date): string {
@@ -68,8 +87,9 @@ export default function MealPage() {
 
       setIsLoading(true);
       try {
+        // 알러지 이름을 ID로 변환
         const allergyCodes = selectedAllergies.length > 0
-          ? selectedAllergies.join(',')
+          ? getAllergyIdsFromNames(selectedAllergies)
           : undefined;
 
         console.log('Fetching meal data:', { date: formattedDate, restaurantId, mealType, allergyCodes });
