@@ -8,6 +8,7 @@ import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
 import useeKeyboard from '@/app/web_view/hooks/keyboard/useKeyboard';
+import { usePlatform } from '@/app/web_view/hooks/usePlatform';
 
 type ChatRoom = {
     id: number;
@@ -31,6 +32,7 @@ export default function WebViewChatRoomPage() {
     const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
 
     const { keyboardHeight, isKeyboardOpen } = useeKeyboard();
+    const { isIOS } = usePlatform();
 
     useEffect(() => {
         if (roomId) {
@@ -79,11 +81,58 @@ export default function WebViewChatRoomPage() {
         };
     }, [roomId]);
 
+    useEffect(() => {
+        const originalStyle = window.getComputedStyle(document.body).overflow;
+        const originalPosition = document.body.style.position;
+        const originalWidth = document.body.style.width;
+        const originalHeight = document.body.style.height;
+        const originalTouchAction = document.body.style.touchAction;
+
+        // Freesing Body
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+        document.body.style.touchAction = 'none'; // prevent touch scroll on mobile
+
+        //Unmout : recover
+        return () => {
+            document.body.style.overflow = originalStyle;
+            document.body.style.position = originalPosition;
+            document.body.style.width = originalWidth;
+            document.body.style.height = originalHeight;
+            document.body.style.touchAction = originalTouchAction;
+        };
+    }, []);
+
 
     if (!roomId) {
         return <div>유효하지 않은 채팅방입니다.</div>;
     }
 
+    // @ Todo : IOS
+    if (isIOS) {
+        return (
+            <div
+                className="bg-white flex flex-col"
+                style={{
+                    position: 'fixed',
+                    top: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
+                    left: 0,
+                    right: 0,
+                    height: window.visualViewport ? `${window.visualViewport.height}px` : '100%',
+                    overflow: 'hidden',
+                }}
+            >
+                <ChatRoomDetail
+                    roomId={roomId}
+                    room={currentRoom}
+                    onMenuClick={() => router.push('/web_view/Chat')}
+                />
+            </div>
+        );
+    }
+    // Android
     return (
         <div
             className="bg-white flex flex-col"
