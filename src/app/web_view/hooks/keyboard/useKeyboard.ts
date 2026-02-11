@@ -1,12 +1,23 @@
-import { useAndroidKeyboard } from "./useAndroidKeyboard";
-import { useIOSKeyboard } from "./useIOSKeyboard";
-import { usePlatform } from "../usePlatform";
+import { usePlatform } from '../usePlatform';
+import { useIOSKeyboard } from './useIOSKeyboard';
+import { useAndroidKeyboard } from './useAndroidKeyboard';
 
 export default function useKeyboard() {
     const { isIOS, isAndroid } = usePlatform();
 
-    if (isIOS) return useIOSKeyboard();
-    if (isAndroid) return useAndroidKeyboard();
+    const iosKeyboard = useIOSKeyboard();
+    const androidKeyboard = useAndroidKeyboard();
 
-    return { keyboardHeight: 0, isKeyboardOpen: false };
+    if (isIOS) {
+        return iosKeyboard;
+    }
+
+    if (isAndroid) {
+        return androidKeyboard;
+    }
+
+    return {
+        keyboardHeight: 0,
+        isKeyboardOpen: false,
+    };
 }
