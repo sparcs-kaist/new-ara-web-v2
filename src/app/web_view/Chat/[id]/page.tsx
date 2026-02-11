@@ -8,7 +8,6 @@ import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
 import useeKeyboard from '@/app/web_view/hooks/keyboard/useKeyboard';
-import { is } from 'date-fns/locale';
 
 type ChatRoom = {
     id: number;
