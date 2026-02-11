@@ -89,8 +89,13 @@ export default function ArticleList({
             : null;
           const answerStatusColor = hasAnswerStatus
             ? (answered
-              ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600')
-              : 'text-red-600')
+              ? (post.communication_article_status === 2 ? 'text-slate-500' : 'text-amber-700')
+              : 'text-rose-600')
+            : '';
+          const answerStatusBackgroundColor = hasAnswerStatus
+            ? (answered
+              ? (post.communication_article_status === 2 ? 'bg-slate-100' : 'bg-amber-50')
+              : 'bg-rose-50')
             : '';
 
           const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
@@ -207,7 +212,9 @@ export default function ArticleList({
                             .filter(Boolean)
                             .map((item, i, arr) => (
                               <span key={i} className={`
-                                ${showAnswerStatus && answerStatusText && i === arr.length - 1 ? answerStatusColor : 'text-gray-500'} 
+                                ${showAnswerStatus && answerStatusText && i === arr.length - 1 ?
+                                  answerStatusColor + ' ' + answerStatusBackgroundColor + ' px-1.5 py-0.5 rounded inline-block font-medium text-[0.95em]' :
+                                  'text-gray-500'} 
                                 ${i === 0 ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}
                               `}>
                                 {item}
