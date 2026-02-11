@@ -10,7 +10,7 @@ import ChatTypePopover from '@/app/chat/components/ChatTypePopover';
 import UserSearchDialog from '@/app/chat/components/UserSearchDialog';
 import RoomCreateDialog from '@/app/chat/components/RoomCreateDialog';
 import { fetchChatRoomList, createGroupDM, createDM } from '@/lib/api/chat';
-import InvitationListDialog from '@/app/chat/components/InvitationListDialog'; // 임포트 추가
+import InvitationListDialog from '@/app/chat/components/InvitationListDialog';
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -39,7 +39,7 @@ type ChatRoom = {
     chat_name_type: string;
     picture?: string;
     recent_message_at?: string;
-    recent_message?: RecentMessage;   // <- 객체로 변경
+    recent_message?: RecentMessage;
     created_at?: string;
 };
 
@@ -52,7 +52,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [showRoomCreate, setShowRoomCreate] = useState(false);
-    const [showInvitationDialog, setShowInvitationDialog] = useState(false); // 상태 추가
+    const [showInvitationDialog, setShowInvitationDialog] = useState(false);
     const router = useRouter();
 
     const refreshRoomList = () => {
@@ -231,7 +231,6 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                 onClose={() => setShowRoomCreate(false)}
                 onCreate={handleCreateGroupRoom}
             />
-            {/* 새로 추가된 초대장 다이얼로그 */}
             <InvitationListDialog
                 open={showInvitationDialog}
                 onClose={() => setShowInvitationDialog(false)}

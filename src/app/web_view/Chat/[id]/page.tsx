@@ -7,6 +7,7 @@ import ChatRoomDetail from '@/app/chat/components/ChatRoomDetail';
 import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
+import useeKeyboard from '@/app/web_view/hooks/keyboard/useKeyboard';
 
 type ChatRoom = {
     id: number;
@@ -28,6 +29,8 @@ export default function WebViewChatRoomPage() {
     }, [params]);
 
     const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
+
+    const { keyboardHeight, isKeyboardOpen } = useeKeyboard();
 
     useEffect(() => {
         if (roomId) {
@@ -83,14 +86,14 @@ export default function WebViewChatRoomPage() {
 
     return (
         <div
-            className="bg-white flex flex-col" // flex와 flex-col 추가
+            className="bg-white flex flex-col"
             style={{
                 position: 'fixed',
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0,
-                paddingBottom: 'env(keyboard-inset-height, 0px)',
+                paddingBottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
             }}
         >
             <ChatRoomDetail
