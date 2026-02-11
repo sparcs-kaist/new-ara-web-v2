@@ -94,7 +94,8 @@ export default function WebViewChatRoomPage() {
                 right: 0,
                 bottom: 0,
                 paddingBottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
-                marginTop: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
+                overflow: 'hidden',
+                height: '100dvh',
             }}
         >
             <ChatRoomDetail
