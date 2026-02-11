@@ -33,33 +33,6 @@ export default function WebViewChatRoomPage() {
     const { keyboardHeight, isKeyboardOpen } = useeKeyboard();
 
     useEffect(() => {
-        // 1. 마운트 시: body size 고정 (web_view용, viewport가 올라가는 현상 방지)
-        const originalStyle = window.getComputedStyle(document.body).overflow;
-        const originalPosition = window.getComputedStyle(document.body).position;
-        const originalHeight = window.getComputedStyle(document.body).height;
-        const originalWidth = window.getComputedStyle(document.body).width;
-
-        document.body.style.position = 'fixed';
-        document.body.style.top = '0';
-        document.body.style.left = '0';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-        document.body.style.overflow = 'hidden';
-        document.body.style.touchAction = 'none'; // 모바일 터치 스크롤 방지
-
-        // Unmout : recover
-        return () => {
-            document.body.style.position = originalPosition;
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.width = originalWidth;
-            document.body.style.height = originalHeight;
-            document.body.style.overflow = originalStyle;
-            document.body.style.touchAction = '';
-        };
-    }, []);
-
-    useEffect(() => {
         if (roomId) {
             fetchChatRoomList().then((data) => {
                 const room = data.results.find((r: ChatRoom) => r.id === roomId);
@@ -116,10 +89,11 @@ export default function WebViewChatRoomPage() {
             className="bg-white flex flex-col"
             style={{
                 position: 'fixed',
-                top: 0,
+                top: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
                 left: 0,
                 right: 0,
-                bottom: isKeyboardOpen ? `${keyboardHeight}px` : '0px',
+                height: window.visualViewport ? `${window.visualViewport.height}px` : '100%',
+                overflow: 'hidden',
             }}
         >
             <ChatRoomDetail
