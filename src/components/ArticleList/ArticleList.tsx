@@ -38,7 +38,7 @@ const hiddenReasonText: Record<string, string> = {
   ACCESS_DENIED_CONTENT: "접근 권한이 없는 게시물 입니다.",
 };
 
-export default function ArticleList({ 
+export default function ArticleList({
   posts, // 게시글 목록
   showWriter = false, // 작성자 표시
   showBoard = false, // 게시판 표시
@@ -84,13 +84,13 @@ export default function ArticleList({
           const answered = hasAnswerStatus && post.communication_article_status !== null && post.communication_article_status > 0;
           const answerStatusText = hasAnswerStatus
             ? (answered
-                ? (post.communication_article_status === 2 ? '답변 완료' : '소통중') 
-                : '답변 대기중')
+              ? (post.communication_article_status === 2 ? '답변 완료' : '소통중')
+              : '답변 대기중')
             : null;
           const answerStatusColor = hasAnswerStatus
             ? (answered
-                ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600') 
-                : 'text-red-600')
+              ? (post.communication_article_status === 2 ? 'text-blue-600' : 'text-yellow-600')
+              : 'text-red-600')
             : '';
 
           const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
@@ -115,8 +115,10 @@ export default function ArticleList({
             <li
               key={post.id}
               className={`border-b border-gray-200 last:border-b-0`}
-              style={{ paddingBottom: `${gapBetweenPosts}px`,
-                       paddingTop: `${gapBetweenPosts}px` }}
+              style={{
+                paddingBottom: `${gapBetweenPosts}px`,
+                paddingTop: `${gapBetweenPosts}px`
+              }}
             >
               <Link href={`/post/${post.id}`} className="block h-full">
                 <div className="flex items-center h-full">
@@ -147,7 +149,7 @@ export default function ArticleList({
                       )}
                     </div>
                   )}
-                  
+
                   <div className="w-full flex flex-col justify-center min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -157,7 +159,7 @@ export default function ArticleList({
                               [{topicName}]
                             </span>
                           )}
-                          <span 
+                          <span
                             className={`overflow-hidden whitespace-nowrap text-ellipsis ${titleFontSize} ${titleFontWeight} ${titleTextColor} flex-1`}
                             title={displayTitle}
                           >
@@ -165,18 +167,18 @@ export default function ArticleList({
                           </span>
                         </div>
                         {showAttachment && hasAttachment && (
-                          <Image 
-                            src="/Image.svg" 
-                            alt="첨부파일" 
-                            width={17} 
-                            height={14.22} 
+                          <Image
+                            src="/Image.svg"
+                            alt="첨부파일"
+                            width={17}
+                            height={14.22}
                             className="flex-shrink-0"
                           />
                         )}
                       </div>
-                      
+
                       <div className="flex items-center text-[12px] text-gray-500 ml-2 flex-shrink-0">
-                        {[ showTimeAgo && timeAgo, showHit && post.hit_count !== undefined && `조회 ${post.hit_count}` ]
+                        {[showTimeAgo && timeAgo, showHit && post.hit_count !== undefined && `조회 ${post.hit_count}`]
                           .filter(Boolean)
                           .map((item, i, arr) => (
                             <span key={i}>
@@ -188,20 +190,20 @@ export default function ArticleList({
                         {!hasBottomContent && showStatus && (
                           <>
                             {(showTimeAgo && timeAgo) || (showHit && post.hit_count !== undefined) ? <span className="mx-1">·</span> : null}
-                            <Like 
-                              like={post.positive_vote_count} 
-                              dislike={post.negative_vote_count} 
-                              comment={post.comment_count} 
+                            <Like
+                              like={post.positive_vote_count}
+                              dislike={post.negative_vote_count}
+                              comment={post.comment_count}
                             />
                           </>
                         )}
                       </div>
                     </div>
-                    
+
                     {hasBottomContent && (
                       <div className={`flex w-full justify-between items-center`} style={{ marginTop: `${gapBetweenTitleAndMeta}px` }}>
                         <div className="text-[12px] text-gray-500 flex items-center min-w-0 flex-1">
-                          {[ showBoard && post.parent_board?.ko_name, showWriter && post.created_by?.profile?.nickname, showAnswerStatus && answerStatusText ]
+                          {[showBoard && post.parent_board?.ko_name, showWriter && post.created_by?.profile?.nickname, showAnswerStatus && answerStatusText]
                             .filter(Boolean)
                             .map((item, i, arr) => (
                               <span key={i} className={`
@@ -214,13 +216,13 @@ export default function ArticleList({
                             ))
                           }
                         </div>
-                        
+
                         <div className="flex items-center flex-shrink-0 ml-2">
                           {showStatus && (
-                            <Like 
-                              like={post.positive_vote_count} 
-                              dislike={post.negative_vote_count} 
-                              comment={post.comment_count} 
+                            <Like
+                              like={post.positive_vote_count}
+                              dislike={post.negative_vote_count}
+                              comment={post.comment_count}
                             />
                           )}
                         </div>
