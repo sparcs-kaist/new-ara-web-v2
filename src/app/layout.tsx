@@ -1,39 +1,28 @@
-'use client';
+"use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import React from "react";
-import "./globals.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useMe } from "@/lib/query/user";
 import NavBar from "@/components/NavBar/NavBar";
 import Footer from "@/components/Footer/Footer";
-import "@/i18n";
-import { fetchMe } from "@/lib/api/user";
+import "./globals.css";
+
+const queryClient = new QueryClient();
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const pathname = usePathname();
 
-  useEffect(() => {
-    // /login 페이지에서는 인증 체크하지 않음
-    if (pathname === "/login") {
-      setIsLoggedIn(false);
-      return;
-    }
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthWrapper pathname={pathname}>{children}</AuthWrapper>
+    </QueryClientProvider>
+  );
+}
 
-    async function checkAuth() {
-      try {
-        await fetchMe();
-        setIsLoggedIn(true);
-      } catch {
-        console.error("인증 실패, 로그인 페이지로 리다이렉트합니다.");
-        window.location.href = "/login";
-      }
-    }
-
-    checkAuth();
-  }, [pathname]);
-
-  // /login에서는 바로 children 렌더링
+// 인증 체크 + 렌더링을 분리
+function AuthWrapper({ pathname, children }: { pathname: string; children: ReactNode }) {
+  // /login 페이지는 인증 체크 필요 없음
   if (pathname === "/login") {
     return (
       <html lang="ko">
@@ -44,15 +33,25 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (isLoggedIn === null) {
+  const { data: me, isLoading, isError } = useMe();
+
+  if (isLoading) {
     return (
       <html lang="ko">
-        <body><p>로딩 중...</p></body>
+        <body>
+          <p>로딩 중...</p>
+        </body>
       </html>
     );
   }
 
-  // WebView 페이지 : 기본 NavBar와 Footer를 사용하지 않음.
+  if (isError || !me) {
+    // 인증 실패 → 로그인 페이지로 리다이렉트
+    if (typeof window !== "undefined") window.location.href = "/login";
+    return null;
+  }
+
+  // WebView 페이지 : NavBar와 Footer 제외
   if (pathname.startsWith("/web_view")) {
     return (
       <html lang="ko">
@@ -66,8 +65,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // 채팅 페이지 : Footer를 사용하지 않음
-
+  // 채팅 페이지 : Footer 제외
   if (pathname.startsWith("/chat")) {
     return (
       <html lang="ko">
@@ -82,7 +80,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // 일반 페이지 : NavBar와 Footer포함해서 렌더링
+  // 일반 페이지 : NavBar + Footer
   return (
     <html lang="ko">
       <head>
