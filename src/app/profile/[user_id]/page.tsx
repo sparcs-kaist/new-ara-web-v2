@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { UserProfileArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
 import { fetchUserProfile } from '@/lib/api/user_profile';
 import { GeneralUserProfile } from '@/lib/types/user_profile';
@@ -46,27 +46,10 @@ export default function UserProfilePage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mt-2 sm:mt-0 flex-wrap">
                                     <div className="flex items-center gap-2 flex-wrap">
-
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className="rounded-xl pl-8 pr-2 py-1.5 text-sm w-45 bg-gray-50 text-gray-700 font-medium"
-                                                placeholder="검색어를 입력하세요"
-                                            />
-                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">
-                                                <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
-                                                    <path d="M11.5 11.5L15 15M7 12A5 5 0 1 1 7 2a5 5 0 0 1 0 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                </svg>
-                                            </span>
-                                        </div>
+                                        {/* User 통계나 게시글 수?*/}
                                     </div>
-
-                                    <button
-                                        className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0 hidden sm:block"
-                                    >
-                                        게시물 작성하기
-                                    </button>
                                 </div>
+                                <span className="block text-left text-black font-bold ">작성한 글</span>
                                 <UserProfileArticleList userId={parseInt(params.user_id, 10)} />
                             </div>
                         </div>
