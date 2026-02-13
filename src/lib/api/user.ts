@@ -5,8 +5,8 @@ import { queryBuilder } from "../utils/queryBuilder";
 
 // fetchMe : 로그인 유저 정보
 export const fetchMe = async () => {
-    const { data } = await http.get("/me");
-    return data;
+  const { data } = await http.get("/me");
+  return data;
 }
 
 // fetchUser, updateUser : 유저 프로필 조회/수정

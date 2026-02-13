@@ -1,14 +1,26 @@
 'use client';
 
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { UserProfileArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
-import { fetchUserProfile, fetchUserPosts } from '@/lib/api/user_profile';
+import { fetchUserProfile } from '@/lib/api/user_profile';
+import { GeneralUserProfile } from '@/lib/types/user_profile';
 import Image from 'next/image';
 
 export default function UserProfilePage() {
 
     const params = useParams<{ user_id: string }>();
+    const [userProfile, setUserProfile] = useState<GeneralUserProfile | null>(null);
+
+    //fetch User Profile
+    useEffect(() => {
+        if (params.user_id) {
+            const userId = parseInt(params.user_id, 10);
+            fetchUserProfile(userId).then((data) => {
+                setUserProfile(data);
+            });
+        }
+    }, [params.user_id]);
 
     return (
         <div className="min-h-screen">
@@ -17,7 +29,18 @@ export default function UserProfilePage() {
                     <div className="lg:w-2/3 xl:w-3/4">
                         <div className="bg-white rounded-lg shadow-sm md:p-6 sm:p-3">
                             <div className="mb-3">
-                                <h3 className="text-xl font-semibold text-black">원래는 여기가 게시판 제목입니다..</h3>
+                                <div className="flex items-center mb-4">
+                                    <div className="w-16 h-16 rounded-full overflow-hidden mr-4">
+                                        <Image
+                                            src={userProfile?.picture || '/default_profile_image.png'}
+                                            alt="User Profile"
+                                            width={64}
+                                            height={64}
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-black">{userProfile?.nickname || '알 수 없는 사용자'}</h3>
+                                </div>
                             </div>
 
                             <div className="space-y-4">
