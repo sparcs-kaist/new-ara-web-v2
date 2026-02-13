@@ -5,6 +5,7 @@ import ArticleList from '@/components/ArticleList/ArticleList';
 import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
 import { fetchMe } from "@/lib/api/user";
+import { fetchUserPosts } from '@/lib/api/user_profile';
 import { debounce } from "lodash";
 
 //메인 페이지 - 지금 핫한 글
@@ -507,4 +508,46 @@ export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Fi
 // Post 페이지 - 하단 글 목록 (아직 구현 X)
 export function PostBottomeArticleList() {
   return null;
+}
+
+// User Profile 페이지 - 다른 사용자가 작성한 글
+export function UserProfileArticleList({ userId }: { userId: number }) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
+
+  useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
+
+    const fetchData = async () => {
+      const Response = await fetchUserPosts(userId, currentPage);
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
+    };
+    fetchData();
+  }, [userId, currentPage]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showBoard={true}
+      showTimeAgo={true}
+      showAttachment={true}
+      showProfile={true}
+      showWriter={true}
+      titleFontSize='text-[16px]'
+      showTopic={true}
+      showHit={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
 }
