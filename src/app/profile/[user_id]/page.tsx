@@ -125,10 +125,6 @@ export default function UserProfilePage() {
                 console.log('친구 추가');
                 break;
             */
-
-            case 'block_message':
-                console.log('메시지 차단');
-                break;
             case 'block_user':
                 setIsBlockDialogOpen(true);
                 break;
@@ -208,7 +204,7 @@ export default function UserProfilePage() {
                                             </button>
 
                                             {menuOpen && (
-                                                <div className="absolute left-0 top-full font-semibold mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+                                                <div className="absolute left-0 top-full font-medium mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                                                     <button
                                                         onClick={() => handleMenuAction('chat')}
                                                         className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 flex items-center gap-2"
@@ -216,12 +212,6 @@ export default function UserProfilePage() {
                                                         채팅하기
                                                     </button>
                                                     <hr className="my-1 border-gray-100" />
-                                                    <button
-                                                        onClick={() => handleMenuAction('block_message')}
-                                                        className="w-full text-left px-4 py-2 text-sm text-gray- hover:bg-gray-50 flex items-center gap-2"
-                                                    >
-                                                        메시지 차단
-                                                    </button>
                                                     {isBlocked ? (
                                                         <button
                                                             onClick={() => handleMenuAction('unblock_user')}
