@@ -147,7 +147,17 @@ export default function PosterCarousel() {
         );
     }
     if (items.length === 0) {
-        return null;
+        return (
+            <div className="w-full">
+                <Link href="/board?board=poster" className="flex items-center space-x-2 mb-[16px]">
+                    <h2 className="text-[20px] font-bold">📌 Zabo</h2>
+                    <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
+                </Link>
+                <div className="w-full flex items-center justify-center bg-white text-gray-400" style={{ aspectRatio: '4/1.414' }}>
+                    게시된 포스터가 없습니다.
+                </div>
+            </div>
+        );
     }
 
     return (
