@@ -1,10 +1,11 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { UserProfileArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
 import { fetchUserProfile } from '@/lib/api/user_profile';
 import { blockUser, unblockUser } from '@/lib/api/user';
+import { createDM, getDmByUserId } from '@/lib/api/chat';
 import { useBlockList } from '@/lib/query/user';
 import { GeneralUserProfile } from '@/lib/types/user_profile';
 import AlertDialog from '@/components/Dialog/AlertDialog';
@@ -13,13 +14,19 @@ import Image from 'next/image';
 export default function UserProfilePage() {
     const params = useParams<{ user_id: string }>();
     const { data: blockList } = useBlockList();
+    const router = useRouter();
     const [userProfile, setUserProfile] = useState<GeneralUserProfile | null>(null);
     const [isBlocked, setIsBlocked] = useState(false); // 현재 프로필을 조회하고 있는 User가 차단된 상태인지 여부
     const [isMyProfile, setIsMyProfile] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
+    const [DM, setDM] = useState<null | number>(null); // 현재 Profile을 조회하고 있는 사용자와의 DM방이 이미 존재하는지 여부
 
+
+    // Dialog State Management
+    const [menuOpen, setMenuOpen] = useState(false);
     const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
     const [isUnblockDialogOpen, setIsUnblockDialogOpen] = useState(false);
+    const [isDMDialogOpen, setIsDMDialogOpen] = useState(false);
+
     const menuRef = useRef<HTMLDivElement>(null);
 
     // fetch User Profile
@@ -53,6 +60,15 @@ export default function UserProfilePage() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [menuOpen]);
 
+    useEffect(() => {
+        if (params.user_id) {
+            const userId = parseInt(params.user_id, 10);
+            getDmByUserId(userId).then((data) => {
+                setDM(data.dm_room);
+            });
+        }
+    }, [params.user_id]);
+
     // 실제 차단 API를 호출할 함수
     const handleConfirmBlock = () => {
         blockUser(params.user_id!).then(() => {
@@ -68,15 +84,36 @@ export default function UserProfilePage() {
         setIsUnblockDialogOpen(false);
     };
 
+    // DM chatroom 생성 함수
+    const createDMRoom = async () => {
+        if (!userProfile) return;
+        try {
+            const dmRoom = await createDM(userProfile.user);
+            //생성된 채팅방으로 이동
+            router.push(`/chat/${dmRoom.id}/`);
+        } catch (error) {
+            console.error("DM 생성 실패:", error);
+            alert("DM 생성에 실패했습니다. 다시 시도해주세요.");
+        }
+    }
+
     const handleMenuAction = (action: string) => {
         setMenuOpen(false);
         switch (action) {
             case 'chat':
-                console.log('채팅하기');
+                if (DM != null) {
+                    router.push(`/chat/${DM}/`);
+                } else {
+                    setIsDMDialogOpen(true);
+                }
                 break;
+
+            /* 친구 기능 : ToDO?
             case 'friend':
                 console.log('친구 추가');
                 break;
+            */
+
             case 'block_message':
                 console.log('메시지 차단');
                 break;
@@ -110,6 +147,18 @@ export default function UserProfilePage() {
                 title="사용자 차단 해제"
                 description={`정말로 ${userProfile?.nickname || '이 사용자'}을(를) 차단 해제하시겠습니까?`}
                 confirmText="차단 해제"
+                cancelText="취소"
+                isDestructive={true}
+            />
+
+            {/* 채팅방 생성 확인 Dialog */}
+            <AlertDialog
+                isOpen={isDMDialogOpen}
+                onClose={() => setIsDMDialogOpen(false)}
+                onConfirm={createDMRoom}
+                title="1:1 채팅방 생성"
+                description={`${userProfile?.nickname || 'unknown'} 사용자와 1:1 채팅방을 만드시겠습니까?`}
+                confirmText="채팅방 생성"
                 cancelText="취소"
                 isDestructive={true}
             />
