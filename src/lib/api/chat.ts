@@ -144,6 +144,12 @@ export const unblockDM = async (userId: number) => {
     await http.post(`chat/dm/unblock/`, payload);
 }
 
+//특정 User와의 DM방 존재 여부 확인. 존재하지 않을시 null
+export const getDmByUserId = async (userId: number): Promise<{ dm_room: number | null }> => {
+    const { data } = await http.get(`chat/dm/user/${userId}/`);
+    return data;
+}
+
 // 채팅방에 메시지 보내기
 export const sendMessage = async (roomId: number, content: string) => {
     try {
