@@ -11,9 +11,21 @@ import { GeneralUserProfile } from '@/lib/types/user_profile';
 import AlertDialog from '@/components/Dialog/AlertDialog';
 import Image from 'next/image';
 
+interface BlockedUser {
+    user: {
+        id: number;
+    };
+}
+
+interface BlockListResponse {
+    results: BlockedUser[];
+}
+
 export default function UserProfilePage() {
     const params = useParams<{ user_id: string }>();
-    const { data: blockList } = useBlockList();
+    const { data: blockList } = useBlockList() as {
+        data: BlockListResponse | undefined;
+    };
     const router = useRouter();
     const [userProfile, setUserProfile] = useState<GeneralUserProfile | null>(null);
     const [isBlocked, setIsBlocked] = useState(false); // 현재 프로필을 조회하고 있는 User가 차단된 상태인지 여부
@@ -43,7 +55,7 @@ export default function UserProfilePage() {
 
     useEffect(() => {
         if (!blockList?.results) return;
-        const ids = blockList.results.map((item: any) => item.user.id);;
+        const ids = blockList.results.map((item) => item.user.id);
         setIsBlocked(ids.includes(Number(params.user_id)));
     }, [blockList]);
 
