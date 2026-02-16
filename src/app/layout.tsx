@@ -8,13 +8,14 @@ import NavBar from "@/components/NavBar/NavBar";
 import Footer from "@/components/Footer/Footer";
 import "@/i18n";
 import { fetchMe } from "@/lib/api/user";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    // /login 페이지에서는 인증 체크하지 않음
     if (pathname === "/login") {
       setIsLoggedIn(false);
       return;
@@ -33,65 +34,52 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     checkAuth();
   }, [pathname]);
 
-  // /login에서는 바로 children 렌더링
-  if (pathname === "/login") {
-    return (
-      <html lang="ko">
-        <body className="h-screen">
+  const renderContent = () => {
+    if (pathname === "/login") {
+      return (
+        <QueryClientProvider client={queryClient}>
           <main className="h-full">{children}</main>
-        </body>
-      </html>
-    );
-  }
+        </QueryClientProvider>
+      );
+    }
 
-  if (isLoggedIn === null) {
-    return (
-      <html lang="ko">
-        <body><p>로딩 중...</p></body>
-      </html>
-    );
-  }
+    if (isLoggedIn === null) {
+      return (
+        <QueryClientProvider client={queryClient}>
+          <p>로딩 중...</p>
+        </QueryClientProvider>
+      );
+    }
 
-  // WebView 페이지 : 기본 NavBar와 Footer를 사용하지 않음.
-  if (pathname.startsWith("/web_view")) {
-    return (
-      <html lang="ko">
-        <head>
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-        </head>
-        <body className="h-screen">
-          <main className="h-full">{children}</main>
-        </body>
-      </html>
-    );
-  }
+    if (pathname.startsWith("/web_view")) {
+      return <main className="h-full">{children}</main>;
+    }
 
-  // 채팅 페이지 : Footer를 사용하지 않음
-
-  if (pathname.startsWith("/chat")) {
-    return (
-      <html lang="ko">
-        <head>
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-        </head>
-        <body className="h-screen">
+    if (pathname.startsWith("/chat")) {
+      return (
+        <QueryClientProvider client={queryClient}>
           <NavBar />
           <main>{children}</main>
-        </body>
-      </html>
-    );
-  }
+        </QueryClientProvider>
+      );
+    }
 
-  // 일반 페이지 : NavBar와 Footer포함해서 렌더링
+    return (
+      <QueryClientProvider client={queryClient}>
+        <NavBar />
+        <main>{children}</main>
+        <Footer />
+      </QueryClientProvider>
+    );
+  };
+
   return (
     <html lang="ko">
       <head>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
       </head>
-      <body>
-        <NavBar />
-        <main>{children}</main>
-        <Footer />
+      <body className="h-screen">
+        {renderContent()}
       </body>
     </html>
   );

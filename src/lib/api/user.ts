@@ -1,5 +1,6 @@
 import http from "@/lib/api/http";
 import { queryBuilder } from "../utils/queryBuilder";
+import { queryClient } from "../queryClient";
 
 //type QueryValue = string | number | boolean | null | undefined;
 
@@ -44,11 +45,15 @@ export const updateUser = async (userId: number | string, { nickname, picture, s
 // blockUser, unblockUser : 유저 차단/차단 해제
 export const blockUser = async (userId: number | string) => {
   const { data } = await http.post('/blocks/', { user: userId })
+  //@Todo : API call layer와 caching layer 분리하기
+  queryClient.invalidateQueries({ queryKey: ["blockList"] })
   return data
 }
 
 export const unblockUser = async (userId: number | string) => {
   const { data } = await http.post('/blocks/without_id/', { blocked: userId })
+  //@Todo : API call layer와 caching layer 분리하기
+  queryClient.invalidateQueries({ queryKey: ["blockList"] })
   return data
 }
 
@@ -60,6 +65,8 @@ export const fetchBlocks = async () => {
 
 export const deleteBlock = async (blockId: number | string) => {
   const { data } = await http.delete(`/blocks/${blockId}/`)
+  //@Todo : API call layer와 caching layer 분리하기
+  queryClient.invalidateQueries({ queryKey: ["blockList"] })
   return data
 }
 

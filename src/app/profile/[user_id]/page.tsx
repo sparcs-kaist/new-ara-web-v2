@@ -4,17 +4,24 @@ import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { UserProfileArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
 import { fetchUserProfile } from '@/lib/api/user_profile';
+import { blockUser, unblockUser } from '@/lib/api/user';
+import { useBlockList } from '@/lib/query/user';
 import { GeneralUserProfile } from '@/lib/types/user_profile';
+import AlertDialog from '@/components/Dialog/AlertDialog';
 import Image from 'next/image';
 
 export default function UserProfilePage() {
-
     const params = useParams<{ user_id: string }>();
+    const { data: blockList } = useBlockList();
     const [userProfile, setUserProfile] = useState<GeneralUserProfile | null>(null);
+    const [isBlocked, setIsBlocked] = useState(false); // 현재 프로필을 조회하고 있는 User가 차단된 상태인지 여부
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
+    const [isUnblockDialogOpen, setIsUnblockDialogOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    //fetch User Profile
+    // fetch User Profile
     useEffect(() => {
         if (params.user_id) {
             const userId = parseInt(params.user_id, 10);
@@ -23,6 +30,12 @@ export default function UserProfilePage() {
             });
         }
     }, [params.user_id]);
+
+    useEffect(() => {
+        if (!blockList?.results) return;
+        const ids = blockList.results.map((item: any) => item.user.id);;
+        setIsBlocked(ids.includes(Number(params.user_id)));
+    }, [blockList]);
 
     // 외부 클릭 시 메뉴 닫기
     useEffect(() => {
@@ -37,9 +50,23 @@ export default function UserProfilePage() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [menuOpen]);
 
+    // 실제 차단 API를 호출할 함수
+    const handleConfirmBlock = () => {
+        blockUser(params.user_id!).then(() => {
+            setIsBlocked(true);
+        });
+        setIsBlockDialogOpen(false);
+    };
+
+    const handleConfirmUnblock = () => {
+        unblockUser(params.user_id!).then(() => {
+            setIsBlocked(false);
+        });
+        setIsUnblockDialogOpen(false);
+    };
+
     const handleMenuAction = (action: string) => {
         setMenuOpen(false);
-        // TODO: 각 액션에 맞는 API 호출 또는 라우팅
         switch (action) {
             case 'chat':
                 console.log('채팅하기');
@@ -51,13 +78,39 @@ export default function UserProfilePage() {
                 console.log('메시지 차단');
                 break;
             case 'block_user':
-                console.log('사용자 차단');
+                setIsBlockDialogOpen(true);
+                break;
+            case 'unblock_user':
+                setIsUnblockDialogOpen(true);
                 break;
         }
     };
 
     return (
         <div className="min-h-screen">
+            {/* 사용자 차단 / 차단 해제 다이얼로그 */}
+            <AlertDialog
+                isOpen={isBlockDialogOpen}
+                onClose={() => setIsBlockDialogOpen(false)}
+                onConfirm={handleConfirmBlock}
+                title="사용자 차단"
+                description={`정말로 ${userProfile?.nickname || '이 사용자'}을(를) 차단하시겠습니까? 차단 시 해당 사용자의 게시글이 숨김 처리 됩니다.`}
+                confirmText="차단하기"
+                cancelText="취소"
+                isDestructive={true}
+            />
+
+            <AlertDialog
+                isOpen={isUnblockDialogOpen}
+                onClose={() => setIsUnblockDialogOpen(false)}
+                onConfirm={handleConfirmUnblock}
+                title="사용자 차단 해제"
+                description={`정말로 ${userProfile?.nickname || '이 사용자'}을(를) 차단 해제하시겠습니까?`}
+                confirmText="차단 해제"
+                cancelText="취소"
+                isDestructive={true}
+            />
+
             <div className="container mx-auto md:px-20 sm:px-12 xs:px-8 px-4 py-0">
                 <div className="flex flex-col lg:flex-row gap-4">
                     <div className="lg:w-2/3 xl:w-3/4">
@@ -93,30 +146,22 @@ export default function UserProfilePage() {
                                             <div className="absolute left-0 top-full font-semibold mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                                                 <button
                                                     onClick={() => handleMenuAction('chat')}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                                 >
-                                                    💬 채팅하기
+                                                    채팅하기
                                                 </button>
-                                                {/* 친구 기능 : @ Todo 
-                                                <button
-                                                    onClick={() => handleMenuAction('friend')}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    👤 친구 추가
-                                                </button>
-                                                */}
                                                 <hr className="my-1 border-gray-100" />
                                                 <button
                                                     onClick={() => handleMenuAction('block_message')}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                                 >
-                                                    🚫 메시지 차단
+                                                    메시지 차단
                                                 </button>
                                                 <button
                                                     onClick={() => handleMenuAction('block_user')}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
                                                 >
-                                                    ⛔ 사용자 차단
+                                                    사용자 차단
                                                 </button>
                                             </div>
                                         )}
@@ -125,11 +170,6 @@ export default function UserProfilePage() {
                             </div>
 
                             <div>
-                                <div className="flex items-center justify-between mt-2 sm:mt-0 flex-wrap">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {/* User 통계나 게시글 수?*/}
-                                    </div>
-                                </div>
                                 <span className="block text-left text-black font-semibold ">작성한 글</span>
                                 <hr className="border-t-2 border-gray-300 mt-2 mb-2" />
                                 <UserProfileArticleList userId={parseInt(params.user_id, 10)} />
@@ -137,6 +177,7 @@ export default function UserProfilePage() {
                         </div>
                     </div>
 
+                    {/* 사이드바 영역 */}
                     <div className="lg:w-1/3 xl:w-1/4">
                         <div className="bg-white rounded-lg shadow-sm px-4 py-8 sticky top-8">
                             <div className="mb-6">
