@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchMe } from "@/lib/api/user";
-import { fetchBlocks, blockUser, unblockUser } from "@/lib/api/user";
+import { fetchBlocks } from "@/lib/api/user";
 
 export const useMe = () => {
     return useQuery({
