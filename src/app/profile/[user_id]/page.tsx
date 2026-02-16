@@ -15,6 +15,7 @@ export default function UserProfilePage() {
     const { data: blockList } = useBlockList();
     const [userProfile, setUserProfile] = useState<GeneralUserProfile | null>(null);
     const [isBlocked, setIsBlocked] = useState(false); // 현재 프로필을 조회하고 있는 User가 차단된 상태인지 여부
+    const [isMyProfile, setIsMyProfile] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
 
     const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false);
@@ -27,6 +28,8 @@ export default function UserProfilePage() {
             const userId = parseInt(params.user_id, 10);
             fetchUserProfile(userId).then((data) => {
                 setUserProfile(data);
+                //본인의 Profile을 조회한 경우 : api response에 email이 포함됨
+                setIsMyProfile(!!data.email);
             });
         }
     }, [params.user_id]);
@@ -128,44 +131,55 @@ export default function UserProfilePage() {
                                     </div>
                                     <h3 className="text-xl font-semibold text-black">{userProfile?.nickname || '알 수 없는 사용자'}</h3>
 
-                                    {/* 더보기(Kebab) 메뉴 */}
-                                    <div className="relative ml-2" ref={menuRef}>
-                                        <button
-                                            onClick={() => setMenuOpen((prev) => !prev)}
-                                            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                                            aria-label="더보기"
-                                        >
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-gray-500">
-                                                <circle cx="12" cy="5" r="2" />
-                                                <circle cx="12" cy="12" r="2" />
-                                                <circle cx="12" cy="19" r="2" />
-                                            </svg>
-                                        </button>
+                                    {/* 더보기(Kebab) 메뉴 : 본인 프로필일 때는 숨김*/}
+                                    {!isMyProfile && (
+                                        <div className="relative ml-2" ref={menuRef}>
+                                            <button
+                                                onClick={() => setMenuOpen((prev) => !prev)}
+                                                className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                                                aria-label="더보기"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-gray-500">
+                                                    <circle cx="12" cy="5" r="2" />
+                                                    <circle cx="12" cy="12" r="2" />
+                                                    <circle cx="12" cy="19" r="2" />
+                                                </svg>
+                                            </button>
 
-                                        {menuOpen && (
-                                            <div className="absolute left-0 top-full font-semibold mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
-                                                <button
-                                                    onClick={() => handleMenuAction('chat')}
-                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    채팅하기
-                                                </button>
-                                                <hr className="my-1 border-gray-100" />
-                                                <button
-                                                    onClick={() => handleMenuAction('block_message')}
-                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    메시지 차단
-                                                </button>
-                                                <button
-                                                    onClick={() => handleMenuAction('block_user')}
-                                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
-                                                >
-                                                    사용자 차단
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
+                                            {menuOpen && (
+                                                <div className="absolute left-0 top-full font-semibold mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+                                                    <button
+                                                        onClick={() => handleMenuAction('chat')}
+                                                        className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-50 flex items-center gap-2"
+                                                    >
+                                                        채팅하기
+                                                    </button>
+                                                    <hr className="my-1 border-gray-100" />
+                                                    <button
+                                                        onClick={() => handleMenuAction('block_message')}
+                                                        className="w-full text-left px-4 py-2 text-sm text-gray- hover:bg-gray-50 flex items-center gap-2"
+                                                    >
+                                                        메시지 차단
+                                                    </button>
+                                                    {isBlocked ? (
+                                                        <button
+                                                            onClick={() => handleMenuAction('unblock_user')}
+                                                            className="w-full text-left px-4 py-2 text-sm text-black hover:bg-green-50 flex items-center gap-2"
+                                                        >
+                                                            차단 해제
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleMenuAction('block_user')}
+                                                            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                                                        >
+                                                            사용자 차단
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
