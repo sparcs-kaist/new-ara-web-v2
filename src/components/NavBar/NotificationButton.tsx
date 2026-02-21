@@ -27,6 +27,18 @@ export default function NotificationButton() {
         setShowNoti(!showNoti);
     };
 
+    // 영역 밖 클릭 시 닫기
+    useEffect(() => {
+        if (!showNoti) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+                setShowNoti(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showNoti]);
+
     // 버튼 위치에 맞게 알림창 위치 계산
     const getPosition = () => {
         // 기본 위치

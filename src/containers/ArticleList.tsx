@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import ArticleList from '@/components/ArticleList/ArticleList';
-import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
+import { fetchTopArticles, fetchArticles, fetchAllArticlesExcludingPortalNotice } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
 import { fetchMe } from "@/lib/api/user";
 import { fetchUserPosts } from '@/lib/api/user_profile';
@@ -155,6 +155,47 @@ export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListPr
 
     const fetchData = async () => {
       const Response = await fetchArticles({ pageSize, page: currentPage, query });
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
+    };
+    fetchData();
+  }, [pageSize, currentPage, query]);
+
+  return (
+    <ArticleList
+      posts={posts}
+      showBoard={true}
+      showTimeAgo={true}
+      showAttachment={true}
+      showProfile={true}
+      showWriter={true}
+      titleFontSize='text-[16px]'
+      showTopic={true}
+      showHit={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
+}
+
+export function BoardAllArticleExcludePortalNoticeList({ pageSize = 10, query }: BoardArticleListProps) {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
+
+  useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
+
+    const fetchData = async () => {
+      const Response = await fetchAllArticlesExcludingPortalNotice({ pageSize, page: currentPage, query });
 
       if (requestTokenRef.current === currentToken) {
         setPosts(Response.results);

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { BoardArticleList, BoardAllArticleList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
+import { BoardArticleList, BoardAllArticleList, BoardAllArticleExcludePortalNoticeList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
 import { fetchBoardList } from '@/lib/api/board';
 import Image from 'next/image';
 
@@ -41,7 +41,7 @@ export default function Board() {
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [searchInput, setSearchInput] = useState<string>('');
-
+  const [excludePortalNotice, setExcludePortalNotice] = useState(false);
   // 검색 실행 핸들러: 상태 먼저 세팅 → URL 반영
   const handleSearch = () => {
     const trimmed = searchInput.trim();
@@ -198,11 +198,26 @@ export default function Board() {
                       게시물 작성하기
                     </button>
                   )}
+
+                  {currentBoardType === 'all' && (
+                    <label className="flex items-center gap-1.5 text-md text-gray-600 cursor-pointer select-none ml-auto mt-2 sm:mt-0">
+                      <input
+                        type="checkbox"
+                        checked={excludePortalNotice}
+                        onChange={(e) => setExcludePortalNotice(e.target.checked)}
+                        className="accent-[#e15858] w-3.5 h-3.5 cursor-pointer"
+                      />
+                      포탈 공지 제외
+                    </label>
+                  )}
                 </div>
 
                 {currentBoardType === 'all' && (
                   <div className="max-w-none">
-                    <BoardAllArticleList query={search} />
+                    {excludePortalNotice
+                      ? <BoardAllArticleExcludePortalNoticeList query={search} />
+                      : <BoardAllArticleList query={search} />
+                    }
                   </div>
                 )}
                 {currentBoardType === 'popular' && (
