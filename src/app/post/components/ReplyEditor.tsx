@@ -48,7 +48,7 @@ export default function ReplyEditor({
             />
             <div className="flex flex-col gap-[4px] justify-start shrink-0">
                 <button
-                    className="flex py-2 px-5 rounded-[8px] text-xs bg-[#ED3A3A] text-white whitespace-nowrap hover:bg-[#C62626]"
+                    className="flex py-1 px-4 rounded-[16px] text-sm font-medium bg-white text-[#e15858] border-[1.5px] border-[#e15858] whitespace-nowrap hover:bg-[#ed3a3a]/10"
                     onClick={onSubmit}
                 >
                     {isEditing ? "수정" : "등록"}
@@ -56,13 +56,13 @@ export default function ReplyEditor({
                 {/* 수정 모드일 때도 취소 버튼이 보이도록 조건 변경 */}
                 {(isNested || isEditing) && onCancel && (
                     <button
-                        className="flex py-2 px-5 rounded-[8px] text-xs bg-[#E9E9E9] whitespace-nowrap hover:bg-[#B5B5B5]"
+                        className="flex py-1 px-4 rounded-[16px] text-sm font-medium text-gray-500 border-[1.5px] border-gray-500 whitespace-nowrap hover:bg-gray-100"
                         onClick={onCancel}
                     >
                         취소
                     </button>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

@@ -100,7 +100,7 @@ export default function UserSearchDialog({ open, onClose, onSelectUser, title, a
                                            transition-all duration-300 translate-x-4 group-hover:translate-x-0"
                             >
                                 <button
-                                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition disabled:bg-gray-400"
+                                    className="flex items-center gap-2 px-3 py-1 bg-white text-[#e15858] rounded-full border-[1.5px] border-[#e15858] shadow hover:bg-[#ed3a3a]/5 transition disabled:bg-gray-400"
                                     onClick={() => handleSelect({ id: user.user, nickname: user.nickname })}
                                     disabled={submitting === user.user}
                                 >
