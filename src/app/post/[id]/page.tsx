@@ -394,10 +394,13 @@ export default function PostDetailPage() {
           )}
 
           <div className='flex flex-row w-full h-fit justify-between items-center'>
-            <div className='flex flex-row gap-[4px] cursor-pointer text-[#333333] items-center' onClick={() => { }}>
+            <div
+              className={`flex flex-row gap-[4px] text-[#333333] items-center ${post.name_type === 1 ? 'cursor-pointer' : ''}`}
+              onClick={() => { if (post.name_type === 1) router.push(`/profile/${post.created_by.id}`); }}
+            >
               <img src={post.created_by.profile.picture} alt="example" width={20} />
               {post.created_by.profile.nickname}
-              <Image src="/Chevron.svg" alt="" width={20} height={20} />
+              {post.name_type === 1 && <Image src="/Chevron.svg" alt="" width={20} height={20} />}
             </div>
             <div className='flex text-[#B5B5B5] text-sm' onClick={() => { }}>
               {`${formatDate(post.created_at)}  ·  조회 ${post.hit_count}`}
