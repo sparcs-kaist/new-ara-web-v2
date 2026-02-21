@@ -20,6 +20,7 @@ export default function Write() {
   const router = useRouter(); // useRouter 훅 사용
   const searchParams = useSearchParams();
   const editPostId = searchParams.get('edit');
+  const boardParam = searchParams.get('board');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor | null>(null);
@@ -41,6 +42,22 @@ export default function Write() {
       .then(data => setBoards(data.filter((b: ApiBoard) => b.user_writable)))
       .catch(console.error)
   }, [])
+
+  // URL query param으로 게시판 자동 설정 (?board=5 등)
+  useEffect(() => {
+    if (!boards.length || editPostId) return; // 수정 모드면 무시
+    const paramId = Number(boardParam);
+    const matched = boards.find(b => b.id === paramId);
+    if (matched) {
+      setBoardId(matched.id);
+      setTopicId('');
+      if (matched.name_type === 4) setNameType('REALNAME');
+      else setNameType('REGULAR');
+      const market = /장터|거래|마켓/i.test(matched.ko_name ?? '');
+      setIsMarket(market);
+    }
+    // boardParam이 없거나 유효하지 않으면 기본값(7, 자유게시판) 유지
+  }, [boards, boardParam, editPostId])
 
   const [title, setTitle] = useState<string>('');
   const [saving, setSaving] = useState(false);

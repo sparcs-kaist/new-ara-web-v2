@@ -190,13 +190,14 @@ export default function Board() {
                     </div>
                   </div>
 
-                  <button
-                    className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0 hidden sm:block"
-                    onClick={() => router.push(`/write`)}
-                    disabled={!selectedBoard?.user_writable}
-                  >
-                    게시물 작성하기
-                  </button>
+                  {selectedBoard?.user_writable && (
+                    <button
+                      className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0 hidden sm:block"
+                      onClick={() => router.push(currentBoardId ? `/write?board=${currentBoardId}` : `/write`)}
+                    >
+                      게시물 작성하기
+                    </button>
+                  )}
                 </div>
 
                 {currentBoardType === 'all' && (
