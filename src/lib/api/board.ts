@@ -8,13 +8,13 @@ type Filter = {
 };
 
 export type ArticleQuery = {
-  boardId?: number | number[]; 
-  topicId?: number; 
+  boardId?: number | number[];
+  topicId?: number;
   username?: string;
   userId?: number;
-  query?: string; 
-  ordering?: string; 
-  page?: number; 
+  query?: string;
+  ordering?: string;
+  page?: number;
   pageSize?: number;
   filter?: Filter;
 };
@@ -34,7 +34,7 @@ function buildArticleParams(params: ArticleQuery): Record<string, QueryValue> {
   if (params.ordering) context.ordering = params.ordering;
   if (params.query) context.main_search__contains = params.query;
   if (params.userId) context.created_by = params.userId;
-  
+
 
   const filter = params.filter;
   if (filter) {
@@ -43,7 +43,7 @@ function buildArticleParams(params: ArticleQuery): Record<string, QueryValue> {
     } else if (filter.communication_article__school_response_status__lt !== undefined) {
       context.communication_article__school_response_status__lt = filter.communication_article__school_response_status__lt;
     }
-    
+
   }
 
   if (params.page) context.page = params.page;
@@ -150,5 +150,18 @@ export const fetchAllPostinPositiveOrder = async (params: BoardQuery) =>
 //신고 목록 조회
 export const fetchReports = async () => {
   const { data } = await http.get('reports/');
+  return data;
+};
+
+//전체보기 포탈 공지글 제외
+// 19 : 포스터 (V2에서 추가됨)
+// https://newara.sparcs.org/api/articles/?parent_board__in=2,3,4,5,7,8,10,11,12,13,14,17,18,19
+export const fetchAllArticlesExcludingPortalNotice = async (params: ArticleQuery = {}) => {
+  const nonPortalBoardIds = [2, 3, 4, 5, 7, 8, 10, 11, 12, 13, 14, 17, 18, 19];
+  const overridden: ArticleQuery = {
+    ...params,
+    boardId: nonPortalBoardIds,
+  };
+  const { data } = await http.get(`articles/?${queryBuilder(buildArticleParams(overridden))}`);
   return data;
 };
