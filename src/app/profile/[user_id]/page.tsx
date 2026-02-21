@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { UserProfileArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList } from '@/containers/ArticleList';
 import { fetchUserProfile } from '@/lib/api/user_profile';
@@ -43,14 +43,18 @@ export default function UserProfilePage() {
 
     // fetch User Profile
     useEffect(() => {
-        if (params.user_id) {
-            const userId = parseInt(params.user_id, 10);
-            fetchUserProfile(userId).then((data) => {
-                setUserProfile(data);
-                //본인의 Profile을 조회한 경우 : api response에 email이 포함됨
-                setIsMyProfile(!!data.email);
-            });
+        if (!params.user_id || !/^\d+$/.test(params.user_id)) {
+            notFound();
+            return;
         }
+        const userId = parseInt(params.user_id, 10);
+        fetchUserProfile(userId).then((data) => {
+            setUserProfile(data);
+            //본인의 Profile을 조회한 경우 : api response에 email이 포함됨
+            setIsMyProfile(!!data.email);
+        }).catch(() => {
+            notFound();
+        });
     }, [params.user_id]);
 
     useEffect(() => {
