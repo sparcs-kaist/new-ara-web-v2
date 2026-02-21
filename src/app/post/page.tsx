@@ -100,7 +100,11 @@ export default function PostDetailPage() {
   }, []);
 
   if (!post) {
-    return <div className="p-8 text-center">로딩 중…</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-10 h-10 border-4 border-[#ed3a3a]/30 border-t-[#ed3a3a] rounded-full animate-spin" />
+      </div>
+    );
   }
 
   const mappedAttachments = (post.attachments ?? []).map(att => ({
