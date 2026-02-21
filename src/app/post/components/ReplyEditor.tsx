@@ -27,13 +27,14 @@ export default function ReplyEditor({
                     resize-none
                     leading-relaxed
                     text-base
-                    border
-                    border-[#E9E9E9]
-                    bg-[#FAFAFA]
+                    border-[1.5px]
+                    border-gray-300
+                    bg-gray-20
                     rounded-[8px]
                     focus:outline-none
                     focus:ring-0
-                    no-scrollbar 
+                    no-scrollbar
+                    placeholder-gray-500 
                 "
                 style={{
                     height: "auto",
@@ -44,7 +45,7 @@ export default function ReplyEditor({
                     target.style.height = "auto";
                     target.style.height = `${target.scrollHeight}px`;
                 }}
-                placeholder="내용을 입력하세요"
+                placeholder="댓글을 입력해 주세요"
             />
             <div className="flex flex-col gap-[4px] justify-start shrink-0">
                 <button
