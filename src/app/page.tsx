@@ -69,7 +69,7 @@ export default function Home() {
       {/* 실제 메인 페이지 컨텐츠 - Grid 레이아웃, 좌우 여백(padding) 추가 */}
       <main className="grid grid-cols-10 gap-3 xl:px-1 md:px-16 sm:px-12 xs:px-8 px-4">
         {loading ? (
-          <div className="col-span-10 text-center py-8">데이터를 불러오는 중...</div>
+          <div className="col-span-10 text-center py-8"></div>
         ) : (
           <>
             {/* --- 상단 왼쪽 영역 (1, 2행) --- */}

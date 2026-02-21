@@ -27,7 +27,7 @@ const SparcsNotice = ({ className }: SparcsNoticeProps) => {
             {/* 고정 높이를 제거하고 flex-1을 추가하여 남은 공간을 모두 채움 */}
             <div className="relative w-full flex-1 overflow-hidden rounded-md">
                 <Image
-                    src="/SparcsNotice/커피쿠폰 스토리.png"
+                    src="/SparcsNotice/2026S_recruiting.png"
                     alt="SPARCS Notice"
                     fill
                     className="object-cover"
