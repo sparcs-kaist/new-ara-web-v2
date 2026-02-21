@@ -150,7 +150,7 @@ export default function PosterCarousel() {
         return (
             <div className="w-full">
                 <Link href="/board?board=poster" className="flex items-center space-x-2 mb-[16px]">
-                    <h2 className="text-[20px] font-bold">📌 Zabo</h2>
+                    <h2 className="text-[20px] font-bold">📌 포스터</h2>
                     <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
                 </Link>
                 <div className="w-full flex items-center justify-center bg-white text-gray-400" style={{ aspectRatio: '4/1.414' }}>
@@ -163,7 +163,7 @@ export default function PosterCarousel() {
     return (
         <div className="w-full">
             <Link href="/board?board=poster" className="flex items-center space-x-2 mb-[16px]">
-                <h2 className="text-[20px] font-bold">📌 Zabo</h2>
+                <h2 className="text-[20px] font-bold">📌 포스터</h2>
                 <Image src="/Right_Chevron.svg" width={8.84} height={15} alt="arrow" />
             </Link>
             <div className="overflow-hidden">
