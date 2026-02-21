@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { fetchMe } from '@/lib/api/user';
 
 interface UserData {
+    user: number;
     picture: string;
     nickname: string;
     num_articles: number;
@@ -50,7 +51,7 @@ const SmallMyInfo = () => {
         );
     }
 
-    const emailToShow = userData.email || userData.sso_user_info?.email || '';
+    /*
     const formatLocalYYYYMMDD = (d: Date) => {
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -58,10 +59,11 @@ const SmallMyInfo = () => {
         return `${y}-${m}-${day}`;
     };
     const joinedDateText = userData.created_at ? formatLocalYYYYMMDD(new Date(userData.created_at)) : '';
+    */
 
     return (
         <div className="p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow">
-            <div className="flex items-center gap-3 mb-3">
+            <Link href={`/myinfo`} className="flex items-center gap-3 mb-3 cursor-pointer rounded-lg">
                 <Image
                     src={userData.picture || '/user.png'}
                     alt="profile picture"
@@ -87,7 +89,7 @@ const SmallMyInfo = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </Link>
             <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-around items-center text-center">
                     <Link href="https://mail.kaist.ac.kr" target="_blank" className="text-black font-medium hover:underline">메일</Link>
