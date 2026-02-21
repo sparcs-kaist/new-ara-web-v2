@@ -52,7 +52,7 @@ const AlertDialog = ({
                 <div className="flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                         {cancelText}
                     </button>
@@ -61,9 +61,9 @@ const AlertDialog = ({
                             onConfirm();
                             onClose();
                         }}
-                        className={`flex-1 rounded-lg py-2.5 text-sm font-medium text-white transition-colors ${isDestructive
-                            ? 'bg-red-500 hover:bg-red-600'
-                            : 'bg-red-600 hover:bg-red-700'
+                        className={`flex-1 rounded-xl py-2.5 text-sm font-medium text-white transition-colors ${isDestructive
+                            ? 'bg-red-500/90 hover:bg-red-600/80'
+                            : 'bg-red-600/90 hover:bg-red-700/80'
                             }`}
                     >
                         {confirmText}
