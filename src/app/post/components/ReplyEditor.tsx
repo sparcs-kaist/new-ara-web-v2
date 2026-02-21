@@ -28,7 +28,7 @@ export default function ReplyEditor({
                     leading-relaxed
                     text-base
                     border-[1.5px]
-                    border-gray-300
+                    border-gray-200
                     bg-gray-20
                     rounded-[8px]
                     focus:outline-none
