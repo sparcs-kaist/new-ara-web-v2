@@ -3,6 +3,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import LeaveContextMenu from '@/app/chat/components/LeaveContextMenu';
 
 // 참여자 타입 정의
@@ -132,7 +133,7 @@ export default function MembersPanel({
                         <ul className="space-y-4">
                             {members.map((m) => (
                                 <li key={m.user.id} className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    <Link href={`/profile/${m.user.id}`} className="flex items-center gap-3 min-w-0 rounded-lg cursor-pointer">
                                         <div className="relative w-9 h-9">
                                             <Image
                                                 src={m.user.profile?.picture || '/default-room.png'}
@@ -150,7 +151,7 @@ export default function MembersPanel({
                                                 {m.role === 'OWNER' && <span className='text-sm text-gray-600'>소유자</span>}
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
