@@ -28,7 +28,11 @@ export default function WebViewPostFrame() {
             .finally(() => setIsLoading(false))
     }, [postId])
 
-    if (isLoading) return <div className="p-4 text-center text-sm text-gray-500">로딩 중…</div>
+    if (isLoading) return (
+        <div className="flex items-center justify-center min-h-screen">
+            <div className="w-10 h-10 border-4 border-[#ed3a3a]/30 border-t-[#ed3a3a] rounded-full animate-spin" />
+        </div>
+    )
     if (!post) return null
 
     return (
