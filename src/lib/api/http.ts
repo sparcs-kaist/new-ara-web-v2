@@ -1,5 +1,5 @@
 import axios from 'axios'
-//  import { getCookie } from '../utils/cookie'
+import { getCookie } from '../utils/cookie'
 import { errorParser } from '../utils/errorParser'
 
 export const apiUrl = (() => {
@@ -20,8 +20,6 @@ const http = axios.create({
   withCredentials: true,
 })
 
-// backend doesn't use CSRF protection yet.
-/*
 http.interceptors.request.use(
   config => {
     config.headers['X-CSRFToken'] = getCookie('csrftoken')
@@ -29,7 +27,7 @@ http.interceptors.request.use(
   },
   error => Promise.reject(error),
 )
-*/
+
 
 http.interceptors.response.use(
   response => response,
