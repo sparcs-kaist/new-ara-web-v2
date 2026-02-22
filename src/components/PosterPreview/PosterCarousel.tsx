@@ -177,7 +177,7 @@ export default function PosterCarousel() {
                         const href = `/post/${a.id}`;
                         const hasError = errorIdx.includes(idx);
                         return (
-                            <Link key={`${a.id}-${idx}`} href={href} className="block basis-1/4 shrink-0">
+                            <Link key={`${a.id}-${idx}`} href={href} className="block basis-1/4 shrink-0 min-w-0 overflow-hidden">
                                 <div className="w-full" style={{ aspectRatio: '210/297' }}>
                                     <div className="relative w-full h-full overflow-hidden rounded-lg border border-gray-200 bg-white flex items-center justify-center">
                                         {hasError || !img ? (
@@ -187,7 +187,7 @@ export default function PosterCarousel() {
                                                 src={img.file}
                                                 alt={a.title}
                                                 fill
-                                                className="object-contain bg-white"
+                                                className="object-cover"
                                                 sizes="(max-width: 768px) 50vw, 25vw"
                                                 onError={() => setErrorIdx(prev => prev.includes(idx) ? prev : [...prev, idx])}
                                             />
