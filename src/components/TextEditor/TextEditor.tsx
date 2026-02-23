@@ -60,7 +60,11 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
         }),
         Underline,
         CustomCodeBlock,
-        Link.configure({ openOnClick: false }),
+        Link.configure({
+          openOnClick: false,
+          autolink: false,
+          linkOnPaste: false,
+        }),
         Placeholder.configure({
           placeholder: 'Write something …',
           showOnlyWhenEditable: true,
