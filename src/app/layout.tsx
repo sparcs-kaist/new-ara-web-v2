@@ -15,6 +15,36 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const pathname = usePathname();
 
+  // Vue -> Next.js 마이그레이션 : Vue의 Service Worker가 남아 있는 문제가 있음
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        if (registrations.length > 0) {
+          // 등록된 워커 해제
+          Promise.all(registrations.map(r => r.unregister())).then((results) => {
+            const isAnyUnregistered = results.some(Boolean);
+
+            if (isAnyUnregistered) {
+              console.log('Old Service Workers cleared.');
+
+              if (!sessionStorage.getItem('sw_cleared')) {
+                sessionStorage.setItem('sw_cleared', 'true');
+                window.location.reload();
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // 캐시 스토리지는 새로고침 없이도 바로 비울 수 있습니다.
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        Promise.all(names.map(name => caches.delete(name)));
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (pathname === "/login") {
       setIsLoggedIn(false);
