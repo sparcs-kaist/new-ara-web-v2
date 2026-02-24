@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 
 import { fetchMe, logout } from "@/lib/api/user";
 
-const DEFAULT_PROFILE = "/default_profile.png";
+const DEFAULT_PROFILE = "/user.png";
 
 export default function NavBarProfile() {
   const [User, setUser] = useState("");
