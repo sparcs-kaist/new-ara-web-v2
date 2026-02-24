@@ -64,7 +64,7 @@ const MarketPreview = () => {
                             />
                         ) : (
                             <Image
-                                src={article.attachments[0]?.file || '/default-product-image.png'}
+                                src={article.attachments[0]?.file || '/Service_Logo_Simple.svg'}
                                 alt={article.title}
                                 fill
                                 className="object-cover group-hover:scale-105 transition-transform duration-200"
