@@ -195,7 +195,7 @@ const projects: Project[] = [
         'leesia:강현우', 'seol:설윤아', 'youns:최윤서', 'appleseed:강찬규'
       ],
       DS: [
-        'cheese:서인성',
+        'cheese:서인성', 'siwon:박정원',
         'yumyum:조유민', 'nine:배세윤', 'cheddar:최다은',
         'stitch:이채영', 'zero:임현정', 'luny:김나영'
       ]
