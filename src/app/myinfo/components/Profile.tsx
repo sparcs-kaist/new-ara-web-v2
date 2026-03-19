@@ -1,30 +1,33 @@
-'use client';
+"use client";
 import Image from "next/image";
-import { useTranslation } from 'react-i18next';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
-import { fetchMe, updateUser } from '@/lib/api/user';
+import { useTranslation } from "react-i18next";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Cropper from "react-easy-crop";
+import { fetchMe, updateUser } from "@/lib/api/user";
 
 const MAX_SIZE_MB = 3; // 최대 업로드 용량 제한
 
 // Helper: image를 로드해서 canvas로 자르기
 const createImage = (url: string) =>
   new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new window.Image();  // window.Image 로 명확히 지정
-    img.addEventListener('load', () => resolve(img));
-    img.addEventListener('error', (error) => reject(error));
-    img.setAttribute('crossOrigin', 'anonymous');
+    const img = new window.Image(); // window.Image 로 명확히 지정
+    img.addEventListener("load", () => resolve(img));
+    img.addEventListener("error", (error) => reject(error));
+    img.setAttribute("crossOrigin", "anonymous");
     img.src = url;
   });
 
-const getCroppedImg = async (imageSrc: string, crop: { x: number, y: number, width: number, height: number }) => {
+const getCroppedImg = async (
+  imageSrc: string,
+  crop: { x: number; y: number; width: number; height: number },
+) => {
   const image = await createImage(imageSrc);
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = crop.width;
   canvas.height = crop.height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
-  if (!ctx) throw new Error('Failed to get canvas context');
+  if (!ctx) throw new Error("Failed to get canvas context");
 
   ctx.drawImage(
     image,
@@ -35,13 +38,13 @@ const getCroppedImg = async (imageSrc: string, crop: { x: number, y: number, wid
     0,
     0,
     crop.width,
-    crop.height
+    crop.height,
   );
 
   return new Promise<Blob>((resolve) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
-    }, 'image/jpeg');
+    }, "image/jpeg");
   });
 };
 
@@ -49,10 +52,10 @@ const Profile = () => {
   const { t } = useTranslation();
 
   const [userId, setUserId] = useState<number | null>(null);
-  const [profileImage, setProfileImage] = useState<string>('/user.png');
-  const [nickname, setNickname] = useState('');
-  const [email, setEmail] = useState('');
-  const [newNickname, setNewNickname] = useState('');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [nickname, setNickname] = useState("");
+  const [email, setEmail] = useState("");
+  const [newNickname, setNewNickname] = useState("");
   const [isNicknameEditable, setIsNicknameEditable] = useState(false);
   const [seeSexual, setSeeSexual] = useState(false);
   const [seeSocial, setSeeSocial] = useState(false);
@@ -61,7 +64,12 @@ const Profile = () => {
   const [croppingImage, setCroppingImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number, y: number, width: number, height: number } | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,14 +78,14 @@ const Profile = () => {
       try {
         const data = await fetchMe();
         setUserId(data.user);
-        setProfileImage(data.picture || '/user.png');
-        setEmail(data.email || '');
-        setNickname(data.nickname || '');
-        setNewNickname(data.nickname || '');
+        setProfileImage(data.picture || null);
+        setEmail(data.email || "");
+        setNickname(data.nickname || "");
+        setNewNickname(data.nickname || "");
         setSeeSexual(data.see_sexual);
         setSeeSocial(data.see_social);
       } catch (error) {
-        console.error('프로필 정보 로딩 실패', error);
+        console.error("프로필 정보 로딩 실패", error);
       }
     };
     loadProfile();
@@ -96,13 +104,24 @@ const Profile = () => {
         return;
       }
       const imageUrl = URL.createObjectURL(file);
-      setCroppingImage(imageUrl);  // crop 모달용 이미지 세팅
+      setCroppingImage(imageUrl); // crop 모달용 이미지 세팅
     }
   };
 
-  const onCropComplete = useCallback((croppedArea: { x: number, y: number, width: number, height: number }, croppedAreaPixels: { x: number, y: number, width: number, height: number }) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onCropComplete = useCallback(
+    (
+      croppedArea: { x: number; y: number; width: number; height: number },
+      croppedAreaPixels: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      },
+    ) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    [],
+  );
 
   // crop 완료 후 저장 처리 및 서버 업로드
   const saveCroppedImage = async () => {
@@ -110,7 +129,9 @@ const Profile = () => {
 
     try {
       const croppedBlob = await getCroppedImg(croppingImage, croppedAreaPixels);
-      const croppedFile = new File([croppedBlob], 'cropped.jpg', { type: 'image/jpeg' });
+      const croppedFile = new File([croppedBlob], "cropped.jpg", {
+        type: "image/jpeg",
+      });
       setSelectedPicture(croppedFile);
       setProfileImage(URL.createObjectURL(croppedFile)); // crop 결과 미리보기
       setCroppingImage(null); // 모달 닫기
@@ -123,11 +144,11 @@ const Profile = () => {
         sexual: seeSexual,
         social: seeSocial,
       });
-      setProfileImage(updatedData.picture || '/user.png');
-      alert(t('프로필 이미지가 성공적으로 변경되었습니다.'));
+      setProfileImage(updatedData.picture);
+      alert(t("프로필 이미지가 성공적으로 변경되었습니다."));
     } catch (error) {
-      console.error('프로필 이미지 변경 실패:', error);
-      alert(t('프로필 이미지 변경에 실패하였습니다.'));
+      console.error("프로필 이미지 변경 실패:", error);
+      alert(t("프로필 이미지 변경에 실패하였습니다."));
     }
   };
 
@@ -150,10 +171,10 @@ const Profile = () => {
       setNickname(newNickname.trim() || nickname);
       setIsNicknameEditable(false);
       setSelectedPicture(null);
-      alert(t('프로필이 성공적으로 변경되었습니다.'));
+      alert(t("프로필이 성공적으로 변경되었습니다."));
     } catch (error) {
-      console.error('프로필 변경 실패:', error);
-      alert(t('프로필 변경에 실패하였습니다.'));
+      console.error("프로필 변경 실패:", error);
+      alert(t("프로필 변경에 실패하였습니다."));
     }
   };
 
@@ -169,15 +190,21 @@ const Profile = () => {
   return (
     <div className="flex flex-col items-center mb-[24px]">
       <div className="relative mb-[24px]">
-        <Image
-          src={profileImage}
-          width={128}
-          height={128}
-          style={{ objectFit: "cover", borderRadius: "50%" }} // 원형 유지
-          alt="Profile Image"
-          onClick={handlePictureClick}
-          className="cursor-pointer"
-        />
+        {profileImage ? (
+          <Image
+            src={profileImage}
+            width={128}
+            height={128}
+            style={{ objectFit: "cover", borderRadius: "50%" }} // 원형 유지
+            alt="Profile Image"
+            onClick={handlePictureClick}
+            className="cursor-pointer"
+          />
+        ) : (
+          <div className="w-[128px] h-[128px] rounded-full bg-ara_red_most_bright flex items-center justify-center">
+            <span className="text-[24px] font-bold">N</span>
+          </div>
+        )}
         <input
           type="file"
           className="hidden"
@@ -189,7 +216,9 @@ const Profile = () => {
           className="absolute bottom-0 right-0 flex items-center justify-center w-[2rem] h-[2rem] rounded-full bg-white cursor-pointer"
           onClick={handlePictureClick}
         >
-          <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">camera_alt</i>
+          <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">
+            camera_alt
+          </i>
         </a>
       </div>
 
@@ -217,13 +246,13 @@ const Profile = () => {
               className="bg-ara_red text-white px-4 py-2 rounded"
               onClick={saveCroppedImage}
             >
-              {t('적용')}
+              {t("적용")}
             </button>
             <button
               className="bg-gray-400 text-white px-4 py-2 rounded"
               onClick={cancelCropping}
             >
-              {t('취소')}
+              {t("취소")}
             </button>
           </div>
         </div>
@@ -233,39 +262,49 @@ const Profile = () => {
         {!isNicknameEditable ? (
           <div className="flex flex-row items-center">
             <div className="text-[20px] font-extrabold truncate inline-block">
-              {nickname}
+              {nickname || (
+                <div className="w-[200px] h-[30px] bg-ara_red_most_bright animate-pulse rounded-md inline-block"></div>
+              )}
             </div>
             <a
               className="ml-1 flex items-center cursor-pointer"
               onClick={() => setIsNicknameEditable(true)}
             >
-              <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">create</i>
+              <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">
+                create
+              </i>
             </a>
           </div>
         ) : (
-          <div className="flex items-center space-x-1">
+          <div className="flex flex-col items-center space-y-2">
             <input
               value={newNickname}
               onChange={(e) => setNewNickname(e.target.value)}
-              className="w-[130px] h-[28px] text-[15px] font-normal border border-gray-300 rounded-full px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="w-[150px] h-[28px] text-[15px] text-center font-normal border border-gray-300 rounded-full px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
             />
-            <div className="flex space-x-1">
+            <div className="w-[100%] flex space-x-1">
               <button
-                className="px-3 py-[5px] text-white text-sm font-semibold rounded-full bg-[#E52933] hover:bg-[#cc202b] transition duration-200"
+                className="w-[100%] px-3 py-[5px] text-white text-sm font-semibold rounded-full bg-[#E52933] hover:bg-[#cc202b] transition duration-200"
                 onClick={handleNicknameSave}
               >
-                {t('확인')}
+                {t("확인")}
               </button>
               <button
-                className="px-3 py-[5px] text-gray-600 text-sm font-semibold rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200"
+                className="w-[100%] px-3 py-[5px] text-gray-600 text-sm font-semibold rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200"
                 onClick={handleNicknameCancel}
               >
-                {t('취소')}
+                {t("취소")}
               </button>
             </div>
           </div>
         )}
-        <div className="text-[16px] text-gray-500 font-medium truncate">{email}</div>
+        {email ? (
+          <div className="text-[16px] text-gray-500 font-medium truncate">
+            {email}
+          </div>
+        ) : (
+          <div className="w-[200px] h-[24px] bg-ara_red_most_bright animate-pulse rounded inline-block"></div>
+        )}
       </div>
     </div>
   );

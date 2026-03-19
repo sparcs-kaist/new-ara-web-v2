@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
-import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
-import React from 'react';
-import { fetchMe, updateUser } from '@/lib/api/user';
+"use client";
+import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
+import React from "react";
+import { fetchMe, updateUser } from "@/lib/api/user";
 
 interface PostSettingProps {
-  onSettingChange?: (settings: { seeSexual: boolean; seeSocial: boolean }) => void;
+  onSettingChange?: (settings: {
+    seeSexual: boolean;
+    seeSocial: boolean;
+  }) => void;
 }
 
 const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
@@ -21,14 +24,14 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
     (async () => {
       try {
         const data = await fetchMe();
-        console.log('fetchMe data:', data);
+        console.log("fetchMe data:", data);
         setUserData(data);
         setIsSexual(Boolean(data.see_sexual));
         setIsSocial(Boolean(data.see_social));
-        setError(null);  // 성공 시 에러 초기화도 명시적으로!
+        setError(null); // 성공 시 에러 초기화도 명시적으로!
       } catch (e) {
         console.error("fetchMe error:", e);
-        setError(t('설정값을 불러오는 데 실패했습니다.'));
+        setError(t("설정값을 불러오는 데 실패했습니다."));
       } finally {
         setLoading(false);
       }
@@ -40,7 +43,7 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
 
     try {
       await updateUser(userData.user, {
-        nickname: userData.nickname ?? '',
+        nickname: userData.nickname ?? "",
         picture: null, // 혹은 기존 사진 처리
         sexual: newSexual,
         social: newSocial,
@@ -48,7 +51,7 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
       setError(null);
       onSettingChange?.({ seeSexual: newSexual, seeSocial: newSocial });
     } catch {
-      setError(t('설정 저장에 실패했습니다.'));
+      setError(t("설정 저장에 실패했습니다."));
     }
   };
 
@@ -64,29 +67,53 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
     saveSettings(isSexual, newValue);
   };
 
-  if (loading) return <div>{t('로딩 중...')}</div>;
+  //if (loading) return <div>{t('로딩 중...')}</div>;
+  if (loading) {
+    return (
+      <div className="w-full rounded-md bg-ara_red_most_bright p-3 animate-pulse">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-24 rounded bg-ara_red_bright/60" />
+            <div className="h-6 w-12 rounded-full bg-ara_red_bright/60" />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-28 rounded bg-ara_red_bright/60" />
+            <div className="h-6 w-12 rounded-full bg-ara_red_bright/60" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div>
       <div className="p-[10px] w-full">
         <div className="flex justify-between items-center p-[8px] h-[30px]">
-          <span className="text-sm">{t('성인글 보기')}</span>
+          <span className="text-sm">{t("성인글 보기")}</span>
           <div onClick={toggleSexual} className="cursor-pointer flex-shrink-0">
             {isSexual ? (
-              <i className="material-icons text-ara_red !text-[30px]">toggle_on</i>
+              <i className="material-icons text-ara_red !text-[30px]">
+                toggle_on
+              </i>
             ) : (
-              <i className="material-icons text-gray-400 !text-[30px]">toggle_off</i>
+              <i className="material-icons text-gray-400 !text-[30px]">
+                toggle_off
+              </i>
             )}
           </div>
         </div>
         <div className="flex justify-between items-center p-[8px] h-[30px]">
-          <span className="text-sm">{t('settings-social')}</span>
+          <span className="text-sm">{t("settings-social")}</span>
           <div onClick={toggleSocial} className="cursor-pointer">
             {isSocial ? (
-              <i className="material-icons text-ara_red !text-[30px]">toggle_on</i>
+              <i className="material-icons text-ara_red !text-[30px]">
+                toggle_on
+              </i>
             ) : (
-              <i className="material-icons text-gray-400 !text-[30px]">toggle_off</i>
+              <i className="material-icons text-gray-400 !text-[30px]">
+                toggle_off
+              </i>
             )}
           </div>
         </div>
