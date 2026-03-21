@@ -55,7 +55,7 @@ export class ChatSocketClient3 {
         }
     }
 
-    send(data: any) {
+    send<T extends object>(data: T) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             console.log('WebSocket 메시지 전송:', data);
             this.socket.send(JSON.stringify(data));

@@ -6,12 +6,12 @@ import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
 import FileMessage from './FileMessage';
-import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
+import { fetchChatMessages, /* sendMessage, */ fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
 import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
-import { uploadAttachments } from '@/lib/api/post';
-import { sendAttachmentMessage } from '@/lib/api/chat';
+// import { uploadAttachments } from '@/lib/api/post';
+// import { sendAttachmentMessage } from '@/lib/api/chat';
 import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM, createInvitation } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
@@ -39,6 +39,23 @@ interface ChatRoomDetailProps {
     onMenuClick?: () => void; // 메뉴 클릭 핸들러 prop 추가
 }
 
+interface Message {
+    chat_room: number;
+    created_at: string;
+    created_by: Member["user"];
+    expired_at: string;
+    id: number;
+    message_content: string;
+    message_type: string;
+    updated_at: string;
+    attachment?: {
+        url?: string
+        file?: unknown
+    };
+    attachment_url: string;
+    attachment_file: unknown;
+}
+
 // 참여자 타입 (API 변경 반영)
 type Member = {
     user: {
@@ -56,9 +73,28 @@ type Member = {
     last_seen_at?: string | null;
 };
 
+interface UserJoinPayload {
+    type: "user_join";
+    user: number;
+    room_id: number;
+}
+
+interface UserLeavePayload {
+    type: "user_leave";
+    user: number;
+    room_id: number;
+}
+
+interface MessageDeletedPayload {
+    type: "message_deleted";
+    message_id: number;
+}
+
+// type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
+
 export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDetailProps) {
     const router = useRouter();
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [myId, setMyId] = useState<number | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -113,6 +149,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
     // 소켓 이벤트 리스너 추가
     useEffect(() => {
         // 최신 1개만 가져와 반영
+        /*
         const applyRecent = async () => {
             const d = await fetchRecentMessage(roomId);
             const latest = d?.results?.[0];
@@ -138,8 +175,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 setMembers(data?.members ?? []);
             } catch { }
         };
+        */
 
-        const handleRoomUpdate = async (payload: any) => {
+        const handleRoomUpdate = async (/* payload: any */) => {
+            /*
             console.log('소켓 update 이벤트 수신:', payload);
 
             // payload 필드가 있다면 그것을 사용 (서버 브로드캐스트 구조)
@@ -180,18 +219,16 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                     refreshMembers();
                 }, 300);
             }
+            */
         };
 
         // NEW: 유저가 방에 진입했을 때(접속) 처리
-        const handleUserJoin = async (payload: any) => {
-            const targetRoomId =
-                payload?.room_id ?? payload?.chat_room ?? payload?.room?.id ?? roomId;
+        const handleUserJoin = async (payload: UserJoinPayload) => {
+            const targetRoomId = payload.room_id // ?? payload?.chat_room ?? payload?.room?.id ?? roomId;
             if (targetRoomId !== roomId) return;
 
-            const joinedUserId =
-                typeof payload?.user === 'object' ? payload?.user?.id : payload?.user;
+            const joinedUserId = payload.user // typeof payload?.user === 'object' ? payload?.user?.id : payload?.user;
 
-            // 1) 낙관적 업데이트: 해당 유저의 last_seen_at을 지금으로
             if (joinedUserId) {
                 const nowIso = new Date().toISOString();
                 setMembers(prev => {
@@ -203,39 +240,34 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 });
             }
 
-            // 2) 내가 입장한 이벤트면 서버에 읽음 처리
             if (joinedUserId && myId && joinedUserId === myId) {
                 try { await readChatRoom(roomId); } catch { }
             }
 
-            // 3) 서버 기준으로 재동기화(서버가 members를 보내주면 그대로 사용)
-            if (Array.isArray(payload?.members)) {
-                setMembers(payload.members);
-            } else {
-                setTimeout(() => { refreshMembers(); }, 300);
-            }
+            // if (Array.isArray(payload?.members)) {
+            //     setMembers(payload.members);
+            // } else {
+            //     setTimeout(() => { refreshMembers(); }, 300);
+            // }
         };
 
         // NEW: 유저가 방을 나갔을 때(연결 종료) 처리
-        const handleUserLeave = (payload: any) => {
-            const userId = payload?.user;
-            if (userId) {
-                // 만약 나간 유저가 입력 중이었다면, 목록에서 즉시 제거
-                setTypingUsers(prev => {
-                    if (!prev.has(userId)) {
-                        return prev; // 변경 없음
-                    }
-                    const newMap = new Map(prev);
-                    newMap.delete(userId);
-                    console.log(`User ${userId} left, removing from typing list.`);
-                    return newMap;
-                });
-            }
+        const handleUserLeave = (payload: UserLeavePayload) => {
+            const userId = payload.user;
+            setTypingUsers(prev => {
+                if (!prev.has(userId)) {
+                    return prev; // 변경 없음
+                }
+                const newMap = new Map(prev);
+                newMap.delete(userId);
+                console.log(`User ${userId} left, removing from typing list.`);
+                return newMap;
+            });
         };
 
         // NEW: 메시지 삭제 이벤트 수신 핸들러
-        const handleMessageDeleted = (payload: any) => {
-            const deletedMessageId = payload?.message_id;
+        const handleMessageDeleted = (payload: MessageDeletedPayload) => {
+            const deletedMessageId = payload.message_id;
             if (deletedMessageId) {
                 console.log(`메시지 삭제 이벤트 수신: ${deletedMessageId}`);
                 setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
@@ -243,25 +275,25 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         };
 
         // NEW: 타이핑 시작 이벤트 수신 핸들러
-        const handleTypingStart = (payload: any) => {
-            const userId = payload?.user;
-            if (userId && userId !== myId) {
-                const userProfile = members.find(m => m.user.id === userId)?.user.profile;
-                const nickname = userProfile?.nickname || `사용자 ${userId}`;
-                setTypingUsers(prev => new Map(prev).set(userId, nickname));
-            }
+        const handleTypingStart = (/* payload: any */) => {
+            // const userId = payload?.user;
+            // if (userId && userId !== myId) {
+            //     const userProfile = members.find(m => m.user.id === userId)?.user.profile;
+            //     const nickname = userProfile?.nickname || `사용자 ${userId}`;
+            //     setTypingUsers(prev => new Map(prev).set(userId, nickname));
+            // }
         };
 
         // NEW: 타이핑 종료 이벤트 수신 핸들러
-        const handleTypingStop = (payload: any) => {
-            const userId = payload?.user;
-            if (userId) {
-                setTypingUsers(prev => {
-                    const newMap = new Map(prev);
-                    newMap.delete(userId);
-                    return newMap;
-                });
-            }
+        const handleTypingStop = (/* payload: any */) => {
+            // const userId = payload?.user;
+            // if (userId) {
+            //     setTypingUsers(prev => {
+            //         const newMap = new Map(prev);
+            //         newMap.delete(userId);
+            //         return newMap;
+            //     });
+            // }
         };
 
         chatSocket.on('room_update', handleRoomUpdate);
@@ -295,7 +327,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 chatSocket.currentRoomId = roomId;
             }
             try {
-                chatSocket.send?.({
+                chatSocket.send<UserJoinPayload>({
                     type: 'user_join',
                     room_id: roomId,
                     user: myId
@@ -305,7 +337,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             }
 
             // 디버깅: 소켓 연결 확인
-            console.log(`소켓 연결 상태: ${chatSocket.isConnected?.()}, 현재 방: ${chatSocket.currentRoomId}`);
+            console.log(`소켓 연결 상태: ${chatSocket.isConnected()}, 현재 방: ${chatSocket.currentRoomId}`);
         };
 
         // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
@@ -333,7 +365,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 }
 
                 try {
-                    chatSocket.send?.({
+                    chatSocket.send<UserLeavePayload>({
                         type: 'user_leave',
                         room_id: roomId,
                         user: myId
@@ -365,7 +397,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         try {
             if (chatSocket.isConnected?.()) {
                 console.log('소켓 이벤트 전송 시도');
-                chatSocket.send?.({
+                chatSocket.send({
                     type: 'update',
                     payload: {
                         room_id: roomId,
@@ -393,7 +425,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         return undefined;
     };
 
-    const getAttachmentName = (msg: any): string | undefined => {
+    const getAttachmentName = (msg: any) => {
         const n = msg?.attachment?.name;
         if (n) return n;
         const url = getAttachmentUrl(msg) || (typeof msg?.message_content === 'string' ? msg.message_content : undefined);
@@ -407,10 +439,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
     };
 
     // 메시지 기준 미확인(안 읽은) 인원 수 계산
-    const getUnreadCount = (msg: any) => {
-        if (!msg?.created_at) return 0;
+    const getUnreadCount = (msg: Message) => {
+        if (!msg.created_at) return 0;
         const msgTime = new Date(msg.created_at).getTime();
-        const senderId = msg?.created_by?.id;
+        const senderId = msg.created_by?.id;
         // 카운트 기준: (1) 보낸 사람 제외 (2) last_seen_at이 없거나, msgTime 이후인 경우만 읽지 않음으로 간주
         const unread = members.reduce((acc, m) => {
             const uid = m.user?.id;
@@ -441,7 +473,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
 
             // 소켓으로 삭제 이벤트 브로드캐스트
             if (chatSocket.isConnected?.()) {
-                chatSocket.send?.({
+                chatSocket.send?.<MessageDeletedPayload>({
                     type: 'message_deleted',
                     message_id: contextMenu.messageId,
                 });
@@ -479,9 +511,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             alert(`${user.nickname}님에게 초대장을 보냈습니다.`);
             // 성공 시 다이얼로그를 닫을 수 있습니다.
             setInviteDialogOpen(false);
-        } catch (error: any) {
-            // API 함수에서 던진 에러 메시지를 그대로 사용
-            throw new Error(error.message || '초대장 발송에 실패했습니다.');
+        } catch (error: unknown) {
+            if (error instanceof Error) throw new Error(error.message || '초대장 발송에 실패했습니다.');
         }
     };
 
@@ -633,7 +664,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const isGroupedWithPrev = currentTime === prevTime && prevSender === msg.created_by?.id;
                         const isGroupedWithNext = currentTime === nextTime && nextSender === msg.created_by?.id;
                         const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
-                        const showProfile = !isGroupedWithPrev;
+                        // const showProfile = !isGroupedWithPrev;
                         const showTime = !isGroupedWithNext;
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
 
