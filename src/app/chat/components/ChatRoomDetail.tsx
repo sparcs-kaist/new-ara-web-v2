@@ -64,7 +64,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
     const chatEndRef = useRef<HTMLDivElement>(null);
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
-    // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isInviteDialogOpen, setInviteDialogOpen] = useState(false); // 추가
@@ -80,7 +79,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
 
     // 내 ID 가져오기
     useEffect(() => {
-        fetchMe()
+            fetchMe()
             .then((data) => {
                 setMyId(data.user);
             });
@@ -619,6 +618,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const unreadCount = getUnreadCount(msg);
                         const readCount = unreadCount > 0 ? unreadCount : undefined;
 
+                        const currentDate = (msg.created_at as string).slice(0, 10).split("-").map(e => parseInt(e));
+                        const prevDate = idx > 0 ? (messages[idx - 1].created_at as string).slice(0, 10).split("-").map(e => parseInt(e)) : [0, 0, 0];
+                        const isDateChanged = !currentDate.every((v, i) => v === prevDate[i])
+
                         const currentTime = msg.created_at?.slice(11, 16);
                         const prevMsg = idx > 0 ? messages[idx - 1] : null;
                         const prevTime = prevMsg?.created_at?.slice(11, 16);
@@ -638,69 +641,79 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
 
                         return (
-                            <div
-                                key={messageKey}
-                                className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
-                                onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
-                            >
-                                {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
-                                {!isMe && (
-                                    <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
-                                        {!isGroupedWithPrev && (
-                                            msg.created_by?.profile?.picture ? (
-                                                <Image
-                                                    src={msg.created_by.profile.picture}
-                                                    alt={msg.created_by.profile?.nickname || ''}
-                                                    width={36}
-                                                    height={36}
-                                                    className="rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-9 h-9" aria-hidden />
-                                            )
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                    {/* 닉네임 (상대방 메시지일 때만) */}
-                                    {!isMe && !isGroupedWithPrev && msg.created_by?.profile?.nickname && (
-                                        <div className="text-xs text-gray-600 mb-1">
-                                            {msg.created_by.profile.nickname}
+                            <>  
+                                {isDateChanged && <div className="flex items-center my-4">
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                        <div className="px-3 text-sm text-gray-400">
+                                            {currentDate.map(v => v.toString().padStart(2, "0")).join("-")}
+                                        </div>
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                </div>}
+                                <div
+                                    key={messageKey}
+                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
+                                    onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
+                                >
+                                    {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
+                                    {!isMe && (
+                                        <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
+                                            {!isGroupedWithPrev && (
+                                                msg.created_by?.profile?.picture ? (
+                                                    <Image
+                                                        src={msg.created_by.profile.picture}
+                                                        alt={msg.created_by.profile?.nickname || ''}
+                                                        width={36}
+                                                        height={36}
+                                                        className="rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-9 h-9" aria-hidden />
+                                                )
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* 메시지 타입별 다른 UI */}
-                                    {mtype === 'IMAGE' ? (
-                                        <ImageMessage
-                                            url={getAttachmentUrl(msg) || msg.message_content}
-                                            alt={getAttachmentName(msg)}
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            readCount={readCount}
-                                        />
-                                    ) : mtype === 'FILE' ? (
-                                        <FileMessage
-                                            url={getAttachmentUrl(msg) || msg.message_content}
-                                            name={getAttachmentName(msg) || '파일'}
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            readCount={readCount}
-                                        />
-                                    ) : (
-                                        <MessageBox
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            theme="ara"
-                                            readStatus={unreadCount === 0 ? 'read' : 'delivered'}
-                                            readCount={readCount}
-                                            isGrouped={isGroupedWithPrev}
-                                        >
-                                            {msg.message_content}
-                                        </MessageBox>
-                                    )}
+                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                        {/* 닉네임 (상대방 메시지일 때만) */}
+                                        {!isMe && !isGroupedWithPrev && msg.created_by?.profile?.nickname && (
+                                            <div className="text-xs text-gray-600 mb-1">
+                                                {msg.created_by.profile.nickname}
+                                            </div>
+                                        )}
+
+                                        {/* 메시지 타입별 다른 UI */}
+                                        {mtype === 'IMAGE' ? (
+                                            <ImageMessage
+                                                url={getAttachmentUrl(msg) || msg.message_content}
+                                                alt={getAttachmentName(msg)}
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                readCount={readCount}
+                                            />
+                                        ) : mtype === 'FILE' ? (
+                                            <FileMessage
+                                                url={getAttachmentUrl(msg) || msg.message_content}
+                                                name={getAttachmentName(msg) || '파일'}
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                readCount={readCount}
+                                            />
+                                        ) : (
+                                            <MessageBox
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                theme="ara"
+                                                readStatus={unreadCount === 0 ? 'read' : 'delivered'}
+                                                readCount={readCount}
+                                                isGrouped={isGroupedWithPrev}
+                                            >
+                                                {msg.message_content}
+                                            </MessageBox>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            
+                            </>  
                         );
                     })
                 )}
