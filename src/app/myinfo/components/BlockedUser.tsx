@@ -1,8 +1,8 @@
-'use client';
-import { useTranslation } from 'react-i18next';
+"use client";
+import { useTranslation } from "react-i18next";
 import Image from "next/image";
-import React, { useEffect, useState } from 'react';
-import { fetchBlocks, deleteBlock } from '@/lib/api/user';
+import React, { useEffect, useState } from "react";
+import { fetchBlocks, deleteBlock } from "@/lib/api/user";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,11 +17,11 @@ const BlockedUser = () => {
       try {
         setLoading(true);
         const data = await fetchBlocks();
-        console.log('blockedUsers:', data.results);
+        console.log("blockedUsers:", data.results);
         setBlockedUsers(data.results || []);
         setError(null);
       } catch {
-        setError(t('차단한 유저 목록을 불러오는 데 실패했습니다.'));
+        setError(t("차단한 유저 목록을 불러오는 데 실패했습니다."));
       } finally {
         setLoading(false);
       }
@@ -34,15 +34,21 @@ const BlockedUser = () => {
       setBlockedUsers((prev) => prev.filter((block) => block.id !== blockId));
       setError(null);
     } catch {
-      setError(t('차단 해제에 실패했습니다.'));
+      setError(t("차단 해제에 실패했습니다."));
     }
   };
 
-  if (loading) return <div>{t('로딩 중...')}</div>;
+  //if (loading) return <div>{t('로딩 중...')}</div>;
+  if (loading)
+    return (
+      <div className="bg-gray-100 p-5 animate-pulse rounded inline-block"></div>
+    );
   if (error) return <div className="text-red-500">{error}</div>;
 
   if (blockedUsers.length === 0) {
-    return <div className="p-[10px] text-sm">{t('차단한 유저가 없습니다.')}</div>;
+    return (
+      <div className="p-[10px] text-sm">{t("차단한 유저가 없습니다.")}</div>
+    );
   }
 
   return (
@@ -58,7 +64,9 @@ const BlockedUser = () => {
                 className="mr-[0.5rem] object-cover rounded-full"
                 alt={block.user.username || "Blocked User Image"}
               />
-              <span className="truncate">{block.user.username || "Unknown"}</span>
+              <span className="truncate">
+                {block.user.username || "Unknown"}
+              </span>
               <a
                 onClick={() => deleteBlockedUser(block.id)}
                 className="ml-auto flex items-center justify-center cursor-pointer"

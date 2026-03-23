@@ -1,48 +1,49 @@
 /* eslint-disable */
 
-'use client';
-import React, { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+"use client";
+import React, { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import SmallBoardMyInfo from "@/app/myinfo/components/SmallBoardMyInfo";
 import { MyActivity } from "@/app/myinfo/components/MyActivity";
 import PostSetting from "@/app/myinfo/components/PostSetting";
 import BlockedUser from "@/app/myinfo/components/BlockedUser";
 import Profile from "@/app/myinfo/components/Profile";
-import { ProfileRecentArticleList } from "../../containers/ArticleList"
+import { ProfileRecentArticleList } from "../../containers/ArticleList";
 import { ProfileBookmarkedArticlesList } from "../../containers/ArticleList";
 import { ProfileMyArticleList } from "../../containers/ArticleList";
 import { ProfileNotificationList } from "../../containers/NotificationList";
 
+import clsx from "clsx";
 
-import clsx from 'clsx';
-
-const TABS = ['내가 쓴 글', '최근 본 글', '담아둔 글', '알림'] as const;
-type TabType = typeof TABS[number];
+const TABS = ["내가 쓴 글", "최근 본 글", "담아둔 글", "알림"] as const;
+type TabType = (typeof TABS)[number];
 
 const MyInfo = () => {
   const searchParams = useSearchParams();
   const initialTab: TabType = useMemo(() => {
-    const q = (searchParams?.get('tab') || '').toLowerCase();
-    if (q === 'notification' || q === '알림') return '알림';
-    if (q === 'recent' || q === '최근' || q === 'recent-view') return '최근 본 글';
-    if (q === 'bookmark' || q === 'bookmarked' || q === '담아둔 글') return '담아둔 글';
-    if (q === 'mine' || q === 'my' || q === '내가 쓴 글') return '내가 쓴 글';
-    return '내가 쓴 글';
+    const q = (searchParams?.get("tab") || "").toLowerCase();
+    if (q === "notification" || q === "알림") return "알림";
+    if (q === "recent" || q === "최근" || q === "recent-view")
+      return "최근 본 글";
+    if (q === "bookmark" || q === "bookmarked" || q === "담아둔 글")
+      return "담아둔 글";
+    if (q === "mine" || q === "my" || q === "내가 쓴 글") return "내가 쓴 글";
+    return "내가 쓴 글";
   }, [searchParams]);
 
   const [tab, setTab] = useState<TabType>(initialTab);
   const [pages, setPages] = useState<Record<TabType, number>>({
-    '내가 쓴 글': 1,
-    '최근 본 글': 1,
-    '담아둔 글': 1,
-    '알림': 1,
+    "내가 쓴 글": 1,
+    "최근 본 글": 1,
+    "담아둔 글": 1,
+    알림: 1,
   });
 
   const [searches, setSearches] = useState<Record<TabType, string>>({
-    '내가 쓴 글': '',
-    '최근 본 글': '',
-    '담아둔 글': '',
-    '알림': '',
+    "내가 쓴 글": "",
+    "최근 본 글": "",
+    "담아둔 글": "",
+    알림: "",
   });
 
   const [filters, setFilters] = useState({
@@ -51,8 +52,8 @@ const MyInfo = () => {
   });
 
   const handleSearchChange = (newSearch: string) => {
-    setSearches(prev => ({ ...prev, [tab]: newSearch }));
-    setPages(prev => ({ ...prev, [tab]: 1 }));
+    setSearches((prev) => ({ ...prev, [tab]: newSearch }));
+    setPages((prev) => ({ ...prev, [tab]: 1 }));
   };
 
   const currentSearch = searches[tab];
@@ -62,9 +63,15 @@ const MyInfo = () => {
       {/* 좌측 프로필 + 설정 */}
       <div className="hidden lg:flex lg:flex-col lg:w-[270px] flex-shrink-0 gap-4 items-center">
         <Profile />
-        <SmallBoardMyInfo title="활동 기록"><MyActivity /></SmallBoardMyInfo>
-        <SmallBoardMyInfo title="설정"><PostSetting onSettingChange={setFilters} /></SmallBoardMyInfo>
-        <SmallBoardMyInfo title="차단한 유저"><BlockedUser /></SmallBoardMyInfo>
+        <SmallBoardMyInfo title="활동 기록">
+          <MyActivity />
+        </SmallBoardMyInfo>
+        <SmallBoardMyInfo title="설정">
+          <PostSetting onSettingChange={setFilters} />
+        </SmallBoardMyInfo>
+        <SmallBoardMyInfo title="차단한 유저">
+          <BlockedUser />
+        </SmallBoardMyInfo>
       </div>
 
       {/* 우측 게시글 리스트 */}
@@ -72,20 +79,18 @@ const MyInfo = () => {
         <div className="flex justify-between items-end border-b border-gray-200 pb-3 mt-[17px]">
           {/* 탭 네비게이션 */}
           <div className="relative flex gap-8">
-            {TABS.map(t => (
+            {TABS.map((t) => (
               <button
                 key={t}
                 className={clsx(
-                  'relative pb-1  text-md font-semibold transition-colors duration-200',
-                  tab === t ? 'text-red-600' : 'text-black hover:text-red-500'
+                  "relative pb-1  text-md font-semibold transition-colors duration-200",
+                  tab === t ? "text-red-600" : "text-black hover:text-red-500",
                 )}
                 onClick={() => setTab(t)}
               >
                 {t}
                 {tab === t && (
-                  <div
-                    className="absolute left-1/2 -bottom-[2px] -translate-x-1/2 w-[20px] h-[4px] rounded bg-[#ED3A3A] transition-all duration-200"
-                  />
+                  <div className="absolute left-1/2 -bottom-[2px] -translate-x-1/2 w-[20px] h-[4px] rounded bg-[#ED3A3A] transition-all duration-200" />
                 )}
               </button>
             ))}
@@ -112,18 +117,22 @@ const MyInfo = () => {
         </div>
 
         <div>
-          {tab === '내가 쓴 글' && (
+          {tab === "내가 쓴 글" && (
             <ProfileMyArticleList filters={filters} search={currentSearch} />
           )}
-          {tab === '최근 본 글' && (
-            <ProfileRecentArticleList filters={filters} search={currentSearch} />
+          {tab === "최근 본 글" && (
+            <ProfileRecentArticleList
+              filters={filters}
+              search={currentSearch}
+            />
           )}
-          {tab === '담아둔 글' && (
-            <ProfileBookmarkedArticlesList filters={filters} search={currentSearch} />
+          {tab === "담아둔 글" && (
+            <ProfileBookmarkedArticlesList
+              filters={filters}
+              search={currentSearch}
+            />
           )}
-          {tab === '알림' && (
-            <ProfileNotificationList search={currentSearch} />
-          )}
+          {tab === "알림" && <ProfileNotificationList search={currentSearch} />}
         </div>
       </div>
     </div>
@@ -131,4 +140,3 @@ const MyInfo = () => {
 };
 
 export default MyInfo;
-
