@@ -6,12 +6,12 @@ import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
 import FileMessage from './FileMessage';
-import { fetchChatMessages, sendMessage, fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
+import { fetchChatMessages, /* sendMessage, */ fetchRecentMessage, fetchChatRoomDetail } from '@/lib/api/chat';
 import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
-import { uploadAttachments } from '@/lib/api/post';
-import { sendAttachmentMessage } from '@/lib/api/chat';
+// import { uploadAttachments } from '@/lib/api/post';
+// import { sendAttachmentMessage } from '@/lib/api/chat';
 import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM, createInvitation } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
@@ -39,6 +39,23 @@ interface ChatRoomDetailProps {
     onMenuClick?: () => void; // 메뉴 클릭 핸들러 prop 추가
 }
 
+interface Message {
+    chat_room: number;
+    created_at: string;
+    created_by: Member["user"];
+    expired_at: string;
+    id: number;
+    message_content: string;
+    message_type: string;
+    updated_at: string;
+    attachment?: {
+        url?: string
+        file?: unknown
+    };
+    attachment_url: string;
+    attachment_file: unknown;
+}
+
 // 참여자 타입 (API 변경 반영)
 type Member = {
     user: {
@@ -56,15 +73,33 @@ type Member = {
     last_seen_at?: string | null;
 };
 
+interface UserJoinPayload {
+    type: "user_join";
+    user: number;
+    room_id: number;
+}
+
+interface UserLeavePayload {
+    type: "user_leave";
+    user: number;
+    room_id: number;
+}
+
+interface MessageDeletedPayload {
+    type: "message_deleted";
+    message_id: number;
+}
+
+// type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
+
 export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDetailProps) {
     const router = useRouter();
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [myId, setMyId] = useState<number | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const messageContainerRef = useRef<HTMLDivElement>(null);
 
-    // 추가: 참여자 패널 상태/목록
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isInviteDialogOpen, setInviteDialogOpen] = useState(false); // 추가
@@ -80,7 +115,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
 
     // 내 ID 가져오기
     useEffect(() => {
-        fetchMe()
+            fetchMe()
             .then((data) => {
                 setMyId(data.user);
             });
@@ -184,15 +219,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         };
 
         // NEW: 유저가 방에 진입했을 때(접속) 처리
-        const handleUserJoin = async (payload: any) => {
-            const targetRoomId =
-                payload?.room_id ?? payload?.chat_room ?? payload?.room?.id ?? roomId;
+        const handleUserJoin = async (payload: UserJoinPayload) => {
+            const targetRoomId = payload.room_id // ?? payload?.chat_room ?? payload?.room?.id ?? roomId;
             if (targetRoomId !== roomId) return;
 
-            const joinedUserId =
-                typeof payload?.user === 'object' ? payload?.user?.id : payload?.user;
+            const joinedUserId = payload.user // typeof payload?.user === 'object' ? payload?.user?.id : payload?.user;
 
-            // 1) 낙관적 업데이트: 해당 유저의 last_seen_at을 지금으로
             if (joinedUserId) {
                 const nowIso = new Date().toISOString();
                 setMembers(prev => {
@@ -204,39 +236,34 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 });
             }
 
-            // 2) 내가 입장한 이벤트면 서버에 읽음 처리
             if (joinedUserId && myId && joinedUserId === myId) {
                 try { await readChatRoom(roomId); } catch { }
             }
 
-            // 3) 서버 기준으로 재동기화(서버가 members를 보내주면 그대로 사용)
-            if (Array.isArray(payload?.members)) {
-                setMembers(payload.members);
-            } else {
-                setTimeout(() => { refreshMembers(); }, 300);
-            }
+            // if (Array.isArray(payload?.members)) {
+            //     setMembers(payload.members);
+            // } else {
+            //     setTimeout(() => { refreshMembers(); }, 300);
+            // }
         };
 
         // NEW: 유저가 방을 나갔을 때(연결 종료) 처리
-        const handleUserLeave = (payload: any) => {
-            const userId = payload?.user;
-            if (userId) {
-                // 만약 나간 유저가 입력 중이었다면, 목록에서 즉시 제거
-                setTypingUsers(prev => {
-                    if (!prev.has(userId)) {
-                        return prev; // 변경 없음
-                    }
-                    const newMap = new Map(prev);
-                    newMap.delete(userId);
-                    console.log(`User ${userId} left, removing from typing list.`);
-                    return newMap;
-                });
-            }
+        const handleUserLeave = (payload: UserLeavePayload) => {
+            const userId = payload.user;
+            setTypingUsers(prev => {
+                if (!prev.has(userId)) {
+                    return prev; // 변경 없음
+                }
+                const newMap = new Map(prev);
+                newMap.delete(userId);
+                console.log(`User ${userId} left, removing from typing list.`);
+                return newMap;
+            });
         };
 
         // NEW: 메시지 삭제 이벤트 수신 핸들러
-        const handleMessageDeleted = (payload: any) => {
-            const deletedMessageId = payload?.message_id;
+        const handleMessageDeleted = (payload: MessageDeletedPayload) => {
+            const deletedMessageId = payload.message_id;
             if (deletedMessageId) {
                 console.log(`메시지 삭제 이벤트 수신: ${deletedMessageId}`);
                 setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
@@ -296,7 +323,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 chatSocket.currentRoomId = roomId;
             }
             try {
-                chatSocket.send?.({
+                chatSocket.send<UserJoinPayload>({
                     type: 'user_join',
                     room_id: roomId,
                     user: myId
@@ -306,7 +333,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             }
 
             // 디버깅: 소켓 연결 확인
-            console.log(`소켓 연결 상태: ${chatSocket.isConnected?.()}, 현재 방: ${chatSocket.currentRoomId}`);
+            console.log(`소켓 연결 상태: ${chatSocket.isConnected()}, 현재 방: ${chatSocket.currentRoomId}`);
         };
 
         // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
@@ -334,7 +361,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 }
 
                 try {
-                    chatSocket.send?.({
+                    chatSocket.send<UserLeavePayload>({
                         type: 'user_leave',
                         room_id: roomId,
                         user: myId
@@ -366,7 +393,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         try {
             if (chatSocket.isConnected?.()) {
                 console.log('소켓 이벤트 전송 시도');
-                chatSocket.send?.({
+                chatSocket.send({
                     type: 'update',
                     payload: {
                         room_id: roomId,
@@ -394,7 +421,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         return undefined;
     };
 
-    const getAttachmentName = (msg: any): string | undefined => {
+    const getAttachmentName = (msg: any) => {
         const n = msg?.attachment?.name;
         if (n) return n;
         const url = getAttachmentUrl(msg) || (typeof msg?.message_content === 'string' ? msg.message_content : undefined);
@@ -408,10 +435,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
     };
 
     // 메시지 기준 미확인(안 읽은) 인원 수 계산
-    const getUnreadCount = (msg: any) => {
-        if (!msg?.created_at) return 0;
+    const getUnreadCount = (msg: Message) => {
+        if (!msg.created_at) return 0;
         const msgTime = new Date(msg.created_at).getTime();
-        const senderId = msg?.created_by?.id;
+        const senderId = msg.created_by?.id;
         // 카운트 기준: (1) 보낸 사람 제외 (2) last_seen_at이 없거나, msgTime 이후인 경우만 읽지 않음으로 간주
         const unread = members.reduce((acc, m) => {
             const uid = m.user?.id;
@@ -441,8 +468,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             setMessages(prev => prev.filter(m => m.id !== contextMenu.messageId));
 
             // 소켓으로 삭제 이벤트 브로드캐스트
-            if (chatSocket.isConnected?.()) {
-                chatSocket.send?.({
+            if (chatSocket.isConnected()) {
+                chatSocket.send<MessageDeletedPayload>({
                     type: 'message_deleted',
                     message_id: contextMenu.messageId,
                 });
@@ -480,9 +507,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             alert(`${user.nickname}님에게 초대장을 보냈습니다.`);
             // 성공 시 다이얼로그를 닫을 수 있습니다.
             setInviteDialogOpen(false);
-        } catch (error: any) {
-            // API 함수에서 던진 에러 메시지를 그대로 사용
-            throw new Error(error.message || '초대장 발송에 실패했습니다.');
+        } catch (error: unknown) {
+            if (error instanceof Error) throw new Error(error.message || '초대장 발송에 실패했습니다.');
         }
     };
 
@@ -619,6 +645,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const unreadCount = getUnreadCount(msg);
                         const readCount = unreadCount > 0 ? unreadCount : undefined;
 
+                        const currentDate = (msg.created_at as string).slice(0, 10).split("-").map(e => parseInt(e));
+                        const prevDate = idx > 0 ? (messages[idx - 1].created_at as string).slice(0, 10).split("-").map(e => parseInt(e)) : [0, 0, 0];
+                        const isDateChanged = !currentDate.every((v, i) => v === prevDate[i])
+
                         const currentTime = msg.created_at?.slice(11, 16);
                         const prevMsg = idx > 0 ? messages[idx - 1] : null;
                         const prevTime = prevMsg?.created_at?.slice(11, 16);
@@ -630,7 +660,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const isGroupedWithPrev = currentTime === prevTime && prevSender === msg.created_by?.id;
                         const isGroupedWithNext = currentTime === nextTime && nextSender === msg.created_by?.id;
                         const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
-                        const showProfile = !isGroupedWithPrev;
+                        // const showProfile = !isGroupedWithPrev;
                         const showTime = !isGroupedWithNext;
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
 
@@ -638,69 +668,78 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
 
                         return (
-                            <div
-                                key={messageKey}
-                                className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
-                                onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
-                            >
-                                {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
-                                {!isMe && (
-                                    <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
-                                        {!isGroupedWithPrev && (
-                                            msg.created_by?.profile?.picture ? (
-                                                <Image
-                                                    src={msg.created_by.profile.picture}
-                                                    alt={msg.created_by.profile?.nickname || ''}
-                                                    width={36}
-                                                    height={36}
-                                                    className="rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-9 h-9" aria-hidden />
-                                            )
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                    {/* 닉네임 (상대방 메시지일 때만) */}
-                                    {!isMe && !isGroupedWithPrev && msg.created_by?.profile?.nickname && (
-                                        <div className="text-xs text-gray-600 mb-1">
-                                            {msg.created_by.profile.nickname}
+                            <React.Fragment key={messageKey}>  
+                                {isDateChanged && <div className="flex items-center my-4">
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                        <div className="px-3 text-sm text-gray-400">
+                                            {currentDate.map(v => v.toString().padStart(2, "0")).join("-")}
+                                        </div>
+                                    <div className="flex-1 h-px bg-gray-200" />
+                                </div>}
+                                <div
+                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
+                                    onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
+                                >
+                                    {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
+                                    {!isMe && (
+                                        <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
+                                            {!isGroupedWithPrev && (
+                                                msg.created_by?.profile?.picture ? (
+                                                    <Image
+                                                        src={msg.created_by.profile.picture}
+                                                        alt={msg.created_by.profile?.nickname || ''}
+                                                        width={36}
+                                                        height={36}
+                                                        className="rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-9 h-9" aria-hidden />
+                                                )
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* 메시지 타입별 다른 UI */}
-                                    {mtype === 'IMAGE' ? (
-                                        <ImageMessage
-                                            url={getAttachmentUrl(msg) || msg.message_content}
-                                            alt={getAttachmentName(msg)}
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            readCount={readCount}
-                                        />
-                                    ) : mtype === 'FILE' ? (
-                                        <FileMessage
-                                            url={getAttachmentUrl(msg) || msg.message_content}
-                                            name={getAttachmentName(msg) || '파일'}
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            readCount={readCount}
-                                        />
-                                    ) : (
-                                        <MessageBox
-                                            isMe={isMe}
-                                            time={showTime ? currentTime : undefined}
-                                            theme="ara"
-                                            readStatus={unreadCount === 0 ? 'read' : 'delivered'}
-                                            readCount={readCount}
-                                            isGrouped={isGroupedWithPrev}
-                                        >
-                                            {msg.message_content}
-                                        </MessageBox>
-                                    )}
+                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                        {/* 닉네임 (상대방 메시지일 때만) */}
+                                        {!isMe && !isGroupedWithPrev && msg.created_by?.profile?.nickname && (
+                                            <div className="text-xs text-gray-600 mb-1">
+                                                {msg.created_by.profile.nickname}
+                                            </div>
+                                        )}
+
+                                        {/* 메시지 타입별 다른 UI */}
+                                        {mtype === 'IMAGE' ? (
+                                            <ImageMessage
+                                                url={getAttachmentUrl(msg) || msg.message_content}
+                                                alt={getAttachmentName(msg)}
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                readCount={readCount}
+                                            />
+                                        ) : mtype === 'FILE' ? (
+                                            <FileMessage
+                                                url={getAttachmentUrl(msg) || msg.message_content}
+                                                name={getAttachmentName(msg) || '파일'}
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                readCount={readCount}
+                                            />
+                                        ) : (
+                                            <MessageBox
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                theme="ara"
+                                                readStatus={unreadCount === 0 ? 'read' : 'delivered'}
+                                                readCount={readCount}
+                                                isGrouped={isGroupedWithPrev}
+                                            >
+                                                {msg.message_content}
+                                            </MessageBox>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            
+                            </React.Fragment>  
                         );
                     })
                 )}
