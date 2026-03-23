@@ -149,7 +149,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
     // 소켓 이벤트 리스너 추가
     useEffect(() => {
         // 최신 1개만 가져와 반영
-        /*
         const applyRecent = async () => {
             const d = await fetchRecentMessage(roomId);
             const latest = d?.results?.[0];
@@ -175,10 +174,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                 setMembers(data?.members ?? []);
             } catch { }
         };
-        */
 
-        const handleRoomUpdate = async (/* payload: any */) => {
-            /*
+        const handleRoomUpdate = async (payload: any) => {
             console.log('소켓 update 이벤트 수신:', payload);
 
             // payload 필드가 있다면 그것을 사용 (서버 브로드캐스트 구조)
@@ -219,7 +216,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                     refreshMembers();
                 }, 300);
             }
-            */
         };
 
         // NEW: 유저가 방에 진입했을 때(접속) 처리
@@ -275,25 +271,25 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
         };
 
         // NEW: 타이핑 시작 이벤트 수신 핸들러
-        const handleTypingStart = (/* payload: any */) => {
-            // const userId = payload?.user;
-            // if (userId && userId !== myId) {
-            //     const userProfile = members.find(m => m.user.id === userId)?.user.profile;
-            //     const nickname = userProfile?.nickname || `사용자 ${userId}`;
-            //     setTypingUsers(prev => new Map(prev).set(userId, nickname));
-            // }
+        const handleTypingStart = (payload: any) => {
+            const userId = payload?.user;
+            if (userId && userId !== myId) {
+                const userProfile = members.find(m => m.user.id === userId)?.user.profile;
+                const nickname = userProfile?.nickname || `사용자 ${userId}`;
+                setTypingUsers(prev => new Map(prev).set(userId, nickname));
+            }
         };
 
         // NEW: 타이핑 종료 이벤트 수신 핸들러
-        const handleTypingStop = (/* payload: any */) => {
-            // const userId = payload?.user;
-            // if (userId) {
-            //     setTypingUsers(prev => {
-            //         const newMap = new Map(prev);
-            //         newMap.delete(userId);
-            //         return newMap;
-            //     });
-            // }
+        const handleTypingStop = (payload: any) => {
+            const userId = payload?.user;
+            if (userId) {
+                setTypingUsers(prev => {
+                    const newMap = new Map(prev);
+                    newMap.delete(userId);
+                    return newMap;
+                });
+            }
         };
 
         chatSocket.on('room_update', handleRoomUpdate);
@@ -472,8 +468,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
             setMessages(prev => prev.filter(m => m.id !== contextMenu.messageId));
 
             // 소켓으로 삭제 이벤트 브로드캐스트
-            if (chatSocket.isConnected?.()) {
-                chatSocket.send?.<MessageDeletedPayload>({
+            if (chatSocket.isConnected()) {
+                chatSocket.send<MessageDeletedPayload>({
                     type: 'message_deleted',
                     message_id: contextMenu.messageId,
                 });
@@ -672,7 +668,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
 
                         return (
-                            <>  
+                            <React.Fragment key={messageKey}>  
                                 {isDateChanged && <div className="flex items-center my-4">
                                     <div className="flex-1 h-px bg-gray-200" />
                                         <div className="px-3 text-sm text-gray-400">
@@ -681,7 +677,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                                     <div className="flex-1 h-px bg-gray-200" />
                                 </div>}
                                 <div
-                                    key={messageKey}
                                     className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
                                     onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
                                 >
@@ -744,7 +739,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
                                     </div>
                                 </div>
                             
-                            </>  
+                            </React.Fragment>  
                         );
                     })
                 )}
