@@ -201,9 +201,7 @@ const Profile = () => {
             className="cursor-pointer"
           />
         ) : (
-          <div className="w-[128px] h-[128px] rounded-full bg-ara_red_most_bright flex items-center justify-center">
-            <span className="text-[24px] font-bold">N</span>
-          </div>
+          <div className="w-[128px] h-[128px] rounded-full bg-gray-100 animate-pulse"></div>
         )}
         <input
           type="file"

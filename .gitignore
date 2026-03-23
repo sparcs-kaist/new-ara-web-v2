@@ -43,3 +43,5 @@ next-env.d.ts
 # Ignore local HTTPS certificates
 nginx/localhost.crt
 nginx/localhost.key
+
+.codex
