@@ -41,7 +41,7 @@ const BlockedUser = () => {
   //if (loading) return <div>{t('로딩 중...')}</div>;
   if (loading)
     return (
-      <div className="bg-ara_red_most_bright p-5 animate-pulse rounded inline-block"></div>
+      <div className="bg-gray-100 p-5 animate-pulse rounded inline-block"></div>
     );
   if (error) return <div className="text-red-500">{error}</div>;
 

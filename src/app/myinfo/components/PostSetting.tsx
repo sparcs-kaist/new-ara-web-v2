@@ -70,15 +70,15 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
   //if (loading) return <div>{t('로딩 중...')}</div>;
   if (loading) {
     return (
-      <div className="w-full rounded-md bg-ara_red_most_bright p-3 animate-pulse">
+      <div className="w-full rounded-md bg-gray-100 p-[10px] animate-pulse">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="h-4 w-24 rounded bg-ara_red_bright/60" />
-            <div className="h-6 w-12 rounded-full bg-ara_red_bright/60" />
+            <div className="h-4 w-24" />
+            <div className="h-6 w-12" />
           </div>
           <div className="flex items-center justify-between">
-            <div className="h-4 w-28 rounded bg-ara_red_bright/60" />
-            <div className="h-6 w-12 rounded-full bg-ara_red_bright/60" />
+            <div className="h-4 w-28" />
+            <div className="h-6 w-12" />
           </div>
         </div>
       </div>

@@ -257,55 +257,52 @@ const Profile = () => {
           </div>
         </div>
       )}
-
-      <div className="flex flex-col items-center justify-between">
-        {!isNicknameEditable ? (
-          <div className="flex flex-row items-center">
-            <div className="text-[20px] font-extrabold truncate inline-block">
-              {nickname || (
-                <div className="w-[200px] h-[30px] bg-ara_red_most_bright animate-pulse rounded-md inline-block"></div>
-              )}
-            </div>
-            <a
-              className="ml-1 flex items-center cursor-pointer"
-              onClick={() => setIsNicknameEditable(true)}
-            >
-              <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">
-                create
-              </i>
-            </a>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center space-y-2">
-            <input
-              value={newNickname}
-              onChange={(e) => setNewNickname(e.target.value)}
-              className="w-[150px] h-[28px] text-[15px] text-center font-normal border border-gray-300 rounded-full px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-            <div className="w-[100%] flex space-x-1">
-              <button
-                className="w-[100%] px-3 py-[5px] text-white text-sm font-semibold rounded-full bg-[#E52933] hover:bg-[#cc202b] transition duration-200"
-                onClick={handleNicknameSave}
+      {nickname && email ? (
+        <div className="flex flex-col items-center justify-between">
+          {!isNicknameEditable ? (
+            <div className="flex flex-row items-center">
+              <div className="text-[20px] font-extrabold truncate inline-block">
+                {nickname}
+              </div>
+              <a
+                className="ml-1 flex items-center cursor-pointer"
+                onClick={() => setIsNicknameEditable(true)}
               >
-                {t("확인")}
-              </button>
-              <button
-                className="w-[100%] px-3 py-[5px] text-gray-600 text-sm font-semibold rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200"
-                onClick={handleNicknameCancel}
-              >
-                {t("취소")}
-              </button>
+                <i className="material-icons !text-[1.3rem] !leading-[1.3rem]">
+                  create
+                </i>
+              </a>
             </div>
-          </div>
-        )}
-        {email ? (
+          ) : (
+            <div className="flex flex-col items-center space-y-2">
+              <input
+                value={newNickname}
+                onChange={(e) => setNewNickname(e.target.value)}
+                className="w-[150px] h-[28px] text-[15px] text-center font-normal border border-gray-300 rounded-full px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+              />
+              <div className="w-[100%] flex space-x-1">
+                <button
+                  className="w-[100%] px-3 py-[5px] text-white text-sm font-semibold rounded-full bg-[#E52933] hover:bg-[#cc202b] transition duration-200"
+                  onClick={handleNicknameSave}
+                >
+                  {t("확인")}
+                </button>
+                <button
+                  className="w-[100%] px-3 py-[5px] text-gray-600 text-sm font-semibold rounded-full bg-gray-100 hover:bg-gray-200 transition duration-200"
+                  onClick={handleNicknameCancel}
+                >
+                  {t("취소")}
+                </button>
+              </div>
+            </div>
+          )}
           <div className="text-[16px] text-gray-500 font-medium truncate">
             {email}
           </div>
-        ) : (
-          <div className="w-[200px] h-[24px] bg-ara_red_most_bright animate-pulse rounded inline-block"></div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="w-[250px] h-[54px] bg-gray-100 animate-pulse rounded-3xl inline-block"></div>
+      )}
     </div>
   );
 };
