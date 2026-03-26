@@ -28,10 +28,6 @@ export default function AuthHandlerInner() {
           router.replace("/");
         }
       });
-
-    fetch("/api/me", { credentials: "include" })
-      .then(res => res.json())
-      .then(data => console.log("me API result:", data));
   }, [router, searchParams]);
 
   return <div>로그인 처리 중...</div>;
