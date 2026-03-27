@@ -3,19 +3,15 @@ import http from "@/lib/api/http";
 import { queryBuilder } from "../utils/queryBuilder";
 import { queryClient } from "../queryClient";
 
-//type QueryValue = string | number | boolean | null | undefined;
-export const meQueryKey = ["me"] as const;
-
 export const fetchMeFromApi = async () => {
   const { data } = await http.get("/me");
   return data;
 };
 
 export const meQueryOptions = queryOptions({
-  queryKey: meQueryKey,
+  queryKey: ["me"],
   queryFn: fetchMeFromApi,
   staleTime: Infinity,
-  gcTime: Infinity,
   retry: false,
 });
 
@@ -56,7 +52,7 @@ export const updateUser = async (
     },
   });
 
-  queryClient.invalidateQueries({ queryKey: meQueryKey });
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
@@ -99,7 +95,7 @@ export const updateDarkMode = async (
     },
   });
 
-  queryClient.invalidateQueries({ queryKey: meQueryKey });
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
@@ -108,15 +104,15 @@ export const updateTos = async (userId: number | string) => {
   const { data } = await http.patch(
     `/user_profiles/${userId}/agree_terms_of_service/`,
   );
-  queryClient.invalidateQueries({ queryKey: meQueryKey });
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
 // logout : 로그아웃
 export const logout = async (userId: number | string) => {
-  await queryClient.cancelQueries({ queryKey: meQueryKey });
+  await queryClient.cancelQueries({ queryKey: ["me"] });
   const { data } = await http.delete(`/users/${userId}/sso_logout/`);
-  queryClient.removeQueries({ queryKey: meQueryKey });
+  queryClient.removeQueries({ queryKey: ["me"] });
   return data;
 };
 
