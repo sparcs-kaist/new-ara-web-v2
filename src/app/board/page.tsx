@@ -190,7 +190,7 @@ export default function Board() {
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     {currentBoardId === 4 && (
                                         <label className="flex items-center gap-1.5 mr-2 text-md text-gray-600 cursor-pointer select-none ml-auto mt-2 sm:mt-0">
                                             <input
@@ -199,7 +199,7 @@ export default function Board() {
                                                 onChange={(e) => setIsGrid(e.target.checked)}
                                                 className="accent-[#e15858] w-3.5 h-3.5 cursor-pointer"
                                             />
-                                            그리드 배치 사용
+                                            타일로 보기
                                         </label>
                                     )}
 
