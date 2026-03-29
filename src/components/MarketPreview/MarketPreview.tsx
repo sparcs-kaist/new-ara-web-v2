@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { fetchArticles } from '@/lib/api/board';
 
 // API 응답에 기반한 타입 정의
-interface MarketArticle {
+export interface MarketArticle {
     id: number;
     title: string;
     attachments: {
