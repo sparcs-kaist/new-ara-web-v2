@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -7,9 +7,9 @@ import "./globals.css";
 import NavBar from "@/components/NavBar/NavBar";
 import Footer from "@/components/Footer/Footer";
 import "@/i18n";
-import { fetchMeFromApi } from "@/lib/api/user";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { fetchMe } from "@/lib/api/user";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -18,11 +18,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   // Vue -> Next.js 마이그레이션 : Vue의 Service Worker가 남아 있는 문제가 있음
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          registration.unregister()
-        })
-      })
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister();
+        });
+      });
     }
   }, []);
 
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     async function checkAuth() {
       try {
-        await fetchMeFromApi();
+        await fetchMe();
         setIsLoggedIn(true);
       } catch {
         console.error("인증 실패, 로그인 페이지로 리다이렉트합니다.");
@@ -89,11 +89,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <head>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet"
+        />
       </head>
-      <body className="h-screen">
-        {renderContent()}
-      </body>
+      <body className="h-screen">{renderContent()}</body>
     </html>
   );
 }
