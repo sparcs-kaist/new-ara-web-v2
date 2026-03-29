@@ -12,6 +12,7 @@ import { fetchMe } from "@/lib/api/user";
 import { fetchUserPosts } from "@/lib/api/user_profile";
 import { debounce } from "lodash";
 import { useMe } from "@/lib/query/user";
+import { GridArticleList } from '@/components/ArticleList/GridArticleList';
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -326,10 +327,7 @@ export function BoardBookmarkedArticlesList() {
     const fetchData = async () => {
       const Response = await fetchArchives();
       //@ TODO : 알맞는 타입 추가하기
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const articles = (Response.results || []).map(
-        (item: any) => item.parent_article,
-      );
+      const articles = (Response.results || []).map((item: any) => item.parent_article);
       setPosts(articles);
     };
     fetchData();
@@ -657,6 +655,36 @@ export function UserProfileArticleList({ userId }: { userId: number }) {
       showStatus={true}
       showAnswerStatus={true}
       pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+    />
+  );
+}
+
+export function MarketArticleContainer() {
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const requestTokenRef = useRef(0);
+
+  useEffect(() => {
+    const currentToken = ++requestTokenRef.current;
+
+    const fetchData = async () => {
+      const Response = await fetchArticles({ boardId: 4, pageSize: 12, page: currentPage });
+
+      if (requestTokenRef.current === currentToken) {
+        setPosts(Response.results);
+        setTotalPages(Response.num_pages || 1);
+      }
+    };
+    fetchData();
+  }, [currentPage]);
+
+  return (
+    <GridArticleList
+      posts={posts}
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={setCurrentPage}
