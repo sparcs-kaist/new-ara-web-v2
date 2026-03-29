@@ -1,12 +1,17 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useRef } from 'react';
-import ArticleList from '@/components/ArticleList/ArticleList';
-import { fetchTopArticles, fetchArticles, fetchAllArticlesExcludingPortalNotice } from "@/lib/api/board";
-import { fetchRecentViewedPosts, fetchArchives } from '@/lib/api/board';
+import React, { useEffect, useState, useRef } from "react";
+import ArticleList from "@/components/ArticleList/ArticleList";
+import {
+  fetchTopArticles,
+  fetchArticles,
+  fetchAllArticlesExcludingPortalNotice,
+} from "@/lib/api/board";
+import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
 import { fetchMe } from "@/lib/api/user";
-import { fetchUserPosts } from '@/lib/api/user_profile';
+import { fetchUserPosts } from "@/lib/api/user_profile";
 import { debounce } from "lodash";
+import { useMe } from "@/lib/query/user";
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -15,7 +20,7 @@ export function HotPreview() {
     const fetchData = async () => {
       const Response = await fetchTopArticles({ pageSize: 3 });
       setPosts(Response.results);
-    }
+    };
     fetchData();
   }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
   return (
@@ -26,10 +31,9 @@ export function HotPreview() {
       showTimeAgo={true}
       showStatus={true}
       showAttachment={true}
-      titleFontSize='text-[16px]'
-    >
-    </ArticleList>
-  )
+      titleFontSize="text-[16px]"
+    ></ArticleList>
+  );
 }
 
 //메인 페이지 - 방금 올라온 글
@@ -37,9 +41,12 @@ export function RecentPreview() {
   const [posts, setPosts] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize: 3, ordering: '-created_at' });
+      const Response = await fetchArticles({
+        pageSize: 3,
+        ordering: "-created_at",
+      });
       setPosts(Response.results);
-    }
+    };
     fetchData();
   }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
   return (
@@ -50,10 +57,9 @@ export function RecentPreview() {
       showAttachment={true}
       showProfile={true}
       showWriter={true}
-      titleFontSize='text-[16px]'
-    >
-    </ArticleList>
-  )
+      titleFontSize="text-[16px]"
+    ></ArticleList>
+  );
 }
 
 //메인 페이지 - 학교에게 전합니다.
@@ -63,7 +69,7 @@ export function ToSchoolPreview() {
     const fetchData = async () => {
       const Response = await fetchArticles({ pageSize: 3, boardId: 14 });
       setPosts(Response.results);
-    }
+    };
     fetchData();
   }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
   return (
@@ -72,11 +78,9 @@ export function ToSchoolPreview() {
       showTimeAgo={true}
       showAnswerStatus={true}
       showStatus={true}
-      titleFontSize='text-[16px]'
-
-    >
-    </ArticleList>
-  )
+      titleFontSize="text-[16px]"
+    ></ArticleList>
+  );
 }
 
 //메인 페이지 - 포탈 공지
@@ -92,7 +96,12 @@ interface BoardArticleListProps {
 }
 
 // 🔸 Board 페이지 - 일반 게시글
-export function BoardArticleList({ boardId = 7, pageSize = 10, topicId, query }: BoardArticleListProps) {
+export function BoardArticleList({
+  boardId = 7,
+  pageSize = 10,
+  topicId,
+  query,
+}: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -127,7 +136,7 @@ export function BoardArticleList({ boardId = 7, pageSize = 10, topicId, query }:
       showStatus={true}
       showAnswerStatus={true}
       showHit={true}
-      titleFontSize='text-[16px]'
+      titleFontSize="text-[16px]"
       showTopic={true}
       pagination={true}
       currentPage={currentPage}
@@ -144,7 +153,10 @@ export function BoardArticleList({ boardId = 7, pageSize = 10, topicId, query }:
 // 이 경우에는 useRef를 사용하여 요청 토큰을 관리하는 것이 더 간단하고 효과적이다.
 
 // Board 페이지 - 전체 게시글
-export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListProps) {
+export function BoardAllArticleList({
+  pageSize = 10,
+  query,
+}: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -154,7 +166,11 @@ export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListPr
     const currentToken = ++requestTokenRef.current;
 
     const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize, page: currentPage, query });
+      const Response = await fetchArticles({
+        pageSize,
+        page: currentPage,
+        query,
+      });
 
       if (requestTokenRef.current === currentToken) {
         setPosts(Response.results);
@@ -172,7 +188,7 @@ export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListPr
       showAttachment={true}
       showProfile={true}
       showWriter={true}
-      titleFontSize='text-[16px]'
+      titleFontSize="text-[16px]"
       showTopic={true}
       showHit={true}
       showStatus={true}
@@ -185,7 +201,10 @@ export function BoardAllArticleList({ pageSize = 10, query }: BoardArticleListPr
   );
 }
 
-export function BoardAllArticleExcludePortalNoticeList({ pageSize = 10, query }: BoardArticleListProps) {
+export function BoardAllArticleExcludePortalNoticeList({
+  pageSize = 10,
+  query,
+}: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -195,7 +214,11 @@ export function BoardAllArticleExcludePortalNoticeList({ pageSize = 10, query }:
     const currentToken = ++requestTokenRef.current;
 
     const fetchData = async () => {
-      const Response = await fetchAllArticlesExcludingPortalNotice({ pageSize, page: currentPage, query });
+      const Response = await fetchAllArticlesExcludingPortalNotice({
+        pageSize,
+        page: currentPage,
+        query,
+      });
 
       if (requestTokenRef.current === currentToken) {
         setPosts(Response.results);
@@ -213,7 +236,7 @@ export function BoardAllArticleExcludePortalNoticeList({ pageSize = 10, query }:
       showAttachment={true}
       showProfile={true}
       showWriter={true}
-      titleFontSize='text-[16px]'
+      titleFontSize="text-[16px]"
       showTopic={true}
       showHit={true}
       showStatus={true}
@@ -227,7 +250,10 @@ export function BoardAllArticleExcludePortalNoticeList({ pageSize = 10, query }:
 }
 
 // 🔸 Board 페이지 - 인기 게시글
-export function BoardHotArticleList({ pageSize = 10, query }: BoardArticleListProps) {
+export function BoardHotArticleList({
+  pageSize = 10,
+  query,
+}: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -237,7 +263,11 @@ export function BoardHotArticleList({ pageSize = 10, query }: BoardArticleListPr
     const currentToken = ++requestTokenRef.current;
 
     const fetchData = async () => {
-      const Response = await fetchTopArticles({ pageSize, page: currentPage, query });
+      const Response = await fetchTopArticles({
+        pageSize,
+        page: currentPage,
+        query,
+      });
 
       if (requestTokenRef.current === currentToken) {
         setPosts(Response.results);
@@ -255,7 +285,7 @@ export function BoardHotArticleList({ pageSize = 10, query }: BoardArticleListPr
       showAttachment={true}
       showProfile={true}
       showWriter={true}
-      titleFontSize='text-[16px]'
+      titleFontSize="text-[16px]"
       showTopic={true}
       showHit={true}
       showStatus={true}
@@ -276,7 +306,7 @@ export function BoardRecentArticleList() {
     const fetchData = async () => {
       const Response = await fetchRecentViewedPosts({ pageSize: 5 });
       setPosts(Response.results);
-    }
+    };
     fetchData();
   }, []);
   return (
@@ -284,10 +314,9 @@ export function BoardRecentArticleList() {
       posts={posts}
       showAttachment={true}
       showTimeAgo={true}
-      titleFontSize='text-[14px]'
-    >
-    </ArticleList>
-  )
+      titleFontSize="text-[14px]"
+    ></ArticleList>
+  );
 }
 
 //Board 페이지 - 북마크한 게시글
@@ -298,9 +327,11 @@ export function BoardBookmarkedArticlesList() {
       const Response = await fetchArchives();
       //@ TODO : 알맞는 타입 추가하기
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const articles = (Response.results || []).map((item: any) => item.parent_article);
+      const articles = (Response.results || []).map(
+        (item: any) => item.parent_article,
+      );
       setPosts(articles);
-    }
+    };
     fetchData();
   }, []);
   return (
@@ -308,9 +339,9 @@ export function BoardBookmarkedArticlesList() {
       posts={posts}
       showAttachment={true}
       showTimeAgo={true}
-      titleFontSize='text-[14px]'
+      titleFontSize="text-[14px]"
     />
-  )
+  );
 }
 
 interface Filters {
@@ -324,17 +355,24 @@ function isPostHidden(post: any, filters: Filters) {
   return false;
 }
 
-export function ProfileMyArticleList({ filters, search }: { filters: Filters, search: string }) {
+export function ProfileMyArticleList({
+  filters,
+  search,
+}: {
+  filters: Filters;
+  search: string;
+}) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [userId, setUserId] = useState<number | null>(null);
 
+  const { data: user } = useMe();
+
   // 유저 정보 가져오기
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await fetchMe();
         setUserId(user.user);
       } catch (error) {
         console.error("유저 정보를 불러오는 데 실패했습니다.", error);
@@ -358,9 +396,13 @@ export function ProfileMyArticleList({ filters, search }: { filters: Filters, se
         let filteredPosts = response.results.map((post: any) => {
           if (isPostHidden(post, filters)) {
             const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
-            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+            newPost.why_hidden = newPost.why_hidden
+              ? [...newPost.why_hidden]
+              : [];
+            if (post.isSexual && !filters.seeSexual)
+              newPost.why_hidden.push("ADULT_CONTENT");
+            if (post.isSocial && !filters.seeSocial)
+              newPost.why_hidden.push("SOCIAL_CONTENT");
             return newPost;
           }
           return post;
@@ -368,9 +410,10 @@ export function ProfileMyArticleList({ filters, search }: { filters: Filters, se
 
         if (searchTerm) {
           const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter((post: any) =>
-            post.title?.toLowerCase().includes(lowerSearch) ||
-            post.content?.toLowerCase().includes(lowerSearch)
+          filteredPosts = filteredPosts.filter(
+            (post: any) =>
+              post.title?.toLowerCase().includes(lowerSearch) ||
+              post.content?.toLowerCase().includes(lowerSearch),
           );
         }
 
@@ -410,7 +453,13 @@ export function ProfileMyArticleList({ filters, search }: { filters: Filters, se
   );
 }
 
-export function ProfileRecentArticleList({ filters, search }: { filters: Filters, search: string }) {
+export function ProfileRecentArticleList({
+  filters,
+  search,
+}: {
+  filters: Filters;
+  search: string;
+}) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -420,14 +469,21 @@ export function ProfileRecentArticleList({ filters, search }: { filters: Filters
 
     const fetchData = async (searchTerm: string) => {
       try {
-        const response = await fetchRecentViewedPosts({ pageSize: 10, page: currentPage });
+        const response = await fetchRecentViewedPosts({
+          pageSize: 10,
+          page: currentPage,
+        });
 
         let filteredPosts = response.results.map((post: any) => {
           if (isPostHidden(post, filters)) {
             const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
-            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+            newPost.why_hidden = newPost.why_hidden
+              ? [...newPost.why_hidden]
+              : [];
+            if (post.isSexual && !filters.seeSexual)
+              newPost.why_hidden.push("ADULT_CONTENT");
+            if (post.isSocial && !filters.seeSocial)
+              newPost.why_hidden.push("SOCIAL_CONTENT");
             return newPost;
           }
           return post;
@@ -435,9 +491,10 @@ export function ProfileRecentArticleList({ filters, search }: { filters: Filters
 
         if (searchTerm) {
           const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter((post: any) =>
-            post.title?.toLowerCase().includes(lowerSearch) ||
-            post.content?.toLowerCase().includes(lowerSearch)
+          filteredPosts = filteredPosts.filter(
+            (post: any) =>
+              post.title?.toLowerCase().includes(lowerSearch) ||
+              post.content?.toLowerCase().includes(lowerSearch),
           );
         }
 
@@ -478,7 +535,13 @@ export function ProfileRecentArticleList({ filters, search }: { filters: Filters
 }
 
 // Profile 페이지 - 북마크 한 글
-export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Filters, search: string }) {
+export function ProfileBookmarkedArticlesList({
+  filters,
+  search,
+}: {
+  filters: Filters;
+  search: string;
+}) {
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -488,7 +551,10 @@ export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Fi
 
     const fetchData = async (searchTerm: string) => {
       try {
-        const response = await fetchArchives({ pageSize: 10, page: currentPage });
+        const response = await fetchArchives({
+          pageSize: 10,
+          page: currentPage,
+        });
 
         const articles = (response.results || [])
           .map((item: any) => item?.parent_article)
@@ -497,9 +563,13 @@ export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Fi
         let filteredPosts = articles.map((post: any) => {
           if (isPostHidden(post, filters)) {
             const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
-            if (post.isSexual && !filters.seeSexual) newPost.why_hidden.push('ADULT_CONTENT');
-            if (post.isSocial && !filters.seeSocial) newPost.why_hidden.push('SOCIAL_CONTENT');
+            newPost.why_hidden = newPost.why_hidden
+              ? [...newPost.why_hidden]
+              : [];
+            if (post.isSexual && !filters.seeSexual)
+              newPost.why_hidden.push("ADULT_CONTENT");
+            if (post.isSocial && !filters.seeSocial)
+              newPost.why_hidden.push("SOCIAL_CONTENT");
             return newPost;
           }
           return post;
@@ -507,9 +577,10 @@ export function ProfileBookmarkedArticlesList({ filters, search }: { filters: Fi
 
         if (searchTerm) {
           const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter((post: any) =>
-            post.title?.toLowerCase().includes(lowerSearch) ||
-            post.content?.toLowerCase().includes(lowerSearch)
+          filteredPosts = filteredPosts.filter(
+            (post: any) =>
+              post.title?.toLowerCase().includes(lowerSearch) ||
+              post.content?.toLowerCase().includes(lowerSearch),
           );
         }
 
@@ -580,7 +651,7 @@ export function UserProfileArticleList({ userId }: { userId: number }) {
       showAttachment={true}
       showProfile={true}
       showWriter={true}
-      titleFontSize='text-[16px]'
+      titleFontSize="text-[16px]"
       showTopic={true}
       showHit={true}
       showStatus={true}

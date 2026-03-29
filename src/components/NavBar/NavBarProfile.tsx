@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
-import { fetchMe, logout } from "@/lib/api/user";
+import { logout } from "@/lib/api/user";
+import { useMe } from "@/lib/query/user";
 
 const DEFAULT_PROFILE = "/user.png";
 
@@ -12,10 +13,10 @@ export default function NavBarProfile() {
   const [picture, setPicture] = useState("");
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const { data: user_data } = useMe();
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user_data = await fetchMe();
       setUser(user_data.nickname);
       setPicture(user_data.picture);
       setUserId(user_data.user_id);
@@ -26,7 +27,10 @@ export default function NavBarProfile() {
   // 팝오버 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };

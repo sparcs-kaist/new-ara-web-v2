@@ -1,17 +1,10 @@
-import { queryOptions } from "@tanstack/react-query";
 import http from "@/lib/api/http";
 import { queryBuilder } from "../utils/queryBuilder";
 import { queryClient } from "../queryClient";
-import { useMe } from "../query/user";
-
-export const fetchMeFromApi = async () => {
-  const { data } = await http.get("/me");
-  return data;
-};
 
 // fetchMe : 로그인 유저 정보
 export const fetchMe = async () => {
-  const { data } = useMe();
+  const { data } = await http.get("/me");
   return data;
 };
 

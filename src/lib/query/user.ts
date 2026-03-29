@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchBlocks, fetchMeFromApi } from "@/lib/api/user";
+import { fetchBlocks, fetchMe } from "@/lib/api/user";
 
 export const useMe = () => {
   return useQuery({
     queryKey: ["me"],
-    queryFn: fetchMeFromApi,
+    queryFn: fetchMe,
     staleTime: 300000,
     retry: false,
     refetchOnWindowFocus: false,

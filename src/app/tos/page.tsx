@@ -1,59 +1,60 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import LanguageSwitcher from './components/LanguageSwitcher'
-import { tosContent } from './content'
-import { updateTos, fetchMe } from '@/lib/api/user'
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import { tosContent } from "./content";
+import { updateTos } from "@/lib/api/user";
+import { useMe } from "@/lib/query/user";
 
 export default function TOSPage() {
   // 기본 언어는 한국어로 설정
-  const [locale, setLocale] = useState<'ko' | 'en'>('ko')
-  const [agreed, setAgreed] = useState(false) // 약관 동의 여부 상태 추가
-  const [user, setUser] = useState<number | null>(null)
+  const [locale, setLocale] = useState<"ko" | "en">("ko");
+  const [agreed, setAgreed] = useState(false); // 약관 동의 여부 상태 추가
+  const [user, setUser] = useState<number | null>(null);
+  const { data: userData } = useMe();
 
   useEffect(() => {
     //User 정보 가져오기
     const fetchUserData = async () => {
       try {
-        const userData = await fetchMe()
-        setUser(userData.user)
-        setAgreed(userData.agree_terms_of_service_at != null) // 사용자 약관 동의 상태 설정
+        setUser(userData.user);
+        setAgreed(userData.agree_terms_of_service_at != null); // 사용자 약관 동의 상태 설정
       } catch (error) {
-        console.error("Error fetching user data:", error)
+        console.error("Error fetching user data:", error);
       }
-    }
-    fetchUserData()
-  }, [])
+    };
+    fetchUserData();
+  }, []);
   useEffect(() => {
     // URL에서 언어 파라미터 가져오기
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlLocale = urlParams.get('lang') as 'ko' | 'en'
-    if (urlLocale && (urlLocale === 'ko' || urlLocale === 'en')) {
-      setLocale(urlLocale)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLocale = urlParams.get("lang") as "ko" | "en";
+    if (urlLocale && (urlLocale === "ko" || urlLocale === "en")) {
+      setLocale(urlLocale);
     }
-  }, [])
+  }, []);
 
   // 언어 변경 핸들러
-  const handleLocaleChange = (newLocale: 'ko' | 'en') => {
-    setLocale(newLocale)
-  }
+  const handleLocaleChange = (newLocale: "ko" | "en") => {
+    setLocale(newLocale);
+  };
 
   // 약관 동의 핸들러
   const handleAgree = () => {
     if (user) {
-      updateTos(user)
+      updateTos(user);
     }
-    window.location.href = '/' // 약관 동의 후 홈으로 redirect
-  }
+    window.location.href = "/"; // 약관 동의 후 홈으로 redirect
+  };
 
   // 약관 거절 핸들러
   const handleDecline = () => {
-    alert('약관에 동의하지 않으면 서비스를 이용할 수 없습니다.')
-  }
+    alert("약관에 동의하지 않으면 서비스를 이용할 수 없습니다.");
+  };
 
   // 현재 사용 중인 언어의 콘텐츠 가져오기
-  const currentContent = tosContent[locale]
+  const currentContent = tosContent[locale];
 
   return (
     <div className="min-h-screen bg-white">
@@ -136,5 +137,5 @@ export default function TOSPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
