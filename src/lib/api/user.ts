@@ -2,22 +2,17 @@ import { queryOptions } from "@tanstack/react-query";
 import http from "@/lib/api/http";
 import { queryBuilder } from "../utils/queryBuilder";
 import { queryClient } from "../queryClient";
+import { useMe } from "../query/user";
 
 export const fetchMeFromApi = async () => {
   const { data } = await http.get("/me");
   return data;
 };
 
-export const meQueryOptions = queryOptions({
-  queryKey: ["me"],
-  queryFn: fetchMeFromApi,
-  staleTime: Infinity,
-  retry: false,
-});
-
 // fetchMe : 로그인 유저 정보
 export const fetchMe = async () => {
-  return queryClient.fetchQuery(meQueryOptions);
+  const { data } = useMe();
+  return data;
 };
 
 // fetchUser, updateUser : 유저 프로필 조회/수정

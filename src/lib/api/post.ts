@@ -1,6 +1,7 @@
-import http from '@/lib/api/http';
+import http from "@/lib/api/http";
+import { queryClient } from "../queryClient";
 
-type VoteAction = 'vote_cancel' | 'vote_negative' | 'vote_positive';
+type VoteAction = "vote_cancel" | "vote_negative" | "vote_positive";
 
 // 게시글 단건 조회 (context에 vote action을 넣으면 해당 액션 경로 호출)
 export const fetchPost = async ({
@@ -21,9 +22,10 @@ export const fetchPost = async ({
     : `articles/${postId}/`;
 
   const params = new URLSearchParams();
-  if (fromView) params.append('from_view', fromView);
-  if (current !== undefined) params.append('current', current.toString());
-  if (overrideHidden !== undefined) params.append('override_hidden', overrideHidden.toString());
+  if (fromView) params.append("from_view", fromView);
+  if (current !== undefined) params.append("current", current.toString());
+  if (overrideHidden !== undefined)
+    params.append("override_hidden", overrideHidden.toString());
 
   const url = params.toString() ? `${baseUrl}?${params}` : baseUrl;
   const { data } = await http.get(url);
@@ -38,10 +40,13 @@ export const createPost = async ({
   boardId: number;
   newArticle: Record<string, unknown>;
 }) => {
-  const { data } = await http.post('articles/', {
+  const { data } = await http.post("articles/", {
     ...newArticle,
     parent_board: boardId,
   });
+
+  // useMe 호출을 다시 호출해야 게시물 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
@@ -61,7 +66,7 @@ export const updatePost = async ({
 
 // 게시글 스크랩
 export const archivePost = async (postId: number) => {
-  const { data } = await http.post('scraps/', { parent_article: postId });
+  const { data } = await http.post("scraps/", { parent_article: postId });
   return data;
 };
 
@@ -75,9 +80,9 @@ export const unarchivePost = async (scrapId: number) => {
 export const reportPost = async (
   postId: number,
   typeReport: string,
-  reasonReport: string
+  reasonReport: string,
 ) => {
-  const { data } = await http.post('reports/', {
+  const { data } = await http.post("reports/", {
     parent_article: postId,
     type: typeReport,
     content: reasonReport,
@@ -88,12 +93,18 @@ export const reportPost = async (
 // 게시글 삭제
 export const deletePost = async (postId: number) => {
   const { data } = await http.delete(`articles/${postId}/`);
+
+  // useMe 호출을 다시 호출해야 게시물 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
 // 게시글 추천/비추천 (vote action은 별도 함수로 분리하는게 나을 수도 있지만, 필요시 context로 대체 가능)
 export const votePost = async (postId: number, action: VoteAction) => {
   const { data } = await http.post(`articles/${postId}/${action}/`);
+
+  // useMe 호출을 다시 호출해야 vote 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
@@ -116,40 +127,46 @@ export const fetchComment = async ({
 export const createComment = async ({
   commentContent,
   parent_article_id,
-  name_type
+  name_type,
 }: {
   commentContent: string;
   parent_article_id: number;
   name_type: number;
 }) => {
-  const { data } = await http.post('comments/', {
+  const { data } = await http.post("comments/", {
     content: commentContent,
     parent_article: parent_article_id,
     name_type: name_type,
     attachment: null,
-  })
-  return data; // return 추가
-}
+  });
 
+  // useMe 호출을 다시 호출해야 댓글 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+  return data; // return 추가
+};
 
 //대댓글 작성
 export const createNestedComment = async ({
   commentContent,
   parent_comment_id,
-  name_type
+  name_type,
 }: {
   commentContent: string;
   parent_comment_id: number;
   name_type: number;
 }) => {
-  const { data } = await http.post('comments/', {
+  const { data } = await http.post("comments/", {
     content: commentContent,
     parent_comment: parent_comment_id,
     name_type: name_type,
     attachment: null,
-  })
+  });
+
+  // useMe 호출을 다시 호출해야 댓글 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+
   return data; // return 추가
-}
+};
 
 // 댓글 수정
 export const updateComment = async (
@@ -168,16 +185,20 @@ export const updateComment = async (
 // 댓글 추천/비추천
 export const voteComment = async (commentId: number, action: VoteAction) => {
   const { data } = await http.post(`comments/${commentId}/${action}/`);
+
+  // useMe 호출을 다시 호출해야 추천 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+
   return data;
 };
 
 // 댓글 신고
 export const reportComment = async (
   commentId: number,
-  typeReport: string = 'others',
-  reasonReport: string
+  typeReport: string = "others",
+  reasonReport: string,
 ) => {
-  const { data } = await http.post('reports/', {
+  const { data } = await http.post("reports/", {
     parent_comment: commentId,
     type: typeReport,
     content: reasonReport,
@@ -188,6 +209,9 @@ export const reportComment = async (
 // 댓글 삭제
 export const deleteComment = async (commentId: number) => {
   const { data } = await http.delete(`comments/${commentId}/`);
+
+  // useMe 호출을 다시 호출해야 댓글 개수 갱신 가능
+  queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
 
@@ -195,13 +219,13 @@ export const deleteComment = async (commentId: number) => {
 export const uploadAttachments = async (attachments: File | File[]) => {
   const generateFormData = (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     return formData;
   };
 
   const httpOptions = {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   };
 
@@ -209,10 +233,10 @@ export const uploadAttachments = async (attachments: File | File[]) => {
   if (Array.isArray(attachments)) {
     return Promise.all(
       attachments.map((attachment) =>
-        http.post('attachments/', generateFormData(attachment), httpOptions)
-      )
+        http.post("attachments/", generateFormData(attachment), httpOptions),
+      ),
     );
   }
 
-  return http.post('attachments/', generateFormData(attachments), httpOptions);
+  return http.post("attachments/", generateFormData(attachments), httpOptions);
 };
