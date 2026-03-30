@@ -34,7 +34,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     async function checkAuth() {
       try {
-        await fetchMe();
+        await queryClient.prefetchQuery({
+          queryKey: ["me"],
+          queryFn: fetchMe,
+        });
         setIsLoggedIn(true);
       } catch {
         console.error("인증 실패, 로그인 페이지로 리다이렉트합니다.");

@@ -10,19 +10,23 @@ const DEFAULT_PROFILE = "/user.png";
 export default function NavBarProfile() {
   const [User, setUser] = useState("");
   const [userId, setUserId] = useState<number | string>("");
-  const [picture, setPicture] = useState("");
+  const [picture, setPicture] = useState(DEFAULT_PROFILE);
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const { data: user_data } = useMe();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      setUser(user_data.nickname);
-      setPicture(user_data.picture);
-      setUserId(user_data.user_id);
-    };
-    fetchUser();
-  }, []);
+    if (!user_data) {
+      setPicture("");
+      setUser("");
+      setUserId("");
+      return;
+    }
+
+    setPicture(user_data.picture);
+    setUser(user_data.nickname);
+    setUserId(user_data.user_id);
+  }, [user_data]);
 
   // 팝오버 외부 클릭 시 닫기
   useEffect(() => {
