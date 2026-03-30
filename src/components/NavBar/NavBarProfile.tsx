@@ -58,13 +58,15 @@ export default function NavBarProfile() {
         className="flex items-center space-x-[10px] cursor-pointer"
       >
         <div className="relative w-6 h-6">
-          <Image
+          {picture ? (<Image
             src={picture || DEFAULT_PROFILE}
             alt="user profile image"
             fill
             className="rounded-full object-cover"
             sizes="24px"
-          />
+          />) : 
+          <div className="size-[24px] rounded-full bg-gray-100 animate-pulse"></div>
+          }
         </div>
         <p>{User}</p>
       </button>
