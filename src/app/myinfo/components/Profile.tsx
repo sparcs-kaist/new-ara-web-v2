@@ -3,7 +3,8 @@ import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Cropper from "react-easy-crop";
-import { fetchMe, updateUser } from "@/lib/api/user";
+import { updateUser } from "@/lib/api/user";
+import { useMe } from "@/lib/query/user";
 
 const MAX_SIZE_MB = 3; // 최대 업로드 용량 제한
 
@@ -72,11 +73,11 @@ const Profile = () => {
   } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data } = useMe();
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await fetchMe();
         setUserId(data.user);
         setProfileImage(data.picture || null);
         setEmail(data.email || "");

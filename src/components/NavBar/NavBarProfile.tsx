@@ -2,31 +2,39 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
-import { fetchMe, logout } from "@/lib/api/user";
+import { logout } from "@/lib/api/user";
+import { useMe } from "@/lib/query/user";
 
 const DEFAULT_PROFILE = "/user.png";
 
 export default function NavBarProfile() {
   const [User, setUser] = useState("");
   const [userId, setUserId] = useState<number | string>("");
-  const [picture, setPicture] = useState("");
+  const [picture, setPicture] = useState(DEFAULT_PROFILE);
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const { data: user_data } = useMe();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const user_data = await fetchMe();
-      setUser(user_data.nickname);
-      setPicture(user_data.picture);
-      setUserId(user_data.user_id);
-    };
-    fetchUser();
-  }, []);
+    if (!user_data) {
+      setPicture("");
+      setUser("");
+      setUserId("");
+      return;
+    }
+
+    setPicture(user_data.picture);
+    setUser(user_data.nickname);
+    setUserId(user_data.user_id);
+  }, [user_data]);
 
   // 팝오버 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -50,13 +58,15 @@ export default function NavBarProfile() {
         className="flex items-center space-x-[10px] cursor-pointer"
       >
         <div className="relative w-6 h-6">
-          <Image
+          {picture ? (<Image
             src={picture || DEFAULT_PROFILE}
             alt="user profile image"
             fill
             className="rounded-full object-cover"
             sizes="24px"
-          />
+          />) : 
+          <div className="size-[24px] rounded-full bg-gray-100 animate-pulse"></div>
+          }
         </div>
         <p>{User}</p>
       </button>

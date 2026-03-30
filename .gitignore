@@ -45,3 +45,5 @@ nginx/localhost.crt
 nginx/localhost.key
 
 .codex
+AGENTS.md
+.agents/

@@ -3,7 +3,8 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import React from "react";
-import { fetchMe, updateUser } from "@/lib/api/user";
+import { updateUser } from "@/lib/api/user";
+import { useMe } from "@/lib/query/user";
 
 interface PostSettingProps {
   onSettingChange?: (settings: {
@@ -19,11 +20,11 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null); // 나중에 타입 지정
+  const { data } = useMe();
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchMe();
         console.log("fetchMe data:", data);
         setUserData(data);
         setIsSexual(Boolean(data.see_sexual));
