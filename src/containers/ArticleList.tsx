@@ -84,7 +84,7 @@ export function ToSchoolPreview() {
       showAnswerStatus={true}
       showStatus={true}
       titleFontSize="text-[16px]"
-    ></ArticleList>
+    />
   );
 }
 

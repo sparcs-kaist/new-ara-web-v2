@@ -46,9 +46,9 @@ export default function Board() {
     // 검색 실행 핸들러: 상태 먼저 세팅 → URL 반영
     const handleSearch = () => {
         const trimmed = searchInput.trim();
-        setSearch(trimmed);
 
         const params = new URLSearchParams(Array.from(searchParams.entries()));
+        params.delete('page');
         if (trimmed) {
             params.set('search', trimmed);
         } else {
