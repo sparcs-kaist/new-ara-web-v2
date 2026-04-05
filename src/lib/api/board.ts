@@ -1,6 +1,7 @@
 import http from '@/lib/api/http';
 import { queryBuilder } from '@/lib/utils/queryBuilder';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { omit } from 'lodash';
 
 type QueryValue = string | number | boolean | null | undefined;
 type Filter = {
@@ -80,7 +81,7 @@ export const useArticles = (params: ArticleQuery & {hidePortalNotice?: boolean} 
       'articles', JSON.stringify(params)
     ],
     queryFn: async () => {
-      const data = await (params.hidePortalNotice ? fetchArticles : fetchAllArticlesExcludingPortalNotice)(params);
+      const data = await (params.hidePortalNotice ? fetchAllArticlesExcludingPortalNotice : fetchArticles)(omit(params, "hidePortalNotice"));
 
       /* eslint-disable-next-line */
       data.results.forEach((post: any) => {
