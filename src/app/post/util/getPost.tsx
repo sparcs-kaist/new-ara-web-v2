@@ -29,7 +29,7 @@ export const cleanJsonString = (jsonStr: string): string => {
 // @ts-expect-error : temporary fix the build error to make dev server work
 // data format을 any로 설정할 수 있게 하기 위함
 export function formatPost({ data }): PostData {
-    console.log(data);
+    // console.log(data);
     let processedContent = data.content;
 
     if (typeof data.content === 'string') {

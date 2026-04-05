@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { BoardArticleList, BoardAllArticleList, BoardAllArticleExcludePortalNoticeList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList, MarketArticleContainer } from '@/containers/ArticleList';
+import { BoardArticleList, BoardAllArticleList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList, MarketArticleContainer } from '@/containers/ArticleList';
 import { fetchBoardList } from '@/lib/api/board';
 import Image from 'next/image';
 
@@ -46,9 +46,9 @@ export default function Board() {
     // 검색 실행 핸들러: 상태 먼저 세팅 → URL 반영
     const handleSearch = () => {
         const trimmed = searchInput.trim();
-        setSearch(trimmed);
 
         const params = new URLSearchParams(Array.from(searchParams.entries()));
+        params.delete('page');
         if (trimmed) {
             params.set('search', trimmed);
         } else {
@@ -227,10 +227,7 @@ export default function Board() {
 
                                 {currentBoardType === 'all' && (
                                     <div className="max-w-none">
-                                        {excludePortalNotice
-                                            ? <BoardAllArticleExcludePortalNoticeList query={search} />
-                                            : <BoardAllArticleList query={search} />
-                                        }
+                                        <BoardAllArticleList query={search} hidePortalNotice={excludePortalNotice} />
                                     </div>
                                 )}
                                 {currentBoardType === 'popular' && (
