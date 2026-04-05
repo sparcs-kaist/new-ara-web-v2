@@ -1,7 +1,15 @@
 import http from "@/lib/api/http";
 import { queryClient } from "../queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type VoteAction = "vote_cancel" | "vote_negative" | "vote_positive";
+interface PostParams {
+  postId: number;
+  context?: VoteAction;
+  fromView?: string;
+  current?: number;
+  overrideHidden?: boolean;
+}
 
 // 게시글 단건 조회 (context에 vote action을 넣으면 해당 액션 경로 호출)
 export const fetchPost = async ({
@@ -10,13 +18,7 @@ export const fetchPost = async ({
   fromView,
   current,
   overrideHidden,
-}: {
-  postId: number;
-  context?: VoteAction;
-  fromView?: string;
-  current?: number;
-  overrideHidden?: boolean;
-}) => {
+}: PostParams) => {
   const baseUrl = context
     ? `articles/${postId}/${context}/`
     : `articles/${postId}/`;
@@ -30,6 +32,50 @@ export const fetchPost = async ({
   const url = params.toString() ? `${baseUrl}?${params}` : baseUrl;
   const { data } = await http.get(url);
   return data;
+};
+
+export const usePost = ({
+  postId,
+  context,
+  fromView = 'all',
+  current = 3,
+  overrideHidden = true,
+}: PostParams) => {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: [
+      'article',
+      postId,
+      context ?? null,
+      fromView ?? null,
+      current ?? null,
+      overrideHidden ?? null,
+    ],
+    queryFn: () =>
+      fetchPost({
+        postId,
+        context,
+        fromView,
+        current,
+        overrideHidden,
+      }),
+    placeholderData: () => {
+      /* eslint-disable-next-line */
+      const queries: [readonly any[], any][] = queryClient.getQueriesData({ queryKey: ['articles'] });
+
+      for (const [, data] of queries) {
+        /* eslint-disable-next-line */
+        const found = data?.results?.find((p: any) => p.id === postId);
+        if (found) {
+          return found;
+        }
+      }
+
+      return undefined;
+    },
+    staleTime: 1000 * 60,
+  });
 };
 
 // 게시글 생성

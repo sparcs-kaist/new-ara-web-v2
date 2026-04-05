@@ -6,6 +6,7 @@ import {
   fetchTopArticles,
   fetchArticles,
   fetchAllArticlesExcludingPortalNotice,
+  useArticles,
 } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
 import { fetchMe } from "@/lib/api/user";
@@ -13,6 +14,9 @@ import { fetchUserPosts } from "@/lib/api/user_profile";
 import { debounce } from "lodash";
 import { useMe } from "@/lib/query/user";
 import { GridArticleList } from '@/components/ArticleList/GridArticleList';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
@@ -94,6 +98,7 @@ interface BoardArticleListProps {
   pageSize?: number;
   topicId?: number;
   query?: string; // 검색어 prop 추가
+  hidePortalNotice?: boolean;
 }
 
 // 🔸 Board 페이지 - 일반 게시글
@@ -104,7 +109,18 @@ export function BoardArticleList({
   query,
 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+
   const [totalPages, setTotalPages] = useState(1);
   const requestTokenRef = useRef(0);
 
@@ -142,110 +158,48 @@ export function BoardArticleList({
       pagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     />
   );
 }
 
-// 검색을 지원하는 Board 페이지의 컴포넌트들의 경우
-// state update를 fetch한 순서대로 유지하기 위해 useRef를 사용합니다. (ABBA 문제 방지)
-// 가장 최근에 요청한 fetch의 state만을 반영할 수 있도록 합니다.
-// 다른 방법으로는 Abort Controller를 사용하여 이전 요청을 취소하는 방법이 있지만,
-// 이 경우에는 useRef를 사용하여 요청 토큰을 관리하는 것이 더 간단하고 효과적이다.
-
-// Board 페이지 - 전체 게시글
-export function BoardAllArticleList({
+export const BoardAllArticleList = ({
   pageSize = 10,
   query,
-}: BoardArticleListProps) {
-  const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
+  hidePortalNotice = false,
+}: BoardArticleListProps) => {
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
 
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
 
-    const fetchData = async () => {
-      const Response = await fetchArticles({
-        pageSize,
-        page: currentPage,
-        query,
-      });
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
 
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [pageSize, currentPage, query]);
+  const { data } = useArticles({
+    pageSize, page: currentPage, query, hidePortalNotice
+  })
 
   return (
     <ArticleList
-      posts={posts}
-      showBoard={true}
-      showTimeAgo={true}
-      showAttachment={true}
-      showProfile={true}
-      showWriter={true}
+      posts={data?.results || []}
+      showBoard
+      showTimeAgo
+      showAttachment
+      showProfile
+      showWriter
       titleFontSize="text-[16px]"
-      showTopic={true}
-      showHit={true}
-      showStatus={true}
-      showAnswerStatus={true}
-      pagination={true}
+      showTopic
+      showHit
+      showStatus
+      showAnswerStatus
+      pagination
       currentPage={currentPage}
-      totalPages={totalPages}
-      onPageChange={setCurrentPage}
-    />
-  );
-}
-
-export function BoardAllArticleExcludePortalNoticeList({
-  pageSize = 10,
-  query,
-}: BoardArticleListProps) {
-  const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
-
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
-
-    const fetchData = async () => {
-      const Response = await fetchAllArticlesExcludingPortalNotice({
-        pageSize,
-        page: currentPage,
-        query,
-      });
-
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [pageSize, currentPage, query]);
-
-  return (
-    <ArticleList
-      posts={posts}
-      showBoard={true}
-      showTimeAgo={true}
-      showAttachment={true}
-      showProfile={true}
-      showWriter={true}
-      titleFontSize="text-[16px]"
-      showTopic={true}
-      showHit={true}
-      showStatus={true}
-      showAnswerStatus={true}
-      pagination={true}
-      currentPage={currentPage}
-      totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      totalPages={data?.num_pages || 1}
+      onPageChange={handlePageChange}
     />
   );
 }
@@ -256,7 +210,18 @@ export function BoardHotArticleList({
   query,
 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+
   const [totalPages, setTotalPages] = useState(1);
   const requestTokenRef = useRef(0);
 
@@ -295,7 +260,7 @@ export function BoardHotArticleList({
       pagination={true}
       currentPage={currentPage}
       totalPages={totalPages}
-      onPageChange={setCurrentPage}
+      onPageChange={handlePageChange}
     />
   );
 }

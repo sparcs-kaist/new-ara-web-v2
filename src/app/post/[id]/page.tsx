@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
-import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment, deletePost } from '@/lib/api/post';
+import { fetchPost, votePost, voteComment, archivePost, unarchivePost, createComment, deletePost, usePost } from '@/lib/api/post';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import { formatPost } from '../util/getPost';
 import Image from "next/image";
@@ -20,7 +20,7 @@ export default function PostDetailPage() {
   const postId = params?.id ? parseInt(params.id as string, 10) : null;
 
   const [post, setPost] = useState<PostData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true);
   const [newCommentContent, setNewCommentContent] = useState('');
   const [selectedNameType, setSelectedNameType] = useState(1);
   const [reportingCommentId, setReportingCommentId] = useState<number | null>(null);
@@ -56,24 +56,38 @@ export default function PostDetailPage() {
       return; // useEffect 종료
     }
 
-    setIsLoading(true);
-    fetchPost({
-      postId,
-      fromView: 'all',
-      current: 3,
-      overrideHidden: true,
-    })
-      .then(data => {
-        setPost(formatPost({ data }));
-      })
-      .catch(error => {
-        console.error("게시물 로딩 실패:", error);
-        notFound(); // API 요청 실패 시에도 404 페이지로 리다이렉트
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    // fetchPost({
+    //   postId,
+    //   fromView: 'all',
+    //   current: 3,
+    //   overrideHidden: true,
+    // })
+    //   .then(data => {
+    //     setPost(formatPost({ data }));
+    //   })
+    //   .catch(error => {
+    //     console.error("게시물 로딩 실패:", error);
+    //     notFound(); // API 요청 실패 시에도 404 페이지로 리다이렉트
+    //   })
+    //   .finally(() => {
+    //     setIsLoading(false);
+    //   });
   }, [postId]);
+
+  
+  const { data, isLoading, error } = usePost({
+    postId: postId!,
+    fromView: 'all',
+    current: 3,
+    overrideHidden: true,
+  });
+
+  useEffect(() => {
+    if (data === undefined) return;
+    setPost(formatPost({ data }))
+  }, [data])
+
+  if (error) notFound();
 
   // post 데이터가 로드되면 기본 name_type 설정
   useEffect(() => {
@@ -523,7 +537,7 @@ export default function PostDetailPage() {
         </div>
         {/* 댓글 부분 */}
         {
-          post.comments.map((val, idx) =>
+          post.comments ? post.comments.map((val, idx) =>
             <CommentList
               comment={val}
               key={idx}
@@ -533,7 +547,9 @@ export default function PostDetailPage() {
               onNegativeVote={comment_negative_vote_handler}
               onReport={setReportingCommentId} // 신고 핸들러 전달
             />
-          )
+          ) : <div className="flex items-center justify-center min-h-screen">
+            <div className="w-10 h-10 border-4 border-[#ed3a3a]/30 border-t-[#ed3a3a] rounded-full animate-spin" />
+          </div>
         }
         {/* 댓글 입력 섹션 */}
         <div className="flex flex-col gap-1 mt-4">

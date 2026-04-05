@@ -1,5 +1,6 @@
 import http from '@/lib/api/http';
 import { queryBuilder } from '@/lib/utils/queryBuilder';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 
 type QueryValue = string | number | boolean | null | undefined;
 type Filter = {
@@ -67,7 +68,29 @@ export const fetchBoardGroups = async () => {
 //일반 게시글 목록 조회
 export const fetchArticles = async (params: ArticleQuery = {}) => {
   const { data } = await http.get(`articles/?${queryBuilder(buildArticleParams(params))}`);
+  console.log(data)
   return data;
+};
+
+export const useArticles = (params: ArticleQuery & {hidePortalNotice?: boolean} = {}) => {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: [
+      'articles', JSON.stringify(params)
+    ],
+    queryFn: async () => {
+      const data = await (params.hidePortalNotice ? fetchArticles : fetchAllArticlesExcludingPortalNotice)(params);
+
+      /* eslint-disable-next-line */
+      data.results.forEach((post: any) => {
+        queryClient.setQueryData(['article', post?.id], post);
+      });
+
+      return data;
+    },
+    placeholderData: keepPreviousData
+  });
 };
 
 //추천 게시글 (top) 목록 조회
