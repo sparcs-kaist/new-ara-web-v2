@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import {
     fetchArticles,
     fetchTopArticles,
@@ -39,6 +40,7 @@ const SPECIAL_LABEL: Record<SpecialKind, string> = {
  */
 export default function BoardSlugPage() {
     const router = useRouter();
+    const onBack = useSafeBack();
     const params = useParams<{ slug: string }>();
     const rawSlug = decodeURIComponent(params.slug ?? '');
     const isSpecial = rawSlug.startsWith('_');
@@ -128,7 +130,7 @@ export default function BoardSlugPage() {
     const leading = (
         <button
             type="button"
-            onClick={() => router.back()}
+            onClick={onBack}
             className="flex items-center text-ara_red"
             aria-label="뒤로"
         >
@@ -164,7 +166,7 @@ export default function BoardSlugPage() {
                             onClick={() =>
                                 router.push(
                                     board
-                                        ? `/web_view/Search?board=${board.slug}`
+                                        ? `/web_view/Search?board=${board.id}`
                                         : '/web_view/Search',
                                 )
                             }

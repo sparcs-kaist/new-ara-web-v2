@@ -86,7 +86,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
             // 2. 성공하면 검색 다이얼로그를 닫습니다.
             setShowUserSearch(false);
             // 3. 생성된 채팅방으로 사용자를 이동시킵니다.
-            router.push(`/chat/${newRoom.id}`);
+            router.push(`/web_view/Chat/${newRoom.id}`);
         } catch (error: any) {
             // 4. 에러가 발생하면 (ex: 이미 채팅방이 존재) UserSearchDialog가
             //    에러 메시지를 alert로 띄워줄 수 있도록 에러를 다시 던집니다.

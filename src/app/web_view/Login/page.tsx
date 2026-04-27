@@ -3,36 +3,46 @@
 import { AraLogo, Screen } from '@/app/web_view/_components';
 
 /**
- * SPARCS SSO entry. Mirrors the simple landing of `lib/pages/login_page.dart`:
- * centered ARA logo + a primary CTA button. No shadow, no border around
- * the button (just brand red).
+ * Faithful port of `lib/pages/login_page.dart`:
+ *
+ *   ┌──────────────────────────┐
+ *   │                          │
+ *   │     [ARA logo, 200w]     │  Expanded — fills the top region.
+ *   │                          │
+ *   │ ┌──────────────────────┐ │  300×60 button, 20px radius, ED3A3A,
+ *   │ │  SPARCS SSO로 로그인  │ │  label 18/w500 white.
+ *   │ └──────────────────────┘ │
+ *   │           50px           │  Fixed bottom gap.
+ *   └──────────────────────────┘
+ *
+ * SSO target uses the page's own origin so dev / prod / preview all work
+ * — Flutter goes through SparcsSSOPage; on the web we redirect to the
+ * Django SSO endpoint and let it bounce us back to /web_view/Main.
  */
 export default function LoginPage() {
     const onSsoLogin = () => {
-        const apiHost = process.env.NEXT_PUBLIC_API_HOST || 'https://newara.dev.sparcs.org';
-        const next = encodeURIComponent('https://newara.dev.sparcs.org/web_view/Main');
-        window.location.href = `${apiHost}/api/users/sso_login/?next=${next}`;
+        if (typeof window === 'undefined') return;
+        const apiHost =
+            process.env.NEXT_PUBLIC_API_HOST?.replace(/\/$/, '') ||
+            window.location.origin;
+        const next = `${window.location.origin}/web_view/Main`;
+        window.location.href = `${apiHost}/api/users/sso_login/?next=${encodeURIComponent(next)}`;
     };
 
     return (
         <Screen withTabBar={false}>
-            <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6">
-                <div className="flex-1" />
-                <AraLogo width={140} height={76} />
-                <div className="mt-3 text-[16px] font-medium text-[#B1B1B1]">
-                    KAIST 학생 커뮤니티
+            <div className="flex min-h-[100dvh] flex-col items-center px-6">
+                <div className="flex w-full flex-1 items-center justify-center">
+                    <AraLogo width={200} height={109} />
                 </div>
-                <div className="flex-1" />
-
                 <button
                     type="button"
                     onClick={onSsoLogin}
-                    className="h-[50px] w-full max-w-[320px] rounded-[10px] bg-ara_red text-[15px] font-bold text-white"
+                    className="flex h-[60px] w-[300px] items-center justify-center rounded-[20px] bg-ara_red text-[18px] font-medium text-white"
                 >
-                    SPARCS SSO 로그인
+                    SPARCS SSO로 로그인
                 </button>
-
-                <footer className="mt-8 text-[12px] text-[#B1B1B1]">© SPARCS Ara</footer>
+                <div className="h-[50px]" />
             </div>
         </Screen>
     );

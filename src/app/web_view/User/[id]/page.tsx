@@ -8,6 +8,7 @@ import {
     PostPreview,
     Screen,
 } from '@/app/web_view/_components';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { blockUser } from '@/lib/api/user';
 import { fetchUserProfile, fetchUserPosts } from '@/lib/api/user_profile';
 import type { ResponsePost } from '@/lib/types/post';
@@ -28,6 +29,7 @@ interface UserProfile {
  */
 export default function UserViewPage() {
     const router = useRouter();
+    const onBack = useSafeBack();
     const params = useParams();
     const idParam = params?.id;
     const userId =
@@ -85,7 +87,7 @@ export default function UserViewPage() {
         try {
             await blockUser(userId);
             if (typeof window !== 'undefined') window.alert('차단했어요.');
-            router.back();
+            onBack();
         } catch (e) {
             console.warn('blockUser failed', e);
             if (typeof window !== 'undefined') window.alert('차단에 실패했어요.');

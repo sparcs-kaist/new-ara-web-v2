@@ -42,7 +42,13 @@ export function AppHeader({
 
     const handleBack = () => {
         if (onBack) return onBack();
-        if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+            return;
+        }
+        // Deep-link entry — no SPA history to pop. Send the user to Main so
+        // the back arrow never feels dead and never falls out of /web_view.
+        router.replace('/web_view/Main');
     };
 
     const showDefaultLeading = leading === undefined;

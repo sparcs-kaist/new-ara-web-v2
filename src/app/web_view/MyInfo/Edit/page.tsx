@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AppHeader, Screen } from '@/app/web_view/_components';
+import {
+    CameraIcon,
+    LeftChevronIcon,
+    Screen,
+} from '@/app/web_view/_components';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { fetchMe, updateUser } from '@/lib/api/user';
 
 interface MeProfile {
@@ -10,17 +14,28 @@ interface MeProfile {
     user?: number;
     nickname?: string;
     picture?: string | null;
+    email?: string | null;
     see_sexual?: boolean;
     see_social?: boolean;
 }
 
 /**
- * Mirrors `lib/pages/profile_edit_page.dart`. A round 96px avatar at the
- * top, "변경" button, a single nickname text field, and a sticky red
- * 저장 CTA at the bottom.
+ * Faithful port of `lib/pages/profile_edit_page.dart`.
+ *
+ *   AppBar: red ‹ back · centered "프로필 수정" 18/w700 · "완료" 17/w500 right.
+ *   Body:
+ *     - 10px gap
+ *     - Round avatar (width-70 diameter), grey 1px border, with a 40×40
+ *       black "camera" badge at bottom:0 right:50.
+ *     - 40px gap
+ *     - Row (width-60): "닉네임" 17/w700 #636363  ─30px─  filled input
+ *       (#EBEBEB, 10px radius, 15px left padding).
+ *     - Helper text 12/w600 #BFBFBF, 80px left padding.
+ *     - 30px gap
+ *     - Row (width-60): "이메일" 17/w700 #636363  ─45px─  email 15/w500 #B1B1B1.
  */
 export default function ProfileEditPage() {
-    const router = useRouter();
+    const onBack = useSafeBack();
     const fileRef = useRef<HTMLInputElement | null>(null);
     const [me, setMe] = useState<MeProfile | null>(null);
     const [nickname, setNickname] = useState('');
@@ -50,21 +65,27 @@ export default function ProfileEditPage() {
         setPictureFile(f);
     };
 
-    const onSave = async () => {
-        if (!me?.id || saving) return;
+    const onSubmit = async () => {
+        if (!me?.user && !me?.id) return;
+        const userId = (me.user ?? me.id) as number;
+        const trimmed = nickname.trim();
+        if (!trimmed) {
+            if (typeof window !== 'undefined') window.alert('닉네임이 작성되지 않았습니다!');
+            return;
+        }
         setSaving(true);
         try {
-            await updateUser(me.id, {
-                nickname: nickname.trim(),
+            await updateUser(userId, {
+                nickname: trimmed,
                 picture: pictureFile,
                 sexual: Boolean(me.see_sexual),
                 social: Boolean(me.see_social),
             });
-            router.back();
+            onBack();
         } catch (e) {
             console.warn('updateUser failed', e);
             if (typeof window !== 'undefined') {
-                window.alert('저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+                window.alert('설정 변경 중 문제가 발생했습니다.');
             }
         } finally {
             setSaving(false);
@@ -73,60 +94,95 @@ export default function ProfileEditPage() {
 
     return (
         <Screen withTabBar={false}>
-            <AppHeader title="프로필 수정" />
-
-            <div className="flex flex-col items-center gap-3 px-5 pt-8 pb-4">
-                <span
-                    className="inline-flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-full bg-[#E5E5E5]"
-                    aria-hidden
-                >
-                    {previewUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={previewUrl} alt="" className="h-full w-full object-cover" />
-                    )}
-                </span>
+            <header className="sticky top-0 z-40 flex h-14 items-center bg-white">
                 <button
                     type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="bg-transparent text-[13px] font-medium text-ara_red"
+                    onClick={onBack}
+                    aria-label="뒤로"
+                    className="flex h-14 w-14 items-center justify-center text-ara_red"
                 >
-                    변경
+                    <LeftChevronIcon size={35} />
                 </button>
-                <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onPickFile}
-                />
-            </div>
-
-            <label className="block px-5 pb-1 text-[12px] text-[#646464]">닉네임</label>
-            <div className="px-5">
-                <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="닉네임을 입력하세요"
-                    className="block w-full rounded-[10px] bg-[#F8F8F8] px-3 py-3 text-[14px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
-                />
-            </div>
-
-            <div
-                className="fixed inset-x-0 z-30 bg-white px-5 pt-3"
-                style={{
-                    bottom: 0,
-                    paddingBottom: 'calc(12px + var(--ara-safe-bottom))',
-                }}
-            >
+                <h1 className="absolute left-0 right-0 mx-auto w-fit text-[18px] font-bold text-ara_red">
+                    프로필 수정
+                </h1>
                 <button
                     type="button"
-                    onClick={onSave}
-                    disabled={saving || !nickname.trim()}
-                    className="block h-[50px] w-full rounded-[10px] bg-ara_red text-[15px] font-bold text-white disabled:bg-ara_red_bright"
+                    onClick={onSubmit}
+                    disabled={saving}
+                    className="ml-auto px-[15px] text-[17px] font-medium text-ara_red disabled:opacity-50"
                 >
-                    {saving ? '저장 중...' : '저장'}
+                    완료
                 </button>
+            </header>
+
+            <div className="flex flex-col items-center">
+                <div className="h-[10px]" />
+
+                {/* Round avatar with camera badge — width-70 diameter. */}
+                <div
+                    className="relative"
+                    style={{ width: 'calc(100vw - 70px)', height: 'calc(100vw - 70px)', maxWidth: 320, maxHeight: 320 }}
+                >
+                    <div className="h-full w-full overflow-hidden rounded-full border border-[#9E9E9E] bg-[#E5E5E5]">
+                        {previewUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={previewUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                draggable={false}
+                            />
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => fileRef.current?.click()}
+                        aria-label="프로필 사진 변경"
+                        className="absolute bottom-0 right-[50px] flex h-10 w-10 items-center justify-center rounded-full bg-[#333333] text-white"
+                    >
+                        <CameraIcon size={20} />
+                    </button>
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={onPickFile}
+                    />
+                </div>
+
+                <div className="h-10" />
+
+                {/* Nickname row */}
+                <div className="flex w-[calc(100%-60px)] items-center">
+                    <span className="text-[17px] font-bold text-[#636363]">닉네임</span>
+                    <div className="w-[30px]" />
+                    <div className="flex-1 rounded-[10px] bg-[#EBEBEB]">
+                        <input
+                            type="text"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            placeholder="변경하실 닉네임을 입력해주세요."
+                            className="block h-[44px] w-full bg-transparent pl-[15px] text-[15px] text-black placeholder:text-[#9E9E9E] focus:outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="w-[calc(100%-60px)] pl-[80px] pt-[6px] text-[12px] font-semibold text-[#BFBFBF]">
+                    닉네임은 한번 변경할 시 3개월간 변경이 불가합니다.
+                </div>
+
+                <div className="h-[30px]" />
+
+                {/* Email row — read-only display. */}
+                <div className="flex w-[calc(100%-60px)] items-center">
+                    <span className="text-[17px] font-bold text-[#636363]">이메일</span>
+                    <div className="w-[45px]" />
+                    <span className="flex-1 truncate text-[15px] font-medium text-[#B1B1B1]">
+                        {me?.email ?? '이메일 정보가 없습니다.'}
+                    </span>
+                </div>
             </div>
         </Screen>
     );
