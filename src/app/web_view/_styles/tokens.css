@@ -1,0 +1,206 @@
+/*
+ * Ara mobile (web_view) design tokens.
+ *
+ * These mirror the Flutter app's `lib/constants/colors_info.dart` and the
+ * Pretendard typography stack defined in `pubspec.yaml`. They are scoped to
+ * `[data-ara-shell]` so they do not leak into the rest of the web app.
+ */
+
+[data-ara-shell] {
+    /* Brand */
+    --ara-primary: #ED3A3A;
+    --ara-primary-soft: #FF7070;
+    --ara-primary-bright: #FDF0F0;
+    --ara-positive: #ED3A3A;
+    --ara-negative: #538DD1;
+    --ara-neutral: #BBBBBB;
+
+    /* Surface */
+    --ara-bg: #FFFFFF;
+    --ara-bg-elevated: #FFFFFF;
+    --ara-bg-muted: #F7F7F7;
+    --ara-divider: #F0F0F0;
+    --ara-divider-strong: #DBDBDB;
+
+    /* Text */
+    --ara-text-primary: #111111;
+    --ara-text-secondary: #555555;
+    --ara-text-tertiary: #888888;
+    --ara-text-quaternary: #BBBBBB;
+    --ara-text-on-primary: #FFFFFF;
+
+    /* Layout */
+    --ara-tab-height: 56px;
+    --ara-header-height: 48px;
+    --ara-radius-sm: 8px;
+    --ara-radius-md: 12px;
+    --ara-radius-lg: 16px;
+    --ara-spacing-xs: 4px;
+    --ara-spacing-sm: 8px;
+    --ara-spacing-md: 12px;
+    --ara-spacing-lg: 16px;
+    --ara-spacing-xl: 20px;
+
+    /* Safe area — set by the layout from the bridge or visualViewport. */
+    --ara-safe-top: env(safe-area-inset-top, 0px);
+    --ara-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ara-safe-left: env(safe-area-inset-left, 0px);
+    --ara-safe-right: env(safe-area-inset-right, 0px);
+
+    /* Native keyboard height — overridden by the bridge / useKeyboard hook. */
+    --ara-keyboard-height: 0px;
+
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ara-text-primary);
+    background: var(--ara-bg);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+}
+
+[data-ara-shell] *,
+[data-ara-shell] *::before,
+[data-ara-shell] *::after {
+    box-sizing: border-box;
+}
+
+[data-ara-shell] .ara-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: var(--ara-safe-top);
+    padding-left: var(--ara-safe-left);
+    padding-right: var(--ara-safe-right);
+}
+
+[data-ara-shell] .ara-screen--with-tabbar {
+    padding-bottom: calc(var(--ara-tab-height) + var(--ara-safe-bottom));
+}
+
+[data-ara-shell] .ara-screen--no-tabbar {
+    padding-bottom: var(--ara-safe-bottom);
+}
+
+[data-ara-shell] .ara-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: stretch;
+    height: calc(var(--ara-tab-height) + var(--ara-safe-bottom));
+    padding-bottom: var(--ara-safe-bottom);
+    background: var(--ara-bg);
+    border-top: 1px solid var(--ara-divider);
+    z-index: 50;
+}
+
+[data-ara-shell] .ara-tabbar__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    color: var(--ara-text-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+[data-ara-shell] .ara-tabbar__btn[data-active='true'] {
+    color: var(--ara-primary);
+}
+
+[data-ara-shell] .ara-tabbar__icon {
+    width: 24px;
+    height: 24px;
+}
+
+[data-ara-shell] .ara-header {
+    position: sticky;
+    top: 0;
+    height: var(--ara-header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    background: var(--ara-bg);
+    border-bottom: 1px solid var(--ara-divider);
+    z-index: 40;
+}
+
+[data-ara-shell] .ara-header__title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ara-text-primary);
+    margin: 0 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-ara-shell] .ara-header__btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--ara-text-primary);
+    cursor: pointer;
+}
+
+[data-ara-shell] .ara-card {
+    background: var(--ara-bg-elevated);
+    border: 1px solid var(--ara-divider);
+    border-radius: var(--ara-radius-md);
+    padding: var(--ara-spacing-lg);
+}
+
+[data-ara-shell] .ara-list-row {
+    display: flex;
+    align-items: center;
+    padding: var(--ara-spacing-md) var(--ara-spacing-lg);
+    border-bottom: 1px solid var(--ara-divider);
+    background: var(--ara-bg);
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(237, 58, 58, 0.05);
+}
+
+[data-ara-shell] .ara-list-row:active {
+    background: var(--ara-bg-muted);
+}
+
+[data-ara-shell] .ara-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ara-text-secondary);
+    background: var(--ara-bg-muted);
+}
+
+[data-ara-shell] .ara-pill--primary {
+    color: var(--ara-primary);
+    background: var(--ara-primary-bright);
+}
+
+[data-ara-shell] .ara-skeleton {
+    background: linear-gradient(90deg, #F0F0F0 0%, #F8F8F8 50%, #F0F0F0 100%);
+    background-size: 200% 100%;
+    animation: ara-skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--ara-radius-sm);
+}
+
+@keyframes ara-skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
