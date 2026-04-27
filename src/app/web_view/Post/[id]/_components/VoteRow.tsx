@@ -1,6 +1,6 @@
 'use client';
 
-import { bridge } from '@/app/web_view/_bridge';
+import { DislikeIcon, LikeIcon } from '@/app/web_view/_components';
 
 interface VoteRowProps {
     myVote: boolean | null;
@@ -10,97 +10,43 @@ interface VoteRowProps {
 }
 
 /**
- * Up/down arrow + count pair shown below the article body.
+ * Faithful port of `_buildVoteButtons` from `post_view_page.dart`.
+ *
+ * A centred row with the large like icon (≈22px) + count (20/w500) and
+ * the dislike pair, separated by a 20px gap. The icon and count colours
+ * follow the user's vote state exactly like Flutter's `_buildVoteIcons`.
  */
 export function VoteRow({ myVote, positive, negative, onVote }: VoteRowProps) {
-    const tap = () => {
-        try {
-            bridge?.send('haptic', { kind: 'light' });
-        } catch {
-            /* noop */
-        }
-    };
+    const onUp = () => onVote(myVote === true ? 'vote_cancel' : 'vote_positive');
+    const onDown = () => onVote(myVote === false ? 'vote_cancel' : 'vote_negative');
 
-    const handleUp = () => {
-        tap();
-        onVote(myVote === true ? 'vote_cancel' : 'vote_positive');
-    };
-    const handleDown = () => {
-        tap();
-        onVote(myVote === false ? 'vote_cancel' : 'vote_negative');
-    };
+    // myVote === !isPositive  → grey;  myVote === null → outline;  matches → filled coloured.
+    const likeColor =
+        myVote === false ? 'text-[#BBBBBB]' : 'text-ara_red';
+    const dislikeColor =
+        myVote === true ? 'text-[#BBBBBB]' : 'text-ara_blue';
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                gap: 12,
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '12px 0',
-            }}
-        >
+        <div className="flex items-center justify-center pt-[10px]">
             <button
                 type="button"
-                onClick={handleUp}
+                onClick={onUp}
                 aria-pressed={myVote === true}
-                style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    border: `1px solid ${myVote === true ? 'var(--ara-positive)' : 'var(--ara-divider-strong)'}`,
-                    borderRadius: 999,
-                    background: myVote === true ? 'var(--ara-primary-bright)' : 'transparent',
-                    color: myVote === true ? 'var(--ara-positive)' : 'var(--ara-text-secondary)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                }}
+                className={`flex items-center bg-transparent ${likeColor}`}
             >
-                <Arrow direction="up" />
-                {positive}
+                <LikeIcon size={22} />
+                <span className="ml-1 text-[20px] font-medium">{positive}</span>
             </button>
+            <div className="w-5" />
             <button
                 type="button"
-                onClick={handleDown}
+                onClick={onDown}
                 aria-pressed={myVote === false}
-                style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    border: `1px solid ${myVote === false ? 'var(--ara-negative)' : 'var(--ara-divider-strong)'}`,
-                    borderRadius: 999,
-                    background: myVote === false ? '#EAF2FB' : 'transparent',
-                    color: myVote === false ? 'var(--ara-negative)' : 'var(--ara-text-secondary)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                }}
+                className={`flex items-center bg-transparent ${dislikeColor}`}
             >
-                <Arrow direction="down" />
-                {negative}
+                <DislikeIcon size={22} />
+                <span className="ml-1 text-[20px] font-medium">{negative}</span>
             </button>
         </div>
-    );
-}
-
-function Arrow({ direction }: { direction: 'up' | 'down' }) {
-    const rotate = direction === 'up' ? 0 : 180;
-    return (
-        <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            style={{ transform: `rotate(${rotate}deg)` }}
-            aria-hidden
-        >
-            <path
-                d="M7 3L11.5 9.5H2.5L7 3Z"
-                fill="currentColor"
-            />
-        </svg>
     );
 }

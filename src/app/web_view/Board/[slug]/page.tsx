@@ -1,199 +1,207 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Screen, AppHeader } from '@/app/web_view/_components';
-import { fetchArticles, fetchBoardList } from '@/lib/api/board';
+import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
+import {
+    fetchArticles,
+    fetchTopArticles,
+    fetchArchivedPosts,
+    fetchRecentViewedPosts,
+    fetchBoardList,
+} from '@/lib/api/board';
 import type { ResponsePost } from '@/lib/types/post';
-import { ArticleRow, ArticleRowSkeleton } from '../_components/ArticleRow';
-import { Fab } from '../_components/Fab';
-import { SearchIconButton } from '../_components/SearchTrigger';
-import { PosterGrid } from './_components/PosterGrid';
 
 interface BoardItem {
     id: number;
     slug: string;
     ko_name: string;
     en_name?: string;
-    name_type?: number;
 }
 
-const POSTER_SLUGS = new Set(['poster', 'poster-general']);
-const POSTER_BOARD_ID = 19;
-const PAGE_SIZE = 20;
+type SpecialKind = 'all' | 'top' | 'scraps' | 'recent';
 
+const SPECIAL_LABEL: Record<SpecialKind, string> = {
+    all: '전체보기',
+    top: '인기글',
+    scraps: '담아둔 글',
+    recent: '최근 본 글',
+};
+
+/**
+ * Mirrors `lib/pages/post_list_show_page.dart`: a list of `PostPreview`
+ * rows separated by 1px hairlines, with the board name shown next to a
+ * red back-arrow (the 200px-wide `leadingWidth` AppBar in Flutter).
+ *
+ * Recognises four pseudo-slugs that come from the Board home tab:
+ * `_all`, `_top`, `_scraps`, `_recent`. Anything else is treated as a
+ * real board slug and resolved against `fetchBoardList()`.
+ */
 export default function BoardSlugPage() {
     const router = useRouter();
     const params = useParams<{ slug: string }>();
-    const slug = params?.slug;
+    const rawSlug = decodeURIComponent(params.slug ?? '');
+    const isSpecial = rawSlug.startsWith('_');
+    const specialKind: SpecialKind | null = isSpecial ? (rawSlug.slice(1) as SpecialKind) : null;
 
     const [board, setBoard] = useState<BoardItem | null>(null);
     const [posts, setPosts] = useState<ResponsePost[]>([]);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState<number | null>(null);
+    const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [boardError, setBoardError] = useState(false);
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-    const isPoster = useMemo(
-        () => !!board && (POSTER_SLUGS.has(board.slug) || board.id === POSTER_BOARD_ID),
-        [board],
-    );
-
-    // Resolve slug -> board metadata.
+    // Resolve board metadata for non-special slugs.
     useEffect(() => {
-        if (!slug) return;
+        if (isSpecial) return;
         let cancelled = false;
         fetchBoardList()
             .then((res) => {
                 const list: BoardItem[] = Array.isArray(res) ? res : (res?.results ?? []);
-                const match = list.find((b) => b.slug === slug);
                 if (cancelled) return;
-                if (!match) {
-                    setBoardError(true);
-                    return;
-                }
-                setBoard(match);
+                setBoard(list.find((b) => b.slug === rawSlug) ?? null);
             })
-            .catch(() => {
-                if (!cancelled) setBoardError(true);
-            });
+            .catch(() => {});
         return () => {
             cancelled = true;
         };
-    }, [slug]);
+    }, [isSpecial, rawSlug]);
 
-    // Reset paging when the board changes.
-    useEffect(() => {
-        setPosts([]);
-        setPage(1);
-        setTotalPages(null);
-    }, [board?.id]);
-
-    // Fetch one page.
     const loadPage = useCallback(
-        async (boardId: number, pageNum: number) => {
+        async (p: number) => {
             setLoading(true);
             try {
-                const res = await fetchArticles({
-                    boardId,
-                    page: pageNum,
-                    pageSize: PAGE_SIZE,
-                });
-                const results: ResponsePost[] = res.results ?? [];
-                setPosts((prev) => (pageNum === 1 ? results : [...prev, ...results]));
-                setTotalPages(res.num_pages ?? 1);
-            } catch {
-                // swallow — keep what we have
+                let res: { results?: ResponsePost[]; next?: string | null } = {};
+                if (specialKind === 'top') {
+                    res = await fetchTopArticles({ page: p, pageSize: 20 });
+                } else if (specialKind === 'scraps') {
+                    res = await fetchArchivedPosts({ page: p, pageSize: 20 });
+                } else if (specialKind === 'recent') {
+                    res = await fetchRecentViewedPosts({ page: p, pageSize: 20 });
+                } else if (specialKind === 'all') {
+                    res = await fetchArticles({ page: p, pageSize: 20 });
+                } else if (board) {
+                    res = await fetchArticles({ boardId: board.id, page: p, pageSize: 20 });
+                } else {
+                    return;
+                }
+                const list = (res.results ?? []) as ResponsePost[];
+                setPosts((prev) => (p === 1 ? list : [...prev, ...list]));
+                setHasNext(Boolean(res.next));
+                setPage(p);
+            } catch (e) {
+                console.warn('board page fetch failed', e);
             } finally {
                 setLoading(false);
             }
         },
-        [],
+        [specialKind, board],
     );
 
     useEffect(() => {
-        if (!board) return;
-        loadPage(board.id, page);
-    }, [board, page, loadPage]);
+        if (!isSpecial && !board) return; // wait for board metadata
+        setPosts([]);
+        setHasNext(true);
+        setPage(1);
+        loadPage(1);
+    }, [board, isSpecial, loadPage]);
 
-    // IntersectionObserver-driven infinite scroll.
-    const sentinelRef = useRef<HTMLDivElement | null>(null);
+    // Infinite scroll via IntersectionObserver.
     useEffect(() => {
-        const node = sentinelRef.current;
-        if (!node) return;
-        if (loading) return;
-        if (totalPages !== null && page >= totalPages) return;
-
-        const observer = new IntersectionObserver(
+        const el = sentinelRef.current;
+        if (!el) return;
+        const io = new IntersectionObserver(
             (entries) => {
-                if (entries.some((e) => e.isIntersecting)) {
-                    setPage((p) => p + 1);
+                if (entries.some((e) => e.isIntersecting) && hasNext && !loading) {
+                    loadPage(page + 1);
                 }
             },
             { rootMargin: '200px' },
         );
-        observer.observe(node);
-        return () => observer.disconnect();
-    }, [loading, page, totalPages, posts.length]);
+        io.observe(el);
+        return () => io.disconnect();
+    }, [page, hasNext, loading, loadPage]);
 
-    if (boardError) {
-        return (
-            <Screen>
-                <AppHeader title="게시판" />
-                <div
-                    style={{
-                        padding: 'var(--ara-spacing-xl)',
-                        textAlign: 'center',
-                        color: 'var(--ara-text-tertiary)',
-                    }}
-                >
-                    존재하지 않는 게시판입니다.
-                </div>
-            </Screen>
-        );
-    }
+    const title = specialKind ? SPECIAL_LABEL[specialKind] : (board?.ko_name ?? '');
+
+    // Faithful Flutter AppBar: red chevron + small red board name on the left.
+    const leading = (
+        <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center text-ara_red"
+            aria-label="뒤로"
+        >
+            <LeftChevronIcon size={32} />
+            <span className="ml-1 text-[17px] font-medium text-ara_red">{title}</span>
+        </button>
+    );
 
     return (
-        <Screen>
+        <Screen withTabBar={false}>
             <AppHeader
-                title={board?.ko_name ?? ''}
+                title={null}
+                leading={leading}
                 trailing={
-                    <SearchIconButton
-                        onClick={() =>
-                            router.push(
-                                `/web_view/Search?board=${encodeURIComponent(slug ?? '')}`,
-                            )
-                        }
-                    />
+                    <>
+                        <button
+                            type="button"
+                            aria-label="글쓰기"
+                            onClick={() =>
+                                router.push(
+                                    board
+                                        ? `/web_view/PostWrite?board=${board.id}`
+                                        : '/web_view/PostWrite',
+                                )
+                            }
+                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                        >
+                            <PostIcon size={28} />
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="검색"
+                            onClick={() =>
+                                router.push(
+                                    board
+                                        ? `/web_view/Search?board=${board.slug}`
+                                        : '/web_view/Search',
+                                )
+                            }
+                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                        >
+                            <SearchIcon size={28} />
+                        </button>
+                    </>
                 }
             />
 
-            {board === null && (
-                <div>
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <ArticleRowSkeleton key={i} />
-                    ))}
-                </div>
-            )}
+            <ul className="px-5">
+                {posts.map((p, idx) => (
+                    <li key={p.id}>
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/web_view/Post/${p.id}`)}
+                            className="block w-full bg-transparent py-[11px] text-left"
+                        >
+                            <PostPreview post={p} />
+                        </button>
+                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
+                    </li>
+                ))}
+            </ul>
 
-            {board && isPoster && <PosterGrid posts={posts} />}
-
-            {board && !isPoster && (
-                <div>
-                    {posts.map((post) => (
-                        <ArticleRow key={post.id} post={post} />
-                    ))}
-                </div>
-            )}
-
-            {board && posts.length === 0 && !loading && (
-                <div
-                    style={{
-                        padding: 'var(--ara-spacing-xl)',
-                        textAlign: 'center',
-                        color: 'var(--ara-text-tertiary)',
-                    }}
-                >
+            {!loading && posts.length === 0 && (
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
                     게시물이 없습니다.
                 </div>
             )}
 
-            {board && loading && (
-                <div>
-                    {Array.from({ length: 3 }).map((_, i) => (
-                        <ArticleRowSkeleton key={`load-${i}`} />
-                    ))}
+            <div ref={sentinelRef} aria-hidden className="h-8" />
+            {loading && (
+                <div className="flex justify-center py-3 text-[12px] text-[#B1B1B1]">
+                    불러오는 중...
                 </div>
-            )}
-
-            {/* Sentinel for IntersectionObserver-driven pagination. */}
-            <div ref={sentinelRef} aria-hidden style={{ height: 1 }} />
-
-            {board && (
-                <Fab
-                    href={`/web_view/PostWrite?board=${board.id}`}
-                    aboveTabBar={false}
-                />
             )}
         </Screen>
     );

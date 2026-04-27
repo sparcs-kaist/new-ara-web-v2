@@ -2,9 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Screen, AppHeader } from '@/app/web_view/_components';
+import {
+    AppHeader,
+    MoreIcon,
+    PostPreview,
+    Screen,
+} from '@/app/web_view/_components';
 import { blockUser } from '@/lib/api/user';
 import { fetchUserProfile, fetchUserPosts } from '@/lib/api/user_profile';
+import type { ResponsePost } from '@/lib/types/post';
 
 interface UserProfile {
     id: number;
@@ -15,12 +21,11 @@ interface UserProfile {
     sso_user_info?: { email?: string } | null;
 }
 
-interface PostRow {
-    id: number;
-    title: string;
-    parent_board?: { ko_name?: string } | null;
-}
-
+/**
+ * Mirrors `lib/pages/user_view_page.dart` — view another user's profile and
+ * the list of articles they've written. The trailing kebab opens a tiny
+ * popover with 차단 / 쪽지 actions.
+ */
 export default function UserViewPage() {
     const router = useRouter();
     const params = useParams();
@@ -29,11 +34,11 @@ export default function UserViewPage() {
         typeof idParam === 'string'
             ? Number(idParam)
             : Array.isArray(idParam)
-                ? Number(idParam[0])
-                : NaN;
+              ? Number(idParam[0])
+              : NaN;
 
     const [user, setUser] = useState<UserProfile | null>(null);
-    const [posts, setPosts] = useState<PostRow[]>([]);
+    const [posts, setPosts] = useState<ResponsePost[]>([]);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -53,7 +58,7 @@ export default function UserViewPage() {
             setLoading(true);
             try {
                 const data = await fetchUserPosts(userId, p);
-                const results = (data?.results ?? []) as PostRow[];
+                const results = (data?.results ?? []) as ResponsePost[];
                 setPosts((prev) => (p === 1 ? results : [...prev, ...results]));
                 setHasNext(Boolean(data?.next));
                 setPage(p);
@@ -74,15 +79,16 @@ export default function UserViewPage() {
     const onBlock = async () => {
         if (!userId || busy) return;
         setMenuOpen(false);
-        if (!confirm('이 사용자를 차단하시겠어요?')) return;
+        if (typeof window !== 'undefined' && !window.confirm('이 사용자를 차단하시겠어요?'))
+            return;
         setBusy(true);
         try {
             await blockUser(userId);
-            alert('차단했어요.');
+            if (typeof window !== 'undefined') window.alert('차단했어요.');
             router.back();
         } catch (e) {
             console.warn('blockUser failed', e);
-            alert('차단에 실패했어요.');
+            if (typeof window !== 'undefined') window.alert('차단에 실패했어요.');
         } finally {
             setBusy(false);
         }
@@ -90,50 +96,39 @@ export default function UserViewPage() {
 
     const onMessage = () => {
         setMenuOpen(false);
-        // TODO: native 쪽지 기능 연결
-        alert('쪽지 기능은 준비 중이에요.');
+        if (typeof window !== 'undefined') window.alert('쪽지 기능은 준비 중이에요.');
     };
 
     return (
         <Screen withTabBar={false}>
             <AppHeader
-                title={user?.nickname ?? '프로필'}
+                title={user?.nickname ?? ''}
                 trailing={
-                    <div style={{ position: 'relative' }}>
+                    <div className="relative">
                         <button
                             type="button"
-                            className="ara-header__btn"
                             onClick={() => setMenuOpen((v) => !v)}
-                            aria-label="more"
+                            aria-label="더보기"
+                            className="flex h-11 w-11 items-center justify-center bg-transparent text-black"
                         >
-                            <span style={{ fontSize: 22, fontWeight: 700 }}>⋯</span>
+                            <MoreIcon size={20} />
                         </button>
                         {menuOpen && (
                             <div
-                                style={{
-                                    position: 'absolute',
-                                    right: 0,
-                                    top: 36,
-                                    background: 'var(--ara-bg)',
-                                    border: '1px solid var(--ara-divider-strong)',
-                                    borderRadius: 'var(--ara-radius-md)',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                                    minWidth: 120,
-                                    overflow: 'hidden',
-                                    zIndex: 60,
-                                }}
+                                role="menu"
+                                className="absolute right-0 top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-[10px] border border-[#F0F0F0] bg-white"
                             >
                                 <button
                                     type="button"
                                     onClick={onBlock}
-                                    style={menuItemStyle}
+                                    className="block w-full bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
                                 >
                                     차단
                                 </button>
                                 <button
                                     type="button"
                                     onClick={onMessage}
-                                    style={{ ...menuItemStyle, borderTop: '1px solid var(--ara-divider)' }}
+                                    className="block w-full border-t border-[#F0F0F0] bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
                                 >
                                     쪽지
                                 </button>
@@ -143,106 +138,60 @@ export default function UserViewPage() {
                 }
             />
 
-            <section
-                className="ara-card"
-                style={{
-                    margin: 'var(--ara-spacing-lg)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ara-spacing-lg)',
-                }}
-            >
-                <div
-                    style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 999,
-                        background: 'var(--ara-bg-muted)',
-                        backgroundImage: user?.picture ? `url(${user.picture})` : undefined,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        flexShrink: 0,
-                    }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700 }}>{user?.nickname ?? '...'}</div>
+            {/* Profile card (no shadow). */}
+            <section className="flex h-[60px] items-center px-5">
+                <span
+                    className="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E5E5E5]"
+                    aria-hidden
+                >
+                    {user?.picture && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={user.picture}
+                            alt=""
+                            className="h-full w-full object-cover"
+                        />
+                    )}
+                </span>
+                <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center">
+                    <div className="truncate text-[18px] font-bold text-black">
+                        {user?.nickname ?? ''}
+                    </div>
                 </div>
             </section>
 
-            <h2
-                style={{
-                    margin: '0 var(--ara-spacing-lg) var(--ara-spacing-sm)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: 'var(--ara-text-secondary)',
-                }}
-            >
-                작성한 글
-            </h2>
+            <div className="mx-5 mt-2 h-px bg-[#F0F0F0]" />
 
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {posts.map((p) => (
-                    <li
-                        key={p.id}
-                        className="ara-list-row"
-                        onClick={() => router.push(`/web_view/Post/${p.id}`)}
-                    >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: 500,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                }}
-                            >
-                                {p.title}
-                            </div>
-                            {p.parent_board?.ko_name && (
-                                <div
-                                    style={{
-                                        fontSize: 11,
-                                        color: 'var(--ara-text-tertiary)',
-                                        marginTop: 2,
-                                    }}
-                                >
-                                    {p.parent_board.ko_name}
-                                </div>
-                            )}
-                        </div>
+            <h2 className="px-5 py-[15px] text-[16px] font-bold text-black">작성한 글</h2>
+
+            <ul className="px-5">
+                {posts.map((p, idx) => (
+                    <li key={p.id}>
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/web_view/Post/${p.id}`)}
+                            className="block w-full bg-transparent py-[11px] text-left"
+                        >
+                            <PostPreview post={p} />
+                        </button>
+                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
                     </li>
                 ))}
             </ul>
 
             {!loading && posts.length === 0 && (
-                <div
-                    style={{
-                        padding: '40px 16px',
-                        textAlign: 'center',
-                        color: 'var(--ara-text-secondary)',
-                        fontSize: 13,
-                    }}
-                >
-                    작성한 글이 없어요.
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                    작성한 글이 없습니다.
                 </div>
             )}
 
             {hasNext && (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--ara-spacing-md)' }}>
+                <div className="flex justify-center py-3">
                     <button
                         type="button"
                         onClick={() => loadPosts(page + 1)}
                         disabled={loading}
-                        style={{
-                            padding: '8px 18px',
-                            borderRadius: 'var(--ara-radius-md)',
-                            border: '1px solid var(--ara-divider-strong)',
-                            background: 'var(--ara-bg)',
-                            color: 'var(--ara-text-primary)',
-                            fontSize: 13,
-                            cursor: loading ? 'default' : 'pointer',
-                        }}
+                        className="rounded-full border border-[#F0F0F0] bg-white px-5 py-2 text-[13px] text-black"
                     >
                         {loading ? '불러오는 중...' : '더 보기'}
                     </button>
@@ -251,15 +200,3 @@ export default function UserViewPage() {
         </Screen>
     );
 }
-
-const menuItemStyle: React.CSSProperties = {
-    display: 'block',
-    width: '100%',
-    padding: '10px 14px',
-    background: 'transparent',
-    border: 0,
-    textAlign: 'left',
-    fontSize: 13,
-    color: 'var(--ara-text-primary)',
-    cursor: 'pointer',
-};

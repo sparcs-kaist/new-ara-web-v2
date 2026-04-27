@@ -1,56 +1,34 @@
 'use client';
 
-import { Screen, AppHeader } from '@/app/web_view/_components';
-import { bridge } from '@/app/web_view/_bridge';
+import { AppHeader, InformationIcon, Screen } from '@/app/web_view/_components';
 
+/**
+ * Reached when an inactive / deleted account hits the app. Mirrors the
+ * Flutter inquiry page: simple stacked text + a single brand-red CTA.
+ */
 export default function InquiryPage() {
     const onMail = () => {
-        bridge?.send('openExternal', { url: 'mailto:new-ara@sparcs.org' });
+        if (typeof window !== 'undefined') {
+            window.location.href = 'mailto:new-ara@sparcs.org';
+        }
     };
 
     return (
         <Screen withTabBar={false}>
-            <AppHeader title="문의" showBack={false} />
-
-            <div
-                style={{
-                    minHeight: 'calc(100dvh - var(--ara-header-height) - var(--ara-safe-top) - var(--ara-safe-bottom))',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 'var(--ara-spacing-xl)',
-                    gap: 'var(--ara-spacing-xl)',
-                    textAlign: 'center',
-                }}
-            >
-                <p
-                    style={{
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                        color: 'var(--ara-text-secondary)',
-                        margin: 0,
-                        maxWidth: 320,
-                    }}
-                >
+            <AppHeader title="문의" />
+            <div className="flex min-h-[calc(100dvh-56px)] flex-col items-center justify-center gap-5 px-6 text-center">
+                <span className="text-[#B1B1B1]">
+                    <InformationIcon size={50} />
+                </span>
+                <p className="m-0 max-w-[320px] text-[14px] leading-[1.7] text-[#646464]">
                     탈퇴된 계정입니다. 자세한 내용은
                     <br />
                     new-ara@sparcs.org 로 문의해 주세요.
                 </p>
-
                 <button
                     type="button"
                     onClick={onMail}
-                    style={{
-                        padding: '12px 24px',
-                        borderRadius: 'var(--ara-radius-md)',
-                        border: 0,
-                        background: 'var(--ara-primary)',
-                        color: 'var(--ara-text-on-primary)',
-                        fontSize: 14,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                    }}
+                    className="h-[44px] rounded-[10px] bg-ara_red px-6 text-[14px] font-bold text-white"
                 >
                     메일 보내기
                 </button>

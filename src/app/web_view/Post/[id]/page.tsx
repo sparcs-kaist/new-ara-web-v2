@@ -2,18 +2,23 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchPost, votePost } from '@/lib/api/post';
+import {
+    archivePost,
+    fetchPost,
+    reportPost,
+    unarchivePost,
+    votePost,
+} from '@/lib/api/post';
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
-import type { PostData } from '@/lib/types/post';
-import { Screen, AppHeader, ComposerSpacer } from '@/app/web_view/_components';
-import { MoreButton } from './_components/MoreButton';
+import type { Comment, PostData } from '@/lib/types/post';
+import { AppHeader, LeftChevronIcon, Screen } from '@/app/web_view/_components';
 import { ArticleHeader } from './_components/ArticleHeader';
-import { VoteRow } from './_components/VoteRow';
 import { Attachments } from './_components/Attachments';
-import { CommentItem } from './_components/CommentItem';
 import { CommentComposer } from './_components/CommentComposer';
-import { apiUrl } from '@/lib/api/http';
+import { CommentItem } from './_components/CommentItem';
+import { UtilityButtons } from './_components/UtilityButtons';
+import { VoteRow } from './_components/VoteRow';
 
 type VoteAction = 'vote_positive' | 'vote_negative' | 'vote_cancel';
 
@@ -26,7 +31,7 @@ export default function WebViewPostDetailPage() {
     const [post, setPost] = useState<PostData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [replyTarget, setReplyTarget] = useState<number | null>(null);
+    const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
 
     const load = useCallback(async () => {
         if (!Number.isFinite(postId) || postId <= 0) {
@@ -44,7 +49,7 @@ export default function WebViewPostDetailPage() {
             setPost(formatPost({ data }) as unknown as PostData);
             setError(null);
         } catch (e) {
-            console.error('fetchPost failed', e);
+            console.warn('fetchPost failed', e);
             setError('게시물을 불러오지 못했습니다.');
         } finally {
             setLoading(false);
@@ -89,7 +94,7 @@ export default function WebViewPostDetailPage() {
         try {
             await votePost(post.id, action);
         } catch (e) {
-            console.error('votePost failed', e);
+            console.warn('votePost failed', e);
             setPost((prev) =>
                 prev
                     ? {
@@ -103,132 +108,199 @@ export default function WebViewPostDetailPage() {
         }
     };
 
-    const shareUrl =
-        typeof window !== 'undefined'
-            ? `${apiUrl}/post/${postId}`
-            : `/post/${postId}`;
+    const handleScrap = async () => {
+        if (!post) return;
+        try {
+            if (post.my_scrap) {
+                await unarchivePost(post.my_scrap.id);
+                setPost({ ...post, my_scrap: null });
+            } else {
+                const created = await archivePost(post.id);
+                setPost({ ...post, my_scrap: created });
+            }
+        } catch (e) {
+            console.warn('scrap failed', e);
+        }
+    };
+
+    const handleShare = async () => {
+        const url = typeof window !== 'undefined' ? window.location.href : '';
+        try {
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                await navigator.share({ url });
+                return;
+            }
+            if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                await navigator.clipboard.writeText(url);
+            }
+        } catch {
+            /* noop */
+        }
+    };
+
+    const handleReport = async () => {
+        if (!post) return;
+        if (typeof window === 'undefined') return;
+        const reason = window.prompt('신고 사유를 입력하세요');
+        if (!reason) return;
+        try {
+            await reportPost(post.id, 'others', reason);
+            window.alert('신고가 접수되었습니다.');
+        } catch (e) {
+            console.warn('reportPost failed', e);
+        }
+    };
+
+    const handleEdit = () => {
+        if (!post) return;
+        router.push(`/web_view/PostWrite?id=${post.id}`);
+    };
+
+    const handleDelete = async () => {
+        if (!post) return;
+        if (typeof window !== 'undefined' && !window.confirm('정말 삭제하시겠어요?')) return;
+        try {
+            const { deletePost } = await import('@/lib/api/post');
+            await deletePost(post.id);
+            router.back();
+        } catch (e) {
+            console.warn('deletePost failed', e);
+        }
+    };
+
+    if (!post && loading) {
+        return (
+            <Screen withTabBar={false}>
+                <AppHeader title={null} />
+                <div className="flex justify-center py-16 text-[12px] text-[#B1B1B1]">
+                    불러오는 중...
+                </div>
+            </Screen>
+        );
+    }
+
+    if (error) {
+        return (
+            <Screen withTabBar={false}>
+                <AppHeader title={null} />
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">{error}</div>
+            </Screen>
+        );
+    }
+
+    if (!post) return null;
+
+    const boardName = post.parent_board?.ko_name ?? '';
+    const isAnonymousPost = post.name_type === 2;
+    const isBlockedAuthor = !!post.created_by?.is_blocked;
+    const totalCommentCount = countComments(post.comments ?? []);
+
+    // Faithful Flutter AppBar: red chevron + small red board name on the left.
+    const leading = (
+        <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex items-center text-ara_red"
+            aria-label="뒤로"
+        >
+            <LeftChevronIcon size={32} />
+            <span className="ml-1 text-[17px] font-medium text-ara_red">{boardName}</span>
+        </button>
+    );
 
     return (
         <Screen withTabBar={false}>
-            <AppHeader
-                title=""
-                trailing={
-                    <MoreButton
-                        shareUrl={shareUrl}
-                        onReport={() => console.log('[Post] report stub')}
-                        onBlock={() => console.log('[Post] block stub')}
-                    />
-                }
+            <AppHeader title={null} leading={leading} />
+
+            <ArticleHeader post={post} />
+
+            {/* Article body */}
+            <section className="px-5 pt-[10px] text-[15px] leading-relaxed text-black">
+                <TextEditor content={post.content} editable={false} />
+            </section>
+
+            {post.attachments && post.attachments.length > 0 && (
+                <div className="pt-3">
+                    <Attachments attachments={post.attachments} />
+                </div>
+            )}
+
+            <VoteRow
+                myVote={post.my_vote}
+                positive={post.positive_vote_count}
+                negative={post.negative_vote_count}
+                onVote={handleVote}
             />
 
-            {loading && (
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 40,
-                    }}
-                >
-                    <div className="ara-skeleton" style={{ width: '100%', height: 200 }} />
-                </div>
-            )}
+            <UtilityButtons
+                isMine={!!post.is_mine}
+                isScrapped={!!post.my_scrap}
+                isBlockedAuthor={isBlockedAuthor}
+                nameType={post.name_type}
+                onScrap={handleScrap}
+                onShare={handleShare}
+                onReport={handleReport}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+            />
 
-            {!loading && error && (
-                <div style={{ padding: 24, textAlign: 'center', color: 'var(--ara-text-tertiary)' }}>
-                    {error}
-                    <div style={{ marginTop: 12 }}>
-                        <button
-                            type="button"
-                            onClick={() => router.back()}
-                            style={{
-                                padding: '8px 16px',
-                                borderRadius: 999,
-                                border: '1px solid var(--ara-divider-strong)',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            뒤로
-                        </button>
+            {/* Divider before comment section. */}
+            <div className="mx-5 mt-[15px] h-px bg-[#F0F0F0]" />
+
+            <h3 className="px-5 pt-[15px] pb-[15px] text-[16px] font-bold text-black">
+                {totalCommentCount}개의 댓글
+            </h3>
+
+            <section>
+                {post.comments && post.comments.length > 0 ? (
+                    post.comments.map((c) => (
+                        <CommentItem
+                            key={c.id}
+                            comment={c}
+                            isAuthor={
+                                isAnonymousPost &&
+                                c.created_by?.id === post.created_by?.id
+                            }
+                            onReply={(id) =>
+                                setReplyTarget({
+                                    id,
+                                    nickname:
+                                        c.name_type === 2
+                                            ? '익명'
+                                            : c.created_by?.profile?.nickname ?? '',
+                                })
+                            }
+                            onChanged={load}
+                        />
+                    ))
+                ) : (
+                    <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                        첫 댓글을 남겨보세요.
                     </div>
-                </div>
-            )}
+                )}
+            </section>
 
-            {!loading && !error && post && (
-                <>
-                    <ArticleHeader post={post} />
+            {/* Reserve space so the last comment doesn't sit under the composer. */}
+            <div aria-hidden className="h-24" />
 
-                    <section
-                        style={{
-                            padding: '16px var(--ara-spacing-lg)',
-                            fontSize: 15,
-                            lineHeight: 1.6,
-                            color: 'var(--ara-text-primary)',
-                        }}
-                    >
-                        <TextEditor content={post.content} editable={false} />
-                    </section>
-
-                    {post.attachments && post.attachments.length > 0 && (
-                        <Attachments attachments={post.attachments} />
-                    )}
-
-                    <VoteRow
-                        myVote={post.my_vote}
-                        positive={post.positive_vote_count}
-                        negative={post.negative_vote_count}
-                        onVote={handleVote}
-                    />
-
-                    <section style={{ borderTop: '1px solid var(--ara-divider)' }}>
-                        <header
-                            style={{
-                                padding: '12px var(--ara-spacing-lg)',
-                                fontSize: 14,
-                                fontWeight: 600,
-                                color: 'var(--ara-text-primary)',
-                            }}
-                        >
-                            댓글 {post.comments?.length ?? 0}개
-                        </header>
-                        {post.comments && post.comments.length > 0 ? (
-                            post.comments.map((c) => (
-                                <CommentItem
-                                    key={c.id}
-                                    comment={c}
-                                    onReply={(id) => setReplyTarget(id)}
-                                    onChanged={load}
-                                />
-                            ))
-                        ) : (
-                            <div
-                                style={{
-                                    padding: 24,
-                                    textAlign: 'center',
-                                    color: 'var(--ara-text-tertiary)',
-                                    fontSize: 13,
-                                }}
-                            >
-                                첫 댓글을 남겨보세요.
-                            </div>
-                        )}
-                    </section>
-
-                    <ComposerSpacer height={80} />
-
-                    <CommentComposer
-                        postId={post.id}
-                        allowedNameTypes={post.name_type}
-                        replyToCommentId={replyTarget}
-                        onCancelReply={() => setReplyTarget(null)}
-                        onPosted={() => {
-                            setReplyTarget(null);
-                            load();
-                        }}
-                    />
-                </>
-            )}
+            <CommentComposer
+                postId={post.id}
+                allowedNameTypes={post.name_type}
+                replyToCommentId={replyTarget?.id ?? null}
+                replyToNickname={replyTarget?.nickname ?? null}
+                onCancelReply={() => setReplyTarget(null)}
+                onPosted={() => {
+                    setReplyTarget(null);
+                    load();
+                }}
+            />
         </Screen>
     );
+}
+
+/** Total comments + nested replies. */
+function countComments(comments: Comment[]): number {
+    let n = comments.length;
+    for (const c of comments) n += c.comments?.length ?? 0;
+    return n;
 }

@@ -3,40 +3,45 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Screen } from '@/app/web_view/_components';
+import { PostPreview, Screen, SettingIcon } from '@/app/web_view/_components';
 import { fetchMe } from '@/lib/api/user';
 import { fetchUserPosts } from '@/lib/api/user_profile';
 import { fetchArchivedPosts, fetchRecentViewedPosts } from '@/lib/api/board';
+import type { ResponsePost } from '@/lib/types/post';
 
 interface MeProfile {
-    id: number;
+    id?: number;
     user?: number;
     nickname?: string;
     picture?: string | null;
     email?: string;
-    sso_user_info?: { email?: string; kaist_info?: string } | null;
-}
-
-interface PostRow {
-    id: number;
-    title: string;
-    parent_board?: { ko_name?: string; slug?: string } | null;
-    created_at?: string;
+    sso_user_info?: { email?: string; first_name?: string; last_name?: string } | null;
 }
 
 type TabKey = 'mine' | 'scrap' | 'recent';
 
 const TABS: { key: TabKey; label: string }[] = [
-    { key: 'mine', label: '내가 쓴 글' },
-    { key: 'scrap', label: '스크랩한 글' },
+    { key: 'mine', label: '작성한 글' },
+    { key: 'scrap', label: '담아둔 글' },
     { key: 'recent', label: '최근 본 글' },
 ];
 
+/**
+ * Mirrors `lib/pages/user_page.dart`.
+ *
+ * - AppBar: nickname (28/w700 brand red) + setting cog (red 28).
+ * - 60px user info row: 50x50 avatar, name (18/w700) + email (14/w500 #B1B1B1),
+ *   "변경" link (14/w500 #646464).
+ * - TabBar with three tabs, red underline + red label for the active tab.
+ * - "총 N개의 글" header.
+ * - PostPreview list separated by 1px hairlines.
+ */
 export default function MyInfoPage() {
     const router = useRouter();
     const [me, setMe] = useState<MeProfile | null>(null);
     const [tab, setTab] = useState<TabKey>('mine');
-    const [posts, setPosts] = useState<PostRow[]>([]);
+    const [posts, setPosts] = useState<ResponsePost[]>([]);
+    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -51,20 +56,24 @@ export default function MyInfoPage() {
         async (which: TabKey, p: number) => {
             setLoading(true);
             try {
-                let data: { results?: PostRow[]; next?: string | null } = {};
+                let data: { results?: ResponsePost[]; next?: string | null; count?: number; num_items?: number } = {};
                 if (which === 'mine') {
-                    if (!me?.user && !me?.id) return;
-                    const userId = (me?.user ?? me?.id) as number;
+                    if (!me) return;
+                    const userId = (me.user ?? me.id) as number;
+                    if (!userId) return;
                     data = await fetchUserPosts(userId, p);
                 } else if (which === 'scrap') {
                     data = await fetchArchivedPosts({ page: p, pageSize: 20 });
                 } else {
                     data = await fetchRecentViewedPosts({ page: p, pageSize: 20 });
                 }
-                const results = (data.results ?? []) as PostRow[];
+                const results = (data.results ?? []) as ResponsePost[];
                 setPosts((prev) => (p === 1 ? results : [...prev, ...results]));
                 setHasNext(Boolean(data.next));
                 setPage(p);
+                if (typeof data.num_items === 'number') setTotal(data.num_items);
+                else if (typeof data.count === 'number') setTotal(data.count);
+                else setTotal(results.length);
             } catch (e) {
                 console.warn('loadPosts failed', e);
             } finally {
@@ -78,88 +87,63 @@ export default function MyInfoPage() {
         if (tab === 'mine' && !me) return;
         setPosts([]);
         setHasNext(false);
+        setTotal(0);
         loadPosts(tab, 1);
     }, [tab, me, loadPosts]);
 
-    const displayName = me?.nickname ?? '익명';
-    const subtitle = me?.email ?? me?.sso_user_info?.email ?? '';
-    const avatar = me?.picture;
+    const fullName = [me?.sso_user_info?.first_name, me?.sso_user_info?.last_name]
+        .filter(Boolean)
+        .join(' ');
+    const displayName = fullName || me?.nickname || '';
+    const subtitle = me?.email ?? me?.sso_user_info?.email ?? '이메일 정보 없음';
 
     return (
         <Screen withTabBar="auto">
-            <header style={{ padding: 'var(--ara-spacing-lg) var(--ara-spacing-xl) var(--ara-spacing-md)' }}>
-                <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>내 정보</h1>
+            <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-5">
+                <h1 className="flex-1 text-[28px] font-bold text-ara_red">
+                    {me?.nickname ?? ''}
+                </h1>
+                <button
+                    type="button"
+                    onClick={() => router.push('/web_view/MyInfo/Settings')}
+                    aria-label="설정"
+                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                >
+                    <SettingIcon size={28} />
+                </button>
             </header>
 
-            <section
-                className="ara-card"
-                style={{
-                    margin: '0 var(--ara-spacing-lg) var(--ara-spacing-lg)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ara-spacing-lg)',
-                }}
-            >
-                <div
-                    style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 999,
-                        background: 'var(--ara-bg-muted)',
-                        backgroundImage: avatar ? `url(${avatar})` : undefined,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        flexShrink: 0,
-                    }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ara-text-primary)' }}>
-                        {displayName}
-                    </div>
-                    {subtitle && (
-                        <div
-                            style={{
-                                fontSize: 12,
-                                color: 'var(--ara-text-secondary)',
-                                marginTop: 2,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                            }}
-                        >
-                            {subtitle}
-                        </div>
+            {/* User info row */}
+            <div className="flex h-[60px] items-center px-5">
+                <span
+                    className="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E5E5E5]"
+                    aria-hidden
+                >
+                    {me?.picture && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={me.picture}
+                            alt=""
+                            className="h-full w-full object-cover"
+                        />
                     )}
+                </span>
+                <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center">
+                    <div className="truncate text-[18px] font-bold text-black">{displayName}</div>
+                    <div className="truncate text-[14px] font-medium text-[#B1B1B1]">{subtitle}</div>
                 </div>
                 <Link
                     href="/web_view/MyInfo/Edit"
-                    style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: '6px 12px',
-                        borderRadius: 999,
-                        border: '1px solid var(--ara-divider-strong)',
-                        color: 'var(--ara-text-primary)',
-                        textDecoration: 'none',
-                        flexShrink: 0,
-                    }}
+                    className="ml-[30px] text-[14px] font-medium text-[#646464]"
                 >
-                    프로필 수정
+                    변경
                 </Link>
-            </section>
+            </div>
 
-            <nav
-                role="tablist"
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    margin: '0 var(--ara-spacing-lg) var(--ara-spacing-md)',
-                    background: 'var(--ara-bg-muted)',
-                    borderRadius: 'var(--ara-radius-md)',
-                    padding: 4,
-                    gap: 4,
-                }}
-            >
+            <div className="h-[10px]" />
+
+            {/* TabBar */}
+            <nav role="tablist" className="grid grid-cols-3 px-5">
                 {TABS.map((t) => {
                     const active = tab === t.key;
                     return (
@@ -169,17 +153,12 @@ export default function MyInfoPage() {
                             role="tab"
                             aria-selected={active}
                             onClick={() => setTab(t.key)}
-                            style={{
-                                padding: '8px 4px',
-                                borderRadius: 'var(--ara-radius-sm)',
-                                border: 0,
-                                fontSize: 13,
-                                fontWeight: active ? 700 : 500,
-                                color: active ? 'var(--ara-text-primary)' : 'var(--ara-text-secondary)',
-                                background: active ? 'var(--ara-bg)' : 'transparent',
-                                cursor: 'pointer',
-                                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                            }}
+                            className={[
+                                'flex h-[44px] items-center justify-center bg-transparent text-[15px] font-medium',
+                                active
+                                    ? 'border-b-2 border-ara_red text-ara_red'
+                                    : 'border-b-2 border-[#F0F0F0] text-[#B1B1B1]',
+                            ].join(' ')}
                         >
                             {t.label}
                         </button>
@@ -187,84 +166,47 @@ export default function MyInfoPage() {
                 })}
             </nav>
 
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {posts.map((p) => (
-                    <li
-                        key={p.id}
-                        className="ara-list-row"
-                        onClick={() => router.push(`/web_view/Post/${p.id}`)}
-                    >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: 500,
-                                    color: 'var(--ara-text-primary)',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                }}
-                            >
-                                {p.title}
-                            </div>
-                            {p.parent_board?.ko_name && (
-                                <div
-                                    style={{
-                                        fontSize: 11,
-                                        color: 'var(--ara-text-tertiary)',
-                                        marginTop: 2,
-                                    }}
-                                >
-                                    {p.parent_board.ko_name}
-                                </div>
-                            )}
-                        </div>
+            {/* Total count */}
+            <div className="px-5 pt-[14px] text-[16px] font-bold text-[#B1B1B1]">
+                총 {total}개의 글
+            </div>
+
+            <div className="h-[15px]" />
+
+            {/* Post list */}
+            <ul className="px-5">
+                {posts.map((p, idx) => (
+                    <li key={p.id}>
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/web_view/Post/${p.id}`)}
+                            className="block w-full bg-transparent py-[11px] text-left"
+                        >
+                            <PostPreview post={p} />
+                        </button>
+                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
                     </li>
                 ))}
             </ul>
 
             {!loading && posts.length === 0 && (
-                <div
-                    style={{
-                        textAlign: 'center',
-                        color: 'var(--ara-text-secondary)',
-                        padding: '40px 16px',
-                        fontSize: 13,
-                    }}
-                >
-                    아직 게시글이 없어요.
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                    게시물이 없습니다.
                 </div>
             )}
 
             {hasNext && (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--ara-spacing-md)' }}>
+                <div className="flex justify-center py-3">
                     <button
                         type="button"
                         onClick={() => loadPosts(tab, page + 1)}
                         disabled={loading}
-                        style={{
-                            padding: '8px 18px',
-                            borderRadius: 'var(--ara-radius-md)',
-                            border: '1px solid var(--ara-divider-strong)',
-                            background: 'var(--ara-bg)',
-                            color: 'var(--ara-text-primary)',
-                            fontSize: 13,
-                            cursor: loading ? 'default' : 'pointer',
-                        }}
+                        className="rounded-full border border-[#F0F0F0] bg-white px-5 py-2 text-[13px] text-black"
                     >
                         {loading ? '불러오는 중...' : '더 보기'}
                     </button>
                 </div>
             )}
-
-            <div
-                className="ara-list-row"
-                onClick={() => router.push('/web_view/MyInfo/Settings')}
-                style={{ marginTop: 'var(--ara-spacing-lg)', borderTop: '1px solid var(--ara-divider)' }}
-            >
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>설정</span>
-                <span style={{ color: 'var(--ara-text-tertiary)', fontSize: 18 }}>›</span>
-            </div>
         </Screen>
     );
 }

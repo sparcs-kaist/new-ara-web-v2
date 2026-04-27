@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { bridge } from '@/app/web_view/_bridge';
+import { MoreIcon } from '@/app/web_view/_components';
 
 interface MoreButtonProps {
     /** Absolute URL (or path) to share / copy. */
@@ -12,8 +12,8 @@ interface MoreButtonProps {
 
 /**
  * Kebab button for the post detail header. Opens a small popover with
- * 신고 / 차단 / 공유 actions. Share goes through the native bridge when
- * available, falling back to clipboard.
+ * 신고 / 차단 / 공유 actions. Only used as a fallback affordance — the
+ * full action set lives in `UtilityButtons` underneath the article body.
  */
 export function MoreButton({ shareUrl, onReport, onBlock }: MoreButtonProps) {
     const [open, setOpen] = useState(false);
@@ -30,79 +30,55 @@ export function MoreButton({ shareUrl, onReport, onBlock }: MoreButtonProps) {
         return () => document.removeEventListener('mousedown', handleClick);
     }, [open]);
 
-    const tap = () => {
-        try {
-            bridge?.send('haptic', { kind: 'light' });
-        } catch {
-            /* noop */
-        }
-    };
-
     const handleShare = async () => {
-        tap();
         setOpen(false);
         const url = shareUrl ?? (typeof window !== 'undefined' ? window.location.href : '');
         try {
-            // Prefer native share. If unsupported, fall back to clipboard.
-            const res = await bridge?.request('share', { url });
-            if (res && !res.shared) {
-                bridge?.send('clipboardWrite', { text: url });
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                await navigator.share({ url });
+                return;
             }
         } catch {
+            /* fall through */
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
             try {
-                bridge?.send('clipboardWrite', { text: url });
+                await navigator.clipboard.writeText(url);
             } catch {
-                console.log('[MoreButton] share fallback failed', url);
+                /* noop */
             }
         }
     };
 
-    const handleReport = () => {
-        tap();
-        setOpen(false);
-        if (onReport) onReport();
-        else console.log('[MoreButton] report stub');
-    };
-
-    const handleBlock = () => {
-        tap();
-        setOpen(false);
-        if (onBlock) onBlock();
-        else console.log('[MoreButton] block stub');
-    };
-
     return (
-        <div ref={ref} style={{ position: 'relative' }}>
+        <div ref={ref} className="relative">
             <button
                 type="button"
-                className="ara-header__btn"
-                aria-label="more"
+                aria-label="더보기"
                 onClick={() => setOpen((v) => !v)}
+                className="flex h-11 w-11 items-center justify-center bg-transparent text-black"
             >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
-                    <circle cx="10" cy="4.5" r="1.5" fill="currentColor" />
-                    <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                    <circle cx="10" cy="15.5" r="1.5" fill="currentColor" />
-                </svg>
+                <MoreIcon size={20} />
             </button>
             {open && (
                 <div
                     role="menu"
-                    style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 4px)',
-                        right: 0,
-                        minWidth: 140,
-                        background: 'var(--ara-bg-elevated)',
-                        border: '1px solid var(--ara-divider)',
-                        borderRadius: 'var(--ara-radius-md)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                        overflow: 'hidden',
-                        zIndex: 60,
-                    }}
+                    className="absolute right-0 top-full mt-1 min-w-[140px] overflow-hidden rounded-[10px] border border-[#F0F0F0] bg-white"
                 >
-                    <MenuItem label="신고" onClick={handleReport} />
-                    <MenuItem label="차단" onClick={handleBlock} />
+                    <MenuItem
+                        label="신고"
+                        onClick={() => {
+                            setOpen(false);
+                            onReport?.();
+                        }}
+                    />
+                    <MenuItem
+                        label="차단"
+                        onClick={() => {
+                            setOpen(false);
+                            onBlock?.();
+                        }}
+                    />
                     <MenuItem label="공유" onClick={handleShare} />
                 </div>
             )}
@@ -116,17 +92,7 @@ function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
             type="button"
             role="menuitem"
             onClick={onClick}
-            style={{
-                display: 'block',
-                width: '100%',
-                padding: '10px 14px',
-                textAlign: 'left',
-                background: 'transparent',
-                border: 0,
-                fontSize: 14,
-                color: 'var(--ara-text-primary)',
-                cursor: 'pointer',
-            }}
+            className="block w-full bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
         >
             {label}
         </button>

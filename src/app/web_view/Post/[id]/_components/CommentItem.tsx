@@ -1,14 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { formatDate } from '@/app/post/util/formatDate';
+import { useRouter } from 'next/navigation';
 import { voteComment } from '@/lib/api/post';
-import { bridge } from '@/app/web_view/_bridge';
+import {
+    DislikeIcon,
+    LikeIcon,
+    MoreIcon,
+    ReplyArrowIcon,
+} from '@/app/web_view/_components';
 import type { Comment, CommentNested } from '@/lib/types/post';
 
 interface CommentItemProps {
     comment: Comment | CommentNested;
     nested?: boolean;
+    /** Whether the comment author is the post author (for red highlight). */
+    isAuthor?: boolean;
     onReply?: (parentId: number, defaultName: number) => void;
     onChanged?: () => void;
 }
@@ -20,30 +27,34 @@ function nickFor(c: Comment | CommentNested): string {
     return c.created_by?.profile?.nickname ?? '';
 }
 
-function avatarLetter(nick: string): string {
-    return nick?.[0] ?? '?';
-}
-
-export function CommentItem({ comment, nested = false, onReply, onChanged }: CommentItemProps) {
+/**
+ * Faithful port of `_buildCommentListView` in `post_view_page.dart`.
+ *
+ * Replies sit 30px deeper than the parent (matching the Flutter
+ * `margin: EdgeInsets.only(left: 30)`); the post-author's own comments
+ * have a brand-red nickname.
+ */
+export function CommentItem({
+    comment,
+    nested = false,
+    isAuthor = false,
+    onReply,
+    onChanged,
+}: CommentItemProps) {
+    const router = useRouter();
     const [myVote, setMyVote] = useState<boolean | null>(comment.my_vote);
     const [pos, setPos] = useState<number>(comment.positive_vote_count ?? 0);
     const [neg, setNeg] = useState<number>(comment.negative_vote_count ?? 0);
 
-    const tap = () => {
-        try {
-            bridge?.send('haptic', { kind: 'light' });
-        } catch {
-            /* noop */
-        }
-    };
-
     const handleVote = async (positive: boolean) => {
-        tap();
-        const action: 'vote_positive' | 'vote_negative' | 'vote_cancel' =
-            positive ? (myVote === true ? 'vote_cancel' : 'vote_positive')
-                     : (myVote === false ? 'vote_cancel' : 'vote_negative');
+        const action: 'vote_positive' | 'vote_negative' | 'vote_cancel' = positive
+            ? myVote === true
+                ? 'vote_cancel'
+                : 'vote_positive'
+            : myVote === false
+              ? 'vote_cancel'
+              : 'vote_negative';
         const prev = { myVote, pos, neg };
-        // Optimistic update
         let nMy: boolean | null = myVote;
         let nPos = pos;
         let nNeg = neg;
@@ -67,7 +78,7 @@ export function CommentItem({ comment, nested = false, onReply, onChanged }: Com
             await voteComment(comment.id, action);
             onChanged?.();
         } catch (e) {
-            console.error('voteComment failed', e);
+            console.warn('voteComment failed', e);
             setMyVote(prev.myVote);
             setPos(prev.pos);
             setNeg(prev.neg);
@@ -75,142 +86,149 @@ export function CommentItem({ comment, nested = false, onReply, onChanged }: Com
     };
 
     const isDeleted = !!comment.deleted_at;
+    const isHidden = comment.is_hidden ?? false;
+    const isAnonymousProfile = comment.name_type !== 1;
     const nick = nickFor(comment);
     const replies = (comment as Comment).comments;
 
-    return (
-        <div
-            style={{
-                padding: '12px var(--ara-spacing-lg)',
-                paddingLeft: nested ? 'calc(var(--ara-spacing-lg) + 24px)' : 'var(--ara-spacing-lg)',
-                borderBottom: nested ? 'none' : '1px solid var(--ara-divider)',
-                background: nested ? 'var(--ara-bg-muted)' : 'var(--ara-bg)',
-            }}
-        >
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <div
-                    aria-hidden
-                    style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        background: 'var(--ara-bg-muted)',
-                        color: 'var(--ara-text-secondary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        flexShrink: 0,
-                    }}
-                >
-                    {avatarLetter(nick)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: 6,
-                            alignItems: 'center',
-                            fontSize: 12,
-                            color: 'var(--ara-text-tertiary)',
-                            marginBottom: 4,
-                        }}
-                    >
-                        <span style={{ color: 'var(--ara-text-secondary)', fontWeight: 600 }}>{nick}</span>
-                        <span aria-hidden>·</span>
-                        <span>{formatDate(comment.created_at)}</span>
-                    </div>
-                    <p
-                        style={{
-                            margin: 0,
-                            fontSize: 14,
-                            lineHeight: 1.5,
-                            color: isDeleted ? 'var(--ara-text-tertiary)' : 'var(--ara-text-primary)',
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                        }}
-                    >
-                        {isDeleted ? '삭제된 댓글입니다.' : comment.content}
-                    </p>
+    const onAuthorTap = () => {
+        if (isAnonymousProfile) return;
+        router.push(`/web_view/User/${comment.created_by.id}`);
+    };
 
-                    {!isDeleted && (
-                        <div
-                            style={{
-                                display: 'flex',
-                                gap: 12,
-                                alignItems: 'center',
-                                marginTop: 6,
-                                fontSize: 12,
-                                color: 'var(--ara-text-tertiary)',
-                            }}
+    return (
+        <>
+            <div className={`px-5 py-[11px] ${nested ? 'pl-[50px]' : ''}`}>
+                <div className="flex items-start justify-between">
+                    <button
+                        type="button"
+                        onClick={onAuthorTap}
+                        disabled={isAnonymousProfile}
+                        className="flex min-w-0 items-center bg-transparent text-left disabled:cursor-default"
+                    >
+                        <span
+                            className="inline-flex h-[25px] w-[25px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#E5E5E5]"
+                            aria-hidden
                         >
-                            <button
-                                type="button"
-                                onClick={() => handleVote(true)}
-                                style={voteBtnStyle(myVote === true, 'pos')}
-                            >
-                                <Arrow direction="up" /> {pos}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleVote(false)}
-                                style={voteBtnStyle(myVote === false, 'neg')}
-                            >
-                                <Arrow direction="down" /> {neg}
-                            </button>
-                            {!nested && onReply && (
+                            {comment.created_by?.profile?.picture && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={comment.created_by.profile.picture}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                />
+                            )}
+                        </span>
+                        <span
+                            className={[
+                                'ml-[5px] truncate text-[14px] font-medium',
+                                isAuthor ? 'text-ara_red' : 'text-[#333333]',
+                            ].join(' ')}
+                        >
+                            {nick}
+                        </span>
+                        <span className="ml-[7px] text-[12px] font-normal text-[#B1B1B1]">
+                            {formatTime(comment.created_at)}
+                        </span>
+                    </button>
+
+                    {!isHidden && (
+                        <button
+                            type="button"
+                            aria-label="more"
+                            className="flex h-[25px] w-[50px] items-center justify-end bg-transparent text-[#9E9E9E]"
+                        >
+                            <MoreIcon size={18} />
+                        </button>
+                    )}
+                </div>
+
+                <div className="mt-[2px] pl-[30px]">
+                    {isDeleted ? (
+                        <p className="m-0 text-[14px] font-normal text-[#9E9E9E]">
+                            삭제된 댓글입니다.
+                        </p>
+                    ) : isHidden ? (
+                        <p className="m-0 text-[14px] font-normal text-[#9E9E9E]">
+                            숨겨진 댓글입니다.
+                        </p>
+                    ) : (
+                        <p className="m-0 whitespace-pre-wrap break-words text-[14px] font-normal text-[#4A4A4A]">
+                            {comment.content}
+                        </p>
+                    )}
+                </div>
+
+                {!isHidden && !isDeleted && (
+                    <div className="mt-2 flex items-center pl-[30px]">
+                        <button
+                            type="button"
+                            onClick={() => handleVote(true)}
+                            className={`flex items-center bg-transparent ${
+                                myVote === false ? 'text-[#BBBBBB]' : 'text-ara_red'
+                            }`}
+                        >
+                            <LikeIcon size={16} />
+                            <span className="ml-[2px] text-[13px] font-medium">{pos}</span>
+                        </button>
+                        <div className="w-3" />
+                        <button
+                            type="button"
+                            onClick={() => handleVote(false)}
+                            className={`flex items-center bg-transparent ${
+                                myVote === true ? 'text-[#BBBBBB]' : 'text-ara_blue'
+                            }`}
+                        >
+                            <DislikeIcon size={16} />
+                            <span className="ml-[2px] text-[13px] font-medium">{neg}</span>
+                        </button>
+                        {!nested && onReply && (
+                            <>
+                                <div className="w-3" />
                                 <button
                                     type="button"
                                     onClick={() => onReply(comment.id, comment.name_type)}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 0,
-                                        color: 'var(--ara-text-secondary)',
-                                        fontSize: 12,
-                                        cursor: 'pointer',
-                                        padding: 0,
-                                    }}
+                                    className="flex items-center bg-transparent text-black"
                                 >
-                                    답글
+                                    <ReplyArrowIcon size={11} />
+                                    <span className="ml-1 text-[13px] font-medium">답글</span>
                                 </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
+            <div className="mx-5 h-px bg-[#F0F0F0]" />
 
             {replies && replies.length > 0 && (
-                <div style={{ marginTop: 8 }}>
+                <>
                     {replies.map((r) => (
-                        <CommentItem key={r.id} comment={r} nested onChanged={onChanged} />
+                        <CommentItem
+                            key={r.id}
+                            comment={r}
+                            nested
+                            isAuthor={isAuthor}
+                            onChanged={onChanged}
+                        />
                     ))}
-                </div>
+                </>
             )}
-        </div>
+        </>
     );
 }
 
-function voteBtnStyle(active: boolean, kind: 'pos' | 'neg'): React.CSSProperties {
-    const color = active ? (kind === 'pos' ? 'var(--ara-positive)' : 'var(--ara-negative)') : 'var(--ara-text-tertiary)';
-    return {
-        background: 'transparent',
-        border: 0,
-        color,
-        fontSize: 12,
-        cursor: 'pointer',
-        padding: 0,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-    };
-}
-
-function Arrow({ direction }: { direction: 'up' | 'down' }) {
-    const rotate = direction === 'up' ? 0 : 180;
-    return (
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" style={{ transform: `rotate(${rotate}deg)` }} aria-hidden>
-            <path d="M7 3L11.5 9.5H2.5L7 3Z" fill="currentColor" />
-        </svg>
-    );
+function formatTime(iso?: string | null): string {
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return '';
+    const diffSec = Math.max(0, Math.floor((Date.now() - t) / 1000));
+    if (diffSec < 60) return '방금';
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}분 전`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}시간 전`;
+    if (diffSec < 86400 * 7) return `${Math.floor(diffSec / 86400)}일 전`;
+    const d = new Date(iso);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }

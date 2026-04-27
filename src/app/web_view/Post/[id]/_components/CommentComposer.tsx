@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import http from '@/lib/api/http';
-import { bridge } from '@/app/web_view/_bridge';
-import { StickyComposer } from '@/app/web_view/_components';
+import { CloseIcon, SendIcon, StickyComposer } from '@/app/web_view/_components';
 
 interface CommentComposerProps {
     postId: number;
@@ -11,21 +10,37 @@ interface CommentComposerProps {
     allowedNameTypes: number;
     /** When set, posts a reply to this comment id. */
     replyToCommentId?: number | null;
+    /** Nickname of the comment we're replying to (for the "X님께 답글" hint). */
+    replyToNickname?: string | null;
+    /** Comment content currently being edited (when in modify mode). */
+    editingContent?: string | null;
+    /** When set, the composer is in "modify my comment" mode. */
+    editingCommentId?: number | null;
     onCancelReply?: () => void;
     onPosted?: () => void;
 }
 
-const MAX_LINE_HEIGHT_PX = 22; // matches font-size 14 with 1.5 line-height
+const LINE_HEIGHT_PX = 22;
 const MAX_LINES = 5;
 
 /**
- * Sticky bottom comment composer. Auto-grows up to 5 lines and rides above
- * the software keyboard via StickyComposer's `--ara-keyboard-height`.
+ * Faithful port of `_buildCommentTextFormField` in `post_view_page.dart`.
+ *
+ *   ┌──────────────────────────────────────────────┐
+ *   │ {hint when replying / editing}               │
+ *   │ [×]  ┌────────────────────────────┐  ▶       │
+ *   │      │ #f8f8f8 rounded-10 input   │ send 30  │
+ *   └──────────────────────────────────────────────┘
+ *
+ * Lifts above the keyboard via `StickyComposer`'s `--ara-keyboard-height`.
  */
 export function CommentComposer({
     postId,
     allowedNameTypes,
     replyToCommentId,
+    replyToNickname,
+    editingContent,
+    editingCommentId,
     onCancelReply,
     onPosted,
 }: CommentComposerProps) {
@@ -37,152 +52,127 @@ export function CommentComposer({
     const [submitting, setSubmitting] = useState(false);
     const taRef = useRef<HTMLTextAreaElement>(null);
 
+    // Pre-fill with the comment we're editing.
+    useEffect(() => {
+        if (editingCommentId && editingContent != null) setText(editingContent);
+    }, [editingCommentId, editingContent]);
+
     // Auto-grow up to MAX_LINES.
     useEffect(() => {
         const el = taRef.current;
         if (!el) return;
         el.style.height = 'auto';
-        const max = MAX_LINE_HEIGHT_PX * MAX_LINES + 16; // + vertical padding
+        const max = LINE_HEIGHT_PX * MAX_LINES + 16;
         el.style.height = `${Math.min(el.scrollHeight, max)}px`;
         el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden';
     }, [text]);
 
     const showAnonymousToggle = canNickname && canAnonymous;
+    const inEditOrReply = !!replyToCommentId || !!editingCommentId;
     const disabled = !text.trim() || submitting;
 
     const submit = async () => {
         if (disabled) return;
-        try {
-            bridge?.send('haptic', { kind: 'light' });
-        } catch {
-            /* noop */
-        }
         setSubmitting(true);
         try {
             const nameType = anonymous ? 2 : 1;
-            const body: Record<string, unknown> = {
-                content: text,
-                name_type: nameType,
-                attachment: null,
-            };
-            if (replyToCommentId) body.parent_comment = replyToCommentId;
-            else body.parent_article = postId;
-            await http.post('comments/', body);
+            if (editingCommentId) {
+                await http.patch(`comments/${editingCommentId}/`, {
+                    content: text,
+                    is_mine: true,
+                    name_type: nameType,
+                });
+            } else {
+                const body: Record<string, unknown> = {
+                    content: text,
+                    name_type: nameType,
+                    attachment: null,
+                };
+                if (replyToCommentId) body.parent_comment = replyToCommentId;
+                else body.parent_article = postId;
+                await http.post('comments/', body);
+            }
             setText('');
             taRef.current?.blur();
             onPosted?.();
         } catch (e) {
-            console.error('createComment failed', e);
+            console.warn('createComment failed', e);
         } finally {
             setSubmitting(false);
         }
     };
 
+    const headerLabel = editingCommentId
+        ? `나의 댓글 "${editingContent ?? ''}" 수정 중`
+        : replyToCommentId
+          ? `'${replyToNickname ?? ''}'님께 답글을 작성하는 중`
+          : '';
+
     return (
         <StickyComposer aboveTabBar={false}>
-            {replyToCommentId && (
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '6px 12px 0',
-                        fontSize: 12,
-                        color: 'var(--ara-text-tertiary)',
-                    }}
-                >
-                    <span>답글 작성 중</span>
-                    {onCancelReply && (
+            <div className="px-5 pt-[7px] pb-2">
+                {inEditOrReply && (
+                    <div className="truncate pb-1 text-[13px] font-medium text-black">
+                        {headerLabel}
+                    </div>
+                )}
+
+                <div className="flex items-end">
+                    {inEditOrReply && (
                         <button
                             type="button"
                             onClick={onCancelReply}
-                            style={{
-                                background: 'transparent',
-                                border: 0,
-                                color: 'var(--ara-text-secondary)',
-                                fontSize: 12,
-                                cursor: 'pointer',
-                                padding: 0,
-                            }}
+                            aria-label="취소"
+                            className="mr-2 flex h-[30px] w-[30px] items-center justify-center bg-transparent text-ara_red"
                         >
-                            취소
+                            <CloseIcon size={22} />
                         </button>
                     )}
-                </div>
-            )}
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    gap: 8,
-                    padding: '8px 12px',
-                }}
-            >
-                {showAnonymousToggle && (
+
+                    <div className="min-h-[36px] flex-1 rounded-[10px] bg-[#F8F8F8] px-3 py-[7px]">
+                        {showAnonymousToggle && !inEditOrReply && (
+                            <div className="mb-1 flex items-center">
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={anonymous}
+                                    onClick={() => setAnonymous((v) => !v)}
+                                    className={[
+                                        'h-6 rounded-full px-2 text-[12px] font-medium',
+                                        anonymous
+                                            ? 'bg-ara_red_most_bright text-ara_red'
+                                            : 'bg-transparent text-[#9E9E9E]',
+                                    ].join(' ')}
+                                >
+                                    익명
+                                </button>
+                            </div>
+                        )}
+                        <textarea
+                            ref={taRef}
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            placeholder="댓글을 입력하세요"
+                            rows={1}
+                            inputMode="text"
+                            autoCapitalize="sentences"
+                            className="block w-full resize-none border-0 bg-transparent text-[14px] leading-[22px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
+                        />
+                    </div>
+
                     <button
                         type="button"
-                        role="switch"
-                        aria-checked={anonymous}
-                        onClick={() => setAnonymous((v) => !v)}
-                        style={{
-                            flexShrink: 0,
-                            height: 32,
-                            padding: '0 10px',
-                            borderRadius: 999,
-                            border: `1px solid ${anonymous ? 'var(--ara-primary)' : 'var(--ara-divider-strong)'}`,
-                            background: anonymous ? 'var(--ara-primary-bright)' : 'transparent',
-                            color: anonymous ? 'var(--ara-primary)' : 'var(--ara-text-secondary)',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                        }}
+                        onClick={submit}
+                        disabled={disabled}
+                        aria-label="전송"
+                        className={[
+                            'ml-3 flex h-[30px] w-[30px] shrink-0 items-center justify-center bg-transparent',
+                            disabled ? 'text-[#BBBBBB]' : 'text-ara_red',
+                        ].join(' ')}
                     >
-                        익명
+                        <SendIcon size={28} />
                     </button>
-                )}
-                <textarea
-                    ref={taRef}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="댓글을 입력하세요"
-                    rows={1}
-                    inputMode="text"
-                    autoCapitalize="sentences"
-                    style={{
-                        flex: 1,
-                        minHeight: 36,
-                        maxHeight: MAX_LINE_HEIGHT_PX * MAX_LINES + 16,
-                        padding: '8px 12px',
-                        borderRadius: 18,
-                        border: '1px solid var(--ara-divider-strong)',
-                        background: 'var(--ara-bg-muted)',
-                        fontSize: 14,
-                        lineHeight: '22px',
-                        color: 'var(--ara-text-primary)',
-                        resize: 'none',
-                        outline: 'none',
-                        fontFamily: 'inherit',
-                    }}
-                />
-                <button
-                    type="button"
-                    onClick={submit}
-                    disabled={disabled}
-                    style={{
-                        flexShrink: 0,
-                        height: 36,
-                        padding: '0 14px',
-                        borderRadius: 18,
-                        border: 0,
-                        background: disabled ? 'var(--ara-divider-strong)' : 'var(--ara-primary)',
-                        color: '#fff',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                    }}
-                >
-                    전송
-                </button>
+                </div>
             </div>
         </StickyComposer>
     );

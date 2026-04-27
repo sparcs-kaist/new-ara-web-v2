@@ -1,7 +1,11 @@
 'use client';
 
-import { Screen } from '@/app/web_view/_components';
+import { InformationIcon, Screen } from '@/app/web_view/_components';
 
+/**
+ * Generic web-view error fallback. No shadow, no chrome — just a centered
+ * info icon, a short message, and a brand-red retry button.
+ */
 export default function ErrorPage() {
     const onRetry = () => {
         if (typeof window !== 'undefined') window.location.reload();
@@ -9,32 +13,16 @@ export default function ErrorPage() {
 
     return (
         <Screen withTabBar={false}>
-            <div
-                style={{
-                    minHeight: '100dvh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 'var(--ara-spacing-xl)',
-                    gap: 'var(--ara-spacing-lg)',
-                    textAlign: 'center',
-                }}
-            >
-                <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>오류가 발생했어요.</h1>
+            <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center">
+                <span className="text-[#B1B1B1]">
+                    <InformationIcon size={50} />
+                </span>
+                <h1 className="m-0 text-[18px] font-bold text-black">오류가 발생했어요.</h1>
+                <p className="m-0 text-[14px] text-[#B1B1B1]">잠시 후 다시 시도해 주세요.</p>
                 <button
                     type="button"
                     onClick={onRetry}
-                    style={{
-                        padding: '12px 24px',
-                        borderRadius: 'var(--ara-radius-md)',
-                        border: '1px solid var(--ara-divider-strong)',
-                        background: 'var(--ara-bg)',
-                        color: 'var(--ara-text-primary)',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                    }}
+                    className="h-[44px] rounded-[10px] bg-ara_red px-6 text-[14px] font-bold text-white"
                 >
                     다시 시도
                 </button>

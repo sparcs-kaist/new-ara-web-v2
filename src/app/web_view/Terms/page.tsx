@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Screen, AppHeader } from '@/app/web_view/_components';
+import { AppHeader, Screen } from '@/app/web_view/_components';
 import { fetchMe, updateTos } from '@/lib/api/user';
 import { tosContent } from '@/app/tos/content';
 
+/**
+ * Terms-of-service screen. Used both as a referenced doc (no acceptance UI)
+ * and as a gating step right after SSO login (accept=true). The gating
+ * variant adds a sticky red CTA at the bottom.
+ */
 export default function TermsPage() {
     const router = useRouter();
     const search = useSearchParams();
@@ -30,7 +35,9 @@ export default function TermsPage() {
             router.replace('/web_view/Main');
         } catch (e) {
             console.warn('updateTos failed', e);
-            alert('동의 처리에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            if (typeof window !== 'undefined') {
+                window.alert('동의 처리에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -43,36 +50,15 @@ export default function TermsPage() {
             <AppHeader title="이용약관" />
 
             <div
-                style={{
-                    padding: 'var(--ara-spacing-lg)',
-                    paddingBottom: requireAccept ? 96 : 'var(--ara-spacing-xl)',
-                }}
+                className="px-5"
+                style={{ paddingBottom: requireAccept ? '96px' : '24px' }}
             >
-                <p style={{ fontSize: 13, color: 'var(--ara-text-secondary)', marginTop: 0 }}>
-                    {ko.lastUpdated}
-                </p>
+                <p className="mt-0 text-[13px] text-[#B1B1B1]">{ko.lastUpdated}</p>
 
                 {ko.tos.map((s, i) => (
-                    <section key={i} style={{ marginBottom: 'var(--ara-spacing-xl)' }}>
-                        <h2
-                            style={{
-                                fontSize: 15,
-                                fontWeight: 700,
-                                color: 'var(--ara-text-primary)',
-                                margin: '0 0 8px',
-                            }}
-                        >
-                            {s.title}
-                        </h2>
-                        <p
-                            style={{
-                                fontSize: 13,
-                                lineHeight: 1.7,
-                                color: 'var(--ara-text-secondary)',
-                                margin: 0,
-                                whiteSpace: 'pre-wrap',
-                            }}
-                        >
+                    <section key={i} className="mb-6">
+                        <h2 className="m-0 mb-2 text-[15px] font-bold text-black">{s.title}</h2>
+                        <p className="m-0 whitespace-pre-wrap text-[13px] leading-[1.7] text-[#646464]">
                             {s.content}
                         </p>
                     </section>
@@ -81,31 +67,17 @@ export default function TermsPage() {
 
             {requireAccept && (
                 <div
+                    className="fixed inset-x-0 z-30 bg-white px-5 pt-3"
                     style={{
-                        position: 'fixed',
-                        left: 0,
-                        right: 0,
-                        bottom: 'var(--ara-safe-bottom)',
-                        padding: 'var(--ara-spacing-lg)',
-                        background: 'var(--ara-bg)',
-                        borderTop: '1px solid var(--ara-divider)',
+                        bottom: 0,
+                        paddingBottom: 'calc(12px + var(--ara-safe-bottom))',
                     }}
                 >
                     <button
                         type="button"
                         onClick={onAccept}
                         disabled={submitting}
-                        style={{
-                            width: '100%',
-                            padding: '14px',
-                            borderRadius: 'var(--ara-radius-md)',
-                            border: 0,
-                            background: 'var(--ara-primary)',
-                            color: 'var(--ara-text-on-primary)',
-                            fontSize: 15,
-                            fontWeight: 700,
-                            cursor: submitting ? 'default' : 'pointer',
-                        }}
+                        className="block h-[50px] w-full rounded-[10px] bg-ara_red text-[15px] font-bold text-white disabled:bg-ara_red_bright"
                     >
                         {submitting ? '처리 중...' : '동의'}
                     </button>
