@@ -142,8 +142,9 @@ export default function MyInfoPage() {
 
             <div className="h-[10px]" />
 
-            {/* TabBar */}
-            <nav role="tablist" className="grid grid-cols-3 px-5">
+            {/* TabBar — 1px continuous divider across the bar with a 2px red
+                indicator that sits above the divider on the active tab. */}
+            <nav role="tablist" className="mx-5 grid grid-cols-3 border-b border-[#F0F0F0]">
                 {TABS.map((t) => {
                     const active = tab === t.key;
                     return (
@@ -156,8 +157,8 @@ export default function MyInfoPage() {
                             className={[
                                 'flex h-[44px] items-center justify-center bg-transparent text-[15px] font-medium',
                                 active
-                                    ? 'border-b-2 border-ara_red text-ara_red'
-                                    : 'border-b-2 border-[#F0F0F0] text-[#B1B1B1]',
+                                    ? '-mb-px border-b-2 border-ara_red text-ara_red'
+                                    : 'text-[#B1B1B1]',
                             ].join(' ')}
                         >
                             {t.label}

@@ -1,7 +1,7 @@
 'use client';
 
 import {
-    BlockIcon,
+    BarriorIcon,
     BookmarkIcon,
     DeleteIcon,
     ModifyIcon,
@@ -58,7 +58,7 @@ export function UtilityButtons({
                 >
                     <BookmarkIcon size={15} />
                     <span className="ml-1 text-[13px] font-medium">
-                        {isScrapped ? '담아둠' : '담아두기'}
+                        {isScrapped ? '담아둔 글' : '담아두기'}
                     </span>
                 </button>
                 <button
@@ -77,11 +77,14 @@ export function UtilityButtons({
                     <button
                         type="button"
                         onClick={onBlock}
-                        className="flex h-[35px] w-[65px] items-center justify-center rounded-lg border border-[#F0F0F0] bg-transparent text-[#646464]"
+                        className={[
+                            'flex h-[35px] items-center justify-center rounded-lg border border-[#F0F0F0] bg-transparent text-[#646464]',
+                            isBlockedAuthor ? 'w-[85px]' : 'w-[65px]',
+                        ].join(' ')}
                     >
-                        <BlockIcon size={15} />
+                        <BarriorIcon size={15} />
                         <span className="ml-[3px] text-[13px] font-medium">
-                            {isBlockedAuthor ? '차단해제' : '차단'}
+                            {isBlockedAuthor ? '차단 해제' : '차단'}
                         </span>
                     </button>
                 )}

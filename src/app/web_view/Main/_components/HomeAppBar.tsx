@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { AraLogo, PostIcon, SearchIcon } from '@/app/web_view/_components';
+import { AraLogo, LanguageIcon, PostIcon, SearchIcon } from '@/app/web_view/_components';
 
 /**
  * Mirrors the AppBar in `main_page.dart`: 56px tall, ARA logo on the left,
@@ -12,15 +12,22 @@ export function HomeAppBar() {
     const router = useRouter();
     return (
         <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-4">
-            <AraLogo width={56} height={30} />
+            <AraLogo width={68} height={37} />
             <div className="ml-auto flex items-center gap-1">
+                <button
+                    type="button"
+                    aria-label="언어"
+                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                >
+                    <LanguageIcon size={24} />
+                </button>
                 <button
                     type="button"
                     aria-label="글쓰기"
                     onClick={() => router.push('/web_view/PostWrite')}
                     className="flex h-11 w-11 items-center justify-center text-ara_red"
                 >
-                    <PostIcon size={28} />
+                    <PostIcon size={35} />
                 </button>
                 <button
                     type="button"
@@ -28,7 +35,7 @@ export function HomeAppBar() {
                     onClick={() => router.push('/web_view/Search')}
                     className="flex h-11 w-11 items-center justify-center text-ara_red"
                 >
-                    <SearchIcon size={28} />
+                    <SearchIcon size={35} />
                 </button>
             </div>
         </header>

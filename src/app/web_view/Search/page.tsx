@@ -70,8 +70,8 @@ function SearchInner() {
             <AppHeader title="검색" />
 
             <div className="sticky top-14 z-30 flex items-center gap-2 bg-white px-5 py-2">
-                <div className="flex h-10 w-full items-center rounded-[10px] bg-[#F0F0F0] px-2">
-                    <span className="mr-1 inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
+                <div className="flex h-10 w-full items-center rounded-[10px] bg-[#F6F6F6] pl-[6px]">
+                    <span className="inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
                         <SearchIcon size={20} />
                     </span>
                     <input
@@ -84,11 +84,11 @@ function SearchInner() {
                                 submit();
                             }
                         }}
-                        placeholder="게시판/게시물/댓글을 검색하세요"
+                        placeholder="게시판, 게시글 및 댓글 검색"
                         inputMode="search"
                         enterKeyHint="search"
                         autoCapitalize="none"
-                        className="w-full bg-transparent text-[15px] text-black placeholder:text-[#9E9E9E] focus:outline-none"
+                        className="w-full bg-transparent text-[16px] font-medium text-black placeholder:font-medium placeholder:text-[#BBBBBB] focus:outline-none"
                     />
                 </div>
             </div>

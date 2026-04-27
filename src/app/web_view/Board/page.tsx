@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen, MenuIcon, StarIcon, DownloadIcon, SearchIcon, NotifyIcon } from '@/app/web_view/_components';
+import {
+    DownloadIcon,
+    MenuIcon,
+    NotifyIcon,
+    RightChevronIcon,
+    Screen,
+    SearchIcon,
+    StarIcon,
+} from '@/app/web_view/_components';
 import { fetchBoardList } from '@/lib/api/board';
 
 interface BoardItem {
@@ -16,12 +24,11 @@ interface BoardItem {
 /**
  * Mirrors `lib/pages/board_list_page.dart`.
  *
- * - 28/700 brand-red title in the AppBar (this is the "게시판" header that
- *   our previous build was rendering in 22/black instead).
- * - Search field row (filled #F0F0F0).
- * - Three quick links: 전체 보기 / 인기글 / 스크랩.
- * - 1px divider, then board groups (each expandable, default open).
- * - Group 2 is the standalone 자유게시판 board.
+ * - 28/700 brand-red title in the AppBar.
+ * - 40px filled #F6F6F6 search trigger.
+ * - "전체보기 / 인기글 / 담아둔 글" quick links — 32px tall, gry3 (#333).
+ * - 1px hairline + ExpansionTiles for board groups (default open).
+ * - Group 2 (자유게시판) is a single board, rendered without the expander.
  */
 export default function BoardListPage() {
     const router = useRouter();
@@ -56,23 +63,21 @@ export default function BoardListPage() {
 
     return (
         <Screen>
-            {/* AppBar */}
             <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-5">
                 <h1 className="text-[28px] font-bold text-ara_red">게시판</h1>
             </header>
 
             <div className="px-5">
-                {/* Search trigger */}
                 <button
                     type="button"
                     onClick={() => router.push('/web_view/Search')}
-                    className="flex h-10 w-full items-center rounded-[10px] bg-[#F0F0F0] px-2 text-left"
+                    className="flex h-10 w-full items-center rounded-[10px] bg-[#F6F6F6] pl-[6px] text-left"
                 >
-                    <span className="mr-1 inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
+                    <span className="inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
                         <SearchIcon size={20} />
                     </span>
-                    <span className="text-[16px] font-medium text-[#9E9E9E]">
-                        게시판/게시물/댓글을 검색하세요
+                    <span className="text-[16px] font-medium text-[#BBBBBB]">
+                        게시판, 게시글 및 댓글 검색
                     </span>
                 </button>
 
@@ -80,7 +85,7 @@ export default function BoardListPage() {
 
                 <QuickLinkRow
                     icon={<MenuIcon size={32} />}
-                    label="전체 보기"
+                    label="전체보기"
                     onTap={() => router.push('/web_view/Board/_all')}
                 />
                 <div className="h-[10px]" />
@@ -92,7 +97,7 @@ export default function BoardListPage() {
                 <div className="h-[10px]" />
                 <QuickLinkRow
                     icon={<DownloadIcon size={32} />}
-                    label="스크랩"
+                    label="담아둔 글"
                     onTap={() => router.push('/web_view/Board/_scraps')}
                 />
 
@@ -103,7 +108,6 @@ export default function BoardListPage() {
                 {grouped &&
                     Object.entries(grouped).map(([id, group]) => {
                         if (id === '2') {
-                            // 자유게시판 — single board, not expandable.
                             const b = group.items[0];
                             if (!b) return null;
                             return (
@@ -113,10 +117,10 @@ export default function BoardListPage() {
                                     onClick={() => router.push(`/web_view/Board/${b.slug}`)}
                                     className="flex h-12 w-full items-center bg-transparent"
                                 >
-                                    <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                                    <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#333333]">
                                         <NotifyIcon size={32} />
                                     </span>
-                                    <span className="ml-[5px] text-[20px] font-bold text-[#666666]">
+                                    <span className="ml-[5px] text-[20px] font-bold text-[#333333]">
                                         {b.ko_name}
                                     </span>
                                 </button>
@@ -136,10 +140,10 @@ function QuickLinkRow({ icon, label, onTap }: { icon: React.ReactNode; label: st
             onClick={onTap}
             className="flex h-8 w-full items-center bg-transparent"
         >
-            <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+            <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#333333]">
                 {icon}
             </span>
-            <span className="ml-[5px] text-[17px] font-bold text-[#666666]">{label}</span>
+            <span className="ml-[5px] text-[17px] font-bold text-[#333333]">{label}</span>
         </button>
     );
 }
@@ -149,20 +153,12 @@ function BoardGroupTile({ name, items }: { name: string; items: BoardItem[] }) {
     return (
         <details open className="group">
             <summary className="flex h-[39px] cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden">
-                <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#333333]">
                     <NotifyIcon size={32} />
                 </span>
-                <span className="ml-[5px] text-[20px] font-bold text-[#666666]">{name}</span>
+                <span className="ml-[5px] text-[20px] font-bold text-[#333333]">{name}</span>
                 <span className="ml-auto text-ara_red transition-transform group-open:rotate-90 group-open:text-black">
-                    <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
-                        <path
-                            d="M12 8L20 16L12 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
+                    <RightChevronIcon size={14} />
                 </span>
             </summary>
             <div>
@@ -173,7 +169,7 @@ function BoardGroupTile({ name, items }: { name: string; items: BoardItem[] }) {
                         onClick={() => router.push(`/web_view/Board/${b.slug}`)}
                         className="flex h-[39px] w-full items-center bg-transparent pl-[40px] text-left"
                     >
-                        <span className="text-[16px] font-medium text-[#666666]">{b.ko_name}</span>
+                        <span className="text-[16px] font-medium text-[#333333]">{b.ko_name}</span>
                     </button>
                 ))}
             </div>
