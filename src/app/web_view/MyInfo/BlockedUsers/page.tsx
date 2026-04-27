@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Screen, AppHeader } from '@/app/web_view/_components';
+import { AppHeader, Screen } from '@/app/web_view/_components';
 import { deleteBlock, fetchBlocks } from '@/lib/api/user';
 
 interface BlockItem {
@@ -60,49 +60,28 @@ export default function BlockedUsersPage() {
             <AppHeader title="차단된 사용자" />
 
             {loading ? (
-                <div style={{ padding: 'var(--ara-spacing-lg)' }}>
-                    {[0, 1, 2].map((i) => (
-                        <div
-                            key={i}
-                            className="ara-skeleton"
-                            style={{ height: 48, marginBottom: 8 }}
-                        />
-                    ))}
+                <div className="flex justify-center py-6 text-[12px] text-[#B1B1B1]">
+                    불러오는 중...
                 </div>
             ) : items.length === 0 ? (
-                <div
-                    style={{
-                        padding: '60px 24px',
-                        textAlign: 'center',
-                        color: 'var(--ara-text-secondary)',
-                        fontSize: 13,
-                    }}
-                >
-                    차단된 사용자가 없어요.
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                    차단된 사용자가 없습니다.
                 </div>
             ) : (
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                <ul className="px-5">
                     {items.map((b) => (
                         <li
                             key={b.id}
-                            className="ara-list-row"
-                            style={{ cursor: 'default' }}
+                            className="flex h-[50px] items-center border-b border-[#F0F0F0]"
                         >
-                            <span style={{ flex: 1, fontSize: 14 }}>{getBlockedName(b)}</span>
+                            <span className="flex-1 text-[14px] text-black">
+                                {getBlockedName(b)}
+                            </span>
                             <button
                                 type="button"
                                 onClick={() => onUnblock(b.id)}
                                 disabled={removing === b.id}
-                                style={{
-                                    padding: '6px 12px',
-                                    borderRadius: 999,
-                                    border: '1px solid var(--ara-divider-strong)',
-                                    background: 'var(--ara-bg)',
-                                    color: 'var(--ara-text-primary)',
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    cursor: removing === b.id ? 'default' : 'pointer',
-                                }}
+                                className="rounded-full border border-[#F0F0F0] bg-white px-3 py-1 text-[12px] font-medium text-[#646464] disabled:text-[#B1B1B1]"
                             >
                                 {removing === b.id ? '처리 중...' : '차단 해제'}
                             </button>

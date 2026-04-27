@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen, AppHeader } from '@/app/web_view/_components';
+import { AppHeader, RightChevronIcon, Screen } from '@/app/web_view/_components';
 import { bridge, getBridge } from '@/app/web_view/_bridge';
 import { fetchMe, logout, updateDarkMode } from '@/lib/api/user';
 
@@ -12,6 +12,10 @@ interface MeProfile {
     extra_preferences?: { darkMode?: boolean } | null;
 }
 
+/**
+ * Mirrors `lib/pages/setting_page.dart`. List of plain rows separated by
+ * 1px hairlines — no shadow on the page itself, no border on the rows.
+ */
 export default function SettingsPage() {
     const router = useRouter();
     const [me, setMe] = useState<MeProfile | null>(null);
@@ -51,7 +55,9 @@ export default function SettingsPage() {
     };
 
     const onMail = () => {
-        bridge?.send('openExternal', { url: 'mailto:new-ara@sparcs.org' });
+        if (typeof window !== 'undefined') {
+            window.location.href = 'mailto:new-ara@sparcs.org';
+        }
     };
 
     const onLogout = async () => {
@@ -62,8 +68,8 @@ export default function SettingsPage() {
         }
         try {
             bridge?.send('clearSession');
-        } catch (e) {
-            console.warn('clearSession failed', e);
+        } catch {
+            /* noop */
         }
         router.replace('/web_view/Login');
     };
@@ -72,41 +78,62 @@ export default function SettingsPage() {
         <Screen withTabBar={false}>
             <AppHeader title="설정" />
 
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                <li className="ara-list-row" style={{ cursor: 'default' }}>
-                    <span style={{ flex: 1, fontSize: 14 }}>다크 모드</span>
+            <ul className="px-5">
+                <Row label="다크 모드">
                     <Toggle checked={dark} onChange={onToggleDark} />
-                </li>
-                <li
-                    className="ara-list-row"
-                    onClick={() => router.push('/web_view/MyInfo/BlockedUsers')}
-                >
-                    <span style={{ flex: 1, fontSize: 14 }}>차단된 사용자</span>
-                    <Chevron />
-                </li>
-                <li className="ara-list-row" onClick={() => router.push('/web_view/Terms')}>
-                    <span style={{ flex: 1, fontSize: 14 }}>이용약관</span>
-                    <Chevron />
-                </li>
-                <li className="ara-list-row" onClick={onMail}>
-                    <span style={{ flex: 1, fontSize: 14 }}>문의하기</span>
-                    <Chevron />
-                </li>
-                <li className="ara-list-row" style={{ cursor: 'default' }}>
-                    <span style={{ flex: 1, fontSize: 14 }}>버전</span>
-                    <span style={{ color: 'var(--ara-text-tertiary)', fontSize: 13 }}>{appVersion}</span>
-                </li>
-                <li
-                    className="ara-list-row"
-                    onClick={onLogout}
-                    style={{ marginTop: 'var(--ara-spacing-lg)' }}
-                >
-                    <span style={{ flex: 1, fontSize: 14, color: 'var(--ara-primary)', fontWeight: 600 }}>
-                        로그아웃
+                </Row>
+                <Row label="차단된 사용자" onClick={() => router.push('/web_view/MyInfo/BlockedUsers')}>
+                    <span className="text-[#9E9E9E]">
+                        <RightChevronIcon size={16} />
                     </span>
+                </Row>
+                <Row label="이용약관" onClick={() => router.push('/web_view/Terms')}>
+                    <span className="text-[#9E9E9E]">
+                        <RightChevronIcon size={16} />
+                    </span>
+                </Row>
+                <Row label="문의하기" onClick={onMail}>
+                    <span className="text-[#9E9E9E]">
+                        <RightChevronIcon size={16} />
+                    </span>
+                </Row>
+                <Row label="버전">
+                    <span className="text-[13px] text-[#B1B1B1]">{appVersion}</span>
+                </Row>
+
+                <li
+                    onClick={onLogout}
+                    role="button"
+                    className="mt-6 flex h-[50px] cursor-pointer items-center"
+                >
+                    <span className="text-[15px] font-medium text-ara_red">로그아웃</span>
                 </li>
             </ul>
         </Screen>
+    );
+}
+
+function Row({
+    label,
+    onClick,
+    children,
+}: {
+    label: string;
+    onClick?: () => void;
+    children?: React.ReactNode;
+}) {
+    return (
+        <li
+            onClick={onClick}
+            role={onClick ? 'button' : undefined}
+            className={[
+                'flex h-[50px] items-center border-b border-[#F0F0F0]',
+                onClick ? 'cursor-pointer' : 'cursor-default',
+            ].join(' ')}
+        >
+            <span className="flex-1 text-[14px] text-black">{label}</span>
+            {children}
+        </li>
     );
 }
 
@@ -117,40 +144,16 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
             role="switch"
             aria-checked={checked}
             onClick={() => onChange(!checked)}
-            style={{
-                width: 40,
-                height: 24,
-                borderRadius: 999,
-                border: 0,
-                background: checked ? 'var(--ara-primary)' : 'var(--ara-divider-strong)',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background 0.15s ease',
-                padding: 0,
-            }}
+            className={[
+                'relative h-6 w-10 rounded-full p-0 transition-colors',
+                checked ? 'bg-ara_red' : 'bg-[#E5E5E5]',
+            ].join(' ')}
         >
             <span
                 aria-hidden
-                style={{
-                    position: 'absolute',
-                    top: 2,
-                    left: checked ? 18 : 2,
-                    width: 20,
-                    height: 20,
-                    borderRadius: 999,
-                    background: '#FFFFFF',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-                    transition: 'left 0.15s ease',
-                }}
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-[left]"
+                style={{ left: checked ? 18 : 2 }}
             />
         </button>
-    );
-}
-
-function Chevron() {
-    return (
-        <span aria-hidden style={{ color: 'var(--ara-text-tertiary)', fontSize: 18 }}>
-            ›
-        </span>
     );
 }

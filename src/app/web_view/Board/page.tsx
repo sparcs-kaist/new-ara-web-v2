@@ -1,30 +1,36 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { Screen } from '@/app/web_view/_components';
+import { useRouter } from 'next/navigation';
+import { Screen, MenuIcon, StarIcon, DownloadIcon, SearchIcon, NotifyIcon } from '@/app/web_view/_components';
 import { fetchBoardList } from '@/lib/api/board';
-import { BoardHeader } from './_components/BoardHeader';
-import { SearchTrigger } from './_components/SearchTrigger';
 
-// Board entries are typed loosely upstream (`fetchBoardList` returns `any`),
-// so we describe just the fields we touch here.
 interface BoardItem {
     id: number;
     slug: string;
     ko_name: string;
     en_name?: string;
-    group?: { id: number; ko_name: string; slug: string } | null;
+    group?: { id: number; slug: string; ko_name: string } | null;
 }
 
+/**
+ * Mirrors `lib/pages/board_list_page.dart`.
+ *
+ * - 28/700 brand-red title in the AppBar (this is the "게시판" header that
+ *   our previous build was rendering in 22/black instead).
+ * - Search field row (filled #F0F0F0).
+ * - Three quick links: 전체 보기 / 인기글 / 스크랩.
+ * - 1px divider, then board groups (each expandable, default open).
+ * - Group 2 is the standalone 자유게시판 board.
+ */
 export default function BoardListPage() {
+    const router = useRouter();
     const [boards, setBoards] = useState<BoardItem[] | null>(null);
 
     useEffect(() => {
         let cancelled = false;
         fetchBoardList()
             .then((res) => {
-                // The endpoint returns either an array or a paginated wrapper.
                 const list: BoardItem[] = Array.isArray(res) ? res : (res?.results ?? []);
                 if (!cancelled) setBoards(list);
             })
@@ -38,104 +44,139 @@ export default function BoardListPage() {
 
     const grouped = useMemo(() => {
         if (!boards) return null;
-        const map = new Map<string, { name: string; items: BoardItem[] }>();
+        const groups: Record<number, { name: string; items: BoardItem[] }> = {};
         for (const b of boards) {
-            const key = b.group?.slug ?? '__ungrouped';
-            const name = b.group?.ko_name ?? '기타';
-            if (!map.has(key)) map.set(key, { name, items: [] });
-            map.get(key)!.items.push(b);
+            const g = b.group;
+            if (!g) continue;
+            if (!groups[g.id]) groups[g.id] = { name: g.ko_name, items: [] };
+            groups[g.id].items.push(b);
         }
-        return Array.from(map.values());
+        return groups;
     }, [boards]);
 
     return (
         <Screen>
-            <BoardHeader />
-            <SearchTrigger />
+            {/* AppBar */}
+            <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-5">
+                <h1 className="text-[28px] font-bold text-ara_red">게시판</h1>
+            </header>
 
-            {grouped === null && <ListSkeleton />}
-            {grouped && grouped.length === 0 && (
-                <div
-                    style={{
-                        padding: 'var(--ara-spacing-xl)',
-                        textAlign: 'center',
-                        color: 'var(--ara-text-tertiary)',
-                    }}
+            <div className="px-5">
+                {/* Search trigger */}
+                <button
+                    type="button"
+                    onClick={() => router.push('/web_view/Search')}
+                    className="flex h-10 w-full items-center rounded-[10px] bg-[#F0F0F0] px-2 text-left"
                 >
-                    게시판을 불러올 수 없습니다.
-                </div>
-            )}
-            {grouped &&
-                grouped.map((group) => (
-                    <section key={group.name}>
-                        <div
-                            style={{
-                                padding: '12px var(--ara-spacing-lg) 6px',
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: 'var(--ara-text-tertiary)',
-                            }}
-                        >
-                            {group.name}
-                        </div>
-                        {group.items.map((board) => (
-                            <Link
-                                key={board.id}
-                                href={`/web_view/Board/${board.slug}`}
-                                className="ara-list-row"
-                                style={{
-                                    textDecoration: 'none',
-                                    color: 'inherit',
-                                    justifyContent: 'space-between',
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        fontSize: 15,
-                                        fontWeight: 500,
-                                        color: 'var(--ara-text-primary)',
-                                    }}
+                    <span className="mr-1 inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
+                        <SearchIcon size={20} />
+                    </span>
+                    <span className="text-[16px] font-medium text-[#9E9E9E]">
+                        게시판/게시물/댓글을 검색하세요
+                    </span>
+                </button>
+
+                <div className="h-[21px]" />
+
+                <QuickLinkRow
+                    icon={<MenuIcon size={32} />}
+                    label="전체 보기"
+                    onTap={() => router.push('/web_view/Board/_all')}
+                />
+                <div className="h-[10px]" />
+                <QuickLinkRow
+                    icon={<StarIcon size={32} />}
+                    label="인기글"
+                    onTap={() => router.push('/web_view/Board/_top')}
+                />
+                <div className="h-[10px]" />
+                <QuickLinkRow
+                    icon={<DownloadIcon size={32} />}
+                    label="스크랩"
+                    onTap={() => router.push('/web_view/Board/_scraps')}
+                />
+
+                <div className="h-5" />
+                <div className="h-px bg-[#F0F0F0]" />
+                <div className="h-[10px]" />
+
+                {grouped &&
+                    Object.entries(grouped).map(([id, group]) => {
+                        if (id === '2') {
+                            // 자유게시판 — single board, not expandable.
+                            const b = group.items[0];
+                            if (!b) return null;
+                            return (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    onClick={() => router.push(`/web_view/Board/${b.slug}`)}
+                                    className="flex h-12 w-full items-center bg-transparent"
                                 >
-                                    {board.ko_name}
-                                </span>
-                                <ChevronRight />
-                            </Link>
-                        ))}
-                    </section>
-                ))}
+                                    <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                                        <NotifyIcon size={32} />
+                                    </span>
+                                    <span className="ml-[5px] text-[20px] font-bold text-[#666666]">
+                                        {b.ko_name}
+                                    </span>
+                                </button>
+                            );
+                        }
+                        return <BoardGroupTile key={id} name={group.name} items={group.items} />;
+                    })}
+            </div>
         </Screen>
     );
 }
 
-function ListSkeleton() {
+function QuickLinkRow({ icon, label, onTap }: { icon: React.ReactNode; label: string; onTap: () => void }) {
     return (
-        <div>
-            {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="ara-list-row">
-                    <div className="ara-skeleton" style={{ height: 16, width: '50%' }} />
-                </div>
-            ))}
-        </div>
+        <button
+            type="button"
+            onClick={onTap}
+            className="flex h-8 w-full items-center bg-transparent"
+        >
+            <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                {icon}
+            </span>
+            <span className="ml-[5px] text-[17px] font-bold text-[#666666]">{label}</span>
+        </button>
     );
 }
 
-function ChevronRight() {
+function BoardGroupTile({ name, items }: { name: string; items: BoardItem[] }) {
+    const router = useRouter();
     return (
-        <svg
-            width="16"
-            height="16"
-            viewBox="0 0 20 20"
-            fill="none"
-            aria-hidden
-            style={{ color: 'var(--ara-text-tertiary)' }}
-        >
-            <path
-                d="M7.5 4L13.5 10L7.5 16"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
+        <details open className="group">
+            <summary className="flex h-[39px] cursor-pointer list-none items-center [&::-webkit-details-marker]:hidden">
+                <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#666666]">
+                    <NotifyIcon size={32} />
+                </span>
+                <span className="ml-[5px] text-[20px] font-bold text-[#666666]">{name}</span>
+                <span className="ml-auto text-ara_red transition-transform group-open:rotate-90 group-open:text-black">
+                    <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+                        <path
+                            d="M12 8L20 16L12 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                </span>
+            </summary>
+            <div>
+                {items.map((b) => (
+                    <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => router.push(`/web_view/Board/${b.slug}`)}
+                        className="flex h-[39px] w-full items-center bg-transparent pl-[40px] text-left"
+                    >
+                        <span className="text-[16px] font-medium text-[#666666]">{b.ko_name}</span>
+                    </button>
+                ))}
+            </div>
+        </details>
     );
 }

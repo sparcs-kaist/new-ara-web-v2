@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen, AppHeader } from '@/app/web_view/_components';
+import { AppHeader, Screen } from '@/app/web_view/_components';
 import { fetchMe, updateUser } from '@/lib/api/user';
 
 interface MeProfile {
@@ -14,6 +14,11 @@ interface MeProfile {
     see_social?: boolean;
 }
 
+/**
+ * Mirrors `lib/pages/profile_edit_page.dart`. A round 96px avatar at the
+ * top, "변경" button, a single nickname text field, and a sticky red
+ * 저장 CTA at the bottom.
+ */
 export default function ProfileEditPage() {
     const router = useRouter();
     const fileRef = useRef<HTMLInputElement | null>(null);
@@ -58,7 +63,9 @@ export default function ProfileEditPage() {
             router.back();
         } catch (e) {
             console.warn('updateUser failed', e);
-            alert('저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            if (typeof window !== 'undefined') {
+                window.alert('저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+            }
         } finally {
             setSaving(false);
         }
@@ -68,37 +75,20 @@ export default function ProfileEditPage() {
         <Screen withTabBar={false}>
             <AppHeader title="프로필 수정" />
 
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: 'var(--ara-spacing-xl) var(--ara-spacing-lg)',
-                    gap: 'var(--ara-spacing-md)',
-                }}
-            >
-                <div
-                    style={{
-                        width: 96,
-                        height: 96,
-                        borderRadius: 999,
-                        background: 'var(--ara-bg-muted)',
-                        backgroundImage: previewUrl ? `url(${previewUrl})` : undefined,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                    }}
-                />
+            <div className="flex flex-col items-center gap-3 px-5 pt-8 pb-4">
+                <span
+                    className="inline-flex h-[96px] w-[96px] items-center justify-center overflow-hidden rounded-full bg-[#E5E5E5]"
+                    aria-hidden
+                >
+                    {previewUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                    )}
+                </span>
                 <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    style={{
-                        background: 'transparent',
-                        border: 0,
-                        color: 'var(--ara-primary)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                    }}
+                    className="bg-transparent text-[13px] font-medium text-ara_red"
                 >
                     변경
                 </button>
@@ -106,68 +96,34 @@ export default function ProfileEditPage() {
                     ref={fileRef}
                     type="file"
                     accept="image/*"
-                    style={{ display: 'none' }}
+                    className="hidden"
                     onChange={onPickFile}
                 />
             </div>
 
-            <label
-                style={{
-                    display: 'block',
-                    padding: '0 var(--ara-spacing-lg)',
-                    fontSize: 12,
-                    color: 'var(--ara-text-secondary)',
-                    marginBottom: 6,
-                }}
-            >
-                닉네임
-            </label>
-            <div style={{ padding: '0 var(--ara-spacing-lg)' }}>
+            <label className="block px-5 pb-1 text-[12px] text-[#646464]">닉네임</label>
+            <div className="px-5">
                 <input
                     type="text"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="닉네임을 입력하세요"
-                    style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        fontSize: 14,
-                        borderRadius: 'var(--ara-radius-md)',
-                        border: '1px solid var(--ara-divider-strong)',
-                        background: 'var(--ara-bg)',
-                        color: 'var(--ara-text-primary)',
-                        outline: 'none',
-                    }}
+                    className="block w-full rounded-[10px] bg-[#F8F8F8] px-3 py-3 text-[14px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
                 />
             </div>
 
             <div
+                className="fixed inset-x-0 z-30 bg-white px-5 pt-3"
                 style={{
-                    position: 'fixed',
-                    left: 0,
-                    right: 0,
-                    bottom: 'var(--ara-safe-bottom)',
-                    padding: 'var(--ara-spacing-lg)',
-                    background: 'var(--ara-bg)',
-                    borderTop: '1px solid var(--ara-divider)',
+                    bottom: 0,
+                    paddingBottom: 'calc(12px + var(--ara-safe-bottom))',
                 }}
             >
                 <button
                     type="button"
                     onClick={onSave}
                     disabled={saving || !nickname.trim()}
-                    style={{
-                        width: '100%',
-                        padding: '14px',
-                        borderRadius: 'var(--ara-radius-md)',
-                        border: 0,
-                        background: 'var(--ara-primary)',
-                        color: 'var(--ara-text-on-primary)',
-                        fontSize: 15,
-                        fontWeight: 700,
-                        cursor: saving ? 'default' : 'pointer',
-                        opacity: !nickname.trim() ? 0.5 : 1,
-                    }}
+                    className="block h-[50px] w-full rounded-[10px] bg-ara_red text-[15px] font-bold text-white disabled:bg-ara_red_bright"
                 >
                     {saving ? '저장 중...' : '저장'}
                 </button>

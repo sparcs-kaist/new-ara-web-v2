@@ -6,16 +6,23 @@ import { isTabRoot } from './BottomTabBar';
 
 interface ScreenProps {
     children: ReactNode;
-    /** When true, leave space for the bottom tab bar. Defaults to "auto":
-     *  on a tab root path we reserve space; on detail pages we don't. */
+    /**
+     * Reserve space for the bottom tab bar.
+     * - `'auto'` (default): reserve when the route is one of the tab roots.
+     * - `true` / `false`: force on/off.
+     */
     withTabBar?: boolean | 'auto';
     className?: string;
 }
 
 /**
- * Standard mobile screen wrapper. Applies safe-area padding and reserves
- * space for the bottom tab bar when appropriate. Use this as the root of
- * any `web_view/<route>/page.tsx`.
+ * Root wrapper for any web_view page. Applies safe-area padding (top/sides
+ * always; bottom only when no tab bar is visible) and reserves space for
+ * the bottom tab bar so content isn't hidden underneath it.
+ *
+ * The visual chrome (header, lists, etc.) is provided by each page — Screen
+ * intentionally adds no border, shadow or background of its own so the
+ * native UI stays exactly the way Flutter rendered it.
  */
 export function Screen({ children, withTabBar = 'auto', className }: ScreenProps) {
     const pathname = usePathname();
@@ -23,13 +30,15 @@ export function Screen({ children, withTabBar = 'auto', className }: ScreenProps
 
     return (
         <main
-            className={[
-                'ara-screen',
-                showTabBar ? 'ara-screen--with-tabbar' : 'ara-screen--no-tabbar',
-                className ?? '',
-            ]
-                .filter(Boolean)
-                .join(' ')}
+            className={['min-h-[100dvh] bg-white', className ?? ''].filter(Boolean).join(' ')}
+            style={{
+                paddingTop: 'var(--ara-safe-top)',
+                paddingLeft: 'var(--ara-safe-left)',
+                paddingRight: 'var(--ara-safe-right)',
+                paddingBottom: showTabBar
+                    ? 'calc(56px + var(--ara-safe-bottom))'
+                    : 'var(--ara-safe-bottom)',
+            }}
         >
             {children}
         </main>

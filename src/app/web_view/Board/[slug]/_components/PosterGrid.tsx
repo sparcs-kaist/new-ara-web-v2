@@ -4,8 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { ResponsePost } from '@/lib/types/post';
 
-// Loose attachment shape — `ResponsePost.attachments` isn't typed on
-// `ResponsePost` directly, so we describe what we need.
 interface AttachmentLike {
     file: string;
     mimetype?: string;
@@ -24,19 +22,11 @@ function findImage(attachments: unknown): AttachmentLike | undefined {
     });
 }
 
+/** Two-column poster grid for the 포스터 board. */
 export function PosterGrid({ posts }: PosterGridProps) {
     return (
-        <div
-            style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 'var(--ara-spacing-md)',
-                padding: 'var(--ara-spacing-lg)',
-            }}
-        >
+        <div className="grid grid-cols-2 gap-3 px-5">
             {posts.map((post) => {
-                // attachments live on the article but ResponsePost doesn't list them;
-                // pull through an unknown cast.
                 const img = findImage(
                     (post as unknown as { attachments?: AttachmentLike[] }).attachments,
                 );
@@ -44,22 +34,11 @@ export function PosterGrid({ posts }: PosterGridProps) {
                     <Link
                         key={post.id}
                         href={`/web_view/Post/${post.id}`}
-                        style={{
-                            display: 'block',
-                            textDecoration: 'none',
-                            color: 'inherit',
-                        }}
+                        className="block text-inherit no-underline"
                     >
                         <div
-                            style={{
-                                width: '100%',
-                                aspectRatio: '210/297',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                borderRadius: 'var(--ara-radius-md)',
-                                border: '1px solid var(--ara-divider)',
-                                background: 'var(--ara-bg-muted)',
-                            }}
+                            className="relative w-full overflow-hidden rounded-[10px] bg-[#F8F8F8]"
+                            style={{ aspectRatio: '210/297' }}
                         >
                             {img ? (
                                 <Image
@@ -70,30 +49,13 @@ export function PosterGrid({ posts }: PosterGridProps) {
                                     style={{ objectFit: 'cover' }}
                                 />
                             ) : (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'var(--ara-text-quaternary)',
-                                        fontSize: 12,
-                                    }}
-                                >
+                                <div className="absolute inset-0 flex items-center justify-center text-[12px] text-[#B1B1B1]">
                                     이미지 없음
                                 </div>
                             )}
                         </div>
                         <div
-                            style={{
-                                marginTop: 8,
-                                fontSize: 13,
-                                fontWeight: 500,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                            }}
+                            className="mt-2 truncate text-[13px] font-medium text-black"
                             title={post.title}
                         >
                             {post.title}
