@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import http from '@/lib/api/http';
-import { CloseIcon, SendIcon, StickyComposer } from '@/app/web_view/_components';
+import { Close1Icon, SendIcon, StickyComposer } from '@/app/web_view/_components';
 
 interface CommentComposerProps {
     postId: number;
@@ -125,7 +125,7 @@ export function CommentComposer({
                             aria-label="취소"
                             className="mr-2 flex h-[30px] w-[30px] items-center justify-center bg-transparent text-ara_red"
                         >
-                            <CloseIcon size={22} />
+                            <Close1Icon size={22} />
                         </button>
                     )}
 

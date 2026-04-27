@@ -32,7 +32,8 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
 
     const positive = post.positive_vote_count ?? 0;
     const negative = post.negative_vote_count ?? 0;
-    const comments = post.comments?.length ?? 0;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const comments = (post as any).comment_count ?? post.comments?.length ?? 0;
     const myVote = post.my_vote;
 
     return (

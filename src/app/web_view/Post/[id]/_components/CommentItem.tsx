@@ -7,7 +7,7 @@ import {
     DislikeIcon,
     LikeIcon,
     MoreIcon,
-    ReplyArrowIcon,
+    RightArrow2Icon,
 } from '@/app/web_view/_components';
 import type { Comment, CommentNested } from '@/lib/types/post';
 
@@ -190,7 +190,7 @@ export function CommentItem({
                                     onClick={() => onReply(comment.id, comment.name_type)}
                                     className="flex items-center bg-transparent text-black"
                                 >
-                                    <ReplyArrowIcon size={11} />
+                                    <RightArrow2Icon size={11} />
                                     <span className="ml-1 text-[13px] font-medium">답글</span>
                                 </button>
                             </>

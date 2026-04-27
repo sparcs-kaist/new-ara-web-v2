@@ -31,3 +31,21 @@
 [data-ara-shell] *::after {
     box-sizing: border-box;
 }
+
+/* Native-app feel: kill browser button focus halos and tap highlights inside
+   the WebView shell. Inputs keep their own placeholder styles. */
+[data-ara-shell] button:focus,
+[data-ara-shell] button:focus-visible,
+[data-ara-shell] [role="button"]:focus,
+[data-ara-shell] [role="button"]:focus-visible,
+[data-ara-shell] [role="tab"]:focus,
+[data-ara-shell] [role="tab"]:focus-visible,
+[data-ara-shell] a:focus,
+[data-ara-shell] a:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+[data-ara-shell] button {
+    -webkit-tap-highlight-color: transparent;
+}

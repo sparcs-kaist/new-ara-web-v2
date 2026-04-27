@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { fetchNotifications } from '@/lib/api/notification';
-import { BoardIcon, HomeIcon, MemberIcon, NotificationIcon } from './icons';
+import { HomeIcon, MemberIcon, NotificationIcon, PostListIcon } from './icons';
 
 interface Tab {
     path: string;
@@ -20,7 +20,7 @@ const TABS: Tab[] = [
     {
         path: '/web_view/Board',
         matcher: /^\/web_view\/Board(\/|$)/,
-        icon: (active) => <BoardIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+        icon: (active) => <PostListIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
         path: '/web_view/Notifications',

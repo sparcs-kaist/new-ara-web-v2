@@ -163,7 +163,7 @@ export default function MainPage() {
 
             {/* 실시간 인기 */}
             <section className="pt-2">
-                <MainPageTextButton label="실시간 인기 글" onPress={() => router.push('/web_view/Board/_top')} />
+                <MainPageTextButton label="실시간 인기글" onPress={() => router.push('/web_view/Board/_top')} />
                 <div className="px-5">
                     {[0, 1, 2].map((i) => {
                         const post = top[i];
@@ -213,10 +213,16 @@ export default function MainPage() {
                         color="#1F4899"
                         leading={<KaistMark />}
                         onLabelTap={() => goBoard('portal-notice')}
-                        post={data.portal[0] ?? null}
-                        onPostTap={() => data.portal[0] && goPost(data.portal[0].id)}
                     />
                     <div className="h-[10px]" />
+                    {data.portal[0] && (
+                        <>
+                            <button type="button" onClick={() => goPost(data.portal[0].id)} className="block w-full bg-transparent text-left">
+                                <LittleText post={data.portal[0]} />
+                            </button>
+                            <div className="h-[10px]" />
+                        </>
+                    )}
                     {data.portal[1] && (
                         <>
                             <button type="button" onClick={() => goPost(data.portal[1].id)} className="block w-full bg-transparent text-left">
@@ -230,14 +236,13 @@ export default function MainPage() {
                             <button type="button" onClick={() => goPost(data.portal[2].id)} className="block w-full bg-transparent text-left">
                                 <LittleText post={data.portal[2]} />
                             </button>
-                            <div className="h-[10px]" />
                         </>
                     )}
                     <div className="h-[14px]" />
                     <HairlineDivider />
                     <div className="h-[14px]" />
                     <NoticeRow
-                        label="입주 시설"
+                        label="입주 업체"
                         color="#646464"
                         onLabelTap={() => goBoard('facility-notice')}
                         post={data.facility[0] ?? null}
@@ -245,7 +250,7 @@ export default function MainPage() {
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
-                        label="아라"
+                        label="Ara 운영진"
                         color="#ED3A3A"
                         onLabelTap={() => goBoard('ara-notice')}
                         post={data.ara[0] ?? null}
@@ -269,7 +274,7 @@ export default function MainPage() {
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
-                        label="장터"
+                        label="중고거래"
                         color="#646464"
                         onLabelTap={() => goBoard('market')}
                         post={tradeFirst.market}
@@ -319,12 +324,17 @@ function StudentRow({ label, post, onTap }: { label: string; post: ResponsePost 
     );
 }
 
-/** Tiny KAIST monogram used in the portal notice row. Kept inline so we don't
- *  have to bundle the original PNG inside web_view. */
+/** Real KAIST monogram (`assets/icons/kaist.png` → `/webview/icons/kaist.png`). */
 function KaistMark() {
     return (
-        <span className="inline-flex h-[19px] w-[19px] items-center justify-center rounded-sm bg-[#1F4899] text-[10px] font-extrabold text-white">
-            KS
-        </span>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src="/webview/icons/kaist.png"
+            alt="KAIST"
+            width={19}
+            height={19}
+            className="h-[19px] w-[19px] object-cover"
+            draggable={false}
+        />
     );
 }
