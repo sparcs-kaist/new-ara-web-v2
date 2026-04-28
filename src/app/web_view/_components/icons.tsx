@@ -182,6 +182,9 @@ export function VerifiedIcon(p: IconProps) {
 export function LanguageIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/language.svg`} fallback={24} {...p} />;
 }
+export function CameraIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/camera.svg`} fallback={24} {...p} />;
+}
 
 /* =========================================================================
  * Post-preview badges + meatballs menu.

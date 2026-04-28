@@ -12,7 +12,8 @@ import {
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import type { Comment, PostData } from '@/lib/types/post';
-import { AppHeader, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import { AppHeader, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { ArticleHeader } from './_components/ArticleHeader';
 import { Attachments } from './_components/Attachments';
 import { CommentComposer } from './_components/CommentComposer';
@@ -25,6 +26,7 @@ type VoteAction = 'vote_positive' | 'vote_negative' | 'vote_cancel';
 export default function WebViewPostDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const onBack = useSafeBack();
     const idRaw = (params?.id ?? '') as string;
     const postId = Number.parseInt(idRaw, 10);
 
@@ -153,7 +155,7 @@ export default function WebViewPostDetailPage() {
 
     const handleEdit = () => {
         if (!post) return;
-        router.push(`/web_view/PostWrite?id=${post.id}`);
+        router.push(`/web_view/PostWrite?edit=${post.id}`);
     };
 
     const handleDelete = async () => {
@@ -162,7 +164,7 @@ export default function WebViewPostDetailPage() {
         try {
             const { deletePost } = await import('@/lib/api/post');
             await deletePost(post.id);
-            router.back();
+            onBack();
         } catch (e) {
             console.warn('deletePost failed', e);
         }
@@ -199,7 +201,7 @@ export default function WebViewPostDetailPage() {
     const leading = (
         <button
             type="button"
-            onClick={() => router.back()}
+            onClick={onBack}
             className="flex items-center text-ara_red"
             aria-label="뒤로"
         >
@@ -214,10 +216,11 @@ export default function WebViewPostDetailPage() {
 
             <ArticleHeader post={post} />
 
-            {/* Article body */}
-            <section className="px-5 pt-[10px] text-[15px] leading-relaxed text-black">
+            {/* Article body — anchor clicks are intercepted so external URLs
+                open via the bridge instead of replacing the WebView. */}
+            <ContentArea className="px-5 pt-[10px] text-[15px] leading-relaxed text-black">
                 <TextEditor content={post.content} editable={false} />
-            </section>
+            </ContentArea>
 
             {post.attachments && post.attachments.length > 0 && (
                 <div className="pt-3">
