@@ -114,7 +114,7 @@ export default function BoardListPage() {
                                 <button
                                     key={id}
                                     type="button"
-                                    onClick={() => router.push(`/web_view/Board/${b.slug}`)}
+                                    onClick={() => router.push(`/web_view/Board/${b.id}`)}
                                     className="flex h-12 w-full items-center bg-transparent"
                                 >
                                     <span className="ml-[3px] inline-flex h-8 w-8 items-center justify-center text-[#333333]">
@@ -166,7 +166,7 @@ function BoardGroupTile({ name, items }: { name: string; items: BoardItem[] }) {
                     <button
                         key={b.id}
                         type="button"
-                        onClick={() => router.push(`/web_view/Board/${b.slug}`)}
+                        onClick={() => router.push(`/web_view/Board/${b.id}`)}
                         className="flex h-[39px] w-full items-center bg-transparent pl-[40px] text-left"
                     >
                         <span className="text-[16px] font-medium text-[#333333]">{b.ko_name}</span>
