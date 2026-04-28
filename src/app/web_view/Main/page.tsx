@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen, LittleText } from '@/app/web_view/_components';
+import { Screen, LittleText, SkeletonRow, SkeletonLine } from '@/app/web_view/_components';
 import { fetchMe } from '@/lib/api/user';
 import type { ResponsePost } from '@/lib/types/post';
 import { useBoardList, useBoardSection, useTopArticles } from '@/app/web_view/_query';
@@ -57,7 +57,8 @@ export default function MainPage() {
     }, [router]);
 
     const { data: boards } = useBoardList();
-    const { data: top } = useTopArticles(3);
+    const topQuery = useTopArticles(3);
+    const top = topQuery.data;
 
     // Resolve every section's boardId/topicId once boards load. Each
     // section gets its own cached query — back-navigating to Main shows
@@ -78,16 +79,35 @@ export default function MainPage() {
         [boards],
     );
 
-    const talks = useBoardSection({ ...sectionRefs.talk, pageSize: 3 }).data ?? [];
-    const portal = useBoardSection({ ...sectionRefs.portal, pageSize: 3 }).data ?? [];
-    const facility = useBoardSection({ ...sectionRefs.facility, pageSize: 3 }).data ?? [];
-    const ara = useBoardSection({ ...sectionRefs.ara, pageSize: 3 }).data ?? [];
-    const realEstate = useBoardSection({ ...sectionRefs.realEstate, pageSize: 3 }).data ?? [];
-    const market = useBoardSection({ ...sectionRefs.market, pageSize: 3 }).data ?? [];
-    const wanted = useBoardSection({ ...sectionRefs.wanted, pageSize: 3 }).data ?? [];
-    const grad = useBoardSection({ ...sectionRefs.grad, pageSize: 3 }).data ?? [];
-    const undergrad = useBoardSection({ ...sectionRefs.undergrad, pageSize: 3 }).data ?? [];
-    const freshman = useBoardSection({ ...sectionRefs.freshman, pageSize: 3 }).data ?? [];
+    const talksQuery = useBoardSection({ ...sectionRefs.talk, pageSize: 3 });
+    const portalQuery = useBoardSection({ ...sectionRefs.portal, pageSize: 3 });
+    const facilityQuery = useBoardSection({ ...sectionRefs.facility, pageSize: 3 });
+    const araQuery = useBoardSection({ ...sectionRefs.ara, pageSize: 3 });
+    const realEstateQuery = useBoardSection({ ...sectionRefs.realEstate, pageSize: 3 });
+    const marketQuery = useBoardSection({ ...sectionRefs.market, pageSize: 3 });
+    const wantedQuery = useBoardSection({ ...sectionRefs.wanted, pageSize: 3 });
+    const gradQuery = useBoardSection({ ...sectionRefs.grad, pageSize: 3 });
+    const undergradQuery = useBoardSection({ ...sectionRefs.undergrad, pageSize: 3 });
+    const freshmanQuery = useBoardSection({ ...sectionRefs.freshman, pageSize: 3 });
+    const talks = talksQuery.data ?? [];
+    const portal = portalQuery.data ?? [];
+    const facility = facilityQuery.data ?? [];
+    const ara = araQuery.data ?? [];
+    const realEstate = realEstateQuery.data ?? [];
+    const market = marketQuery.data ?? [];
+    const wanted = wantedQuery.data ?? [];
+    const grad = gradQuery.data ?? [];
+    const undergrad = undergradQuery.data ?? [];
+    const freshman = freshmanQuery.data ?? [];
+
+    /**
+     * "Pending" here means: we haven't received this section's first
+     * response yet. Sections render skeletons until that flips, then
+     * the real rows take over. Once data exists in the cache, we keep
+     * showing it across revalidations — no flicker on back-nav.
+     */
+    const isPending = (q: { data: unknown; isFetching: boolean }) =>
+        q.data === undefined && q.isFetching;
 
     // Wire native pull-to-refresh — invalidates the whole webview cache.
     usePullToRefresh();
@@ -119,21 +139,33 @@ export default function MainPage() {
             <section className="pt-2">
                 <MainPageTextButton label="실시간 인기글" onPress={() => router.push('/web_view/Board/_top')} />
                 <div className="px-5">
-                    {[0, 1, 2].map((i) => {
-                        const post = topList[i];
-                        if (!post) return null;
-                        return (
-                            <div key={post.id}>
-                                <PopularBoardRow post={post} rank={i + 1} />
-                                {i < 2 && topList[i + 1] && (
-                                    <div className="flex">
-                                        <div className="w-[28px]" />
-                                        <div className="h-px flex-1 bg-[#F0F0F0]" />
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                    {isPending(topQuery)
+                        ? [0, 1, 2].map((i) => (
+                              <div key={`top-skel-${i}`}>
+                                  <SkeletonRow />
+                                  {i < 2 && (
+                                      <div className="flex">
+                                          <div className="w-[28px]" />
+                                          <div className="h-px flex-1 bg-[#F0F0F0]" />
+                                      </div>
+                                  )}
+                              </div>
+                          ))
+                        : [0, 1, 2].map((i) => {
+                              const post = topList[i];
+                              if (!post) return null;
+                              return (
+                                  <div key={post.id}>
+                                      <PopularBoardRow post={post} rank={i + 1} />
+                                      {i < 2 && topList[i + 1] && (
+                                          <div className="flex">
+                                              <div className="w-[28px]" />
+                                              <div className="h-px flex-1 bg-[#F0F0F0]" />
+                                          </div>
+                                      )}
+                                  </div>
+                              );
+                          })}
                 </div>
             </section>
 
@@ -143,16 +175,23 @@ export default function MainPage() {
             <section>
                 <MainPageTextButton label="자유게시판" onPress={() => goBoard('talk')} />
                 <div className="px-5">
-                    {[0, 1, 2].map((i) => {
-                        const post = talks[i];
-                        if (!post) return null;
-                        return (
-                            <div key={post.id}>
-                                <PopularBoardRow post={post} />
-                                {i < 2 && talks[i + 1] && <HairlineDivider />}
-                            </div>
-                        );
-                    })}
+                    {isPending(talksQuery)
+                        ? [0, 1, 2].map((i) => (
+                              <div key={`talk-skel-${i}`}>
+                                  <SkeletonRow />
+                                  {i < 2 && <HairlineDivider />}
+                              </div>
+                          ))
+                        : [0, 1, 2].map((i) => {
+                              const post = talks[i];
+                              if (!post) return null;
+                              return (
+                                  <div key={post.id}>
+                                      <PopularBoardRow post={post} />
+                                      {i < 2 && talks[i + 1] && <HairlineDivider />}
+                                  </div>
+                              );
+                          })}
                 </div>
             </section>
 
@@ -169,29 +208,40 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('portal-notice')}
                     />
                     <div className="h-[10px]" />
-                    {portal[0] && (
-                        <>
-                            <button type="button" onClick={() => goPost(portal[0].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={portal[0]} />
-                            </button>
-                            <div className="h-[10px]" />
-                        </>
-                    )}
-                    {portal[1] && (
-                        <>
-                            <button type="button" onClick={() => goPost(portal[1].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={portal[1]} />
-                            </button>
-                            <div className="h-[10px]" />
-                        </>
-                    )}
-                    {portal[2] && (
-                        <>
-                            <button type="button" onClick={() => goPost(portal[2].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={portal[2]} />
-                            </button>
-                        </>
-                    )}
+                    {isPending(portalQuery)
+                        ? [0, 1, 2].map((i) => (
+                              <div key={`portal-skel-${i}`}>
+                                  <SkeletonLine />
+                                  {i < 2 && <div className="h-[10px]" />}
+                              </div>
+                          ))
+                        : (
+                              <>
+                                  {portal[0] && (
+                                      <>
+                                          <button type="button" onClick={() => goPost(portal[0].id)} className="block w-full bg-transparent text-left">
+                                              <LittleText post={portal[0]} />
+                                          </button>
+                                          <div className="h-[10px]" />
+                                      </>
+                                  )}
+                                  {portal[1] && (
+                                      <>
+                                          <button type="button" onClick={() => goPost(portal[1].id)} className="block w-full bg-transparent text-left">
+                                              <LittleText post={portal[1]} />
+                                          </button>
+                                          <div className="h-[10px]" />
+                                      </>
+                                  )}
+                                  {portal[2] && (
+                                      <>
+                                          <button type="button" onClick={() => goPost(portal[2].id)} className="block w-full bg-transparent text-left">
+                                              <LittleText post={portal[2]} />
+                                          </button>
+                                      </>
+                                  )}
+                              </>
+                          )}
                     <div className="h-[14px]" />
                     <HairlineDivider />
                     <div className="h-[14px]" />
@@ -201,6 +251,7 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('facility-notice')}
                         post={facility[0] ?? null}
                         onPostTap={() => facility[0] && goPost(facility[0].id)}
+                        loading={isPending(facilityQuery)}
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
@@ -209,6 +260,7 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('ara-notice')}
                         post={ara[0] ?? null}
                         onPostTap={() => ara[0] && goPost(ara[0].id)}
+                        loading={isPending(araQuery)}
                     />
                 </SectionBox>
             </section>
@@ -225,6 +277,7 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('real-estate')}
                         post={tradeFirst.realEstate}
                         showTopic
+                        loading={isPending(realEstateQuery)}
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
@@ -233,6 +286,7 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('market')}
                         post={tradeFirst.market}
                         showTopic
+                        loading={isPending(marketQuery)}
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
@@ -241,6 +295,7 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('wanted')}
                         post={tradeFirst.wanted}
                         showTopic
+                        loading={isPending(wantedQuery)}
                     />
                 </SectionBox>
             </section>
@@ -252,11 +307,11 @@ export default function MainPage() {
                 <MainPageTextButton label="학생 단체" onPress={() => goBoard('students-group')} />
                 <div className="h-[9px]" />
                 <SectionBox>
-                    <StudentRow label="원총" post={grad[0] ?? null} onTap={() => grad[0] && goPost(grad[0].id)} />
+                    <StudentRow label="원총" post={grad[0] ?? null} loading={isPending(gradQuery)} onTap={() => grad[0] && goPost(grad[0].id)} />
                     <div className="h-[10px]" />
-                    <StudentRow label="총학" post={undergrad[0] ?? null} onTap={() => undergrad[0] && goPost(undergrad[0].id)} />
+                    <StudentRow label="총학" post={undergrad[0] ?? null} loading={isPending(undergradQuery)} onTap={() => undergrad[0] && goPost(undergrad[0].id)} />
                     <div className="h-[10px]" />
-                    <StudentRow label="새학" post={freshman[0] ?? null} onTap={() => freshman[0] && goPost(freshman[0].id)} />
+                    <StudentRow label="새학" post={freshman[0] ?? null} loading={isPending(freshmanQuery)} onTap={() => freshman[0] && goPost(freshman[0].id)} />
                 </SectionBox>
             </section>
 
@@ -265,15 +320,19 @@ export default function MainPage() {
     );
 }
 
-function StudentRow({ label, post, onTap }: { label: string; post: ResponsePost | null; onTap?: () => void }) {
+function StudentRow({ label, post, loading, onTap }: { label: string; post: ResponsePost | null; loading?: boolean; onTap?: () => void }) {
     return (
         <div className="flex items-center gap-[10px]">
             <span className="shrink-0 text-[14px] font-bold text-[#B1B1B1]">{label}</span>
-            {post && (
+            {post ? (
                 <button type="button" onClick={onTap} className="min-w-0 flex-1 bg-transparent text-left">
                     <LittleText post={post} />
                 </button>
-            )}
+            ) : loading ? (
+                <div className="min-w-0 flex-1">
+                    <SkeletonLine />
+                </div>
+            ) : null}
         </div>
     );
 }

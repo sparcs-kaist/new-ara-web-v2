@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { fetchArticles, fetchBoardList, fetchTopArticles } from '@/lib/api/board';
 import { fetchPost } from '@/lib/api/post';
 import type { ResponsePost } from '@/lib/types/post';
@@ -85,11 +85,29 @@ interface PostQueryArgs {
     overrideHidden?: boolean;
 }
 
+/**
+ * Walk every cached `['webview', 'articles', ...]` list and the top
+ * articles cache for an entry whose id matches. Returns the first hit
+ * — used as placeholderData for `usePost` so navigating from a list
+ * shows the title/board/author immediately while the body loads.
+ */
+function findCachedPost(qc: QueryClient, postId: number): ResponsePost | undefined {
+    const lists = qc.getQueriesData<ResponsePost[]>({ queryKey: ['webview', 'articles'] });
+    for (const [, data] of lists) {
+        if (!Array.isArray(data)) continue;
+        const hit = data.find((p) => p?.id === postId);
+        if (hit) return hit;
+    }
+    return undefined;
+}
+
 export function usePost({ postId, fromView = 'all', current = 3, overrideHidden = true }: PostQueryArgs) {
+    const qc = useQueryClient();
     return useQuery({
         queryKey: KEY_POST(postId),
         queryFn: () => fetchPost({ postId, fromView, current, overrideHidden }),
         enabled: Number.isFinite(postId) && postId > 0,
+        placeholderData: () => findCachedPost(qc, postId),
     });
 }
 

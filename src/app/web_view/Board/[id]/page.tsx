@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
@@ -64,6 +65,7 @@ export default function BoardIdPage() {
     const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const qc = useQueryClient();
 
     // Resolve board metadata for non-special ids. Unknown ids bounce back
     // to /web_view/Main rather than rendering an empty list.
@@ -116,6 +118,13 @@ export default function BoardIdPage() {
                 setPosts((prev) => (p === 1 ? list : [...prev, ...list]));
                 setHasNext(Boolean(res.next));
                 setPage(p);
+                // Seed the webview cache so `usePost(id).placeholderData`
+                // can show the title/board/author the moment the user
+                // taps a row, instead of waiting for the detail call.
+                qc.setQueryData(
+                    ['webview', 'articles', 'board-list', specialKind ?? board?.id ?? 'all', p],
+                    list,
+                );
             } catch (e) {
                 console.warn('board page fetch failed', e);
                 // Stop the IntersectionObserver from retrying — without
@@ -126,7 +135,7 @@ export default function BoardIdPage() {
                 setLoading(false);
             }
         },
-        [specialKind, board],
+        [specialKind, board, qc],
     );
 
     useEffect(() => {

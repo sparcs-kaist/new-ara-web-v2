@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     archivePost,
-    fetchPost,
     reportPost,
     unarchivePost,
     votePost,
@@ -15,6 +15,7 @@ import type { Comment, PostData } from '@/lib/types/post';
 import { AppHeader, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
+import { usePost } from '@/app/web_view/_query';
 import { ArticleHeader } from './_components/ArticleHeader';
 import { Attachments } from './_components/Attachments';
 import { CommentComposer } from './_components/CommentComposer';
@@ -31,43 +32,53 @@ export default function WebViewPostDetailPage() {
     const idRaw = (params?.id ?? '') as string;
     const postId = Number.parseInt(idRaw, 10);
 
-    const [post, setPost] = useState<PostData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const qc = useQueryClient();
     const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
 
-    const load = useCallback(async () => {
-        if (!Number.isFinite(postId) || postId <= 0) {
-            setError('잘못된 게시물 주소입니다.');
-            setLoading(false);
-            return;
-        }
-        try {
-            const data = await fetchPost({
-                postId,
-                fromView: 'all',
-                current: 3,
-                overrideHidden: true,
-            });
-            setPost(formatPost({ data }) as unknown as PostData);
-            setError(null);
-        } catch (e) {
-            console.warn('fetchPost failed', e);
-            setError('게시물을 불러오지 못했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    }, [postId]);
+    /**
+     * Fetch via the WebView-scoped query cache. `placeholderData` looks up
+     * any cached article (Board list, Main feed) with this id and uses
+     * it as the initial render — the AppBar / title / author show up
+     * instantly on push, then the body fills in once the detail call
+     * completes. Lifts the perceived latency on Board → Post by ~200ms.
+     */
+    const postQuery = usePost({ postId });
+    const isInvalidId = !Number.isFinite(postId) || postId <= 0;
 
-    useEffect(() => {
-        load();
-    }, [load]);
+    // The list cache holds raw `ResponsePost`s; the detail endpoint adds
+    // comments + an extended payload. `formatPost` only normalizes the
+    // body content shape — running it on either is safe.
+    const post = postQuery.data
+        ? (formatPost({ data: postQuery.data }) as unknown as PostData)
+        : null;
+    // `isPlaceholderData` is true while we're showing a list-cache hit
+    // (title/board/author present, body+comments missing). Use it to
+    // skip the bodies/comment-section so the user doesn't see an
+    // incorrect "첫 댓글을 남겨보세요" flash for ~200ms.
+    const isPlaceholder = postQuery.isPlaceholderData;
 
-    usePullToRefresh(load);
+    const reload = useCallback(() => postQuery.refetch(), [postQuery]);
 
-    const applyVote = (action: VoteAction) => {
-        setPost((prev) => {
-            if (!prev) return prev;
+    usePullToRefresh(reload);
+
+    /** Optimistic mutate of the cached post so VoteRow / scrap buttons stay snappy. */
+    const patchPost = useCallback(
+        (patch: (p: PostData) => PostData) => {
+            qc.setQueryData<PostData>(['webview', 'post', postId], (prev) =>
+                prev ? patch(prev) : prev,
+            );
+        },
+        [qc, postId],
+    );
+
+    const handleVote = async (action: VoteAction) => {
+        if (!post) return;
+        const before = {
+            my_vote: post.my_vote,
+            pos: post.positive_vote_count,
+            neg: post.negative_vote_count,
+        };
+        patchPost((prev) => {
             let pos = prev.positive_vote_count;
             let neg = prev.negative_vote_count;
             let next: boolean | null = prev.my_vote;
@@ -86,30 +97,16 @@ export default function WebViewPostDetailPage() {
             }
             return { ...prev, my_vote: next, positive_vote_count: pos, negative_vote_count: neg };
         });
-    };
-
-    const handleVote = async (action: VoteAction) => {
-        if (!post) return;
-        const before = {
-            my_vote: post.my_vote,
-            pos: post.positive_vote_count,
-            neg: post.negative_vote_count,
-        };
-        applyVote(action);
         try {
             await votePost(post.id, action);
         } catch (e) {
             console.warn('votePost failed', e);
-            setPost((prev) =>
-                prev
-                    ? {
-                          ...prev,
-                          my_vote: before.my_vote,
-                          positive_vote_count: before.pos,
-                          negative_vote_count: before.neg,
-                      }
-                    : prev,
-            );
+            patchPost((prev) => ({
+                ...prev,
+                my_vote: before.my_vote,
+                positive_vote_count: before.pos,
+                negative_vote_count: before.neg,
+            }));
         }
     };
 
@@ -117,14 +114,17 @@ export default function WebViewPostDetailPage() {
         if (!post) return;
         try {
             if (post.my_scrap) {
-                await unarchivePost(post.my_scrap.id);
-                setPost({ ...post, my_scrap: null });
+                const scrapId = post.my_scrap.id;
+                patchPost((prev) => ({ ...prev, my_scrap: null }));
+                await unarchivePost(scrapId);
             } else {
                 const created = await archivePost(post.id);
-                setPost({ ...post, my_scrap: created });
+                patchPost((prev) => ({ ...prev, my_scrap: created }));
             }
         } catch (e) {
             console.warn('scrap failed', e);
+            // Fall back to authoritative state.
+            reload();
         }
     };
 
@@ -173,7 +173,18 @@ export default function WebViewPostDetailPage() {
         }
     };
 
-    if (!post && loading) {
+    if (isInvalidId) {
+        return (
+            <Screen withTabBar={false}>
+                <AppHeader title={null} />
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                    잘못된 게시물 주소입니다.
+                </div>
+            </Screen>
+        );
+    }
+
+    if (!post && postQuery.isPending) {
         return (
             <Screen withTabBar={false}>
                 <AppHeader title={null} />
@@ -184,11 +195,13 @@ export default function WebViewPostDetailPage() {
         );
     }
 
-    if (error) {
+    if (!post && postQuery.isError) {
         return (
             <Screen withTabBar={false}>
                 <AppHeader title={null} />
-                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">{error}</div>
+                <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">
+                    게시물을 불러오지 못했습니다.
+                </div>
             </Screen>
         );
     }
@@ -222,10 +235,16 @@ export default function WebViewPostDetailPage() {
             {/* Article body — anchor clicks are intercepted so external URLs
                 open via the bridge instead of replacing the WebView. */}
             <ContentArea className="px-5 pt-[10px] text-[15px] leading-relaxed text-black">
-                <TextEditor content={post.content} editable={false} />
+                {isPlaceholder ? (
+                    <div className="py-10 text-center text-[12px] text-[#B1B1B1]">
+                        본문 불러오는 중...
+                    </div>
+                ) : (
+                    <TextEditor content={post.content} editable={false} />
+                )}
             </ContentArea>
 
-            {post.attachments && post.attachments.length > 0 && (
+            {!isPlaceholder && post.attachments && post.attachments.length > 0 && (
                 <div className="pt-3">
                     <Attachments attachments={post.attachments} />
                 </div>
@@ -254,11 +273,11 @@ export default function WebViewPostDetailPage() {
             <div className="mx-5 mt-[15px] h-px bg-[#F0F0F0]" />
 
             <h3 className="px-5 pt-[15px] pb-[15px] text-[16px] font-bold text-black">
-                {totalCommentCount}개의 댓글
+                {isPlaceholder ? '댓글' : `${totalCommentCount}개의 댓글`}
             </h3>
 
             <section>
-                {post.comments && post.comments.length > 0 ? (
+                {isPlaceholder ? null : post.comments && post.comments.length > 0 ? (
                     post.comments.map((c) => (
                         <CommentItem
                             key={c.id}
@@ -276,7 +295,7 @@ export default function WebViewPostDetailPage() {
                                             : c.created_by?.profile?.nickname ?? '',
                                 })
                             }
-                            onChanged={load}
+                            onChanged={reload}
                         />
                     ))
                 ) : (
@@ -297,7 +316,7 @@ export default function WebViewPostDetailPage() {
                 onCancelReply={() => setReplyTarget(null)}
                 onPosted={() => {
                     setReplyTarget(null);
-                    load();
+                    reload();
                 }}
             />
         </Screen>
