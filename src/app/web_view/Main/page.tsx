@@ -142,7 +142,7 @@ export default function MainPage() {
 
     const goBoard = (slug: string) => {
         const board = boards.find((b) => b.slug === slug);
-        if (board) router.push(`/web_view/Board/${board.slug}`);
+        if (board) router.push(`/web_view/Board/${board.id}`);
     };
     const goPost = (id: number) => router.push(`/web_view/Post/${id}`);
 

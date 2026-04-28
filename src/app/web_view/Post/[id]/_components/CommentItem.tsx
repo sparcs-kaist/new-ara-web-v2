@@ -85,8 +85,11 @@ export function CommentItem({
         }
     };
 
-    const isDeleted = !!comment.deleted_at;
+    // Flutter spec: a comment is "hidden" when `is_hidden` is true; the
+    // *reason* (deleted / reported / blocked) comes from `why_hidden[0]`.
+    // `deleted_at` is a sentinel datetime even on live rows, so don't read it.
     const isHidden = comment.is_hidden ?? false;
+    const hiddenMessage = isHidden ? hiddenCommentMessage(comment.why_hidden) : null;
     const isAnonymousProfile = comment.name_type !== 1;
     const nick = nickFor(comment);
     const replies = (comment as Comment).comments;
@@ -144,13 +147,9 @@ export function CommentItem({
                 </div>
 
                 <div className="mt-[2px] pl-[30px]">
-                    {isDeleted ? (
+                    {hiddenMessage ? (
                         <p className="m-0 text-[14px] font-normal text-[#9E9E9E]">
-                            삭제된 댓글입니다.
-                        </p>
-                    ) : isHidden ? (
-                        <p className="m-0 text-[14px] font-normal text-[#9E9E9E]">
-                            숨겨진 댓글입니다.
+                            {hiddenMessage}
                         </p>
                     ) : (
                         <p className="m-0 whitespace-pre-wrap break-words text-[14px] font-normal text-[#4A4A4A]">
@@ -159,7 +158,7 @@ export function CommentItem({
                     )}
                 </div>
 
-                {!isHidden && !isDeleted && (
+                {!isHidden && (
                     <div className="mt-2 flex items-center pl-[30px]">
                         <button
                             type="button"
@@ -215,6 +214,21 @@ export function CommentItem({
             )}
         </>
     );
+}
+
+/** Mirrors `getHiddenCommentReasons` in `handle_hidden.dart`. */
+function hiddenCommentMessage(whyHidden?: string[] | null): string {
+    const reason = whyHidden?.[0];
+    switch (reason) {
+        case 'DELETED_CONTENT':
+            return '삭제된 댓글입니다.';
+        case 'REPORTED_CONTENT':
+            return '신고 누적으로 숨김된 댓글입니다.';
+        case 'BLOCKED_USER_CONTENT':
+            return '차단한 사용자의 댓글입니다.';
+        default:
+            return '숨겨진 댓글입니다.';
+    }
 }
 
 function formatTime(iso?: string | null): string {

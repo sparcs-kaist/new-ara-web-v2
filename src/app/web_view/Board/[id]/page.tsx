@@ -21,6 +21,7 @@ interface BoardItem {
 }
 
 type SpecialKind = 'all' | 'top' | 'scraps' | 'recent';
+const SPECIAL_KINDS = new Set<SpecialKind>(['all', 'top', 'scraps', 'recent']);
 
 const SPECIAL_LABEL: Record<SpecialKind, string> = {
     all: '전체보기',
@@ -30,44 +31,67 @@ const SPECIAL_LABEL: Record<SpecialKind, string> = {
 };
 
 /**
- * Mirrors `lib/pages/post_list_show_page.dart`: a list of `PostPreview`
- * rows separated by 1px hairlines, with the board name shown next to a
- * red back-arrow (the 200px-wide `leadingWidth` AppBar in Flutter).
- *
- * Recognises four pseudo-slugs that come from the Board home tab:
- * `_all`, `_top`, `_scraps`, `_recent`. Anything else is treated as a
- * real board slug and resolved against `fetchBoardList()`.
+ * Mirrors `lib/pages/post_list_show_page.dart`. The dynamic segment is
+ * the numeric board id — slugs drift between environments so an id-based
+ * route avoids 404s that would otherwise bounce the user out of the
+ * WebView. The four pseudo-segments (`_all`, `_top`, `_scraps`, `_recent`)
+ * keep their underscore-prefixed form so they don't collide with ids.
  */
-export default function BoardSlugPage() {
+export default function BoardIdPage() {
     const router = useRouter();
     const onBack = useSafeBack();
-    const params = useParams<{ slug: string }>();
-    const rawSlug = decodeURIComponent(params.slug ?? '');
-    const isSpecial = rawSlug.startsWith('_');
-    const specialKind: SpecialKind | null = isSpecial ? (rawSlug.slice(1) as SpecialKind) : null;
+    const params = useParams<{ id: string }>();
+    const rawId = decodeURIComponent(params.id ?? '');
+    const isSpecial = rawId.startsWith('_');
+    const specialCandidate = isSpecial ? rawId.slice(1) : null;
+    const specialKind: SpecialKind | null =
+        specialCandidate && SPECIAL_KINDS.has(specialCandidate as SpecialKind)
+            ? (specialCandidate as SpecialKind)
+            : null;
+    const numericBoardId = isSpecial ? null : Number.parseInt(rawId, 10);
+    const hasValidId = numericBoardId !== null && Number.isFinite(numericBoardId) && numericBoardId > 0;
+
+    // Unrecognised pseudo-slug like "_foo" — treat the same as a missing route.
+    useEffect(() => {
+        if (isSpecial && !specialKind) router.replace('/web_view/Main');
+    }, [isSpecial, specialKind, router]);
 
     const [board, setBoard] = useState<BoardItem | null>(null);
+    const [boardResolved, setBoardResolved] = useState(false);
     const [posts, setPosts] = useState<ResponsePost[]>([]);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-    // Resolve board metadata for non-special slugs.
+    // Resolve board metadata for non-special ids. Unknown ids bounce back
+    // to /web_view/Main rather than rendering an empty list.
     useEffect(() => {
         if (isSpecial) return;
+        if (!hasValidId) {
+            router.replace('/web_view/Main');
+            return;
+        }
         let cancelled = false;
         fetchBoardList()
             .then((res) => {
                 const list: BoardItem[] = Array.isArray(res) ? res : (res?.results ?? []);
                 if (cancelled) return;
-                setBoard(list.find((b) => b.slug === rawSlug) ?? null);
+                const found = list.find((b) => b.id === numericBoardId) ?? null;
+                if (!found) {
+                    router.replace('/web_view/Main');
+                    return;
+                }
+                setBoard(found);
+                setBoardResolved(true);
             })
-            .catch(() => {});
+            .catch(() => {
+                if (!cancelled) router.replace('/web_view/Main');
+            });
         return () => {
             cancelled = true;
         };
-    }, [isSpecial, rawSlug]);
+    }, [isSpecial, hasValidId, numericBoardId, router]);
 
     const loadPage = useCallback(
         async (p: number) => {
@@ -101,12 +125,12 @@ export default function BoardSlugPage() {
     );
 
     useEffect(() => {
-        if (!isSpecial && !board) return; // wait for board metadata
+        if (!isSpecial && !boardResolved) return; // wait for board metadata
         setPosts([]);
         setHasNext(true);
         setPage(1);
         loadPage(1);
-    }, [board, isSpecial, loadPage]);
+    }, [boardResolved, isSpecial, loadPage]);
 
     // Infinite scroll via IntersectionObserver.
     useEffect(() => {
