@@ -34,12 +34,34 @@
 }
 
 /*
- * Pull-to-refresh: the native shell owns the spinner via
- * `PullToRefreshController`, so the web side only needs to make sure the
- * top of the page can actually be over-scrolled. iOS WKWebView is fine by
- * default; Android needs `overscroll-behavior-y: contain` so the bounce
- * is owned by the InAppWebView, not the inner div.
+ * Reverse direction for back navigation. The leaving page is gone before
+ * we get a chance to animate it (Next.js unmounts on route change), so
+ * we approximate Cupertino's "previous slides in from -25%" by giving
+ * the *new* page (the one we're going back to) a small left-side fade-in.
+ * Subtler than the forward animation on purpose — back should feel
+ * lighter than forward.
  */
-[data-ara-shell] body {
-    overscroll-behavior-y: contain;
+@keyframes ara-page-slide-back-in {
+    from {
+        transform: translateX(-15%);
+    }
+    to {
+        transform: translateX(0);
+    }
 }
+
+.ara-page-slide-back-in {
+    animation: ara-page-slide-back-in 260ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    background: var(--ara-bg, #ffffff);
+    min-height: 100dvh;
+}
+
+/*
+ * NOTE: don't set `overscroll-behavior: contain` on the body — it
+ * absorbs the overscroll signal at the document level and the
+ * InAppWebView's `PullToRefreshController` never sees the pull. The
+ * default (`auto`) lets the gesture propagate to the WebView, which is
+ * exactly what we want.
+ */
+
