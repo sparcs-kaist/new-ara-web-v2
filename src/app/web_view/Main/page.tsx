@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Screen, LittleText } from '@/app/web_view/_components';
-import { fetchArticles, fetchBoardList, fetchTopArticles } from '@/lib/api/board';
 import { fetchMe } from '@/lib/api/user';
 import type { ResponsePost } from '@/lib/types/post';
+import { useBoardList, useBoardSection, useTopArticles } from '@/app/web_view/_query';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { HomeAppBar } from './_components/HomeAppBar';
 import { MainPageTextButton } from './_components/MainPageTextButton';
 import { PopularBoardRow } from './_components/PopularBoardRow';
@@ -21,52 +22,28 @@ interface BoardItem {
     topics?: Array<{ id: number; slug: string; ko_name: string }>;
 }
 
-interface Sections {
-    top: ResponsePost[];
-    talks: ResponsePost[];
-    portal: ResponsePost[];
-    facility: ResponsePost[];
-    ara: ResponsePost[];
-    realEstate: ResponsePost[];
-    market: ResponsePost[];
-    wanted: ResponsePost[];
-    grad: ResponsePost[];
-    undergrad: ResponsePost[];
-    freshman: ResponsePost[];
-}
-
-const EMPTY: Sections = {
-    top: [],
-    talks: [],
-    portal: [],
-    facility: [],
-    ara: [],
-    realEstate: [],
-    market: [],
-    wanted: [],
-    grad: [],
-    undergrad: [],
-    freshman: [],
-};
-
-/** Find a board id from a slug (and optionally a topic slug) in the board list. */
-function lookupBoard(boards: BoardItem[], slug: string, topicSlug = ''): { boardId?: number; topicId?: number; board?: BoardItem } {
+/** Pick the board id (and a topic id, if requested) for a known slug. */
+function lookupBoard(
+    boards: BoardItem[] | undefined,
+    slug: string,
+    topicSlug = '',
+): { boardId?: number; topicId?: number } {
+    if (!boards) return {};
     const board = boards.find((b) => b.slug === slug);
     if (!board) return {};
-    if (!topicSlug) return { boardId: board.id, board };
+    if (!topicSlug) return { boardId: board.id };
     const topic = board.topics?.find((t) => t.slug === topicSlug);
-    return { boardId: board.id, topicId: topic?.id, board };
+    return { boardId: board.id, topicId: topic?.id };
 }
 
 export default function MainPage() {
     const router = useRouter();
     const [authError, setAuthError] = useState(false);
-    const [boards, setBoards] = useState<BoardItem[]>([]);
-    const [data, setData] = useState<Sections>(EMPTY);
 
+    // 401 gate. We only need the success/failure of the call, not the body —
+    // so this stays outside react-query and just runs once.
     useEffect(() => {
         let cancelled = false;
-        // Auth gate.
         fetchMe().catch((err: unknown) => {
             const status = (err as { response?: { status?: number } })?.response?.status;
             if (status === 401 && !cancelled) {
@@ -74,88 +51,65 @@ export default function MainPage() {
                 router.replace('/web_view/Login');
             }
         });
-
-        (async () => {
-            try {
-                const [boardListRes, topRes] = await Promise.all([
-                    fetchBoardList(),
-                    fetchTopArticles({ pageSize: 3 }),
-                ]);
-                if (cancelled) return;
-                const boardList: BoardItem[] = Array.isArray(boardListRes) ? boardListRes : (boardListRes?.results ?? []);
-                setBoards(boardList);
-
-                const fetchSection = async (slug: string, topicSlug = '') => {
-                    const { boardId, topicId } = lookupBoard(boardList, slug, topicSlug);
-                    if (!boardId) return [] as ResponsePost[];
-                    const res = await fetchArticles({ boardId, topicId, pageSize: 3 });
-                    return (res?.results ?? []) as ResponsePost[];
-                };
-
-                const [
-                    talks,
-                    portal,
-                    facility,
-                    ara,
-                    realEstate,
-                    market,
-                    wanted,
-                    grad,
-                    undergrad,
-                    freshman,
-                ] = await Promise.all([
-                    fetchSection('talk'),
-                    fetchSection('portal-notice'),
-                    fetchSection('facility-notice'),
-                    fetchSection('ara-notice'),
-                    fetchSection('real-estate'),
-                    fetchSection('market'),
-                    fetchSection('wanted'),
-                    fetchSection('students-group', 'grad-assoc'),
-                    fetchSection('students-group', 'undergrad-assoc'),
-                    fetchSection('students-group', 'freshman-council'),
-                ]);
-
-                if (cancelled) return;
-                setData({
-                    top: (topRes?.results ?? []) as ResponsePost[],
-                    talks,
-                    portal,
-                    facility,
-                    ara,
-                    realEstate,
-                    market,
-                    wanted,
-                    grad,
-                    undergrad,
-                    freshman,
-                });
-            } catch (e) {
-                console.warn('Main page load failed', e);
-            }
-        })();
-
         return () => {
             cancelled = true;
         };
     }, [router]);
 
+    const { data: boards } = useBoardList();
+    const { data: top } = useTopArticles(3);
+
+    // Resolve every section's boardId/topicId once boards load. Each
+    // section gets its own cached query — back-navigating to Main shows
+    // the previous data instantly, then revalidates in the background.
+    const sectionRefs = useMemo(
+        () => ({
+            talk: lookupBoard(boards, 'talk'),
+            portal: lookupBoard(boards, 'portal-notice'),
+            facility: lookupBoard(boards, 'facility-notice'),
+            ara: lookupBoard(boards, 'ara-notice'),
+            realEstate: lookupBoard(boards, 'real-estate'),
+            market: lookupBoard(boards, 'market'),
+            wanted: lookupBoard(boards, 'wanted'),
+            grad: lookupBoard(boards, 'students-group', 'grad-assoc'),
+            undergrad: lookupBoard(boards, 'students-group', 'undergrad-assoc'),
+            freshman: lookupBoard(boards, 'students-group', 'freshman-council'),
+        }),
+        [boards],
+    );
+
+    const talks = useBoardSection({ ...sectionRefs.talk, pageSize: 3 }).data ?? [];
+    const portal = useBoardSection({ ...sectionRefs.portal, pageSize: 3 }).data ?? [];
+    const facility = useBoardSection({ ...sectionRefs.facility, pageSize: 3 }).data ?? [];
+    const ara = useBoardSection({ ...sectionRefs.ara, pageSize: 3 }).data ?? [];
+    const realEstate = useBoardSection({ ...sectionRefs.realEstate, pageSize: 3 }).data ?? [];
+    const market = useBoardSection({ ...sectionRefs.market, pageSize: 3 }).data ?? [];
+    const wanted = useBoardSection({ ...sectionRefs.wanted, pageSize: 3 }).data ?? [];
+    const grad = useBoardSection({ ...sectionRefs.grad, pageSize: 3 }).data ?? [];
+    const undergrad = useBoardSection({ ...sectionRefs.undergrad, pageSize: 3 }).data ?? [];
+    const freshman = useBoardSection({ ...sectionRefs.freshman, pageSize: 3 }).data ?? [];
+
+    // Wire native pull-to-refresh — invalidates the whole webview cache.
+    usePullToRefresh();
+
     const goBoard = (slug: string) => {
-        const board = boards.find((b) => b.slug === slug);
+        const board = boards?.find((b) => b.slug === slug);
         if (board) router.push(`/web_view/Board/${board.id}`);
     };
     const goPost = (id: number) => router.push(`/web_view/Post/${id}`);
 
-    const top = data.top;
-    const talks = data.talks;
-
-    const tradeFirst = useMemo(() => ({
-        realEstate: data.realEstate[0] ?? null,
-        market: data.market[0] ?? null,
-        wanted: data.wanted[0] ?? null,
-    }), [data]);
+    const tradeFirst = useMemo(
+        () => ({
+            realEstate: realEstate[0] ?? null,
+            market: market[0] ?? null,
+            wanted: wanted[0] ?? null,
+        }),
+        [realEstate, market, wanted],
+    );
 
     if (authError) return null;
+
+    const topList = top ?? [];
 
     return (
         <Screen>
@@ -166,12 +120,12 @@ export default function MainPage() {
                 <MainPageTextButton label="실시간 인기글" onPress={() => router.push('/web_view/Board/_top')} />
                 <div className="px-5">
                     {[0, 1, 2].map((i) => {
-                        const post = top[i];
+                        const post = topList[i];
                         if (!post) return null;
                         return (
                             <div key={post.id}>
                                 <PopularBoardRow post={post} rank={i + 1} />
-                                {i < 2 && top[i + 1] && (
+                                {i < 2 && topList[i + 1] && (
                                     <div className="flex">
                                         <div className="w-[28px]" />
                                         <div className="h-px flex-1 bg-[#F0F0F0]" />
@@ -215,26 +169,26 @@ export default function MainPage() {
                         onLabelTap={() => goBoard('portal-notice')}
                     />
                     <div className="h-[10px]" />
-                    {data.portal[0] && (
+                    {portal[0] && (
                         <>
-                            <button type="button" onClick={() => goPost(data.portal[0].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={data.portal[0]} />
+                            <button type="button" onClick={() => goPost(portal[0].id)} className="block w-full bg-transparent text-left">
+                                <LittleText post={portal[0]} />
                             </button>
                             <div className="h-[10px]" />
                         </>
                     )}
-                    {data.portal[1] && (
+                    {portal[1] && (
                         <>
-                            <button type="button" onClick={() => goPost(data.portal[1].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={data.portal[1]} />
+                            <button type="button" onClick={() => goPost(portal[1].id)} className="block w-full bg-transparent text-left">
+                                <LittleText post={portal[1]} />
                             </button>
                             <div className="h-[10px]" />
                         </>
                     )}
-                    {data.portal[2] && (
+                    {portal[2] && (
                         <>
-                            <button type="button" onClick={() => goPost(data.portal[2].id)} className="block w-full bg-transparent text-left">
-                                <LittleText post={data.portal[2]} />
+                            <button type="button" onClick={() => goPost(portal[2].id)} className="block w-full bg-transparent text-left">
+                                <LittleText post={portal[2]} />
                             </button>
                         </>
                     )}
@@ -245,16 +199,16 @@ export default function MainPage() {
                         label="입주 업체"
                         color="#646464"
                         onLabelTap={() => goBoard('facility-notice')}
-                        post={data.facility[0] ?? null}
-                        onPostTap={() => data.facility[0] && goPost(data.facility[0].id)}
+                        post={facility[0] ?? null}
+                        onPostTap={() => facility[0] && goPost(facility[0].id)}
                     />
                     <div className="h-[10px]" />
                     <NoticeRow
                         label="Ara 운영진"
                         color="#ED3A3A"
                         onLabelTap={() => goBoard('ara-notice')}
-                        post={data.ara[0] ?? null}
-                        onPostTap={() => data.ara[0] && goPost(data.ara[0].id)}
+                        post={ara[0] ?? null}
+                        onPostTap={() => ara[0] && goPost(ara[0].id)}
                     />
                 </SectionBox>
             </section>
@@ -298,11 +252,11 @@ export default function MainPage() {
                 <MainPageTextButton label="학생 단체" onPress={() => goBoard('students-group')} />
                 <div className="h-[9px]" />
                 <SectionBox>
-                    <StudentRow label="원총" post={data.grad[0] ?? null} onTap={() => data.grad[0] && goPost(data.grad[0].id)} />
+                    <StudentRow label="원총" post={grad[0] ?? null} onTap={() => grad[0] && goPost(grad[0].id)} />
                     <div className="h-[10px]" />
-                    <StudentRow label="총학" post={data.undergrad[0] ?? null} onTap={() => data.undergrad[0] && goPost(data.undergrad[0].id)} />
+                    <StudentRow label="총학" post={undergrad[0] ?? null} onTap={() => undergrad[0] && goPost(undergrad[0].id)} />
                     <div className="h-[10px]" />
-                    <StudentRow label="새학" post={data.freshman[0] ?? null} onTap={() => data.freshman[0] && goPost(data.freshman[0].id)} />
+                    <StudentRow label="새학" post={freshman[0] ?? null} onTap={() => freshman[0] && goPost(freshman[0].id)} />
                 </SectionBox>
             </section>
 

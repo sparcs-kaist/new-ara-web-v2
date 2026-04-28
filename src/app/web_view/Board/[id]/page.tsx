@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import {
     fetchArticles,
     fetchTopArticles,
@@ -117,6 +118,10 @@ export default function BoardIdPage() {
                 setPage(p);
             } catch (e) {
                 console.warn('board page fetch failed', e);
+                // Stop the IntersectionObserver from retrying — without
+                // this, an empty-page 404 (DRF returns 404 past the last
+                // page even when `next` was non-null) loops forever.
+                setHasNext(false);
             } finally {
                 setLoading(false);
             }
@@ -131,6 +136,12 @@ export default function BoardIdPage() {
         setPage(1);
         loadPage(1);
     }, [boardResolved, isSpecial, loadPage]);
+
+    // Pull-to-refresh: re-run the first page of whatever this board is showing.
+    usePullToRefresh(async () => {
+        setHasNext(true);
+        await loadPage(1);
+    });
 
     // Infinite scroll via IntersectionObserver.
     useEffect(() => {

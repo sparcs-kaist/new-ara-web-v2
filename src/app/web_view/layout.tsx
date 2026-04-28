@@ -3,9 +3,12 @@
 import { useEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import './_styles/tokens.css';
+import './_styles/transitions.css';
 import { BottomTabBar, isTabRoot } from './_components/BottomTabBar';
 import { getBridge, useBridgeEvent } from './_bridge';
 import useKeyboard from './hooks/keyboard/useKeyboard';
+import { WebViewQueryProvider } from './_query';
+import { PageTransition } from './_components/PageTransition';
 
 export default function WebViewLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -57,9 +60,9 @@ export default function WebViewLayout({ children }: { children: ReactNode }) {
     });
 
     return (
-        <>
-            {children}
+        <WebViewQueryProvider>
+            <PageTransition pathname={pathname}>{children}</PageTransition>
             {showTabBar && <BottomTabBar />}
-        </>
+        </WebViewQueryProvider>
     );
 }

@@ -66,6 +66,9 @@ export type CommandMap = {
     setSession: { req: { cookie: string }; res: void };
     clearSession: { req: void; res: void };
     reportHeight: { req: { height: number }; res: void };
+    /** Tell the native shell that the pull-to-refresh refetch is finished
+     *  so it can hide the native spinner. */
+    refreshDone: { req: void; res: void };
 };
 
 export type CommandType = keyof CommandMap;
@@ -89,6 +92,9 @@ export type EventMap = {
     'push:opened': { data: Record<string, unknown>; deepLink?: string };
     'deeplink:received': { url: string };
     'auth:expired': void;
+    /** User pulled the WebView down past the threshold; web is expected to
+     *  refetch and call `refresh:done` so the native spinner can dismiss. */
+    'refresh:requested': void;
 };
 
 export type EventType = keyof EventMap;

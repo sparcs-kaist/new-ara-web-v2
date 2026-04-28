@@ -42,11 +42,12 @@ export function HotPreview() {
 }
 
 //메인 페이지 - 방금 올라온 글
+// 포탈 공지(board id 1) 제외 — 운영진 공지가 사용자 글을 묻는 걸 막기 위함.
 export function RecentPreview() {
   const [posts, setPosts] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const Response = await fetchArticles({
+      const Response = await fetchAllArticlesExcludingPortalNotice({
         pageSize: 3,
         ordering: "-created_at",
       });

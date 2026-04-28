@@ -1,0 +1,45 @@
+/*
+ * Page transitions for the WebView shell.
+ *
+ * Mirrors Flutter's `CupertinoPageRoute` (`utils/slide_routing.dart`) — the
+ * destination slides in from the right edge with the iOS standard ease-out
+ * curve. Tab roots don't animate (Flutter's bottom-nav switch is also a
+ * direct cut), only sub-routes pushed onto the stack do.
+ *
+ * The previous page is *not* parallaxed back here (the Cupertino effect
+ * would require an exit animation on the leaving widget — Next.js
+ * unmounts it before our CSS can run on it). The 320ms slide-in alone is
+ * already enough for users not to clock that they're in a WebView.
+ */
+@keyframes ara-page-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.ara-page-slide-in {
+    animation: ara-page-slide-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    /* Promote to its own layer so iOS doesn't repaint the body shadow
+       behind it during the slide. */
+    will-change: transform;
+    /* Prevent the page underneath from peeking through during the
+       transform — most pages already paint a white background, but a
+       small handful (Post detail until the AppHeader paints) flash
+       transparent for one frame otherwise. */
+    background: var(--ara-bg, #ffffff);
+    min-height: 100dvh;
+}
+
+/*
+ * Pull-to-refresh: the native shell owns the spinner via
+ * `PullToRefreshController`, so the web side only needs to make sure the
+ * top of the page can actually be over-scrolled. iOS WKWebView is fine by
+ * default; Android needs `overscroll-behavior-y: contain` so the bounce
+ * is owned by the InAppWebView, not the inner div.
+ */
+[data-ara-shell] body {
+    overscroll-behavior-y: contain;
+}

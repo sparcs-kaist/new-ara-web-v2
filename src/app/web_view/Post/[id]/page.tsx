@@ -14,6 +14,7 @@ import TextEditor from '@/components/TextEditor/TextEditor';
 import type { Comment, PostData } from '@/lib/types/post';
 import { AppHeader, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { ArticleHeader } from './_components/ArticleHeader';
 import { Attachments } from './_components/Attachments';
 import { CommentComposer } from './_components/CommentComposer';
@@ -61,6 +62,8 @@ export default function WebViewPostDetailPage() {
     useEffect(() => {
         load();
     }, [load]);
+
+    usePullToRefresh(load);
 
     const applyVote = (action: VoteAction) => {
         setPost((prev) => {
