@@ -1,0 +1,31 @@
+/*
+ * Shimmer block used by all webview skeleton loaders. The animation is
+ * intentionally slow (1.6s) and low-contrast so it doesn't compete with
+ * actual content if a slow network lets the placeholder linger.
+ */
+.ara-skeleton {
+    background: linear-gradient(
+        90deg,
+        #f3f3f3 0%,
+        #ececec 50%,
+        #f3f3f3 100%
+    );
+    background-size: 200% 100%;
+    animation: ara-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes ara-skeleton-shimmer {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-skeleton {
+        animation: none;
+        background: #f0f0f0;
+    }
+}

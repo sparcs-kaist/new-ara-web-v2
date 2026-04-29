@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { LittleText, RightChevronIcon } from '@/app/web_view/_components';
+import { LittleText, RightChevronIcon, SkeletonLine } from '@/app/web_view/_components';
 import type { ResponsePost } from '@/lib/types/post';
 
 interface NoticeRowProps {
@@ -16,6 +16,8 @@ interface NoticeRowProps {
     post?: ResponsePost | null;
     onPostTap?: () => void;
     showTopic?: boolean;
+    /** Show a skeleton placeholder in the post slot while loading. */
+    loading?: boolean;
 }
 
 /**
@@ -23,7 +25,7 @@ interface NoticeRowProps {
  * box on the home page. Faithful to the `_buildNoticeContents` /
  * `_buildTradeContents` rows in `main_page.dart`.
  */
-export function NoticeRow({ label, color, leading, onLabelTap, post, onPostTap, showTopic }: NoticeRowProps) {
+export function NoticeRow({ label, color, leading, onLabelTap, post, onPostTap, showTopic, loading }: NoticeRowProps) {
     const router = useRouter();
     const handlePostTap = () => {
         if (onPostTap) return onPostTap();
@@ -45,7 +47,7 @@ export function NoticeRow({ label, color, leading, onLabelTap, post, onPostTap, 
                     <RightChevronIcon size={17} />
                 </span>
             </button>
-            {post && (
+            {post ? (
                 <button
                     type="button"
                     onClick={handlePostTap}
@@ -53,7 +55,11 @@ export function NoticeRow({ label, color, leading, onLabelTap, post, onPostTap, 
                 >
                     <LittleText post={post} showTopic={showTopic} />
                 </button>
-            )}
+            ) : loading ? (
+                <div className="min-w-0 flex-1">
+                    <SkeletonLine />
+                </div>
+            ) : null}
         </div>
     );
 }

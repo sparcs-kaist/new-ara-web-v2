@@ -8,6 +8,7 @@ import { fetchMe } from '@/lib/api/user';
 import { fetchUserPosts } from '@/lib/api/user_profile';
 import { fetchArchivedPosts, fetchRecentViewedPosts } from '@/lib/api/board';
 import type { ResponsePost } from '@/lib/types/post';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 
 interface MeProfile {
     id?: number;
@@ -90,6 +91,16 @@ export default function MyInfoPage() {
         setTotal(0);
         loadPosts(tab, 1);
     }, [tab, me, loadPosts]);
+
+    usePullToRefresh(async () => {
+        try {
+            const fresh = await fetchMe();
+            setMe(fresh);
+        } catch (e) {
+            console.warn('fetchMe (refresh) failed', e);
+        }
+        await loadPosts(tab, 1);
+    });
 
     const fullName = [me?.sso_user_info?.first_name, me?.sso_user_info?.last_name]
         .filter(Boolean)

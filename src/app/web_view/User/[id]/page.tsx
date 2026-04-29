@@ -9,6 +9,7 @@ import {
     Screen,
 } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { blockUser } from '@/lib/api/user';
 import { fetchUserProfile, fetchUserPosts } from '@/lib/api/user_profile';
 import type { ResponsePost } from '@/lib/types/post';
@@ -77,6 +78,18 @@ export default function UserViewPage() {
         if (!userId || isNaN(userId)) return;
         loadPosts(1);
     }, [userId, loadPosts]);
+
+    usePullToRefresh(async () => {
+        if (!userId || isNaN(userId)) return;
+        try {
+            const fresh = await fetchUserProfile(userId);
+            setUser(fresh);
+        } catch (e) {
+            console.warn('fetchUserProfile (refresh) failed', e);
+        }
+        setHasNext(false);
+        await loadPosts(1);
+    });
 
     const onBlock = async () => {
         if (!userId || busy) return;

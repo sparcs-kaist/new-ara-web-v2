@@ -10,6 +10,7 @@ import {
     VerifiedIcon,
 } from '@/app/web_view/_components';
 import { fetchNotifications, readAllNotifications } from '@/lib/api/notification';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 
 interface NotificationItem {
     id: number;
@@ -63,6 +64,11 @@ export default function NotificationsPage() {
     useEffect(() => {
         loadPage(1);
     }, [loadPage]);
+
+    usePullToRefresh(async () => {
+        setHasNext(true);
+        await loadPage(1);
+    });
 
     const hasUnread = items.some((it) => !it.is_read);
 

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import {
     fetchArticles,
     fetchTopArticles,
@@ -63,6 +65,7 @@ export default function BoardIdPage() {
     const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const qc = useQueryClient();
 
     // Resolve board metadata for non-special ids. Unknown ids bounce back
     // to /web_view/Main rather than rendering an empty list.
@@ -115,13 +118,24 @@ export default function BoardIdPage() {
                 setPosts((prev) => (p === 1 ? list : [...prev, ...list]));
                 setHasNext(Boolean(res.next));
                 setPage(p);
+                // Seed the webview cache so `usePost(id).placeholderData`
+                // can show the title/board/author the moment the user
+                // taps a row, instead of waiting for the detail call.
+                qc.setQueryData(
+                    ['webview', 'articles', 'board-list', specialKind ?? board?.id ?? 'all', p],
+                    list,
+                );
             } catch (e) {
                 console.warn('board page fetch failed', e);
+                // Stop the IntersectionObserver from retrying — without
+                // this, an empty-page 404 (DRF returns 404 past the last
+                // page even when `next` was non-null) loops forever.
+                setHasNext(false);
             } finally {
                 setLoading(false);
             }
         },
-        [specialKind, board],
+        [specialKind, board, qc],
     );
 
     useEffect(() => {
@@ -131,6 +145,12 @@ export default function BoardIdPage() {
         setPage(1);
         loadPage(1);
     }, [boardResolved, isSpecial, loadPage]);
+
+    // Pull-to-refresh: re-run the first page of whatever this board is showing.
+    usePullToRefresh(async () => {
+        setHasNext(true);
+        await loadPage(1);
+    });
 
     // Infinite scroll via IntersectionObserver.
     useEffect(() => {

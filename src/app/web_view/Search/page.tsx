@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchArticles } from '@/lib/api/board';
 import type { ResponsePost } from '@/lib/types/post';
 import { AppHeader, PostPreview, Screen, SearchIcon } from '@/app/web_view/_components';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 
 function SearchInner() {
     const router = useRouter();
@@ -53,6 +54,10 @@ function SearchInner() {
         if (initialQ) runSearch(initialQ);
         else setResults([]);
     }, [initialQ, runSearch]);
+
+    usePullToRefresh(async () => {
+        if (submittedQ) await runSearch(submittedQ);
+    });
 
     const submit = () => {
         const q = draft.trim();
