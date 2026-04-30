@@ -11,6 +11,11 @@ interface PostParams {
   overrideHidden?: boolean;
 }
 
+interface AttachmentParams {
+  file: File;
+  alias?: string | null;
+}
+
 // 게시글 단건 조회 (context에 vote action을 넣으면 해당 액션 경로 호출)
 export const fetchPost = async ({
   postId,
@@ -37,7 +42,7 @@ export const fetchPost = async ({
 export const usePost = ({
   postId,
   context,
-  fromView = 'all',
+  fromView = "all",
   current = 3,
   overrideHidden = true,
 }: PostParams) => {
@@ -45,7 +50,7 @@ export const usePost = ({
 
   return useQuery({
     queryKey: [
-      'article',
+      "article",
       postId,
       context ?? null,
       fromView ?? null,
@@ -62,7 +67,9 @@ export const usePost = ({
       }),
     placeholderData: () => {
       /* eslint-disable-next-line */
-      const queries: [readonly any[], any][] = queryClient.getQueriesData({ queryKey: ['articles'] });
+      const queries: [readonly any[], any][] = queryClient.getQueriesData({
+        queryKey: ["articles"],
+      });
 
       for (const [, data] of queries) {
         /* eslint-disable-next-line */
@@ -262,10 +269,17 @@ export const deleteComment = async (commentId: number) => {
 };
 
 // 파일 업로드 (단일/다중)
-export const uploadAttachments = async (attachments: File | File[]) => {
-  const generateFormData = (file: File) => {
+export const uploadAttachments = async (
+  attachments: AttachmentParams | AttachmentParams[],
+) => {
+  const generateFormData = (attachment: AttachmentParams) => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", attachment.file);
+
+    if (attachment.alias) {
+      formData.append("alias", attachment.alias);
+    }
+
     return formData;
   };
 

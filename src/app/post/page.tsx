@@ -1,18 +1,18 @@
 /* eslint-disable */
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { fetchPost } from '@/lib/api/post';
-import TextEditor from '@/components/TextEditor/TextEditor';
-import PostAttachmentsPopover from './components/PostAttachmentsPopover';
-import { type PostData } from '@/lib/types/post'; // <<< 타입 가져오기
+import { useEffect, useState } from "react";
+import { fetchPost } from "@/lib/api/post";
+import TextEditor from "@/components/TextEditor/TextEditor";
+import PostAttachmentsPopover from "./components/PostAttachmentsPopover";
+import { type PostData } from "@/lib/types/post"; // <<< 타입 가져오기
 
 const decodeHtmlEntities = (value: string): string => {
   return value
     .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 };
 
 const normalizeAnchorTagValue = (value: string): string => {
@@ -24,85 +24,92 @@ const normalizeAnchorTagValue = (value: string): string => {
 // JSON 문자열 정리 함수
 const cleanJsonString = (jsonStr: string): string => {
   return jsonStr
-    .replace(/"(text|href|src)":"<a\b[^>]*>[\s\S]*?<\/a>"/gi, match => {
+    .replace(/"(text|href|src)":"<a\b[^>]*>[\s\S]*?<\/a>"/gi, (match) => {
       const valueMatch = match.match(/"(?:text|href|src)":"([\s\S]*)"$/i);
       const keyMatch = match.match(/^"(text|href|src)":/i);
-      const key = keyMatch?.[1] ?? 'text';
-      const rawValue = valueMatch?.[1] ?? '';
+      const key = keyMatch?.[1] ?? "text";
+      const rawValue = valueMatch?.[1] ?? "";
       const normalizedValue = normalizeAnchorTagValue(rawValue);
       return `"${key}":${JSON.stringify(normalizedValue)}`;
     })
-    .replace(/,(\s*[}\]])/g, '$1');
+    .replace(/,(\s*[}\]])/g, "$1");
 };
 
 export default function PostDetailPage() {
   const [post, setPost] = useState<PostData | null>(null);
 
   useEffect(() => {
-    console.log('PostDetailPage mounted');
-    console.log('Calling fetchPost...');
+    console.log("PostDetailPage mounted");
+    console.log("Calling fetchPost...");
     fetchPost({
-      postId: 12032,
-      fromView: 'all',
+      postId: 13989,
+      fromView: "all",
       current: 3,
       overrideHidden: true,
     })
-      .then(data => {
-        console.log('Post data:', data);
-        console.log('Content type:', typeof data.content);
-        console.log('Content value:', data.content);
-        console.log('API attachments:', data.attachments);
+      .then((data) => {
+        console.log("Post data:", data);
+        console.log("Content type:", typeof data.content);
+        console.log("Content value:", data.content);
+        console.log("API attachments:", data.attachments);
 
         // content 타입에 따라 처리
         let processedContent = data.content;
 
-        if (typeof data.content === 'string') {
+        if (typeof data.content === "string") {
           const trimmed = data.content.trim();
 
           // JSON 형태인지 확인 ('{' 로 시작)
-          if (trimmed.startsWith('{')) {
+          if (trimmed.startsWith("{")) {
             try {
               // 1차: 그대로 파싱 시도
               processedContent = JSON.parse(trimmed);
-              console.log('Content loaded as JSON from string');
+              console.log("Content loaded as JSON from string");
             } catch (firstErr) {
               try {
                 // 2차: HTML 디코딩 후 파싱 시도
-                const textarea = document.createElement('textarea');
+                const textarea = document.createElement("textarea");
                 textarea.innerHTML = trimmed;
                 const decodedContent = textarea.value;
                 // 강력한 JSON 정리
                 const cleanedContent = cleanJsonString(decodedContent);
-                console.log('Cleaned JSON:', cleanedContent.substring(1700, 1800)); // 에러 지점 근처 확인
+                console.log(
+                  "Cleaned JSON:",
+                  cleanedContent.substring(1700, 1800),
+                ); // 에러 지점 근처 확인
                 processedContent = JSON.parse(cleanedContent);
-                console.log('Content loaded as JSON after HTML decoding');
+                console.log("Content loaded as JSON after HTML decoding");
               } catch (secondErr) {
-                console.log('All JSON parse attempts failed, treating as HTML:', firstErr, secondErr);
+                console.log(
+                  "All JSON parse attempts failed, treating as HTML:",
+                  firstErr,
+                  secondErr,
+                );
                 processedContent = data.content; // 원본 HTML 유지
               }
             }
           } else {
             // HTML 형태
-            console.log('Content loaded as HTML');
+            console.log("Content loaded as HTML");
             processedContent = data.content;
           }
-        } else if (typeof data.content === 'object' && data.content !== null) {
+        } else if (typeof data.content === "object" && data.content !== null) {
           // 이미 파싱된 JSON 객체
-          console.log('Content is already parsed JSON object');
+          console.log("Content is already parsed JSON object");
           processedContent = data.content;
         }
 
-        setPost(prev => {
+        setPost((prev) => {
           const newPost = {
             ...data,
-            content: processedContent
+            content: processedContent,
           };
-          console.log('setPost newPost:', newPost);
+          console.log("setPost newPost:", newPost);
           return newPost;
         });
       })
-      .catch(err => {
-        alert('fetchPost error: ' + String(err));
+      .catch((err) => {
+        alert("fetchPost error: " + String(err));
         console.error(err);
       });
   }, []);
@@ -115,13 +122,18 @@ export default function PostDetailPage() {
     );
   }
 
-  const mappedAttachments = (post.attachments ?? []).map(att => ({
+  const mappedAttachments = (post.attachments ?? []).map((att) => ({
     key: String(att.id),
-    name: att.file?.split('/').pop() ?? 'attachment',
+    alias: att.alias ?? "attachment",
+    name: att.file?.split("/").pop() ?? "attachment",
     url: att.file,
-    type: att.mimetype.startsWith('image') ? 'image' : (att.mimetype.includes('pdf') ? 'pdf' : 'file'),
+    type: att.mimetype.startsWith("image")
+      ? "image"
+      : att.mimetype.includes("pdf")
+        ? "pdf"
+        : "file",
   }));
-  console.log('[page.tsx] mappedAttachments:', mappedAttachments);
+  console.log("[page.tsx] mappedAttachments:", mappedAttachments);
 
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -135,30 +147,34 @@ export default function PostDetailPage() {
           <div className="flex justify-end mb-2 relative">
             <span
               className="text-sm text-gray-700 font-medium cursor-pointer hover:text-red-500 px-2 py-1 bg-white border border-gray-200 rounded shadow"
-              onClick={() => setPopoverOpen(o => !o)}
+              onClick={() => setPopoverOpen((o) => !o)}
             >
               첨부파일 모아보기 ({mappedAttachments.length})
             </span>
             {popoverOpen && (
               <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-300 rounded shadow-lg p-3 space-y-2 z-30">
-                {mappedAttachments.map(att => (
+                {mappedAttachments.map((att) => (
                   <div
                     key={att.key}
                     className="flex items-center gap-3 bg-gray-50 rounded px-2 py-1"
                   >
                     {/* 파일 타입 아이콘 */}
                     <span className="shrink-0">
-                      {att.type === 'image' ? '🖼️' : att.type === 'pdf' ? '📄' : '📎'}
+                      {att.type === "image"
+                        ? "🖼️"
+                        : att.type === "pdf"
+                          ? "📄"
+                          : "📎"}
                     </span>
                     <span
                       className="flex-1 min-w-0 truncate text-xs text-gray-800"
-                      title={att.name}
+                      title={att.alias ?? att.name}
                     >
-                      {att.name}
+                      {att.alias ?? att.name}
                     </span>
                     <a
                       href={att.url}
-                      download={att.name}
+                      download={att.alias ?? att.name}
                       className="px-2 py-0.5 text-xs bg-white border border-gray-300 rounded hover:bg-red-50 hover:text-red-500 transition"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -171,10 +187,7 @@ export default function PostDetailPage() {
             )}
           </div>
         )}
-        <TextEditor
-          content={post.content}
-          editable={false}
-        />
+        <TextEditor content={post.content} editable={false} />
       </div>
     </div>
   );
