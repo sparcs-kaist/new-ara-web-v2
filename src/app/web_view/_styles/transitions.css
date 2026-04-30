@@ -31,6 +31,10 @@
        transparent for one frame otherwise. */
     background: var(--ara-bg, #ffffff);
     min-height: 100dvh;
+    /* The translateX(100%) start position would otherwise push the page
+       off the right edge of the body, briefly painting a horizontal
+       scrollbar before the animation completes. Clip locally. */
+    overflow-x: clip;
 }
 
 /*
@@ -55,6 +59,7 @@
     will-change: transform;
     background: var(--ara-bg, #ffffff);
     min-height: 100dvh;
+    overflow-x: clip;
 }
 
 /*

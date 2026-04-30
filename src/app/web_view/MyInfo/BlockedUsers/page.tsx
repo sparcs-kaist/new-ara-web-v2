@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+    CenteredSpinner,
     Close2Icon,
     LeftChevronIcon,
     Screen,
@@ -100,9 +101,7 @@ export default function BlockedUsersPage() {
             </header>
 
             {loading ? (
-                <div className="flex justify-center py-6 text-[12px] text-[#B1B1B1]">
-                    불러오는 중...
-                </div>
+                <CenteredSpinner padY={32} />
             ) : items.length === 0 ? (
                 <div className="flex h-[55px] items-center justify-center text-[15px] font-medium text-black">
                     차단된 사용자가 없습니다.

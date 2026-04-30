@@ -2,6 +2,7 @@ export { AppHeader } from './AppHeader';
 export { BottomTabBar, isTabRoot } from './BottomTabBar';
 export { PageTransition } from './PageTransition';
 export { Skeleton, SkeletonRow, SkeletonLine } from './Skeleton';
+export { Spinner, CenteredSpinner } from './Spinner';
 export { ContentArea } from './ContentArea';
 export { Screen } from './Screen';
 export { StickyComposer, ComposerSpacer } from './StickyComposer';

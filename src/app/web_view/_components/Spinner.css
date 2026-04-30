@@ -1,0 +1,54 @@
+/*
+ * Red rotating donut — visual match for Flutter's
+ * `CircularProgressIndicator(color: ColorsInfo.newara)` (the loading
+ * indicator the original app showed everywhere a list was fetching).
+ *
+ * The arc grows / shrinks while the whole ring spins, the way Material
+ * Design's indeterminate indicator does. Keeping the two animations
+ * out-of-phase (1.4s rotate vs 1.4s arc) prevents the spinner from
+ * stalling visually at any frame.
+ */
+.ara-donut {
+    display: inline-block;
+    border-style: solid;
+    border-color: transparent;
+    border-top-color: #ed3a3a;
+    border-radius: 50%;
+    animation:
+        ara-donut-rotate 1.4s linear infinite,
+        ara-donut-grow 1.4s ease-in-out infinite;
+}
+
+@keyframes ara-donut-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Cycle through visible-arc lengths by swapping which border edges are red. */
+@keyframes ara-donut-grow {
+    0% {
+        border-top-color: #ed3a3a;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+    }
+    50% {
+        border-top-color: #ed3a3a;
+        border-right-color: #ed3a3a;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+    }
+    100% {
+        border-top-color: #ed3a3a;
+        border-right-color: #ed3a3a;
+        border-bottom-color: #ed3a3a;
+        border-left-color: transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ara-donut {
+        animation: ara-donut-rotate 1.4s linear infinite;
+    }
+}
