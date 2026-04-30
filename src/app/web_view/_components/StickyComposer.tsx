@@ -12,9 +12,19 @@ interface StickyComposerProps {
 /**
  * Bottom-anchored bar that auto-lifts above the software keyboard.
  *
- * The lift comes from the `--ara-keyboard-height` CSS variable, which is set
- * in `web_view/layout.tsx` from `useKeyboard()` (visualViewport) and from
- * the native `keyboard:changed` bridge event.
+ * The lift uses `max(--ara-keyboard-height, --ara-safe-bottom)` rather
+ * than summing them — when the keyboard is up it sits flush against the
+ * device's bottom edge, fully covering the home-indicator safe area, so
+ * adding the safe-bottom on top would push the composer above the
+ * keyboard. With max() we get:
+ *   - keyboard closed → composer sits above the home indicator
+ *   - keyboard open   → composer sits exactly above the keyboard.
+ *
+ * The keyboard height itself is published in `--ara-keyboard-height` by
+ * `web_view/layout.tsx` (visualViewport on iOS; bridge `keyboard:changed`
+ * on demand). On Android the WebView already shrinks via `adjustResize`,
+ * so `useAndroidKeyboard` reports `keyboardHeight: 0` and the layout
+ * shrink alone positions us correctly.
  */
 export function StickyComposer({ children, aboveTabBar = false, className }: StickyComposerProps) {
     return (
@@ -27,8 +37,8 @@ export function StickyComposer({ children, aboveTabBar = false, className }: Sti
                 .join(' ')}
             style={{
                 bottom: aboveTabBar
-                    ? 'calc(var(--ara-keyboard-height, 0px) + 50px + var(--ara-safe-bottom))'
-                    : 'calc(var(--ara-keyboard-height, 0px) + var(--ara-safe-bottom))',
+                    ? 'calc(max(var(--ara-keyboard-height, 0px), var(--ara-safe-bottom)) + 50px)'
+                    : 'max(var(--ara-keyboard-height, 0px), var(--ara-safe-bottom))',
                 paddingLeft: 'var(--ara-safe-left)',
                 paddingRight: 'var(--ara-safe-right)',
             }}
