@@ -25,8 +25,16 @@ export default function LoginPage() {
         const apiHost =
             process.env.NEXT_PUBLIC_API_HOST?.replace(/\/$/, '') ||
             window.location.origin;
-        const next = `${window.location.origin}/web_view/Main`;
-        window.location.href = `${apiHost}/api/users/sso_login/?next=${encodeURIComponent(next)}`;
+        // Mirror the desktop /login flow: SSO bounces back to the
+        // shared `/auth-handler` page (which exchanges code → session
+        // and then routes to `link`). Passing `next=/web_view/Main`
+        // makes that final hop land us back inside the shell.
+        const origin = window.location.origin;
+        const handler = `${origin}/auth-handler`;
+        const next = `${origin}/web_view/Main`;
+        window.location.href =
+            `${apiHost}/api/users/sso_login?handler=${encodeURIComponent(handler)}` +
+            `&next=${encodeURIComponent(next)}`;
     };
 
     return (

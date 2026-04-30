@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon } from '@/app/web_view/_components';
+import { Screen, AppHeader, PostPreview, LeftChevronIcon, SearchIcon, PostIcon, CenteredSpinner, Spinner } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import {
@@ -244,11 +244,13 @@ export default function BoardIdPage() {
             )}
 
             <div ref={sentinelRef} aria-hidden className="h-8" />
-            {loading && (
-                <div className="flex justify-center py-3 text-[12px] text-[#B1B1B1]">
-                    불러오는 중...
+            {loading && posts.length === 0 ? (
+                <CenteredSpinner padY={48} />
+            ) : loading ? (
+                <div className="flex justify-center py-3">
+                    <Spinner size={22} />
                 </div>
-            )}
+            ) : null}
         </Screen>
     );
 }
