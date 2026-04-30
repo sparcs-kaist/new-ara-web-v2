@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { fetchArticles, fetchBoardList, fetchTopArticles } from '@/lib/api/board';
 import { fetchPost } from '@/lib/api/post';
+import { fetchMe } from '@/lib/api/user';
 import type { ResponsePost } from '@/lib/types/post';
 
 /**
@@ -25,11 +26,27 @@ interface BoardItem {
     topics?: Array<{ id: number; slug: string; ko_name: string }>;
 }
 
+const KEY_ME = ['webview', 'me'] as const;
 const KEY_BOARDS = ['webview', 'boards'] as const;
 const KEY_TOP = (pageSize: number) => ['webview', 'articles', 'top', pageSize] as const;
 const KEY_ARTICLES = (params: Record<string, unknown>) =>
     ['webview', 'articles', params] as const;
 const KEY_POST = (postId: number) => ['webview', 'post', postId] as const;
+
+/**
+ * Auth probe. Returns the current user (or throws on 401, which Main
+ * page treats as the trigger to redirect to /web_view/Login). Cached
+ * for the session — there's no point re-firing this on every back-nav.
+ */
+export function useMe() {
+    return useQuery({
+        queryKey: KEY_ME,
+        queryFn: () => fetchMe(),
+        staleTime: 10 * 60_000,
+        gcTime: 60 * 60_000,
+        retry: false,
+    });
+}
 
 export function useBoardList() {
     return useQuery({
