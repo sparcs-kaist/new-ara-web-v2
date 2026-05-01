@@ -22,9 +22,19 @@ const AUTO_PLAY_MS = 3000;
 function isImage(att?: { mimetype?: string; file: string }) {
     if (!att) return false;
     if (att.mimetype) return att.mimetype.startsWith('image');
-    // fallback by extension
     return /\.(png|jpe?g|gif|webp|svg)$/i.test(att.file);
 }
+
+const DUMMY_IMAGE_URL =
+    "https://newara.cdn.sparcs.org/files/260330_%EC%B9%B4%EC%9D%B4%EC%8A%A4%ED%8A%B8_%EC%9B%B9%ED%8F%AC%EC%8A%A4%ED%84%B0%EA%B2%BD%EC%98%81%EA%B3%B5%ED%95%99%EB%B6%80_%EC%84%9D%EB%B0%95%EC%82%AC%EA%B3%BC%EC%A0%95_%EC%B5%9C%EC%A2%85.png";
+
+// const mockArticles: PosterArticle[] = [
+//     { id: 1, title: "1", created_at: new Date().toISOString(), attachments: [{ id: 1, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
+//     { id: 2, title: "2", created_at: new Date().toISOString(), attachments: [{ id: 2, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
+//     { id: 3, title: "3", created_at: new Date().toISOString(), attachments: [{ id: 3, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
+//     { id: 4, title: "4", created_at: new Date().toISOString(), attachments: [{ id: 4, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
+//     { id: 5, title: "5", created_at: new Date().toISOString(), attachments: [{ id: 5, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
+// ];
 
 function parseDate(val?: string | Date) {
     if (!val) return null;
@@ -38,6 +48,8 @@ export default function PosterCarousel() {
     const [errorIdx, setErrorIdx] = useState<number[]>([]);
 
     const [index, setIndex] = useState(0);
+    const [transitionEnabled, setTransitionEnabled] = useState(true);
+
     const trackRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -99,42 +111,50 @@ export default function PosterCarousel() {
         return () => { cancelled = true; };
     }, []);
 
-    // autoplay
+    // for test
+    // useEffect(() => {
+    //     setItems(mockArticles);
+    // }, []);
+
     useEffect(() => {
-        if (items.length <= 1) return;
+        if (items.length <= VISIBLE_COUNT) return;
+
         if (timerRef.current) clearInterval(timerRef.current);
+
         timerRef.current = setInterval(() => {
             setIndex(prev => prev + 1);
         }, AUTO_PLAY_MS);
+
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
     }, [items.length]);
 
-    // reset without animation when looping
-    useEffect(() => {
-        if (items.length === 0) return;
-        const total = items.length;
-        const maxIndex = total; // because we append clones
-        if (index > maxIndex) {
-            const el = trackRef.current;
-            if (el) {
-                el.style.transition = 'none';
-                setIndex(0);
-                requestAnimationFrame(() => {
-                    el.style.transition = '';
-                });
-            } else {
-                setIndex(0);
-            }
-        }
-    }, [index, items.length]);
-
+    // infinite용 배열
     const viewItems = useMemo(() => {
-        if (items.length === 0) return [] as PosterArticle[];
-        const clones = items.slice(0, Math.min(VISIBLE_COUNT, items.length));
-        return items.concat(clones);
+        if (items.length <= VISIBLE_COUNT) return items;
+        return [...items, ...items.slice(0, VISIBLE_COUNT)];
     }, [items]);
+
+    // 끝에서 리셋
+    const handleTransitionEnd = () => {
+        if (items.length <= VISIBLE_COUNT) return;
+
+        if (index >= items.length) {
+            setTransitionEnabled(false);
+            setIndex(0);
+        }
+    };
+
+    // transition 복구
+    useEffect(() => {
+        if (!transitionEnabled) {
+            const raf = requestAnimationFrame(() => {
+                setTransitionEnabled(true);
+            });
+            return () => cancelAnimationFrame(raf);
+        }
+    }, [transitionEnabled]);
 
     if (loading) {
         return (
@@ -159,7 +179,7 @@ export default function PosterCarousel() {
             </div>
         );
     }
-
+    
     return (
         <div className="w-full">
             <Link href="/board?board=poster" className="flex items-center space-x-2 mb-[16px]">
@@ -169,18 +189,27 @@ export default function PosterCarousel() {
             <div className="overflow-hidden">
                 <div
                     ref={trackRef}
-                    className="flex gap-3 transition-transform duration-500 ease-out"
-                    style={{ transform: `translateX(-${(index % (viewItems.length)) * (100 / VISIBLE_COUNT)}%)` }}
+                    className="flex gap-3"
+                    style={{
+                        transform: `translateX(calc(-${index} * ((100% / ${VISIBLE_COUNT}) + 12px)))`,
+                        transition: transitionEnabled
+                            ? 'transform 0.5s ease-out'
+                            : 'none',
+                    }}
+                    onTransitionEnd={handleTransitionEnd}
                 >
                     {viewItems.map((a, idx) => {
                         const img = (a.attachments || []).find(isImage);
-                        const href = `/post/${a.id}`;
                         const hasError = errorIdx.includes(idx);
+
                         return (
-                            <Link key={`${a.id}-${idx}`} href={href} className="block basis-1/4 shrink-0 min-w-0 overflow-hidden">
-                                <div className="w-full" style={{ aspectRatio: '210/297' }}>
-                                    <div className="relative w-full h-full overflow-hidden rounded-lg border border-gray-200 bg-white flex items-center justify-center">
-                                        {hasError || !img ? (
+                            <Link
+                                key={`${a.id}-${idx}`}
+                                href={`/post/${a.id}`}
+                                className="block basis-1/4 shrink-0 min-w-0 overflow-hidden"
+                            >
+                                <div className="relative w-full h-full overflow-hidden rounded-lg border border-gray-200 bg-white flex items-center justify-center aspect-[210/297]">
+                                    {hasError || !img ? (
                                             <Image src="/Service_Logo_Simple.svg" alt="poster" fill className="object-contain p-6" sizes="(max-width: 768px) 50vw, 25vw" />
                                         ) : (
                                             <Image
@@ -192,7 +221,6 @@ export default function PosterCarousel() {
                                                 onError={() => setErrorIdx(prev => prev.includes(idx) ? prev : [...prev, idx])}
                                             />
                                         )}
-                                    </div>
                                 </div>
                                 <div className="mt-2 text-sm font-medium truncate" title={a.title}>{a.title}</div>
                             </Link>
