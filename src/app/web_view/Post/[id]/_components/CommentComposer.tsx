@@ -108,6 +108,26 @@ export function CommentComposer({
           ? `'${replyToNickname ?? ''}'님께 답글을 작성하는 중`
           : '';
 
+    // KakaoTalk-style: when the textarea gains focus and the keyboard
+    // animates in, slide the page contents up so the last comment +
+    // composer stay visible. Without this, Android adjustResize alone
+    // shrinks the WebView but leaves scrollTop where it was, hiding
+    // the latest comment behind the (now smaller) viewport.
+    const onFocus = () => {
+        const scrollToBottom = () => {
+            const max = Math.max(
+                document.body.scrollHeight,
+                document.documentElement.scrollHeight,
+            );
+            window.scrollTo({ top: max, behavior: 'smooth' });
+        };
+        // Keyboard transition is ~250–300ms on both platforms; do an
+        // initial pass at 320ms and a settle pass at 600ms so iOS
+        // doesn't snap back when visualViewport finishes resizing.
+        window.setTimeout(scrollToBottom, 320);
+        window.setTimeout(scrollToBottom, 600);
+    };
+
     return (
         <StickyComposer aboveTabBar={false}>
             <div className="px-5 pt-[7px] pb-2">
@@ -152,6 +172,7 @@ export function CommentComposer({
                             ref={taRef}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
+                            onFocus={onFocus}
                             placeholder="댓글을 입력하세요"
                             rows={1}
                             inputMode="text"
