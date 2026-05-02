@@ -126,7 +126,7 @@ export default function ProfileEditPage() {
                 </button>
             </header>
 
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center pb-10">
                 <div className="h-[10px]" />
 
                 {/* Round avatar with camera badge — width-70 diameter. */}

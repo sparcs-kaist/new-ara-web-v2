@@ -128,7 +128,7 @@ export default function SettingsPage() {
                 </h1>
             </header>
 
-            <div className="flex flex-col items-center pb-10">
+            <div className="flex flex-col items-center pb-[60px]">
                 <div className="h-[23px]" />
 
                 {/* 게시글 설정 */}
