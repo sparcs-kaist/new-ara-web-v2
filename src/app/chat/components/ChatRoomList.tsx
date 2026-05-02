@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
-import { createGroupDM, createDM } from '@/lib/api/chat';
+import { createGroupDM, createDM, fetchChatRoomList } from '@/lib/api/chat';
 import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
-import { InfiniteData, UseInfiniteQueryResult, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -46,10 +46,9 @@ interface ChatRoomListProps {
     selectedRoomId?: number | null;
     isPanelOpen?: boolean; // 패널 상태 prop 추가
     onClose?: () => void;   // 패널 닫기 함수 prop 추가
-    infiniteQuery: UseInfiniteQueryResult<InfiniteData<any, unknown>, Error>
 }
 
-export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose, infiniteQuery }: ChatRoomListProps) {
+export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: ChatRoomListProps) {
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [showRoomCreate, setShowRoomCreate] = useState(false);
@@ -66,7 +65,12 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose, inf
         hasNextPage,
         isFetchingNextPage,
         isLoading
-    } = infiniteQuery ?? {};
+    } = useInfiniteQuery({
+        queryKey: ['chatRooms'],
+        queryFn: ({ pageParam }) => fetchChatRoomList(pageParam, 15),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => lastPage.results?.length === 15 ? allPages.length + 1 : undefined,
+    });
 
     // 2. React Query의 페이지 데이터를 하나의 배열로 합치고 정렬
     const rooms = React.useMemo<ChatRoom[]>(() => {
