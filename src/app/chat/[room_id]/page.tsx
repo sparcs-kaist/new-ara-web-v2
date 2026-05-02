@@ -100,9 +100,6 @@ export default function ChatRoomPage() {
         };
     }, [pathname, roomId]); // pathname이 변경될 때만 실행되도록 의존성 추가
 
-    console.log(infiniteQuery)
-    if (!infiniteQuery) return null;
-
     if (!roomId) {
         return (
             <div className="flex items-center justify-center min-h-[300px] text-gray-500">

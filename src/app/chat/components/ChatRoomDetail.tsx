@@ -18,7 +18,6 @@ import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import { useRouter } from 'next/navigation';
-import { InfiniteData, useQueryClient } from '@tanstack/react-query';
 
 // ROOM 타입 정의
 type ChatRoom = {

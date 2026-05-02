@@ -26,8 +26,7 @@ function isImage(att?: { mimetype?: string; file: string }) {
     return /\.(png|jpe?g|gif|webp|svg)$/i.test(att.file);
 }
 
-const DUMMY_IMAGE_URL =
-    "https://newara.cdn.sparcs.org/files/260330_%EC%B9%B4%EC%9D%B4%EC%8A%A4%ED%8A%B8_%EC%9B%B9%ED%8F%AC%EC%8A%A4%ED%84%B0%EA%B2%BD%EC%98%81%EA%B3%B5%ED%95%99%EB%B6%80_%EC%84%9D%EB%B0%95%EC%82%AC%EA%B3%BC%EC%A0%95_%EC%B5%9C%EC%A2%85.png";
+// const DUMMY_IMAGE_URL = "https://newara.cdn.sparcs.org/files/260330_%EC%B9%B4%EC%9D%B4%EC%8A%A4%ED%8A%B8_%EC%9B%B9%ED%8F%AC%EC%8A%A4%ED%84%B0%EA%B2%BD%EC%98%81%EA%B3%B5%ED%95%99%EB%B6%80_%EC%84%9D%EB%B0%95%EC%82%AC%EA%B3%BC%EC%A0%95_%EC%B5%9C%EC%A2%85.png";
 
 // const mockArticles: PosterArticle[] = [
 //     { id: 1, title: "1", created_at: new Date().toISOString(), attachments: [{ id: 1, file: DUMMY_IMAGE_URL, mimetype: "image/png" }] },
