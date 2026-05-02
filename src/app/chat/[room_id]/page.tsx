@@ -121,7 +121,7 @@ export default function ChatRoomPage() {
                     onClose={() => setListPanelOpen(false)}
                     infiniteQuery={infiniteQuery}
                 />
-
+                
                 <div className="hidden lg:flex py-4">
                     <div className="w-px bg-gray-200 h-full"></div>
                 </div>
