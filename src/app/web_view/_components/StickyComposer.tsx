@@ -30,7 +30,12 @@ export function StickyComposer({ children, aboveTabBar = false, className }: Sti
     return (
         <div
             className={[
-                'fixed inset-x-0 z-[45] bg-white border-t border-[#F0F0F0] transition-[bottom] duration-150',
+                // No `transition-[bottom]` — when iOS visualViewport
+                // settles after the keyboard, the bottom value steps in
+                // sync with the OS keyboard animation. CSS-transitioning
+                // it on top added a 150ms second-order slide that read as
+                // the page sliding back in from the side.
+                'fixed inset-x-0 z-[45] bg-white border-t border-[#F0F0F0]',
                 className ?? '',
             ]
                 .filter(Boolean)

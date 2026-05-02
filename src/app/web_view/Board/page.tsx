@@ -63,7 +63,7 @@ export default function BoardListPage() {
 
     return (
         <Screen>
-            <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-5">
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-5">
                 <h1 className="text-[28px] font-bold text-ara_red">게시판</h1>
             </header>
 

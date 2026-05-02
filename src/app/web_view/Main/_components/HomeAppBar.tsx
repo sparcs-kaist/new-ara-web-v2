@@ -11,7 +11,7 @@ import { AraLogo, PostIcon, SearchIcon } from '@/app/web_view/_components';
 export function HomeAppBar() {
     const router = useRouter();
     return (
-        <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-4">
+        <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-4">
             <AraLogo width={68} height={37} />
             <div className="ml-auto flex items-center gap-1">
                 <button

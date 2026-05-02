@@ -54,7 +54,7 @@ export function AppHeader({
     const showDefaultLeading = leading === undefined;
 
     return (
-        <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-2">
+        <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-2">
             <div className="flex min-w-[44px] items-center">
                 {showDefaultLeading ? (
                     <button
