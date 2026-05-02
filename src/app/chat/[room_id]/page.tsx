@@ -30,7 +30,7 @@ export default function ChatRoomPage() {
 
     const [isListPanelOpen, setListPanelOpen] = useState(false); // 채팅방 목록 패널 상태
 
-    const infiniteQuery = useInfiniteQuery({
+    const { data } = useInfiniteQuery({
         queryKey: ['chatRooms'],
         queryFn: ({ pageParam }) => fetchChatRoomList(pageParam, 15),
         initialPageParam: 1,
@@ -38,7 +38,7 @@ export default function ChatRoomPage() {
     });
 
     const rooms = useMemo<ChatRoom[]>(() => {
-        const allRooms = infiniteQuery.data?.pages.flatMap((page) => page.results || []) || [];
+        const allRooms = data?.pages.flatMap((page) => page.results || []) || [];
         
         // 중복 제거 및 시간순 정렬
         const uniqueRooms = Array.from(new Map(allRooms.map(room => [room.id, room])).values());
@@ -47,7 +47,7 @@ export default function ChatRoomPage() {
             const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
             return bTime - aTime;
         });
-    }, [infiniteQuery]);
+    }, [data]);
 
     // roomId 값이 변경될 때가 아니라 실제 pathname이 변경될 때만 채팅방 변경 처리
     useEffect(() => {
@@ -116,7 +116,6 @@ export default function ChatRoomPage() {
                     selectedRoomId={roomId}
                     isPanelOpen={isListPanelOpen}
                     onClose={() => setListPanelOpen(false)}
-                    infiniteQuery={infiniteQuery}
                 />
                 
                 <div className="hidden lg:flex py-4">
