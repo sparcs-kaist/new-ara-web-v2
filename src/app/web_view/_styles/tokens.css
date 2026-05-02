@@ -37,6 +37,23 @@
     box-sizing: border-box;
 }
 
+/* Native-app feel: hide every scrollbar inside the WebView shell. The
+   Android system WebView paints a transient overlay scrollbar on the
+   body whenever the page scrolls; we kill it together with any inner
+   scroller (textareas, horizontal lists, etc.) so the visual matches
+   Flutter's `BouncingScrollPhysics` (no chrome). */
+[data-ara-shell],
+[data-ara-shell] * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+[data-ara-shell]::-webkit-scrollbar,
+[data-ara-shell] *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
 /* Native-app feel: kill browser button focus halos and tap highlights inside
    the WebView shell. Inputs keep their own placeholder styles. */
 [data-ara-shell] button:focus,

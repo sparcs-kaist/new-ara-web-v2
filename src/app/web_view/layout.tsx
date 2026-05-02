@@ -61,6 +61,17 @@ export default function WebViewLayout({ children }: { children: ReactNode }) {
 
     return (
         <WebViewQueryProvider>
+            {/* Fixed white cap over the status-bar / camera-notch zone.
+                Without it, scrolling the body lifts the page content into
+                the safe-area on Android (the InAppWebView paints behind
+                the system bars) and the camera cutout becomes visible on
+                top of the content. The bottom tab bar already covers the
+                bottom safe-area. */}
+            <div
+                aria-hidden
+                className="fixed inset-x-0 top-0 z-50 bg-white"
+                style={{ height: 'var(--ara-safe-top)', pointerEvents: 'none' }}
+            />
             <PageTransition pathname={pathname}>{children}</PageTransition>
             {showTabBar && <BottomTabBar />}
         </WebViewQueryProvider>

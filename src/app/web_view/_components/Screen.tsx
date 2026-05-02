@@ -30,7 +30,9 @@ export function Screen({ children, withTabBar = 'auto', className }: ScreenProps
 
     return (
         <main
-            className={['min-h-[100dvh] bg-white', className ?? ''].filter(Boolean).join(' ')}
+            className={['flex min-h-[100dvh] flex-col bg-white', className ?? '']
+                .filter(Boolean)
+                .join(' ')}
             style={{
                 paddingTop: 'var(--ara-safe-top)',
                 paddingLeft: 'var(--ara-safe-left)',

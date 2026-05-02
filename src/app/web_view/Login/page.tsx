@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     return (
         <Screen withTabBar={false}>
-            <div className="flex min-h-[100dvh] flex-col items-center px-6">
+            <div className="flex flex-1 flex-col items-center px-6">
                 <div className="flex w-full flex-1 items-center justify-center">
                     <AraLogo width={200} height={109} />
                 </div>
