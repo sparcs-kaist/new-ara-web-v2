@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import TextareaAutosize from 'react-textarea-autosize';
 import { sendMessage, sendAttachmentMessage } from '@/lib/api/chat';
@@ -24,11 +24,11 @@ export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProp
     const hasSentTypingStartRef = useRef(false);
 
     // 소켓으로 타이핑 이벤트 전송
-    const sendTypingEvent = (type: 'typing_start' | 'typing_stop') => {
+    const sendTypingEvent = useCallback((type: 'typing_start' | 'typing_stop') => {
         if (chatSocket.isConnected?.() && myId) { // myId가 있을 때만 전송
             chatSocket.send?.({ type, user_id: myId });
         }
-    };
+    }, [myId]);
 
     // 입력값이 변경될 때마다 타이핑 상태 관리
     useEffect(() => {
@@ -51,7 +51,7 @@ export default function ChatInput({ roomId, myId, onMessageSent }: ChatInputProp
         return () => {
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         };
-    }, [input, myId]); // 의존성 배열에 myId 추가
+    }, [input, myId, sendTypingEvent]); // 의존성 배열에 myId 추가
 
     const handleSend = async () => {
         if (!roomId || (input.trim() === '' && !pending)) return;

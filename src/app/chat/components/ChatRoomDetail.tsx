@@ -1,7 +1,7 @@
 /* eslint-disable */
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
@@ -18,6 +18,7 @@ import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import { useRouter } from 'next/navigation';
+import { InfiniteData, useQueryClient } from '@tanstack/react-query';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -92,7 +93,7 @@ interface MessageDeletedPayload {
 
 // type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
 
-export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDetailProps) {
+export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDetailProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -115,7 +116,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick }: ChatRoomDe
 
     // 내 ID 가져오기
     useEffect(() => {
-            fetchMe()
+        fetchMe()
             .then((data) => {
                 setMyId(data.user);
             });

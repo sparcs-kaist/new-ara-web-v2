@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { fetchArticles } from '@/lib/api/board';
 
 type PosterArticle = {
@@ -42,79 +43,57 @@ function parseDate(val?: string | Date) {
 }
 
 export default function PosterCarousel() {
-    const [items, setItems] = useState<PosterArticle[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [errorIdx, setErrorIdx] = useState<number[]>([]);
-
     const [index, setIndex] = useState(0);
     const [transitionEnabled, setTransitionEnabled] = useState(true);
+    const [errorIdx, setErrorIdx] = useState<number[]>([]);
 
     const trackRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        let cancelled = false;
-        const load = async () => {
-            setLoading(true);
-            setError(null);
+    // React Query로 데이터 페칭 로직 변경
+    const { data: items = [], isLoading, error } = useQuery({
+        queryKey: ['posterArticles', BOARD_ID_POSTER],
+        queryFn: async () => {
             const cutoff = new Date();
             cutoff.setDate(cutoff.getDate() - 60);
             let page = 1;
             const acc: PosterArticle[] = [];
-            try {
-                while (true) {
-                    const resp = await fetchArticles({ boardId: BOARD_ID_POSTER, page: page, pageSize: PAGE_SIZE, ordering: '-created_at' });
-                    const results: PosterArticle[] = resp.results || [];
-                    if (results.length === 0) break;
 
-                    // stop condition: when we encounter an item older than cutoff
-                    let shouldStop = false;
-                    for (const r of results) {
-                        const created = parseDate(r.created_at);
-                        if (!created || created < cutoff) {
-                            shouldStop = true;
-                            break;
-                        }
-                        acc.push(r);
+            while (true) {
+                const resp = await fetchArticles({ boardId: BOARD_ID_POSTER, page: page, pageSize: PAGE_SIZE, ordering: '-created_at' });
+                const results: PosterArticle[] = resp.results || [];
+                if (results.length === 0) break;
+
+                let shouldStop = false;
+                for (const r of results) {
+                    const created = parseDate(r.created_at);
+                    if (!created || created < cutoff) {
+                        shouldStop = true;
+                        break;
                     }
-                    if (shouldStop) break;
-
-                    // If server provides num_pages and we reached end, stop
-                    if (resp.num_pages && page >= resp.num_pages) break;
-                    page += 1;
+                    acc.push(r);
                 }
-
-                // Filter: expire_at in the future and at least one image attachment
-                const now = new Date();
-                const filtered = acc.filter(a => {
-                    const exp = parseDate(a.metadata?.expire_at);
-                    if (!exp || exp <= now) return false;
-                    const img = (a.attachments || []).find(isImage);
-                    return !!img;
-                });
-                // Ensure created_at descending (most recent first)
-                const sorted = filtered.sort((a, b) => {
-                    const ta = parseDate(a.created_at)?.getTime() ?? 0;
-                    const tb = parseDate(b.created_at)?.getTime() ?? 0;
-                    return tb - ta;
-                });
-
-                if (!cancelled) setItems(sorted);
-            } catch (e: any) {
-                if (!cancelled) setError(e?.message || '포스터를 불러오지 못했습니다.');
-            } finally {
-                if (!cancelled) setLoading(false);
+                if (shouldStop) break;
+                if (resp.num_pages && page >= resp.num_pages) break;
+                page += 1;
             }
-        };
-        load();
-        return () => { cancelled = true; };
-    }, []);
-
-    // for test
-    // useEffect(() => {
-    //     setItems(mockArticles);
-    // }, []);
+            return acc;
+        },
+        select: (data) => {
+            const now = new Date();
+            const filtered = data.filter(a => {
+                const exp = parseDate(a.metadata?.expire_at);
+                if (!exp || exp <= now) return false;
+                const img = (a.attachments || []).find(isImage);
+                return !!img;
+            });
+            return filtered.sort((a, b) => {
+                const ta = parseDate(a.created_at)?.getTime() ?? 0;
+                const tb = parseDate(b.created_at)?.getTime() ?? 0;
+                return tb - ta;
+            });
+        },
+    });
 
     useEffect(() => {
         if (items.length <= VISIBLE_COUNT) return;
@@ -130,13 +109,11 @@ export default function PosterCarousel() {
         };
     }, [items.length]);
 
-    // infinite용 배열
     const viewItems = useMemo(() => {
         if (items.length <= VISIBLE_COUNT) return items;
         return [...items, ...items.slice(0, VISIBLE_COUNT)];
     }, [items]);
 
-    // 끝에서 리셋
     const handleTransitionEnd = () => {
         if (items.length <= VISIBLE_COUNT) return;
 
@@ -146,7 +123,6 @@ export default function PosterCarousel() {
         }
     };
 
-    // transition 복구
     useEffect(() => {
         if (!transitionEnabled) {
             const raf = requestAnimationFrame(() => {
@@ -156,14 +132,14 @@ export default function PosterCarousel() {
         }
     }, [transitionEnabled]);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="w-full p-4 text-center">포스터 불러오는 중…</div>
         );
     }
     if (error) {
         return (
-            <div className="w-full p-4 text-center text-red-500">{error}</div>
+            <div className="w-full p-4 text-center text-red-500">{(error as Error).message}</div>
         );
     }
     if (items.length === 0) {

@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
-import { fetchChatRoomList, createGroupDM, createDM } from '@/lib/api/chat';
+import { createGroupDM, createDM } from '@/lib/api/chat';
 import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
+import { InfiniteData, UseInfiniteQueryResult, useQueryClient } from '@tanstack/react-query';
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -45,31 +46,62 @@ interface ChatRoomListProps {
     selectedRoomId?: number | null;
     isPanelOpen?: boolean; // 패널 상태 prop 추가
     onClose?: () => void;   // 패널 닫기 함수 prop 추가
+    infiniteQuery: UseInfiniteQueryResult<InfiniteData<any, unknown>, Error>
 }
 
-export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: ChatRoomListProps) {
-    const [rooms, setRooms] = useState<ChatRoom[]>([]);
+export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose, infiniteQuery }: ChatRoomListProps) {
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [showRoomCreate, setShowRoomCreate] = useState(false);
     const [showInvitationDialog, setShowInvitationDialog] = useState(false); // 상태 추가
     const router = useRouter();
 
-    const refreshRoomList = () => {
-        fetchChatRoomList()
-            .then((data) => {
-                const sortedRooms = [...(data.results || [])].sort((a, b) => {
-                    const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
-                    const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
-                    return bTime - aTime;
-                });
-                setRooms(sortedRooms);
-            });
-    };
+    const queryClient = useQueryClient(); // 새로고침을 위한 queryClient
+    const observerTarget = useRef<HTMLDivElement>(null);
 
+    // 1. useInfiniteQuery로 무한 스크롤 데이터 및 상태 관리
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+    } = infiniteQuery ?? {};
+
+    // 2. React Query의 페이지 데이터를 하나의 배열로 합치고 정렬
+    const rooms = React.useMemo<ChatRoom[]>(() => {
+        const allRooms = data?.pages.flatMap((page) => page.results || []) || [];
+        
+        // 중복 제거 및 시간순 정렬
+        const uniqueRooms = Array.from(new Map(allRooms.map(room => [room.id, room])).values());
+        return uniqueRooms.sort((a, b) => {
+            const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
+            const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
+            return bTime - aTime;
+        });
+    }, [data]);
+
+    // 3. IntersectionObserver로 맨 밑에 도달 시 다음 페이지 호출
     useEffect(() => {
-        refreshRoomList();
-    }, []);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const refreshRoomList = () => {
+        queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+    };
 
     const handleAddChatRoom = async (type: 'DM' | 'GROUP') => {
         if (type === 'DM') {
@@ -97,14 +129,7 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
     const handleCreateGroupRoom = async ({ title, picture }: { title: string; picture: File | null }) => {
         await createGroupDM(title, picture);
         setShowRoomCreate(false);
-        // 채팅방 목록 새로고침
-        const data = await fetchChatRoomList();
-        const sortedRooms = [...(data.results || [])].sort((a, b) => {
-            const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
-            const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
-            return bTime - aTime;
-        });
-        setRooms(sortedRooms);
+        refreshRoomList();
     };
 
     return (
@@ -248,6 +273,12 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                             </button>
                         );
                     })}
+                    <div ref={observerTarget} className="h-0 w-full" />
+                    {(isLoading || isFetchingNextPage) && (
+                        <div className="text-gray-400 text-sm text-center py-4">
+                            더 불러오는 중...
+                        </div>
+                    )}
                 </div>
 
                 <UserSearchDialog
