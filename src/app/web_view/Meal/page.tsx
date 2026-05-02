@@ -7,6 +7,7 @@ import DateNavigator from "./components/DateNavigator";
 import MealHeader from "./components/MealHeader";
 import RestaurantNavigator from "./components/RestaurantNavigator";
 import MenuList from "./components/MenuList";
+import { Spinner } from '@/app/web_view/_components';
 
 import { fetchMeal } from '@/lib/api/meal';
 import {
@@ -181,7 +182,7 @@ export default function MealPage() {
         {/* 로딩 상태 표시 */}
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
-            <span className="text-gray-500">로딩 중...</span>
+            <Spinner size={28} />
           </div>
         ) : currentMenuData.length === 0 ? (
           <div className="flex justify-center items-center h-40">

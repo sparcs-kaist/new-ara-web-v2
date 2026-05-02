@@ -12,7 +12,7 @@ import {
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import type { Comment, PostData } from '@/lib/types/post';
-import { AppHeader, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import { AppHeader, CenteredSpinner, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { usePost } from '@/app/web_view/_query';
@@ -188,9 +188,7 @@ export default function WebViewPostDetailPage() {
         return (
             <Screen withTabBar={false}>
                 <AppHeader title={null} />
-                <div className="flex justify-center py-16 text-[12px] text-[#B1B1B1]">
-                    불러오는 중...
-                </div>
+                <CenteredSpinner />
             </Screen>
         );
     }
@@ -236,9 +234,7 @@ export default function WebViewPostDetailPage() {
                 open via the bridge instead of replacing the WebView. */}
             <ContentArea className="px-5 pt-[10px] text-[15px] leading-relaxed text-black">
                 {isPlaceholder ? (
-                    <div className="py-10 text-center text-[12px] text-[#B1B1B1]">
-                        본문 불러오는 중...
-                    </div>
+                    <CenteredSpinner padY={40} size={28} />
                 ) : (
                     <TextEditor content={post.content} editable={false} />
                 )}

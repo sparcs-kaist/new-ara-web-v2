@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen, LittleText, SkeletonRow, SkeletonLine } from '@/app/web_view/_components';
-import { fetchMe } from '@/lib/api/user';
+import { CenteredSpinner, Screen, LittleText, SkeletonRow, SkeletonLine } from '@/app/web_view/_components';
 import type { ResponsePost } from '@/lib/types/post';
-import { useBoardList, useBoardSection, useTopArticles } from '@/app/web_view/_query';
+import { useBoardList, useBoardSection, useMe, useTopArticles } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { HomeAppBar } from './_components/HomeAppBar';
 import { MainPageTextButton } from './_components/MainPageTextButton';
@@ -40,23 +39,20 @@ export default function MainPage() {
     const router = useRouter();
     const [authError, setAuthError] = useState(false);
 
-    // 401 gate. We only need the success/failure of the call, not the body —
-    // so this stays outside react-query and just runs once.
+    // 401 gate. Cached via react-query so back-nav doesn't refire it
+    // every time the user returns to Main.
+    const meQuery = useMe();
     useEffect(() => {
-        let cancelled = false;
-        fetchMe().catch((err: unknown) => {
-            const status = (err as { response?: { status?: number } })?.response?.status;
-            if (status === 401 && !cancelled) {
-                setAuthError(true);
-                router.replace('/web_view/Login');
-            }
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [router]);
+        const status = (meQuery.error as { response?: { status?: number } } | null)
+            ?.response?.status;
+        if (status === 401) {
+            setAuthError(true);
+            router.replace('/web_view/Login');
+        }
+    }, [meQuery.error, router]);
 
-    const { data: boards } = useBoardList();
+    const boardsQuery = useBoardList();
+    const boards = boardsQuery.data;
     const topQuery = useTopArticles(3);
     const top = topQuery.data;
 
@@ -128,6 +124,21 @@ export default function MainPage() {
     );
 
     if (authError) return null;
+
+    // Cold-start splash: every section query depends on the boards
+    // directory, so until it lands there's nothing meaningful to paint.
+    // Show just the red donut for that one frame — matches the Flutter
+    // "loading the home" experience the user remembered. Once boards
+    // is cached (10-min staleTime), back-nav skips this entirely.
+    const showSplash = !boards && boardsQuery.isPending;
+    if (showSplash) {
+        return (
+            <Screen>
+                <HomeAppBar />
+                <CenteredSpinner padY={120} />
+            </Screen>
+        );
+    }
 
     const topList = top ?? [];
 

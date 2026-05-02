@@ -32,6 +32,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       return;
     }
 
+    // The WebView shell owns its own auth flow (Main page redirects to
+    // /web_view/Login on 401). Bouncing /web_view/* into the desktop
+    // /login here would pop the user out of the WebView entirely.
+    if (pathname.startsWith("/web_view")) {
+      setIsLoggedIn(true);
+      return;
+    }
+
     async function checkAuth() {
       try {
         await fetchMe()
