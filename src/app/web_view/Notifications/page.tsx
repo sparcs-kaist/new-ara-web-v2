@@ -116,22 +116,20 @@ export default function NotificationsPage() {
                                 <button
                                     type="button"
                                     onClick={() => onTap(n)}
-                                    className="mb-[10px] flex w-full items-start gap-[10px] rounded-[15px] border border-[#F0F0F0] bg-white p-[14px] text-left"
+                                    className="mb-[10px] flex min-h-[92px] w-full items-start gap-[10px] rounded-[15px] border border-[#F0F0F0] bg-white p-[14px] text-left"
                                 >
                                     <span
                                         className={[
-                                            'mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                                            'mt-[5px] flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
                                             n.is_read ? 'bg-[#B1B1B1]' : 'bg-ara_red',
                                         ].join(' ')}
                                         aria-hidden
                                     >
-                                        <span className="text-white">
-                                            {n.type === 'default' ? (
-                                                <NotificationIcon size={26} />
-                                            ) : (
-                                                <CommentIcon size={20} />
-                                            )}
-                                        </span>
+                                        {n.type === 'default' ? (
+                                            <NotificationIcon size={28} className="text-white" />
+                                        ) : (
+                                            <CommentIcon size={28} className="text-white" />
+                                        )}
                                     </span>
                                     <div className="min-w-0 flex-1">
                                         <div

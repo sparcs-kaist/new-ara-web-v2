@@ -85,7 +85,17 @@ export default function ProfileEditPage() {
         } catch (e) {
             console.warn('updateUser failed', e);
             if (typeof window !== 'undefined') {
-                window.alert('설정 변경 중 문제가 발생했습니다.');
+                // Surface backend nickname constraints (e.g. 3-month
+                // change cooldown) so the user knows why the save was
+                // rejected — Flutter's profile_edit_page reads
+                // response.data['nickname'][0] for the same reason.
+                const err = e as { response?: { data?: { nickname?: string[] } } };
+                const detail = err?.response?.data?.nickname?.[0];
+                window.alert(
+                    detail
+                        ? `설정 변경 중 문제가 발생했습니다. ${detail}`
+                        : '설정 변경 중 문제가 발생했습니다.',
+                );
             }
         } finally {
             setSaving(false);
@@ -116,7 +126,7 @@ export default function ProfileEditPage() {
                 </button>
             </header>
 
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center pb-10">
                 <div className="h-[10px]" />
 
                 {/* Round avatar with camera badge — width-70 diameter. */}

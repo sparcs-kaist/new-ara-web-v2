@@ -1,6 +1,7 @@
 'use client';
 
 import { AraLogo, Screen } from '@/app/web_view/_components';
+import { getBridge } from '@/app/web_view/_bridge';
 
 /**
  * Faithful port of `lib/pages/login_page.dart`:
@@ -20,8 +21,22 @@ import { AraLogo, Screen } from '@/app/web_view/_components';
  * Django SSO endpoint and let it bounce us back to /web_view/Main.
  */
 export default function LoginPage() {
-    const onSsoLogin = () => {
+    const onSsoLogin = async () => {
         if (typeof window === 'undefined') return;
+
+        // Mirror Flutter's `WebViewCookieManager().clearCookies()` in
+        // SparcsSSOPage.initState — without it, a stale Django session
+        // cookie + a fresh `state` parameter from sso_login disagree at
+        // sso_login_callback, and the WebView lands on the Django 401
+        // error page instead of bouncing back to /auth-handler. Best
+        // effort: in browser dev mode the bridge isn't connected and
+        // `request` rejects immediately, which we swallow.
+        try {
+            await getBridge().request('clearSession');
+        } catch {
+            /* not running inside native shell, or native cleared via fallback */
+        }
+
         const apiHost =
             process.env.NEXT_PUBLIC_API_HOST?.replace(/\/$/, '') ||
             window.location.origin;
@@ -39,7 +54,7 @@ export default function LoginPage() {
 
     return (
         <Screen withTabBar={false}>
-            <div className="flex min-h-[100dvh] flex-col items-center px-6">
+            <div className="flex flex-1 flex-col items-center px-6">
                 <div className="flex w-full flex-1 items-center justify-center">
                     <AraLogo width={200} height={109} />
                 </div>
