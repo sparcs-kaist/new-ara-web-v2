@@ -43,6 +43,41 @@ export default function WebViewLayout({ children }: { children: ReactNode }) {
         };
     }, []);
 
+    // Replace Next.js's default `width=device-width, initial-scale=1`
+    // viewport with the native-app strict variant for the duration of
+    // /web_view/*. The default viewport allows pinch-zoom AND lets
+    // Android Chromium keep layout viewport ≠ visual viewport, which
+    // is the root cause of:
+    //   - users zooming the entire shell with two fingers
+    //   - sticky headers pinning at a coordinate the user can't see
+    //   - body-level overflow that should never exist
+    //   - keyboard reflow visually "sliding" the page in from the side
+    // Restored on unmount so the desktop routes (/login, /, …) keep
+    // their normal zoomable viewport.
+    useEffect(() => {
+        const desired =
+            'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+        let meta = document.querySelector(
+            'meta[name="viewport"]',
+        ) as HTMLMetaElement | null;
+        const previous = meta?.content;
+        let injected = false;
+        if (meta) {
+            meta.content = desired;
+        } else {
+            meta = document.createElement('meta');
+            meta.name = 'viewport';
+            meta.content = desired;
+            document.head.appendChild(meta);
+            injected = true;
+        }
+        return () => {
+            if (!meta) return;
+            if (injected) meta.remove();
+            else if (previous != null) meta.content = previous;
+        };
+    }, []);
+
     // Hardware back button on Android: navigate within the SPA history.
     useBridgeEvent('back:pressed', () => {
         if (typeof window === 'undefined') return;
