@@ -109,23 +109,14 @@ export function CommentComposer({
           : '';
 
     // KakaoTalk-style: when the textarea gains focus and the keyboard
-    // animates in, slide the page contents up so the last comment +
-    // composer stay visible. Without this, Android adjustResize alone
-    // shrinks the WebView but leaves scrollTop where it was, hiding
-    // the latest comment behind the (now smaller) viewport.
+    // animates in, scroll the textarea into view so the last comment +
+    // composer stay visible above the keyboard. Single instant pass
+    // *after* the keyboard transition lands — smooth scroll overlapped
+    // with adjustResize and the page visibly slid in from the side.
     const onFocus = () => {
-        const scrollToBottom = () => {
-            const max = Math.max(
-                document.body.scrollHeight,
-                document.documentElement.scrollHeight,
-            );
-            window.scrollTo({ top: max, behavior: 'smooth' });
-        };
-        // Keyboard transition is ~250–300ms on both platforms; do an
-        // initial pass at 320ms and a settle pass at 600ms so iOS
-        // doesn't snap back when visualViewport finishes resizing.
-        window.setTimeout(scrollToBottom, 320);
-        window.setTimeout(scrollToBottom, 600);
+        window.setTimeout(() => {
+            taRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
+        }, 350);
     };
 
     return (
