@@ -77,7 +77,28 @@ export function BottomTabBar() {
                         type="button"
                         role="tab"
                         aria-selected={active}
-                        onClick={() => router.push(t.path)}
+                        onClick={() => {
+                            if (active) return;
+                            const onMain = TABS[0].matcher.test(pathname ?? '');
+                            const targetMain = t.path === '/web_view/Main';
+                            // Instagram-style: Main is the only stack root.
+                            // - Main → tab: push, so hardware back returns
+                            //   to Main.
+                            // - tab → tab (non-Main): replace, so back from
+                            //   any tab lands on Main rather than ping-pong.
+                            // - tab → Main: prefer router.back() so the
+                            //   single Main entry pushed from Main → tab is
+                            //   actually consumed (no phantom dup that would
+                            //   eat a back press); fall back to replace if
+                            //   the user deep-linked into a tab.
+                            if (onMain) {
+                                router.push(t.path);
+                            } else if (targetMain && window.history.length > 1) {
+                                router.back();
+                            } else {
+                                router.replace(t.path);
+                            }
+                        }}
                         className="flex h-[50px] items-center justify-center bg-transparent"
                     >
                         <span className="flex h-9 w-9 items-center justify-center">
