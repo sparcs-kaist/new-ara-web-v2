@@ -77,7 +77,18 @@ export function BottomTabBar() {
                         type="button"
                         role="tab"
                         aria-selected={active}
-                        onClick={() => router.push(t.path)}
+                        onClick={() => {
+                            if (active) return;
+                            const onMain = TABS[0].matcher.test(pathname ?? '');
+                            // Instagram-style: Main is the only stack root.
+                            // Push only when leaving Main (so hardware back
+                            // returns to Main); every other tab swap replaces
+                            // the current entry, so back from any tab lands
+                            // on Main rather than ping-ponging through the
+                            // tab history.
+                            if (onMain) router.push(t.path);
+                            else router.replace(t.path);
+                        }}
                         className="flex h-[50px] items-center justify-center bg-transparent"
                     >
                         <span className="flex h-9 w-9 items-center justify-center">
