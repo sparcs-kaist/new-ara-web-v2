@@ -43,6 +43,16 @@ class AraBridge {
         { resolve: (v: unknown) => void; reject: (e: Error) => void; timeout: ReturnType<typeof setTimeout> }
     >();
     private listeners = new Map<EventType, Set<Listener<EventType>>>();
+    // Events received before any listener was registered. Replayed when
+    // the first listener for that type subscribes. Critical for events
+    // that fire during the React-hydration window — namely back:pressed
+    // on cookie re-launch, where the WebView lands on Main much faster
+    // than the layout's useBridgeEvent useEffect runs, so the very first
+    // hardware press would otherwise hit zero listeners and disappear.
+    // Capped per-type so an event type with a permanently-absent listener
+    // can't grow unbounded.
+    private bufferedEvents = new Map<EventType, EventPayload<EventType>[]>();
+    private static readonly EVENT_BUFFER_CAP = 5;
     private nextId = 0;
     private _isNative = false;
     private _capabilities: EventPayload<'bridge:ready'> | null = null;
@@ -115,6 +125,19 @@ class AraBridge {
             this.listeners.set(type, set as unknown as Set<Listener<EventType>>);
         }
         set.add(listener);
+        // Replay anything that arrived before this listener existed (see
+        // `bufferedEvents` for why this matters for back:pressed).
+        const buffered = this.bufferedEvents.get(type);
+        if (buffered && buffered.length > 0) {
+            this.bufferedEvents.delete(type);
+            for (const p of buffered) {
+                try {
+                    listener(p as EventPayload<T>);
+                } catch (err) {
+                    console.warn('[AraBridge] replay listener threw', err);
+                }
+            }
+        }
         return () => set!.delete(listener);
     }
 
@@ -153,15 +176,22 @@ class AraBridge {
         }
 
         // Event dispatch
-        const set = this.listeners.get(env.type as EventType);
-        if (set) {
+        const type = env.type as EventType;
+        const payload = (env as { payload?: unknown }).payload as EventPayload<EventType>;
+        const set = this.listeners.get(type);
+        if (set && set.size > 0) {
             for (const l of set) {
                 try {
-                    l((env as { payload?: unknown }).payload as EventPayload<EventType>);
+                    l(payload);
                 } catch (err) {
                     console.warn('[AraBridge] listener threw', err);
                 }
             }
+        } else {
+            const arr = this.bufferedEvents.get(type) ?? [];
+            arr.push(payload);
+            if (arr.length > AraBridge.EVENT_BUFFER_CAP) arr.shift();
+            this.bufferedEvents.set(type, arr);
         }
     };
 }
