@@ -2,8 +2,8 @@ import Link from "next/link";
 import Like from "@/components/ArticleList/Like";
 import Image from "next/image";
 import { ResponsePost } from "@/lib/types/post";
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { formatDistanceToNow } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Pagination } from "./Pagination";
 
 interface ArticleListProps {
@@ -29,6 +29,8 @@ interface ArticleListProps {
 
   gapBetweenPosts?: number; // 게시글들 사이 간격
   gapBetweenTitleAndMeta?: number; // 제목과 메타데이터 사이 간격
+
+  dateType?: "relative" | "absolute"; // 날짜 표시 방식
 }
 
 const hiddenReasonText: Record<string, string> = {
@@ -61,18 +63,34 @@ export default function ArticleList({
   onPageChange, // 페이지 변경 핸들러
   gapBetweenPosts = 8, // 게시글들 사이 간격 (px 단위)
   gapBetweenTitleAndMeta = 4, // 제목과 메타데이터 사이 간격 (px 단위)
+  dateType = "relative", // 날짜 표시 방식 ("relative" 또는 "absolute")
 }: ArticleListProps) {
   const hasMetadata = showWriter || showBoard || showAnswerStatus;
   const hasBottomContent = hasMetadata;
 
   const formatTimeAgo = (dateString: string) => {
     try {
-      const formattedTime = formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
-      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, '');
+      const formattedTime = formatDistanceToNow(new Date(dateString), {
+        addSuffix: true,
+        locale: ko,
+      });
+      return formattedTime.replace(/(약 )|( 미만)|(이상)|(거의 )/g, "");
     } catch (e) {
       console.error("시간 포맷팅 오류:", e);
-      return '';
+      return "";
     }
+  };
+
+  const formatAbsoluteTime = (dateString: string) => {
+    return new Date(dateString)
+      .toLocaleDateString("ko-KR", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\.\s?/g, ".")
+      .replace(/\.$/, "");
   };
 
   return (
@@ -80,42 +98,63 @@ export default function ArticleList({
       <ul style={{ paddingBottom: `${gapBetweenPosts}px` }}>
         {posts.map((post, index) => {
           const rank = (currentPage - 1) * pageSize + index + 1;
-          const hasAttachment = post.attachment_type !== 'NONE';
+          const hasAttachment = post.attachment_type !== "NONE";
           const hasAnswerStatus = post.communication_article_status !== null;
-          const answered = hasAnswerStatus && post.communication_article_status !== null && post.communication_article_status > 0;
+          const answered =
+            hasAnswerStatus &&
+            post.communication_article_status !== null &&
+            post.communication_article_status > 0;
           const answerStatusText = hasAnswerStatus
-            ? (answered
-              ? (post.communication_article_status === 2 ? '답변 완료' : '소통중')
-              : '답변 대기중')
+            ? answered
+              ? post.communication_article_status === 2
+                ? "답변 완료"
+                : "소통중"
+              : "답변 대기중"
             : null;
           const answerStatusColor = hasAnswerStatus
-            ? (answered
-              ? (post.communication_article_status === 2 ? 'text-slate-500' : 'text-amber-700')
-              : 'text-rose-600')
-            : '';
+            ? answered
+              ? post.communication_article_status === 2
+                ? "text-slate-500"
+                : "text-amber-700"
+              : "text-rose-600"
+            : "";
           const answerStatusBackgroundColor = hasAnswerStatus
-            ? (answered
-              ? (post.communication_article_status === 2 ? 'bg-slate-100' : 'bg-amber-50')
-              : 'bg-rose-50')
-            : '';
+            ? answered
+              ? post.communication_article_status === 2
+                ? "bg-slate-100"
+                : "bg-amber-50"
+              : "bg-rose-50"
+            : "";
 
-          const profileImage = post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
-          const timeAgo = post.created_at ? formatTimeAgo(post.created_at) : '';
+          const profileImage =
+            post.created_by?.profile?.picture || "/assets/ServiceAra.svg";
+
+          const time =
+            dateType === "relative"
+              ? formatTimeAgo(post.created_at || "")
+              : formatAbsoluteTime(post.created_at || "");
 
           let displayTitle = post.title;
           let isHiddenTitle = false;
-          if ((!displayTitle || displayTitle.trim() === "") && post.why_hidden && post.why_hidden.length > 0) {
+          if (
+            (!displayTitle || displayTitle.trim() === "") &&
+            post.why_hidden &&
+            post.why_hidden.length > 0
+          ) {
             const reason = post.why_hidden[0];
-            displayTitle = hiddenReasonText[reason] || "숨김 처리된 게시물 입니다.";
+            displayTitle =
+              hiddenReasonText[reason] || "숨김 처리된 게시물 입니다.";
             isHiddenTitle = true;
           }
 
-          const titleTextColor =
-            isHiddenTitle
-              ? 'text-gray-400'
-              : (showReadStatus && post.read_status === '-' ? 'text-gray-500' : 'text-black');
+          const titleTextColor = isHiddenTitle
+            ? "text-gray-400"
+            : showReadStatus && post.read_status === "-"
+              ? "text-gray-500"
+              : "text-black";
 
-          const topicName = showTopic && post.parent_topic ? post.parent_topic.ko_name : null;
+          const topicName =
+            showTopic && post.parent_topic ? post.parent_topic.ko_name : null;
 
           return (
             <li
@@ -123,7 +162,7 @@ export default function ArticleList({
               className={`border-b border-gray-200 last:border-b-0`}
               style={{
                 paddingBottom: `${gapBetweenPosts}px`,
-                paddingTop: `${gapBetweenPosts}px`
+                paddingTop: `${gapBetweenPosts}px`,
               }}
             >
               <Link href={`/post/${post.id}`} className="block h-full">
@@ -139,10 +178,15 @@ export default function ArticleList({
                       style={{ minWidth: 40, minHeight: 40 }}
                     >
                       {isHiddenTitle ? (
-                        post.why_hidden?.[0] === "BLOCKED_USER_CONTENT" || post.why_hidden?.[0] === "REPORTED_CONTENT" ? (
-                          <i className="material-icons text-gray-400 text-3xl">voice_over_off</i>
+                        post.why_hidden?.[0] === "BLOCKED_USER_CONTENT" ||
+                        post.why_hidden?.[0] === "REPORTED_CONTENT" ? (
+                          <i className="material-icons text-gray-400 text-3xl">
+                            voice_over_off
+                          </i>
                         ) : (
-                          <i className="material-icons text-gray-400 text-3xl">visibility_off</i>
+                          <i className="material-icons text-gray-400 text-3xl">
+                            visibility_off
+                          </i>
                         )
                       ) : (
                         <Image
@@ -184,18 +228,27 @@ export default function ArticleList({
                       </div>
 
                       <div className="flex items-center text-[12px] text-gray-500 ml-2 flex-shrink-0">
-                        {[showTimeAgo && timeAgo, showHit && post.hit_count !== undefined && `조회 ${post.hit_count}`]
+                        {[
+                          showTimeAgo && time,
+                          showHit &&
+                            post.hit_count !== undefined &&
+                            `조회 ${post.hit_count}`,
+                        ]
                           .filter(Boolean)
                           .map((item, i, arr) => (
                             <span key={i}>
                               {item}
-                              {i < arr.length - 1 && <span className="mx-1">·</span>}
+                              {i < arr.length - 1 && (
+                                <span className="mx-1">·</span>
+                              )}
                             </span>
-                          ))
-                        }
+                          ))}
                         {!hasBottomContent && showStatus && (
                           <>
-                            {(showTimeAgo && timeAgo) || (showHit && post.hit_count !== undefined) ? <span className="mx-1">·</span> : null}
+                            {(showTimeAgo && time) ||
+                            (showHit && post.hit_count !== undefined) ? (
+                              <span className="mx-1">·</span>
+                            ) : null}
                             <Like
                               like={post.positive_vote_count}
                               dislike={post.negative_vote_count}
@@ -207,22 +260,40 @@ export default function ArticleList({
                     </div>
 
                     {hasBottomContent && (
-                      <div className={`flex w-full justify-between items-center`} style={{ marginTop: `${gapBetweenTitleAndMeta}px` }}>
+                      <div
+                        className={`flex w-full justify-between items-center`}
+                        style={{ marginTop: `${gapBetweenTitleAndMeta}px` }}
+                      >
                         <div className="text-[12px] text-gray-500 flex items-center min-w-0 flex-1">
-                          {[showBoard && post.parent_board?.ko_name, showWriter && post.created_by?.profile?.nickname, showAnswerStatus && answerStatusText]
+                          {[
+                            showBoard && post.parent_board?.ko_name,
+                            showWriter && post.created_by?.profile?.nickname,
+                            showAnswerStatus && answerStatusText,
+                          ]
                             .filter(Boolean)
                             .map((item, i, arr) => (
-                              <span key={i} className={`
-                                ${showAnswerStatus && answerStatusText && i === arr.length - 1 ?
-                                  answerStatusColor + ' ' + answerStatusBackgroundColor + ' px-1.5 py-0.5 rounded inline-block font-medium text-[0.95em]' :
-                                  'text-gray-500'} 
-                                ${i === 0 ? 'overflow-hidden whitespace-nowrap text-ellipsis' : ''}
-                              `}>
+                              <span
+                                key={i}
+                                className={`
+                                ${
+                                  showAnswerStatus &&
+                                  answerStatusText &&
+                                  i === arr.length - 1
+                                    ? answerStatusColor +
+                                      " " +
+                                      answerStatusBackgroundColor +
+                                      " px-1.5 py-0.5 rounded inline-block font-medium text-[0.95em]"
+                                    : "text-gray-500"
+                                } 
+                                ${i === 0 ? "overflow-hidden whitespace-nowrap text-ellipsis" : ""}
+                              `}
+                              >
                                 {item}
-                                {i < arr.length - 1 && <span className="mx-1">·</span>}
+                                {i < arr.length - 1 && (
+                                  <span className="mx-1">·</span>
+                                )}
                               </span>
-                            ))
-                          }
+                            ))}
                         </div>
 
                         <div className="flex items-center flex-shrink-0 ml-2">
@@ -244,7 +315,13 @@ export default function ArticleList({
         })}
       </ul>
 
-      {pagination && totalPages > 1 && <Pagination onPageChange={onPageChange || (() => {})} currentPage={currentPage} totalPages={totalPages} />}
+      {pagination && totalPages > 1 && (
+        <Pagination
+          onPageChange={onPageChange || (() => {})}
+          currentPage={currentPage}
+          totalPages={totalPages}
+        />
+      )}
     </>
   );
 }
