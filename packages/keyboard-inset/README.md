@@ -84,6 +84,83 @@ Size a chat screen that shrinks above the keyboard (pan-invariant, unlike `100dv
 }
 ```
 
+## Bottom-anchored scrolling
+
+Pinning content to the bottom edge while the keyboard resizes the viewport is a
+second problem the inset alone doesn't solve. `createBottomAnchor` compensates
+the scroll position so the bottom stays put across height changes, on either an
+inner scroll container or the document scroller:
+
+```ts
+import { createBottomAnchor } from '@sparcs-kaist/keyboard-inset';
+
+const detach = createBottomAnchor(listEl, { pin: 'always' });   // inner chat column
+const detach = createBottomAnchor(window, { pin: 'always' });   // page with a fixed composer
+```
+
+Two pin modes, because the right UX differs per surface — choosing between them
+is the point of the API:
+
+| `pin` | When the keyboard opens | Fits |
+|---|---|---|
+| `'at-bottom'` (default) | re-glue to the bottom edge **only if the user was already there**; a user who scrolled up keeps their reading position | forum / feed, timelines, comment lists read top-down |
+| `'always'` | preserve whatever sits at the bottom edge **wherever the user is** — the viewport folds up against the keyboard | messenger surfaces: KakaoTalk, Instagram DM, Slack |
+
+**Element target** compensates on `ResizeObserver` ticks — the container box is
+the signal, so content growth (new messages) never fires it. Because scroll
+steps run before the observer within a frame, only a scroll bearing the engine
+clamp's signature — a grow in flight landing exactly at the new bottom — is
+swallowed (it must not re-baseline the stored gap the tick is about to read);
+every other scroll, including a user drag mid-animation, re-baselines the gap
+live. A width change re-glues a user who was at the
+bottom in **either** mode — being at the bottom is reflow-invariant.
+`startAtBottom` (default true) scrolls to the bottom on attach, which is what a
+chat column wants on mount.
+
+**Window target** compensates on `resize` synchronously, so on hosts that
+resize the layout viewport per-frame with the IME animation (the NewAra Flutter
+shell, an `adjustResize` WebView) the content tracks the keyboard frame-by-frame
+instead of being swallowed and jumping at the end. Because it moves the whole
+page, it is hardened against browser-chrome noise:
+
+- **Focus gate** — a shrink engages compensation only when an editable owns
+  focus, the tracker latched a keyboard, or a compensated presentation is
+  already open (focus can race the closing frames). A collapsing URL bar never
+  moves the page.
+- **Debt-bounded grow compensation** — grow (fold-out) is capped at the
+  *nominal* shrink debt (px admitted through the focus gate), drained by the
+  grow delta itself rather than by achieved scroll movement, so a fold-out that
+  clamps at the top can't strand debt and chrome *growth* can't drift the page
+  past where it started.
+- **Direction-dependent gap baseline** — a shrink (fold-in) is never
+  engine-clamped, so its gap is read *fresh* against the pre-event height; a
+  post body that loads silently after mount (no scroll or resize event) thus
+  can't corrupt the fold. A grow (fold-out) also prefers the *fresh* gap and
+  falls back to the *stored* gap only when the geometry bears the engine
+  clamp's signature (`scrollY` pinned at the document bottom): a silent grow
+  under an open keyboard moves the bottom away from the user and so can never
+  fake the signature, keeping a post that grew mid-fold (placeholder→data swap,
+  composer auto-grow) from jumping the page on dismissal.
+- **Overlay carry ledger** — a fold-in that clamps at the physical document
+  edge (overlay hosts can't scroll past the end) records the un-foldable
+  shortfall and fold-out repays it, so the page returns to the user's true gap
+  instead of drifting up by the keyboard height. Window writes force instant
+  scroll (overriding a consumer's `scroll-behavior: smooth`) so the shortfall
+  readback taken right after a write measures real geometry, not a
+  mid-animation phantom.
+- **`effectiveHeight` = layout height − overlay inset** — resize-mode hosts move
+  the layout term, overlay hosts (plain iOS Safari) move the inset; one delta
+  stream covers both.
+- **Orientation reset** — a width change makes heights incomparable, so the
+  outstanding debt and carry are dropped and geometry restarts from the new size.
+- `startAtBottom` is **element-only** — the window target must never move the
+  page on attach.
+
+```ts
+const detach = createBottomAnchor(window, { pin: 'at-bottom', slack: 40 });
+detach();
+```
+
 ## React
 
 ```tsx
@@ -106,6 +183,23 @@ function MessageList() {
   // users who scrolled up keep their reading position.
   useBottomAnchoredScroll(ref);
   return <div ref={ref} className="overflow-y-auto" />;
+}
+```
+
+`useBottomAnchoredScroll` takes the same `pin` option — pass `pin: 'always'`
+for a messenger column, leave it at `'at-bottom'` for a feed. For pages that
+scroll the window rather than an inner column (a post with a fixed comment
+composer), use `useWindowBottomAnchoredScroll`, which defaults to `'always'`
+and never moves the page on mount:
+
+```tsx
+import { useWindowBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
+
+function PostPage() {
+  // folds the article up against the keyboard when the composer focuses;
+  // keyboard-gated, so browser-chrome resizes can't drift it
+  useWindowBottomAnchoredScroll();
+  return <article>…</article>;
 }
 ```
 
@@ -140,10 +234,12 @@ See the TypeScript declarations for full docs. Summary:
 - `createKeyboardTracker(options?)` → `KeyboardTracker` — `getState()`, `subscribe(cb)`, `setOverride(px|null)`, `destroy()`
 - `getSharedKeyboardTracker()` — lazy shared instance (used by the React hooks); HMR-safe
 - `publishKeyboardCssVars(tracker, { target?, prefix? })` → unsubscribe
+- `createBottomAnchor(target, { pin?, slack?, startAtBottom?, tracker? })` → detach — bottom-pins an `HTMLElement` or `window` across keyboard resizes
 - `isEditableElement(el)` — the focus heuristic used internally
 - `KeyboardState` — `{ visible, insetPx, mode: 'resize'|'overlay'|'unknown', visualHeight, editableFocused, source }`
+- `ScrollPinMode` — `'at-bottom' | 'always'`
 - Options: `minKeyboardHeight` (50), `residualEpsilon` (32), `iosDismissFix` (true)
-- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { slack? })`
+- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack? })`
 
 ## Known limits
 
