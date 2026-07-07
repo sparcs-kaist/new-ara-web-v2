@@ -18,6 +18,7 @@ import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import { useRouter } from 'next/navigation';
+import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 
 // ROOM 타입 정의
 type ChatRoom = {
@@ -37,6 +38,8 @@ interface ChatRoomDetailProps {
     roomId: number;
     room?: ChatRoom;
     onMenuClick?: () => void; // 메뉴 클릭 핸들러 prop 추가
+    /** 나가기/차단/삭제 후 이동할 목록 경로. 웹뷰 셸은 '/web_view/Chat'을 넘긴다. */
+    exitTo?: string;
 }
 
 interface Message {
@@ -92,7 +95,7 @@ interface MessageDeletedPayload {
 
 // type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
 
-export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDetailProps) {
+export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/chat' }: ChatRoomDetailProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -458,6 +461,11 @@ export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDe
         }
     }, [messages]);
 
+    // 컨테이너가 리사이즈될 때(키보드로 채팅 컬럼이 줄어들 때) 바닥 앵커 유지.
+    // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
+    // 새 메시지 스크롤은 위의 [messages] 이펙트가 담당(컨텐츠 성장은 RO에 안 잡힘).
+    useBottomAnchoredScroll(messageContainerRef);
+
     // 메시지 삭제 핸들러
     const handleDeleteMessage = async () => {
         if (!contextMenu.messageId) return;
@@ -519,7 +527,7 @@ export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDe
             try {
                 await leaveChatRoom(roomId);
                 alert('채팅방을 나갔습니다.');
-                router.push('/chat');
+                router.push(exitTo);
             } catch (error) {
                 console.error('Failed to leave room:', error);
                 alert('채팅방을 나가는 데 실패했습니다.');
@@ -534,7 +542,7 @@ export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDe
             try {
                 await blockDM(dmPartner.user.id);
                 alert('사용자를 차단했습니다.');
-                router.push('/chat');
+                router.push(exitTo);
             } catch (error) {
                 console.error('Failed to block user:', error);
                 alert('사용자 차단에 실패했습니다.');
@@ -549,7 +557,7 @@ export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDe
             try {
                 await blockChatRoom(roomId);
                 alert('채팅방을 차단하고 나갔습니다.');
-                router.push('/chat');
+                router.push(exitTo);
             } catch (error) {
                 console.error('Failed to block and leave room:', error);
                 alert('실패했습니다.');
@@ -564,7 +572,7 @@ export default function ChatRoomDetail({ roomId, onMenuClick, room }: ChatRoomDe
             try {
                 await deleteChatRoom(roomId);
                 alert('채팅방을 삭제했습니다.');
-                router.push('/chat');
+                router.push(exitTo);
             } catch (error) {
                 console.error('Failed to delete room:', error);
                 alert('채팅방 삭제에 실패했습니다.');

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -19,6 +18,16 @@ type ChatRoom = {
     created_at?: string;
 };
 
+/**
+ * Mobile chat room shell: one column sized by `--kb-visual-height`, so it
+ * shrinks above the keyboard on every host (the visual-viewport height is
+ * pan-invariant, unlike 100dvh−inset math), with ChatRoomDetail's in-flow
+ * input riding the column bottom. Document scroll is locked while open;
+ * the rAF-coalesced corrector resets the programmatic scroll/pan the UA
+ * still applies to reveal a focused caret. It converges and cannot loop —
+ * unlike the old per-visualViewport-event scrollTo(0,0), which fought the
+ * OS mid-animation and caused the jump/side-slide artifacts.
+ */
 export default function WebViewChatRoomPage() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
@@ -29,60 +38,48 @@ export default function WebViewChatRoomPage() {
 
     const [currentRoom, setCurrentRoom] = useState<ChatRoom | undefined>(undefined);
 
-    const [appHeight, setAppHeight] = useState('100%');
-
+    // Lock document scrolling for the lifetime of the room. Restore the raw
+    // inline values — writing back getComputedStyle() results (as before)
+    // leaks a permanent inline `overflow` onto <html>/<body>.
     useEffect(() => {
-        const originalHtmlStyle = window.getComputedStyle(document.documentElement).overflow;
-        const originalBodyStyle = window.getComputedStyle(document.body).overflow;
-        const originalBodyPosition = document.body.style.position;
-        const originalBodyWidth = document.body.style.width;
-        const originalBodyHeight = document.body.style.height;
-
-        document.documentElement.style.overflow = 'hidden';
-
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
-        document.body.style.touchAction = 'none';
-
+        const html = document.documentElement;
+        const body = document.body;
+        const prevHtmlOverflow = html.style.overflow;
+        const prevBodyOverflow = body.style.overflow;
+        const prevHtmlOverscroll = html.style.overscrollBehavior;
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        // Prevent iOS rubber-band pans up front instead of relying on the
+        // corrector below to undo them a frame later.
+        html.style.overscrollBehavior = 'none';
         return () => {
-            document.documentElement.style.overflow = originalHtmlStyle;
-            document.body.style.overflow = originalBodyStyle;
-            document.body.style.position = originalBodyPosition;
-            document.body.style.width = originalBodyWidth;
-            document.body.style.height = originalBodyHeight;
-            document.body.style.touchAction = '';
+            html.style.overflow = prevHtmlOverflow;
+            body.style.overflow = prevBodyOverflow;
+            html.style.overscrollBehavior = prevHtmlOverscroll;
         };
     }, []);
 
+    // Persistent scroll/pan corrector — see the component doc comment.
     useEffect(() => {
-        const handleResize = () => {
-            if (window.visualViewport) {
-                const currentHeight = window.visualViewport.height;
-                setAppHeight(`${currentHeight}px`);
-
+        let rafId = 0;
+        const correct = () => {
+            rafId = 0;
+            const vv = window.visualViewport;
+            const panned = vv ? vv.offsetTop > 0 || vv.offsetLeft > 0 : false;
+            if (window.scrollX !== 0 || window.scrollY !== 0 || panned) {
+                // On WebKit this also collapses a pure visual-viewport pan.
                 window.scrollTo(0, 0);
-            } else {
-                setAppHeight(`${window.innerHeight}px`);
             }
         };
-
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleResize);
-            window.visualViewport.addEventListener('scroll', handleResize); // 스크롤 시도 차단
-            handleResize(); // 초기값 세팅
-        } else {
-            window.addEventListener('resize', handleResize);
-        }
-
+        const schedule = () => {
+            if (rafId === 0) rafId = requestAnimationFrame(correct);
+        };
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.visualViewport?.addEventListener('scroll', schedule);
         return () => {
-            if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', handleResize);
-                window.visualViewport.removeEventListener('scroll', handleResize);
-            } else {
-                window.removeEventListener('resize', handleResize);
-            }
+            window.removeEventListener('scroll', schedule);
+            window.visualViewport?.removeEventListener('scroll', schedule);
+            if (rafId !== 0) cancelAnimationFrame(rafId);
         };
     }, []);
 
@@ -94,16 +91,6 @@ export default function WebViewChatRoomPage() {
             });
         }
     }, [roomId]);
-
-    //for web_view : 최상단 프레임 스크롤 방지
-    useEffect(() => {
-        // 마운트 될 때 scroll disable
-        document.body.style.overflow = 'hidden';
-        // 언마운트 될 때 다시 scroll enable
-        return () => {
-            document.body.style.overflow = 'auto';
-        };
-    }, []);
 
     useEffect(() => {
         if (!roomId) return;
@@ -133,26 +120,28 @@ export default function WebViewChatRoomPage() {
         };
     }, [roomId]);
 
-
     if (!roomId) {
         return <div>유효하지 않은 채팅방입니다.</div>;
     }
 
     return (
         <div
-            className="bg-white flex flex-col w-full"
+            className="relative flex w-full flex-col overflow-hidden bg-white"
             style={{
-                height: appHeight,
-                overflow: 'hidden', // 내부 스크롤만 허용
-                position: 'relative', // 자식 요소 위치 기준점
+                height: 'var(--kb-visual-height, 100dvh)',
+                // Keep the room header out from under the fixed safe-top cap.
+                paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
+                // Home-indicator clearance, zeroed while the keyboard covers it.
+                paddingBottom:
+                    'calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) * (1 - var(--kb-visible, 0)))',
             }}
         >
             <ChatRoomDetail
                 roomId={roomId}
                 room={currentRoom}
+                exitTo="/web_view/Chat"
                 onMenuClick={() => router.push('/web_view/Chat')}
             />
         </div>
     );
 }
-

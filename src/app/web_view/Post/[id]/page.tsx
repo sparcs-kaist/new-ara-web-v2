@@ -12,7 +12,7 @@ import {
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
 import type { Comment, PostData } from '@/lib/types/post';
-import { AppHeader, CenteredSpinner, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import { AppHeader, CenteredSpinner, ComposerSpacer, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { usePost } from '@/app/web_view/_query';
@@ -301,8 +301,10 @@ export default function WebViewPostDetailPage() {
                 )}
             </section>
 
-            {/* Reserve space so the last comment doesn't sit under the composer. */}
-            <div aria-hidden className="h-24" />
+            {/* Reserve space so the last comment doesn't sit under the
+                composer — sized from the composer's measured height, since
+                a reply header or a five-line draft grows well past 96px. */}
+            <ComposerSpacer height={96} />
 
             <CommentComposer
                 postId={post.id}

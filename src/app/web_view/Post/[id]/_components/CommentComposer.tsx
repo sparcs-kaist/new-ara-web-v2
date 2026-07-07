@@ -32,7 +32,7 @@ const MAX_LINES = 5;
  *   │      │ #f8f8f8 rounded-10 input   │ send 30  │
  *   └──────────────────────────────────────────────┘
  *
- * Lifts above the keyboard via `StickyComposer`'s `--ara-keyboard-height`.
+ * Lifts above the keyboard via `StickyComposer` (--kb-inset / --kb-visible).
  */
 export function CommentComposer({
     postId,
@@ -108,16 +108,8 @@ export function CommentComposer({
           ? `'${replyToNickname ?? ''}'님께 답글을 작성하는 중`
           : '';
 
-    // KakaoTalk-style: when the textarea gains focus and the keyboard
-    // animates in, scroll the textarea into view so the last comment +
-    // composer stay visible above the keyboard. Single instant pass
-    // *after* the keyboard transition lands — smooth scroll overlapped
-    // with adjustResize and the page visibly slid in from the side.
-    const onFocus = () => {
-        window.setTimeout(() => {
-            taRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
-        }, 350);
-    };
+    // No focus scroll hack: the composer is viewport-fixed, so it is on
+    // screen by definition and the browser's own focus reveal suffices.
 
     return (
         <StickyComposer aboveTabBar={false}>
@@ -163,7 +155,6 @@ export function CommentComposer({
                             ref={taRef}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            onFocus={onFocus}
                             placeholder="댓글을 입력하세요"
                             rows={1}
                             inputMode="text"
