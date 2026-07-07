@@ -3,8 +3,8 @@ import { AxiosError } from 'axios'; // 추가
 import { queryBuilder } from '@/lib/utils/queryBuilder';
 
 // 채팅방 리스트 가져오기
-export const fetchChatRoomList = async () => {
-    const { data } = await http.get(`chat/room/`);
+export const fetchChatRoomList = async (page = 1, page_size = 15) => {
+    const { data } = await http.get(`chat/room/?page=${page}&page_size=${page_size}`);
     return data;
 }
 

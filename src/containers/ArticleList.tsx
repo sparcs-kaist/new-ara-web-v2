@@ -13,8 +13,8 @@ import { fetchMe } from "@/lib/api/user";
 import { fetchUserPosts } from "@/lib/api/user_profile";
 import { debounce } from "lodash";
 import { useMe } from "@/lib/query/user";
-import { GridArticleList } from '@/components/ArticleList/GridArticleList';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { GridArticleList } from "@/components/ArticleList/GridArticleList";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 
@@ -94,12 +94,13 @@ export function PortalNoticePreview() {
   return;
 }
 
-interface BoardArticleListProps {
+export interface BoardArticleListProps {
   boardId?: number;
   pageSize?: number;
   topicId?: number;
   query?: string; // 검색어 prop 추가
   hidePortalNotice?: boolean;
+  dateType?: "relative" | "absolute";
 }
 
 // 🔸 Board 페이지 - 일반 게시글
@@ -108,19 +109,20 @@ export function BoardArticleList({
   pageSize = 10,
   topicId,
   query,
+  dateType = "relative",
 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
 
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = Number(searchParams.get("page")) || 1;
   const router = useRouter();
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
+    params.set("page", page.toString());
 
     router.push(`?${params.toString()}`, { scroll: false });
-  }
+  };
 
   const [totalPages, setTotalPages] = useState(1);
   const requestTokenRef = useRef(0);
@@ -160,6 +162,7 @@ export function BoardArticleList({
       currentPage={currentPage}
       totalPages={totalPages}
       onPageChange={handlePageChange}
+      dateType={dateType}
     />
   );
 }
@@ -170,19 +173,22 @@ export const BoardAllArticleList = ({
   hidePortalNotice = false,
 }: BoardArticleListProps) => {
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = Number(searchParams.get("page")) || 1;
   const router = useRouter();
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
+    params.set("page", page.toString());
 
     router.push(`?${params.toString()}`, { scroll: false });
-  }
+  };
 
   const { data } = useArticles({
-    pageSize, page: currentPage, query, hidePortalNotice
-  })
+    pageSize,
+    page: currentPage,
+    query,
+    hidePortalNotice,
+  });
 
   return (
     <ArticleList
@@ -203,7 +209,7 @@ export const BoardAllArticleList = ({
       onPageChange={handlePageChange}
     />
   );
-}
+};
 
 // 🔸 Board 페이지 - 인기 게시글
 export function BoardHotArticleList({
@@ -211,17 +217,17 @@ export function BoardHotArticleList({
   query,
 }: BoardArticleListProps) {
   const [posts, setPosts] = useState([]);
-  
+
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const currentPage = Number(searchParams.get("page")) || 1;
   const router = useRouter();
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', page.toString());
+    params.set("page", page.toString());
 
     router.push(`?${params.toString()}`, { scroll: false });
-  }
+  };
 
   const [totalPages, setTotalPages] = useState(1);
   const requestTokenRef = useRef(0);
@@ -293,7 +299,9 @@ export function BoardBookmarkedArticlesList() {
     const fetchData = async () => {
       const Response = await fetchArchives();
       //@ TODO : 알맞는 타입 추가하기
-      const articles = (Response.results || []).map((item: any) => item.parent_article);
+      const articles = (Response.results || []).map(
+        (item: any) => item.parent_article,
+      );
       setPosts(articles);
     };
     fetchData();
@@ -638,7 +646,11 @@ export function MarketArticleContainer() {
     const currentToken = ++requestTokenRef.current;
 
     const fetchData = async () => {
-      const Response = await fetchArticles({ boardId: 4, pageSize: 12, page: currentPage });
+      const Response = await fetchArticles({
+        boardId: 4,
+        pageSize: 12,
+        page: currentPage,
+      });
 
       if (requestTokenRef.current === currentToken) {
         setPosts(Response.results);
