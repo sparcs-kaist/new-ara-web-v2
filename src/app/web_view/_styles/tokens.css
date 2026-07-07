@@ -9,15 +9,23 @@
  * Pretendard font is already loaded globally in `app/globals.css`.
  */
 
+/* Soft-keyboard state — published on <html> by @sparcs-kaist/keyboard-inset
+   (WebViewClientLayout's useKeyboardCssVars). Un-gated on :root so formulas
+   using them are valid before hydration sets [data-ara-shell]; an
+   unresolvable var() would invalidate whole declarations at computed-value
+   time. */
+:root {
+    --kb-inset: 0px;
+    --kb-visible: 0;
+    --kb-visual-height: 100dvh;
+}
+
 [data-ara-shell] {
     /* Safe-area insets — overridden by layout.tsx from the bridge handshake. */
     --ara-safe-top: env(safe-area-inset-top, 0px);
     --ara-safe-bottom: env(safe-area-inset-bottom, 0px);
     --ara-safe-left: env(safe-area-inset-left, 0px);
     --ara-safe-right: env(safe-area-inset-right, 0px);
-
-    /* Software keyboard height — driven by useKeyboard() / native event. */
-    --ara-keyboard-height: 0px;
 
     background: #ffffff;
     color: #111111;

@@ -4,7 +4,8 @@ import { useEffect, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { BottomTabBar, isTabRoot } from './BottomTabBar';
 import { getBridge, useBridgeEvent } from '../_bridge';
-import useKeyboard from '../hooks/keyboard/useKeyboard';
+import { getSharedKeyboardTracker } from '@sparcs-kaist/keyboard-inset';
+import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
@@ -36,7 +37,6 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             root.style.removeProperty('--ara-safe-bottom');
             root.style.removeProperty('--ara-safe-left');
             root.style.removeProperty('--ara-safe-right');
-            root.style.removeProperty('--ara-keyboard-height');
         };
     }, []);
 
@@ -45,14 +45,13 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // OnBackInvokedDispatcher fires authoritatively before the system
     // can finish the activity. We don't listen for `back:pressed` here.
 
-    // Keyboard height — visualViewport on web, optionally overridden by a
-    // native event when the host wants to push a sheet over the WebView.
-    const { keyboardHeight } = useKeyboard();
-    useEffect(() => {
-        document.documentElement.style.setProperty('--ara-keyboard-height', `${keyboardHeight}px`);
-    }, [keyboardHeight]);
+    // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
+    // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
+    useKeyboardCssVars();
+    // The shell doesn't emit keyboard:changed today; if it ever does, the
+    // tracker normalizes the raw height so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
-        document.documentElement.style.setProperty('--ara-keyboard-height', `${p.height}px`);
+        getSharedKeyboardTracker().setOverride(p.visible ? p.height : null);
     });
 
     return (

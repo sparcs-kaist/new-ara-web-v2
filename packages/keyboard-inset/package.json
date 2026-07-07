@@ -1,0 +1,80 @@
+{
+    "name": "@sparcs-kaist/keyboard-inset",
+    "version": "0.1.0",
+    "description": "Framework-agnostic soft-keyboard inset tracking for mobile web apps and WebViews — Android adjustResize, iOS visualViewport quirks, Chrome interactive-widget — with React bindings.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sparcs-kaist/new-ara-web-v2.git",
+        "directory": "packages/keyboard-inset"
+    },
+    "sideEffects": false,
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        },
+        "./react": {
+            "import": {
+                "types": "./dist/react.d.ts",
+                "default": "./dist/react.js"
+            },
+            "require": {
+                "types": "./dist/react.d.cts",
+                "default": "./dist/react.cjs"
+            }
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist",
+        "src",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "prepublishOnly": "npm run build && npm run test"
+    },
+    "peerDependencies": {
+        "react": ">=18"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/react": "^19",
+        "jsdom": "^26",
+        "tsup": "^8",
+        "typescript": "^5",
+        "vitest": "^3"
+    },
+    "keywords": [
+        "keyboard",
+        "virtual-keyboard",
+        "soft-keyboard",
+        "visualviewport",
+        "keyboard-inset",
+        "webview",
+        "wkwebview",
+        "android",
+        "ios",
+        "mobile-web",
+        "react"
+    ]
+}
