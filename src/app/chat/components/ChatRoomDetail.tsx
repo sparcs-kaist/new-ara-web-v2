@@ -464,7 +464,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     // 컨테이너가 리사이즈될 때(키보드로 채팅 컬럼이 줄어들 때) 바닥 앵커 유지.
     // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
     // 새 메시지 스크롤은 위의 [messages] 이펙트가 담당(컨텐츠 성장은 RO에 안 잡힘).
-    useBottomAnchoredScroll(messageContainerRef);
+    useBottomAnchoredScroll(messageContainerRef, { pin: 'always' });
 
     // 메시지 삭제 핸들러
     const handleDeleteMessage = async () => {

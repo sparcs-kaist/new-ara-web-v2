@@ -8,6 +8,7 @@ import {
     type KeyboardTracker,
 } from './tracker';
 import { publishKeyboardCssVars, type PublishCssVarsOptions } from './css-vars';
+import { createBottomAnchor, type ScrollPinMode } from './scroll-anchor';
 
 // useSyncExternalStore requires a REFERENTIALLY STABLE server snapshot —
 // returning a fresh object per call triggers React's "getServerSnapshot
@@ -48,50 +49,60 @@ export function useKeyboardCssVars(opts?: PublishCssVarsOptions): void {
 
 export interface BottomAnchoredScrollOptions {
     /**
-     * How close (px) to the bottom edge still counts as "at the bottom".
-     * Default 40.
+     * `'at-bottom'` (default): re-glue to the bottom edge only when the user
+     * was already there. `'always'`: preserve the bottom-edge content
+     * wherever the user is — messenger-style folding against the keyboard.
+     */
+    pin?: ScrollPinMode;
+    /**
+     * How close (px) to the bottom edge still counts as "at the bottom"
+     * (`'at-bottom'` mode). Default 40.
      */
     slack?: number;
+    /** Scroll to the bottom when anchoring starts. Default true. */
+    startAtBottom?: boolean;
 }
 
 /**
- * Keep a scroll container glued to its bottom edge across CONTAINER
- * resizes (e.g. the keyboard shrinking a chat list); a user who scrolled
- * up keeps their reading position. The at-bottom flag comes from the
- * container's own scroll events — post-resize geometry can't tell where
- * the user was. Content growth is out of scope (it doesn't change the
- * container box): keep scrolling on data changes yourself.
+ * Keep a scroll container's bottom edge anchored across CONTAINER resizes
+ * (e.g. the keyboard shrinking a chat list) — see `pin` for the two UX
+ * modes. Content growth is out of scope (it doesn't change the container
+ * box): keep scrolling on data changes yourself.
  */
 export function useBottomAnchoredScroll<T extends HTMLElement>(
     ref: RefObject<T | null>,
     opts: BottomAnchoredScrollOptions = {},
 ): void {
-    const slack = opts.slack ?? 40;
+    const { pin = 'at-bottom', slack = 40, startAtBottom = true } = opts;
     useEffect(() => {
         const el = ref.current;
-        if (!el || typeof ResizeObserver === 'undefined') return;
+        if (!el) return;
+        return createBottomAnchor(el, { pin, slack, startAtBottom });
+    }, [ref, pin, slack, startAtBottom]);
+}
 
-        // Starts true: the initial observe-fire doubles as the initial
-        // scroll-to-bottom, which is what a chat screen wants on mount.
-        let atBottom = true;
+export interface WindowBottomAnchoredScrollOptions {
+    /**
+     * Default `'always'` — the reason to mount this hook is the
+     * messenger-style fold; pass `'at-bottom'` for feed-style surfaces.
+     */
+    pin?: ScrollPinMode;
+    /** See {@link BottomAnchoredScrollOptions.slack}. */
+    slack?: number;
+}
 
-        const onScroll = () => {
-            atBottom = el.scrollHeight - el.clientHeight - el.scrollTop <= slack;
-        };
-        el.addEventListener('scroll', onScroll, { passive: true });
-
-        const ro = new ResizeObserver(() => {
-            if (!atBottom) return;
-            el.scrollTop = el.scrollHeight - el.clientHeight;
-            atBottom = true; // the write above re-fires onScroll, but be explicit
-        });
-        ro.observe(el);
-
-        return () => {
-            ro.disconnect();
-            el.removeEventListener('scroll', onScroll);
-        };
-    }, [ref, slack]);
+/**
+ * Bottom-anchor the DOCUMENT scroller across keyboard presentations, for
+ * pages that scroll the window rather than an inner column (a post with a
+ * fixed comment composer). Never moves the page on mount; shrink
+ * compensation is keyboard-gated so browser chrome noise can't drift it.
+ */
+export function useWindowBottomAnchoredScroll(
+    opts: WindowBottomAnchoredScrollOptions = {},
+): void {
+    const { pin = 'always', slack = 40 } = opts;
+    useEffect(() => createBottomAnchor(window, { pin, slack }), [pin, slack]);
 }
 
 export type { KeyboardState, KeyboardTracker, KeyboardViewportMode, KeyboardTrackerOptions } from './tracker';
+export type { ScrollPinMode, BottomAnchorOptions } from './scroll-anchor';

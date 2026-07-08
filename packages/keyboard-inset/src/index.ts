@@ -12,3 +12,5 @@ export type {
 } from './tracker';
 export { publishKeyboardCssVars } from './css-vars';
 export type { PublishCssVarsOptions } from './css-vars';
+export { createBottomAnchor } from './scroll-anchor';
+export type { BottomAnchorOptions, ScrollPinMode } from './scroll-anchor';

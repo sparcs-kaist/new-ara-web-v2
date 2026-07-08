@@ -1,6 +1,6 @@
 {
     "name": "@sparcs-kaist/keyboard-inset",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Framework-agnostic soft-keyboard inset tracking for mobile web apps and WebViews — Android adjustResize, iOS visualViewport quirks, Chrome interactive-widget — with React bindings.",
     "license": "MIT",
     "repository": {
