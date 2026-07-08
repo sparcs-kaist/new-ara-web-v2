@@ -131,9 +131,15 @@ export default function WebViewChatRoomPage() {
                 height: 'var(--kb-visual-height, 100dvh)',
                 // Keep the room header out from under the fixed safe-top cap.
                 paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
-                // Home-indicator clearance, zeroed while the keyboard covers it.
+                // Home-indicator clearance, handed off continuously to the
+                // keyboard (see StickyComposer's resting-offset rationale).
+                // Both shrink terms: resize hosts move --ara-kb-shrink
+                // (synchronous), overlay hosts move --kb-inset (same tracker
+                // timing as the --kb-visual-height column height above) —
+                // without the inset term the clearance never collapses under
+                // an overlay keyboard and the input floats above it.
                 paddingBottom:
-                    'calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) * (1 - var(--kb-visible, 0)))',
+                    'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px) - var(--kb-inset, 0px)))',
             }}
         >
             <ChatRoomDetail
