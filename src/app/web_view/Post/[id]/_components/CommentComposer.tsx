@@ -32,7 +32,7 @@ const MAX_LINES = 5;
  *   │      │ #f8f8f8 rounded-10 input   │ send 30  │
  *   └──────────────────────────────────────────────┘
  *
- * Lifts above the keyboard via `StickyComposer` (--kb-inset / --kb-visible).
+ * Lifts above the keyboard via `StickyComposer` (--kb-inset / --ara-kb-shrink).
  */
 export function CommentComposer({
     postId,

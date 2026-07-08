@@ -9,10 +9,14 @@ interface StickyComposerProps {
     className?: string;
 }
 
-// Home-indicator clearance, zeroed while the keyboard is up (it covers that
-// zone — the composer should sit flush against the keyboard).
+// Home-indicator clearance, handed off to the keyboard CONTINUOUSLY: the
+// resting offset gives way px-for-px as the layout viewport shrinks, so the
+// bar holds its absolute screen position until the rising keyboard reaches
+// it, then rides flush on top. Gating this on the binary --kb-visible
+// instead made the bar snap by the safe-bottom height mid-animation — that
+// flag lands rAF + stability frames after the geometry moves.
 const CLOSED_RESTING_OFFSET =
-    'calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) * (1 - var(--kb-visible, 0)))';
+    'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px)))';
 
 /**
  * Bottom-anchored bar that auto-lifts above the software keyboard:
