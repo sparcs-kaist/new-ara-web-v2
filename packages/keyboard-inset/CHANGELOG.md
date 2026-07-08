@@ -17,6 +17,9 @@
     drift the page
 - React: `pin` / `startAtBottom` options on `useBottomAnchoredScroll`; new
   `useWindowBottomAnchoredScroll` for pages that scroll the document
+- Tracker: `setOverride` publishes synchronously while attached (host bridges
+  feed per-animation-frame keyboard insets; a rAF hop would lag the lift by a
+  frame). Detached trackers keep the scheduled path.
 
 ## 0.1.0 (unreleased)
 

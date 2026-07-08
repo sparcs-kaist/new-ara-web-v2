@@ -165,7 +165,14 @@ class DomKeyboardTracker implements KeyboardTracker {
 
     setOverride(rawKeyboardPx: number | null): void {
         this.overrideRaw = rawKeyboardPx;
-        this.schedule();
+        // Host-driven overrides arrive per animation frame; publish
+        // synchronously so the lift lands in the same task instead of one
+        // rAF later. The evaluation reads only cheap current geometry.
+        if (this.attached && !this.destroyed) {
+            this.evaluate();
+        } else {
+            this.schedule();
+        }
     }
 
     destroy(): void {

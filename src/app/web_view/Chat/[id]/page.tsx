@@ -128,7 +128,14 @@ export default function WebViewChatRoomPage() {
         <div
             className="relative flex w-full flex-col overflow-hidden bg-white"
             style={{
-                height: 'var(--kb-visual-height, 100dvh)',
+                // The lower of the two keyboard signals wins, so the column
+                // is right on every host class: resize hosts shrink both
+                // terms (inset ~0); non-resizing hosts with a bridge
+                // override move --kb-inset (dvh stays full); newer System
+                // WebViews that shrink the visual viewport themselves move
+                // --kb-visual-height — never double-subtracted, min() picks
+                // one.
+                height: 'min(var(--kb-visual-height, 100dvh), calc(100dvh - var(--kb-inset, 0px)))',
                 // Keep the room header out from under the fixed safe-top cap.
                 paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
                 // Home-indicator clearance, handed off continuously to the

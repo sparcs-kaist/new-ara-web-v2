@@ -131,8 +131,10 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
     // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
     useKeyboardCssVars();
-    // The shell doesn't emit keyboard:changed today; if it ever does, the
-    // tracker normalizes the raw height so a resize-mode host can't double-lift.
+    // The Android overlay-mode shell emits keyboard:changed per animation
+    // frame (the WebView surface stays full-height under the IME). The
+    // tracker normalizes the raw height against any layout shrink, so a
+    // host that still resizes can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
         getSharedKeyboardTracker().setOverride(p.visible ? p.height : null);
     });

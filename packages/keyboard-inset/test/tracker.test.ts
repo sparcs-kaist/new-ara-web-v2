@@ -290,6 +290,23 @@ describe('setOverride (native bridge feed)', () => {
         flushFrames();
         expect(t.getState().source).toBe('geometry');
     });
+
+    it('publishes synchronously while attached (per-frame bridge feed must not lag a rAF)', () => {
+        const { t } = makeTracker();
+        focusEditable();
+        flushFrames();
+
+        t.setOverride(336);
+        // No flushFrames: the state must already reflect the override.
+        expect(t.getState().insetPx).toBe(336);
+        expect(t.getState().source).toBe('override');
+
+        t.setOverride(180);
+        expect(t.getState().insetPx).toBe(180);
+
+        t.setOverride(null);
+        expect(t.getState().source).toBe('geometry');
+    });
 });
 
 describe('publishKeyboardCssVars', () => {
