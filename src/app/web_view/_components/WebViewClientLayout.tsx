@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { BottomTabBar, isTabRoot } from './BottomTabBar';
 import { getBridge, useBridgeEvent } from '../_bridge';
 import { getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
@@ -9,9 +9,15 @@ import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
+const MAIN_PATH = /^\/web_view\/Main\/?$/;
+const EXIT_TOAST_MS = 2000;
+
 export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
     const showTabBar = isTabRoot(pathname);
+    const [exitToastAt, setExitToastAt] = useState<number | null>(null);
+    const lastBackAtRef = useRef<number | null>(null);
 
     // Mark <html> with the shell attribute so the scoped tokens apply, and
     // sync the safe-area inset values reported by the native bridge.
@@ -40,10 +46,31 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // Hardware back is intercepted in the native shell's MainActivity
-    // (Android) and decided there — it's the only place where the
-    // OnBackInvokedDispatcher fires authoritatively before the system
-    // can finish the activity. We don't listen for `back:pressed` here.
+    // The shipped shell only forwards hardware back as `back:pressed` and
+    // never pops natively; newer shells decide natively and never emit this.
+    useBridgeEvent('back:pressed', () => {
+        if (typeof window === 'undefined') return;
+        const onMain = MAIN_PATH.test(pathname ?? '');
+        if (!onMain && window.history.length > 1) {
+            router.back();
+            return;
+        }
+        // We're at Main (or an unexpected dead-end with no history).
+        // First press shows the toast; a second within 2s actually exits.
+        const now = Date.now();
+        if (lastBackAtRef.current && now - lastBackAtRef.current < EXIT_TOAST_MS) {
+            getBridge().send('exit');
+            return;
+        }
+        lastBackAtRef.current = now;
+        setExitToastAt(now);
+    });
+
+    useEffect(() => {
+        if (exitToastAt == null) return;
+        const t = window.setTimeout(() => setExitToastAt(null), EXIT_TOAST_MS);
+        return () => window.clearTimeout(t);
+    }, [exitToastAt]);
 
     // Publish --ara-kb-shrink (layout-viewport shrink in px) SYNCHRONOUSLY
     // from the resize event. Fixed bottom bars subtract it from their
@@ -152,6 +179,22 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             />
             <PageTransition pathname={pathname}>{children}</PageTransition>
             {showTabBar && <BottomTabBar />}
+            {exitToastAt != null && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center"
+                    style={{
+                        bottom: showTabBar
+                            ? 'calc(var(--ara-safe-bottom) + 70px)'
+                            : 'calc(var(--ara-safe-bottom) + 20px)',
+                    }}
+                >
+                    <div className="rounded-md bg-black/80 px-4 py-2 text-[14px] font-medium text-white">
+                        한 번 더 누르면 종료됩니다.
+                    </div>
+                </div>
+            )}
         </WebViewQueryProvider>
     );
 }
