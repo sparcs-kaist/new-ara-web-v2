@@ -165,9 +165,8 @@ class DomKeyboardTracker implements KeyboardTracker {
 
     setOverride(rawKeyboardPx: number | null): void {
         this.overrideRaw = rawKeyboardPx;
-        // Host-driven overrides arrive per animation frame; publish
-        // synchronously so the lift lands in the same task instead of one
-        // rAF later. The evaluation reads only cheap current geometry.
+        // Host-driven overrides arrive per frame; publish synchronously so
+        // the lift lands in the same task instead of one rAF later.
         if (this.attached && !this.destroyed) {
             this.evaluate();
         } else {
@@ -243,10 +242,9 @@ class DomKeyboardTracker implements KeyboardTracker {
         }
         this.maxInnerHeight = Math.max(this.maxInnerHeight, innerHeight);
 
-        // Occlusion stability: only trust a sample when two consecutive
-        // evaluations agree (filters the 1–2 frame innerHeight/vv.height
-        // skew during Android's per-frame IME animation). While unstable,
-        // keep re-evaluating so we converge without another event.
+        // Occlusion stability: trust a sample only when two consecutive
+        // evaluations agree (filters the 1–2 frame innerHeight/vv.height skew
+        // during Android's per-frame IME animation). Re-evaluate until stable.
         if (this.lastSample >= 0 && Math.abs(rawOcclusion - this.lastSample) <= STABILITY_TOLERANCE_PX) {
             this.stableOcclusion = rawOcclusion;
         } else {
@@ -307,10 +305,8 @@ class DomKeyboardTracker implements KeyboardTracker {
         let visible = latched;
         if (this.overrideRaw !== null) {
             // Raw native height minus observed layout shrink — a resize-mode
-            // host contributes ~0 instead of double-lifting. Measured from
-            // the width-scoped max innerHeight, not the presentation
-            // baseline: the shrink must be recognized even when focus is
-            // absent or arrived after the host already resized.
+            // host contributes ~0 instead of double-lifting. Measured from the
+            // width-scoped max innerHeight so it holds without focus.
             const layoutShrank = Math.max(0, this.maxInnerHeight - innerHeight);
             insetPx = Math.max(0, Math.round(this.overrideRaw - layoutShrank));
             source = 'override';

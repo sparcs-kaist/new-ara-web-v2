@@ -1,47 +1,17 @@
 /**
  * Bottom-anchored scrolling across keyboard-driven height changes.
  *
- * Two pin modes, because the right UX differs per surface:
+ *   'at-bottom' — re-glue to the bottom only if the user was already there.
+ *   'always'    — preserve the bottom-edge content wherever the user is; the
+ *                 viewport folds against the keyboard (messenger style).
  *
- *   'at-bottom' — re-glue to the bottom edge only when the user was already
- *                 there; a user who scrolled up keeps their reading position
- *                 (forum / feed style).
- *   'always'    — preserve whatever content sits at the bottom edge, wherever
- *                 the user is: the viewport "folds" against the keyboard the
- *                 way messenger apps do (KakaoTalk, Instagram DM, Slack).
- *
- * All compensation is written as an ABSOLUTE target derived from a bottom
- * gap (content px hidden below the visible bottom edge), never as a relative
- * delta: when a viewport grows back, engines clamp the scroll offset during
- * layout BEFORE any callback runs, and a relative adjustment on top of that
- * clamp double-compensates. Absolute writes are idempotent against the clamp.
- *
- * Where the baseline gap comes from is direction-dependent:
- *   - A SHRINK is never engine-clamped (the scrollable max only grows), so
- *     the baseline is read fresh against the pre-event height. This also
- *     survives content growth that fired no scroll event (a post body
- *     loading after mount) — a stored gap would be stale.
- *   - A GROW may already be engine-clamped by the time we run, so the
- *     baseline is the STORED gap, maintained by scroll events. On elements,
- *     scroll steps run before ResizeObserver delivery within a frame, so a
- *     scroll bearing the clamp's signature — a grow in flight and a landing
- *     exactly at the new bottom — must not overwrite the stored baseline;
- *     every other scroll is the user and re-baselines live. The window
- *     resize event runs before scroll steps, so the window path needs no
- *     such guard.
- *
- * Element targets compensate on ResizeObserver ticks (the container box is
- * the signal — content growth never fires it). The window target compensates
- * on `resize` synchronously, so on hosts that resize the layout viewport
- * per-frame with the IME animation the content tracks the keyboard
- * frame-by-frame instead of being swallowed and jumping at the end. Window
- * shrink compensation is gated on an editable owning focus (or a visible
- * tracker state) and grow compensation is bounded by NOMINAL debt — the
- * shrink px previously admitted through the gate — so URL-bar chrome noise
- * in plain browsers can never drift the scroll position. Overlay hosts add
- * one more ledger: a fold-in clamped at the physical document edge records
- * the shortfall as `carry`, and fold-out subtracts it, so the page returns
- * to the user's true gap instead of drifting up by the un-foldable px.
+ * Compensation is an ABSOLUTE target from a bottom gap, never a relative
+ * delta: engines clamp the offset during a grow before any callback runs, so
+ * a relative write double-compensates. A shrink is never clamped (baseline
+ * read fresh); a grow may be (baseline is the stored gap). The window target
+ * compensates synchronously inside `resize` so per-frame IME resizes track
+ * live, and its shrink is keyboard-gated so browser chrome can't drift it.
+ * Overlay hosts add `debt`/`carry` ledgers (see inline).
  */
 
 import { getSharedKeyboardTracker, isEditableElement, type KeyboardTracker } from './tracker';
@@ -107,12 +77,8 @@ function anchorElement(
     let lastWidth = 0;
 
     const onScroll = () => {
-        // Scroll steps run before ResizeObserver delivery: while a GROW is
-        // in flight, a scroll landing exactly at the new bottom is the
-        // engine's own clamp — it must not overwrite the pre-event baseline
-        // the observer tick is about to need. Anything else (any position
-        // above the bottom, or any scroll during a shrink) is the user;
-        // ignoring those would make grow ticks fight a live drag.
+        // Scroll runs before ResizeObserver delivery: a scroll landing exactly
+        // at the new bottom mid-grow is the engine's clamp, not the user.
         if (el.clientHeight > lastHeight && readGap() < 1) return;
         gap = readGap();
     };
@@ -162,19 +128,16 @@ function anchorWindow(
     tracker: KeyboardTracker,
 ): () => void {
     const doc = document.documentElement;
-    // Height of the document viewport actually above the keyboard: layout
-    // height minus overlay occlusion. Resize-mode hosts move the first term,
-    // overlay hosts the second — one delta stream covers both.
+    // Document viewport above the keyboard: layout height minus overlay
+    // occlusion. Resize hosts move the first term, overlay hosts the second.
     const effectiveHeight = () => doc.clientHeight - tracker.getState().insetPx;
     // Content px below the visible bottom edge.
     const readGap = () => doc.scrollHeight - window.scrollY - effectiveHeight();
     const writeGap = (gap: number) => {
         const max = Math.max(0, doc.scrollHeight - doc.clientHeight);
         const y = doc.scrollHeight - effectiveHeight() - gap;
-        // Force an instant scroll: under `scroll-behavior: smooth` the
-        // write would animate asynchronously and the carry readback right
-        // after it would measure a phantom shortfall. (CSS `auto` means
-        // instant; the ScrollOptions 'auto' keyword would defer to CSS.)
+        // Force instant scroll: under `scroll-behavior: smooth` the write
+        // animates async and the carry readback measures a phantom shortfall.
         const scroller = (document.scrollingElement ?? doc) as HTMLElement;
         const prev = scroller.style.scrollBehavior;
         scroller.style.scrollBehavior = 'auto';
@@ -185,13 +148,11 @@ function anchorWindow(
     let lastHeight = effectiveHeight();
     let lastWidth = window.innerWidth;
     let gap = readGap();
-    // NOMINAL px of gate-admitted shrink not yet grown back. Drained by the
-    // grow delta itself, never by achieved scroll movement — a fold-out that
-    // clamps at the top must not strand debt that holds the gate open.
+    // NOMINAL px of gate-admitted shrink not yet grown back, drained by the
+    // grow delta itself (not achieved movement) so it can't strand the gate.
     let debt = 0;
-    // Fold px that clamped at the physical document edge (overlay hosts
-    // cannot scroll past the end). Still owed back on fold-out, or the page
-    // ends up drifted upward by the un-foldable amount.
+    // Fold px that clamped at the physical document edge; still owed back on
+    // fold-out, or the page drifts up by the un-foldable amount.
     let carry = 0;
 
     const onScroll = () => {
@@ -214,14 +175,11 @@ function anchorWindow(
         }
         if (delta === 0) return;
         if (delta > 0) {
-            // Shrink baseline read fresh (never engine-clamped; survives
-            // content growth that fired no scroll event). userGap is what
-            // the user perceives: the raw gap minus any fold already stuck
-            // at the document edge.
+            // Shrink baseline read fresh (never clamped). userGap is what the
+            // user perceives: raw gap minus any fold stuck at the doc edge.
             const userGap = doc.scrollHeight - window.scrollY - prevHeight - carry;
-            // Only a keyboard-plausible shrink engages: an editable owns
-            // focus, the tracker latched a keyboard, or we're inside a
-            // compensated presentation (focus can race the last frames).
+            // Only a keyboard-plausible shrink engages: editable focus, a
+            // latched tracker, or mid-presentation (focus races last frames).
             const keyboardish = isEditableElement(document.activeElement)
                 || tracker.getState().visible
                 || debt > 0;
@@ -235,14 +193,8 @@ function anchorWindow(
             const undo = Math.min(growth, debt);
             debt -= undo;
             if (pin === 'always') {
-                // Prefer a fresh baseline here too (the stored gap goes
-                // stale when the document grows silently under an open
-                // keyboard — a post body resolving, a composer growing) —
-                // UNLESS the geometry bears the engine clamp's signature,
-                // scrollY pinned at the document bottom, where the fresh
-                // read is post-clamp and the stored gap is the only
-                // pre-event truth. A silent grow moves the bottom away
-                // from the user, so it can never fake the signature.
+                // Fresh baseline, unless scrollY is pinned at the doc bottom
+                // (the clamp's signature) where only the stored gap is truth.
                 const maxScroll = Math.max(0, doc.scrollHeight - doc.clientHeight);
                 const clamped = window.scrollY >= maxScroll - 1;
                 const baseline = clamped

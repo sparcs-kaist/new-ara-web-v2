@@ -29,9 +29,8 @@ export function publishKeyboardCssVars(
     const apply = (s: KeyboardState) => {
         target.style.setProperty(`${prefix}-inset`, `${s.insetPx}px`);
         target.style.setProperty(`${prefix}-visible`, s.visible ? '1' : '0');
-        // Never publish the pre-measurement 0 — an inline 0px would shadow
-        // whatever stylesheet fallback (e.g. 100dvh) the consumer relies on
-        // until the tracker's first evaluation lands.
+        // Never publish the pre-measurement 0: an inline 0px would shadow the
+        // stylesheet fallback (e.g. 100dvh) until the first evaluation lands.
         if (s.visualHeight > 0) {
             target.style.setProperty(`${prefix}-visual-height`, `${s.visualHeight}px`);
         }

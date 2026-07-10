@@ -48,23 +48,17 @@
     box-sizing: border-box;
 }
 
-/* While a keyboard is up ([data-ara-kb], stamped by WebViewClientLayout),
-   the shell's own bottom-anchored folds own the scroll position; Chromium's
-   scroll anchoring is a second writer with a different target and the two
-   fight for a frame during the per-frame IME resize. Scoped to the keyboard
-   presentation on purpose: with no keyboard, native anchoring still absorbs
-   content growing above the viewport (post images decoding while the reader
-   is down in the comments). */
+/* While a keyboard is up ([data-ara-kb]), the shell's own folds own the
+   scroll position; Chromium scroll anchoring is a second writer that fights
+   them per-frame. Scoped to the keyboard so native anchoring still works otherwise. */
 [data-ara-shell][data-ara-kb],
 [data-ara-shell][data-ara-kb] * {
     overflow-anchor: none;
 }
 
-/* Native-app feel: hide every scrollbar inside the WebView shell. The
-   Android system WebView paints a transient overlay scrollbar on the
-   body whenever the page scrolls; we kill it together with any inner
-   scroller (textareas, horizontal lists, etc.) so the visual matches
-   Flutter's `BouncingScrollPhysics` (no chrome). */
+/* Native-app feel: hide every scrollbar inside the WebView shell (Android
+   system WebView paints a transient overlay scrollbar on scroll; kill it
+   on the body and every inner scroller to match Flutter's no-chrome look). */
 [data-ara-shell],
 [data-ara-shell] * {
     -ms-overflow-style: none;

@@ -84,6 +84,58 @@ Size a chat screen that shrinks above the keyboard (pan-invariant, unlike `100dv
 }
 ```
 
+## Keyboard motion
+
+By default the published `insetPx` / `visualHeight` change the instant a report
+arrives. On hosts where reports are late (a native bridge relaying over IPC) or
+land in one jump (a browser resize), the bar and the fold then trail the
+keyboard or snap at the end. `withKeyboardMotion` wraps a tracker so those two
+values instead move along the platform's own keyboard curve; every other field
+passes through unchanged.
+
+| `motion` | What it does | When to use |
+|---|---|---|
+| `'tracked'` (default) | publishes each reported value as-is | reports already arrive smoothly per frame (an `adjustResize` WebView) |
+| `'animated'` | plays the platform keyboard curve locally, using reports only to confirm and correct the end position | reports arrive late or in one jump, so the UI should move with the keyboard instead of chasing them |
+
+`'animated'` is safe on the first keyboard it ever sees: with no learned height
+yet it passes that presentation through and records it, then animates the ones
+after. Any gap between the animation and the real end position is corrected once
+the reports go quiet.
+
+Pick `host` to match the app framework around the WebView — it sets the curve:
+
+| `host` | For | Curve |
+|---|---|---|
+| `'flutter'` | Flutter WebView | 285ms, `cubic-bezier(0.2,0,0,1)` open and close |
+| `'react-native-synced'` | React Native using keyboard-controller / Reanimated `useAnimatedKeyboard` | same as Flutter |
+| `'react-native'` | stock React Native | 200ms, open `(0,0,0.2,1)` / close `(0.4,0,1,1)` |
+| `'android'` | plain Android WebView app | same as stock React Native |
+| `'ios'` | iOS | 285ms fallback — iOS varies its spring per keyboard, so pass `duration` / `easing` from the bridge for an exact match |
+| `'browser'` (default) | plain browsers | 285ms, best effort (the real curve is unknowable) |
+
+`duration` (ms) and `easing` (cubic-bezier control points) override the preset
+when you have exact values, e.g. from an iOS `keyboardWillChangeFrame` event.
+
+Define the options once and pass the same object to every keyboard-aware hook:
+
+```ts
+// keyboardMotion.ts — one clock for the whole shell
+export const KEYBOARD_MOTION = { motion: 'animated', host: 'flutter' } as const;
+```
+
+```tsx
+import { KEYBOARD_MOTION } from './keyboardMotion';
+
+useKeyboardCssVars(KEYBOARD_MOTION);          // the fixed bar
+useWindowBottomAnchoredScroll(KEYBOARD_MOTION); // the page fold
+```
+
+> **Caution:** give every consumer the *same* options. `getSharedKeyboardMotion`
+> caches one instance per distinct options object, so mismatched `motion` /
+> `host` / `duration` / `easing` run separate clocks and the bar and the scroll
+> fold animate apart.
+
 ## Bottom-anchored scrolling
 
 Pinning content to the bottom edge while the keyboard resizes the viewport is a
@@ -235,11 +287,15 @@ See the TypeScript declarations for full docs. Summary:
 - `getSharedKeyboardTracker()` — lazy shared instance (used by the React hooks); HMR-safe
 - `publishKeyboardCssVars(tracker, { target?, prefix? })` → unsubscribe
 - `createBottomAnchor(target, { pin?, slack?, startAtBottom?, tracker? })` → detach — bottom-pins an `HTMLElement` or `window` across keyboard resizes
+- `withKeyboardMotion(tracker, { motion?, host?, duration?, easing? })` → `KeyboardTracker` — animates the published `insetPx` / `visualHeight` on the platform keyboard curve; `'tracked'` returns the tracker unchanged
+- `getSharedKeyboardMotion(opts)` — shared motion-wrapped tracker over the shared tracker, cached per options (used by the React hooks)
+- `KeyboardHost` — `'flutter' | 'react-native' | 'react-native-synced' | 'android' | 'ios' | 'browser'`
+- `KeyboardMotion` — `'tracked' | 'animated'`
 - `isEditableElement(el)` — the focus heuristic used internally
 - `KeyboardState` — `{ visible, insetPx, mode: 'resize'|'overlay'|'unknown', visualHeight, editableFocused, source }`
 - `ScrollPinMode` — `'at-bottom' | 'always'`
 - Options: `minKeyboardHeight` (50), `residualEpsilon` (32), `iosDismissFix` (true)
-- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack? })`
+- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack? })` — `useKeyboardCssVars` and `useWindowBottomAnchoredScroll` also take the motion options (`motion`, `host`, `duration`, `easing`); pass the same object to both
 
 ## Known limits
 

@@ -9,27 +9,15 @@ interface StickyComposerProps {
     className?: string;
 }
 
-// Home-indicator clearance, handed off to the keyboard CONTINUOUSLY: the
-// resting offset gives way px-for-px as the layout viewport shrinks, so the
-// bar holds its absolute screen position until the rising keyboard reaches
-// it, then rides flush on top. Gating this on the binary --kb-visible
-// instead made the bar snap by the safe-bottom height mid-animation — that
-// flag lands rAF + stability frames after the geometry moves.
+// Home-indicator clearance handed off to the keyboard continuously: the
+// resting offset gives way px-for-px as the layout viewport shrinks.
 const CLOSED_RESTING_OFFSET =
     'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px)))';
 
 /**
- * Bottom-anchored bar that auto-lifts above the software keyboard:
- * `bottom = max(--kb-inset, safe-bottom × (1 − --kb-visible))` — resting on
- * the safe area when closed, flush on the keyboard when open (inset is 0 on
- * hosts whose viewport already shrank, the occlusion elsewhere).
- *
- * The formula must stay pure CSS: the --kb-* vars land in one rAF-batched
- * style commit; routing `visible` through React state instead re-introduces
- * a one-frame mismatch on dismissal. No `transition-[bottom]` either — it
- * double-animates against the OS keyboard animation.
- *
- * Publishes its measured height as `--ara-composer-h` for ComposerSpacer.
+ * Bottom-anchored bar that auto-lifts above the keyboard (safe area when
+ * closed, flush when open). Stays pure CSS — React state or a bottom
+ * transition adds a one-frame mismatch. Publishes `--ara-composer-h`.
  */
 export function StickyComposer({ children, aboveTabBar = false, className }: StickyComposerProps) {
     const ref = useRef<HTMLDivElement>(null);

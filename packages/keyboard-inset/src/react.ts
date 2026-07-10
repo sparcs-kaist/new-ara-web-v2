@@ -9,10 +9,10 @@ import {
 } from './tracker';
 import { publishKeyboardCssVars, type PublishCssVarsOptions } from './css-vars';
 import { createBottomAnchor, type ScrollPinMode } from './scroll-anchor';
+import { getSharedKeyboardMotion, type KeyboardMotionOptions } from './motion';
 
-// useSyncExternalStore requires a REFERENTIALLY STABLE server snapshot —
-// returning a fresh object per call triggers React's "getServerSnapshot
-// should be cached" hydration loop.
+// useSyncExternalStore requires a referentially stable server snapshot —
+// a fresh object per call triggers React's getServerSnapshot hydration loop.
 function getServerSnapshot(): KeyboardState {
     return INITIAL_KEYBOARD_STATE;
 }
@@ -23,9 +23,8 @@ function getServerSnapshot(): KeyboardState {
  */
 export function useKeyboard(tracker?: KeyboardTracker): KeyboardState {
     const t = tracker ?? getSharedKeyboardTracker();
-    // Stable per tracker — an inline arrow would make uSES tear down and
-    // re-create the DOM listeners on every render via the ref-counted
-    // subscribe.
+    // Stable per tracker: an inline arrow makes uSES tear down and recreate
+    // the DOM listeners every render via the ref-counted subscribe.
     const subscribe = useCallback((onChange: () => void) => t.subscribe(onChange), [t]);
     const getSnapshot = useCallback(() => t.getState(), [t]);
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -34,14 +33,15 @@ export function useKeyboard(tracker?: KeyboardTracker): KeyboardState {
 /**
  * Publish `--kb-inset` / `--kb-visible` / `--kb-visual-height` on `<html>`
  * (or `opts.target`) for the lifetime of the calling component. Options are
- * read once on mount.
+ * read once on mount. Pass `motion`/`host` to animate the published values
+ * on the platform keyboard curve (see `withKeyboardMotion`) — use the same
+ * values in every hook of the app so all consumers share one clock.
  */
-export function useKeyboardCssVars(opts?: PublishCssVarsOptions): void {
+export function useKeyboardCssVars(opts?: PublishCssVarsOptions & KeyboardMotionOptions): void {
     useEffect(
-        () => publishKeyboardCssVars(getSharedKeyboardTracker(), opts),
-        // Options are intentionally mount-time-only: the publisher tears
-        // down/rebuilds on identity change otherwise, and callers pass
-        // object literals.
+        () => publishKeyboardCssVars(getSharedKeyboardMotion(opts), opts),
+        // Options are mount-time-only: identity changes would tear down and
+        // rebuild the publisher, and callers pass object literals.
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
@@ -81,7 +81,7 @@ export function useBottomAnchoredScroll<T extends HTMLElement>(
     }, [ref, pin, slack, startAtBottom]);
 }
 
-export interface WindowBottomAnchoredScrollOptions {
+export interface WindowBottomAnchoredScrollOptions extends KeyboardMotionOptions {
     /**
      * Default `'always'` — the reason to mount this hook is the
      * messenger-style fold; pass `'at-bottom'` for feed-style surfaces.
@@ -96,12 +96,22 @@ export interface WindowBottomAnchoredScrollOptions {
  * pages that scroll the window rather than an inner column (a post with a
  * fixed comment composer). Never moves the page on mount; shrink
  * compensation is keyboard-gated so browser chrome noise can't drift it.
+ * `motion`/`host` must match the values given to `useKeyboardCssVars`.
  */
 export function useWindowBottomAnchoredScroll(
     opts: WindowBottomAnchoredScrollOptions = {},
 ): void {
-    const { pin = 'always', slack = 40 } = opts;
-    useEffect(() => createBottomAnchor(window, { pin, slack }), [pin, slack]);
+    const { pin = 'always', slack = 40, motion, host, duration, easing } = opts;
+    useEffect(
+        () => createBottomAnchor(window, {
+            pin,
+            slack,
+            tracker: getSharedKeyboardMotion({ motion, host, duration, easing }),
+        }),
+        // easing is an array; compare by value like the other options.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [pin, slack, motion, host, duration, JSON.stringify(easing)],
+    );
 }
 
 export type { KeyboardState, KeyboardTracker, KeyboardViewportMode, KeyboardTrackerOptions } from './tracker';

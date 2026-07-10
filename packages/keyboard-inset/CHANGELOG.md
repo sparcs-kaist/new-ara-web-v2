@@ -15,6 +15,14 @@
     fresh unless clamp-pinned at the bottom), overlay carry ledger, `effectiveHeight` = layout height −
     overlay inset, orientation reset — browser-chrome (URL bar) noise can't
     drift the page
+- Core: `withKeyboardMotion(tracker, { motion, host, duration?, easing? })` /
+  `getSharedKeyboardMotion(opts)` — optional `'animated'` motion that moves the
+  published `insetPx` / `visualHeight` on the platform keyboard curve (host
+  presets for Flutter, React Native, Android, iOS, browser), so a single shared
+  clock drives the css vars and the scroll fold together; `'tracked'` (default)
+  keeps today's pass-through behavior
+- React: `useKeyboardCssVars` and `useWindowBottomAnchoredScroll` accept the
+  motion options (`motion` / `host` / `duration` / `easing`)
 - React: `pin` / `startAtBottom` options on `useBottomAnchoredScroll`; new
   `useWindowBottomAnchoredScroll` for pages that scroll the document
 - Tracker: `setOverride` publishes synchronously while attached (host bridges

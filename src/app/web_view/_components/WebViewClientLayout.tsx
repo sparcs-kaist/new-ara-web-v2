@@ -8,6 +8,7 @@ import { getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keybo
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
+import { KEYBOARD_MOTION } from './keyboardMotion';
 
 export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -40,22 +41,11 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // Hardware back is intercepted in the native shell's MainActivity
-    // (Android) and decided there — it's the only place where the
-    // OnBackInvokedDispatcher fires authoritatively before the system
-    // can finish the activity. We don't listen for `back:pressed` here.
+    // Hardware back is intercepted and decided in the native shell's
+    // MainActivity (Android); we don't listen for `back:pressed` here.
 
-    // Publish --ara-kb-shrink (layout-viewport shrink in px) SYNCHRONOUSLY
-    // from the resize event. Fixed bottom bars subtract it from their
-    // resting safe-area offset, so the rising keyboard picks them up
-    // continuously mid-flight; the tracker's binary --kb-visible lands
-    // rAF + stability frames later and stepping on it made the bar snap
-    // by the safe-bottom height mid-animation. Width changes reset the
-    // baseline (rotation must re-measure, not read as a giant shrink).
-    // Also stamps data-ara-kb on <html> while a keyboard is plausibly up
-    // (layout shrink, or tracker-visible on overlay hosts) — tokens.css
-    // keys the scroll-anchoring opt-out on it so native anchoring is
-    // disabled only while our folds own the scroll position.
+    // Publish --ara-kb-shrink (synchronous layout-viewport shrink px) so fixed
+    // bars track the keyboard mid-flight, and stamp data-ara-kb while it's up.
     useEffect(() => {
         const root = document.documentElement;
         const tracker = getSharedKeyboardTracker();
@@ -75,10 +65,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             }
         };
         // Keyboard gone but geometry never returned to the ratcheted max
-        // (browser-chrome shrink latched as a close animation): drop the
-        // phantom instead of pinning the composer low until a rotation.
-        // A real shell close reaches shrink 0 well inside the grace window,
-        // making this a no-op there.
+        // (chrome shrink latched as a close): drop the phantom composer offset.
         const releaseIfStuck = () => {
             settleTimer = undefined;
             if (shrink === 0) return;
@@ -100,12 +87,8 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
                 maxHeight = window.innerHeight;
                 engaged = false;
             }
-            // Only a keyboard-plausible resize counts: browser-chrome
-            // (URL bar / toolbar) height moves with no editable focused,
-            // and attributing those to the keyboard would collapse the
-            // composer clearance while merely reading. Non-keyboard
-            // resizes re-baseline instead. Focus is read synchronously —
-            // the tracker's own flag is rAF-late by design.
+            // Only a keyboard-plausible resize counts (editable focus /
+            // tracker-visible / engaged) — others re-baseline. Focus read sync.
             if (isEditableElement(document.activeElement) || tracker.getState().visible || engaged) {
                 maxHeight = Math.max(maxHeight, window.innerHeight);
                 shrink = Math.max(0, maxHeight - window.innerHeight);
@@ -129,8 +112,9 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     }, []);
 
     // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
-    // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
-    useKeyboardCssVars();
+    // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset),
+    // animated on the platform keyboard curve.
+    useKeyboardCssVars(KEYBOARD_MOTION);
     // The Android overlay-mode shell emits keyboard:changed per animation
     // frame (the WebView surface stays full-height under the IME). The
     // tracker normalizes the raw height against any layout shrink, so a

@@ -19,14 +19,9 @@ type ChatRoom = {
 };
 
 /**
- * Mobile chat room shell: one column sized by `--kb-visual-height`, so it
- * shrinks above the keyboard on every host (the visual-viewport height is
- * pan-invariant, unlike 100dvh−inset math), with ChatRoomDetail's in-flow
- * input riding the column bottom. Document scroll is locked while open;
- * the rAF-coalesced corrector resets the programmatic scroll/pan the UA
- * still applies to reveal a focused caret. It converges and cannot loop —
- * unlike the old per-visualViewport-event scrollTo(0,0), which fought the
- * OS mid-animation and caused the jump/side-slide artifacts.
+ * Mobile chat room shell: one column sized by `--kb-visual-height` (pan-
+ * invariant) so it shrinks above the keyboard. Document scroll is locked
+ * while open; a rAF-coalesced corrector resets UA scroll/pan to reveal caret.
  */
 export default function WebViewChatRoomPage() {
     const params = useParams<{ id: string }>();
@@ -128,23 +123,13 @@ export default function WebViewChatRoomPage() {
         <div
             className="relative flex w-full flex-col overflow-hidden bg-white"
             style={{
-                // The lower of the two keyboard signals wins, so the column
-                // is right on every host class: resize hosts shrink both
-                // terms (inset ~0); non-resizing hosts with a bridge
-                // override move --kb-inset (dvh stays full); newer System
-                // WebViews that shrink the visual viewport themselves move
-                // --kb-visual-height — never double-subtracted, min() picks
-                // one.
+                // Lower of the two keyboard signals wins, so the column is
+                // right on every host — never double-subtracted, min() picks one.
                 height: 'min(var(--kb-visual-height, 100dvh), calc(100dvh - var(--kb-inset, 0px)))',
                 // Keep the room header out from under the fixed safe-top cap.
                 paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
-                // Home-indicator clearance, handed off continuously to the
-                // keyboard (see StickyComposer's resting-offset rationale).
-                // Both shrink terms: resize hosts move --ara-kb-shrink
-                // (synchronous), overlay hosts move --kb-inset (same tracker
-                // timing as the --kb-visual-height column height above) —
-                // without the inset term the clearance never collapses under
-                // an overlay keyboard and the input floats above it.
+                // Home-indicator clearance handed off to the keyboard: both
+                // shrink terms (--ara-kb-shrink resize, --kb-inset overlay).
                 paddingBottom:
                     'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px) - var(--kb-inset, 0px)))',
             }}
