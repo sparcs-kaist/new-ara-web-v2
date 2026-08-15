@@ -151,3 +151,33 @@ export const searchUser = async (query: string = "") => {
   const { data } = await http.get(`/user_profiles/search/?query=${query}`);
   return data;
 };
+
+const SEASON = ["봄", "여름", "가을", "겨울"] as const;
+export const fetchCourses = async (year?: number, semester?: typeof SEASON[number]) => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (year !== undefined) params.append("year", year.toString());
+    if (semester !== undefined) params.append("semester", (SEASON.indexOf(semester) + 1).toString());
+
+    const queryString = params.toString();
+    const url = `/courses/${queryString ? `?${queryString}` : ""}`;
+    const { data } = await http.get(url);
+    return data;
+  }
+  // TEST
+  catch {
+    return Array(9).fill({
+      id: 50,
+      course_code: "PH.30001",
+      title: "양자역학 I",
+      department_name: "물리학과",
+      year: 2026,
+      semester: 1,
+      credit: "3.0",
+      professors: [{ id: 2903, name: "최재윤" }],
+      enrollment_count: 1,
+      last_synced_at: "2026-05-12T02:12:20.734487+09:00",
+    });
+  }
+}

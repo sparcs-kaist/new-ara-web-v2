@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"; // useRouter impor
 import type { Editor } from "@tiptap/react";
 import type { AttachmentsHandles } from "./components/Attachments";
 import TextEditor from "../../components/TextEditor/TextEditor";
-import PostOptionBar from "./components/PostOptionBar";
+import { BoardOptionBar } from "./components/PostOptionBar";
 import Attachments, { UploadObject } from "./components/Attachments";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { createPost, updatePost, fetchPost } from "@/lib/api/post"; // updatePost, fetchPost import
@@ -288,7 +288,7 @@ export default function Write() {
           {isEditMode ? "게시물 수정하기" : "게시물 작성하기"}
         </p>
         <hr className="border-t border-gray-300 sm:mb-6 mb-4" />
-        <PostOptionBar
+        <BoardOptionBar
           boards={boards}
           defaultBoardId={boardId}
           defaultCategoryId={topicId}

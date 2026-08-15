@@ -2,9 +2,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { BoardArticleList, BoardAllArticleList, BoardHotArticleList, BoardRecentArticleList, BoardBookmarkedArticlesList, MarketArticleContainer } from '@/containers/ArticleList';
+import { BoardArticleList, BoardAllArticleList, BoardHotArticleList, MarketArticleContainer } from '@/containers/ArticleList';
 import { fetchBoardList } from '@/lib/api/board';
 import Image from 'next/image';
+import Sidebar from '@/components/Sidebar/Sidebar';
+import Search from '@/components/Search';
+import WriteButton from '@/components/Board/WriteButton';
 
 interface Topic {
     id: number;
@@ -171,23 +174,11 @@ export default function Board() {
                                         )}
 
                                         <div className="relative">
-                                            <input
-                                                type="text"
-                                                className="rounded-xl pl-8 pr-2 py-1.5 text-sm w-45 bg-gray-50 text-gray-700 font-medium"
-                                                placeholder="검색어를 입력하세요"
-                                                value={searchInput}
-                                                onChange={(e) => setSearchInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        handleSearch();
-                                                    }
-                                                }}
+                                            <Search
+                                                searchInput={searchInput}
+                                                setSearchInput={setSearchInput}
+                                                handleSearch={handleSearch}
                                             />
-                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-base pointer-events-none">
-                                                <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
-                                                    <path d="M11.5 11.5L15 15M7 12A5 5 0 1 1 7 2a5 5 0 0 1 0 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                </svg>
-                                            </span>
                                         </div>
                                     </div>
 
@@ -203,14 +194,7 @@ export default function Board() {
                                         </label>
                                     )}
 
-                                    {selectedBoard?.user_writable && (
-                                        <button
-                                            className="border border-ara_red text-ara_red rounded-lg px-3 py-1 text-sm font-normal hover:bg-ara_red hover:text-white transition ml-2 mt-2 sm:mt-0 hidden sm:block"
-                                            onClick={() => router.push(currentBoardId ? `/write?board=${currentBoardId}` : `/write`)}
-                                        >
-                                            게시물 작성하기
-                                        </button>
-                                    )}
+                                    {selectedBoard?.user_writable && <WriteButton href={currentBoardId ? `/write?board=${currentBoardId}` : "/write"} />}
 
                                     {currentBoardType === 'all' && (
                                         <label className="flex items-center gap-1.5 text-md text-gray-600 cursor-pointer select-none ml-auto mt-2 sm:mt-0">
@@ -248,18 +232,7 @@ export default function Board() {
                         </div>
                     </div>
 
-                    <div className="lg:w-1/3 xl:w-1/4">
-                        <div className="bg-white rounded-lg shadow-sm px-4 py-8 sticky top-8">
-                            <div className="mb-6">
-                                <h2 className="text-base font-semibold text-gray-800 mb-2">최근 본 글</h2>
-                                <BoardRecentArticleList />
-                            </div>
-                            <div className="mb-6">
-                                <h2 className="text-base font-semibold text-gray-800 mb-2">담아둔 글</h2>
-                                <BoardBookmarkedArticlesList />
-                            </div>
-                        </div>
-                    </div>
+                    <Sidebar />
                 </div>
             </div>
         </div>

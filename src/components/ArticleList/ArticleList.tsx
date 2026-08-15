@@ -81,7 +81,7 @@ export default function ArticleList({
         {posts.map((post, index) => {
           const rank = (currentPage - 1) * pageSize + index + 1;
           const hasAttachment = post.attachment_type !== 'NONE';
-          const hasAnswerStatus = post.communication_article_status !== null;
+          const hasAnswerStatus = post.communication_article_status && post.communication_article_status !== null;
           const answered = hasAnswerStatus && post.communication_article_status !== null && post.communication_article_status > 0;
           const answerStatusText = hasAnswerStatus
             ? (answered

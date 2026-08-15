@@ -7,6 +7,7 @@ import {
   fetchArticles,
   fetchAllArticlesExcludingPortalNotice,
   useArticles,
+  fetchCourseArticles,
 } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
 import { fetchMe } from "@/lib/api/user";
@@ -626,6 +627,54 @@ export function UserProfileArticleList({ userId }: { userId: number }) {
       onPageChange={setCurrentPage}
     />
   );
+}
+
+
+interface CourseArticleListProps {
+  pageSize?: number;
+  query?: string;
+  courseId: number;
+}
+
+// 🔸 Board 페이지 - 일반 게시글
+export function CourseArticleList({ pageSize = 10, query, courseId }: CourseArticleListProps) {
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+
+  const { data } = useQuery({
+    queryKey: ["courses", pageSize, currentPage, query],
+    queryFn: () => fetchCourseArticles({ courseId, query, pageSize, page: currentPage }),
+    placeholderData: keepPreviousData
+  })
+
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
+
+  return (
+    <ArticleList
+      posts={posts}
+      showTimeAgo={true}
+      showProfile={true}
+      showWriter={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      showHit={true}
+      titleFontSize="text-[16px]"
+      showTopic={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages ?? 1}
+      onPageChange={handlePageChange}
+    />
+  )
 }
 
 export function MarketArticleContainer() {

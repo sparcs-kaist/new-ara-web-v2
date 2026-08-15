@@ -189,3 +189,56 @@ export const fetchAllArticlesExcludingPortalNotice = async (params: ArticleQuery
   const { data } = await http.get(`articles/?${queryBuilder(buildArticleParams(overridden))}`);
   return data;
 };
+
+type CourseQuery = {
+  courseId: number;
+  query?: string;
+  page?: number;
+  pageSize?: number;
+  order?: string;
+};
+
+const dummyData = {
+  "num_pages": 1,
+  "num_items": 2,
+  "current": 1,
+  "previous": null,
+  "next": null,
+  "results": [
+    {
+      "id": 264522,
+      "title": "Test2",
+      "created_at": "2026-05-20T01:40:54.512371+09:00",
+      "comment_count": 0,
+      "positive_vote_count": 0,
+      "negative_vote_count": 0,
+      "hit_count": 0
+    },
+    {
+      "id": 264514,
+      "title": "Test",
+      "created_at": "2026-05-18T00:26:11.756938+09:00",
+      "comment_count": 0,
+      "positive_vote_count": 0,
+      "negative_vote_count": 0,
+      "hit_count": 0
+    }
+  ]
+}
+
+export async function fetchCourseArticles({ courseId, ...params }: CourseQuery) {
+  const context: Record<string, QueryValue> = {};
+
+  if (params.query) context.main_search__contains = params.query;
+  if (params.page) context.page = params.page;
+  if (params.pageSize) context.page_size = params.pageSize;
+  if (params.order) context.order = params.order;
+
+  try {
+    const { data } = await http.get(`courses/${courseId}/articles/?${queryBuilder(context)}`);
+    return data
+  }
+  catch {
+    return dummyData
+  }
+}
