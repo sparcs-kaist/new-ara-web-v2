@@ -12,7 +12,7 @@ interface FilterSelectProps {
     onChange: React.ChangeEventHandler<HTMLSelectElement>;
 }
 
-export const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
+const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     return (
         <div className="relative inline-flex items-center group">
             <select
