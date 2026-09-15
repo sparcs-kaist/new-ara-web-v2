@@ -108,7 +108,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `back:pressed`        | —                                                          | Android hardware back button. Web returns `{ handled: boolean }` via the response channel; if `false`, native pops/exits. |
 | `appstate:changed`    | `{ state: 'foreground'\|'background'\|'inactive' }`        | App lifecycle changes. |
 | `network:changed`     | `{ online: boolean, type?: 'wifi'\|'cellular' }`           | Connectivity changes. |
-| `keyboard:changed`    | `{ height: number, visible: boolean }`                     | iOS only — Android relies on visualViewport. |
+| `keyboard:changed`    | `{ height: number, visible: boolean }`                     | Optional; not emitted by the current shell. `height` is the RAW native keyboard height — the web side normalizes it against any layout-viewport shrink (`@sparcs-kaist/keyboard-inset` setOverride), so resize-mode hosts can emit it safely. |
 | `push:received`       | `{ title?, body?, data?, foreground: boolean }`            | A push arrived (foreground or background-tap). |
 | `push:opened`         | `{ data, deepLink?: string }`                              | User tapped a push. |
 | `deeplink:received`   | `{ url: string }`                                          | App opened via custom scheme or universal link. |

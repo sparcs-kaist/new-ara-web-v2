@@ -9,15 +9,26 @@
  * Pretendard font is already loaded globally in `app/globals.css`.
  */
 
+/* Soft-keyboard state — published on <html> by @sparcs-kaist/keyboard-inset
+   (WebViewClientLayout's useKeyboardCssVars). Un-gated on :root so formulas
+   using them are valid before hydration sets [data-ara-shell]; an
+   unresolvable var() would invalidate whole declarations at computed-value
+   time. */
+:root {
+    --kb-inset: 0px;
+    --kb-visible: 0;
+    --kb-visual-height: 100dvh;
+    /* Layout-viewport shrink in px, published synchronously per resize
+       frame by WebViewClientLayout (resize-mode host hand-off). */
+    --ara-kb-shrink: 0px;
+}
+
 [data-ara-shell] {
     /* Safe-area insets — overridden by layout.tsx from the bridge handshake. */
     --ara-safe-top: env(safe-area-inset-top, 0px);
     --ara-safe-bottom: env(safe-area-inset-bottom, 0px);
     --ara-safe-left: env(safe-area-inset-left, 0px);
     --ara-safe-right: env(safe-area-inset-right, 0px);
-
-    /* Software keyboard height — driven by useKeyboard() / native event. */
-    --ara-keyboard-height: 0px;
 
     background: #ffffff;
     color: #111111;
@@ -35,6 +46,35 @@
 [data-ara-shell] *::before,
 [data-ara-shell] *::after {
     box-sizing: border-box;
+}
+
+/* While a keyboard is up ([data-ara-kb], stamped by WebViewClientLayout),
+   the shell's own bottom-anchored folds own the scroll position; Chromium's
+   scroll anchoring is a second writer with a different target and the two
+   fight for a frame during the per-frame IME resize. Scoped to the keyboard
+   presentation on purpose: with no keyboard, native anchoring still absorbs
+   content growing above the viewport (post images decoding while the reader
+   is down in the comments). */
+[data-ara-shell][data-ara-kb],
+[data-ara-shell][data-ara-kb] * {
+    overflow-anchor: none;
+}
+
+/* Native-app feel: hide every scrollbar inside the WebView shell. The
+   Android system WebView paints a transient overlay scrollbar on the
+   body whenever the page scrolls; we kill it together with any inner
+   scroller (textareas, horizontal lists, etc.) so the visual matches
+   Flutter's `BouncingScrollPhysics` (no chrome). */
+[data-ara-shell],
+[data-ara-shell] * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+[data-ara-shell]::-webkit-scrollbar,
+[data-ara-shell] *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 /* Native-app feel: kill browser button focus halos and tap highlights inside

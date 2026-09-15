@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 interface StickyComposerProps {
     children: ReactNode;
@@ -9,38 +9,59 @@ interface StickyComposerProps {
     className?: string;
 }
 
+// Home-indicator clearance, handed off to the keyboard CONTINUOUSLY: the
+// resting offset gives way px-for-px as the layout viewport shrinks, so the
+// bar holds its absolute screen position until the rising keyboard reaches
+// it, then rides flush on top. Gating this on the binary --kb-visible
+// instead made the bar snap by the safe-bottom height mid-animation — that
+// flag lands rAF + stability frames after the geometry moves.
+const CLOSED_RESTING_OFFSET =
+    'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px)))';
+
 /**
- * Bottom-anchored bar that auto-lifts above the software keyboard.
+ * Bottom-anchored bar that auto-lifts above the software keyboard:
+ * `bottom = max(--kb-inset, safe-bottom × (1 − --kb-visible))` — resting on
+ * the safe area when closed, flush on the keyboard when open (inset is 0 on
+ * hosts whose viewport already shrank, the occlusion elsewhere).
  *
- * The lift uses `max(--ara-keyboard-height, --ara-safe-bottom)` rather
- * than summing them — when the keyboard is up it sits flush against the
- * device's bottom edge, fully covering the home-indicator safe area, so
- * adding the safe-bottom on top would push the composer above the
- * keyboard. With max() we get:
- *   - keyboard closed → composer sits above the home indicator
- *   - keyboard open   → composer sits exactly above the keyboard.
+ * The formula must stay pure CSS: the --kb-* vars land in one rAF-batched
+ * style commit; routing `visible` through React state instead re-introduces
+ * a one-frame mismatch on dismissal. No `transition-[bottom]` either — it
+ * double-animates against the OS keyboard animation.
  *
- * The keyboard height itself is published in `--ara-keyboard-height` by
- * `web_view/layout.tsx` (visualViewport on iOS; bridge `keyboard:changed`
- * on demand). On Android the WebView already shrinks via `adjustResize`,
- * so `useAndroidKeyboard` reports `keyboardHeight: 0` and the layout
- * shrink alone positions us correctly.
+ * Publishes its measured height as `--ara-composer-h` for ComposerSpacer.
  */
 export function StickyComposer({ children, aboveTabBar = false, className }: StickyComposerProps) {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(() => {
+            document.documentElement.style.setProperty('--ara-composer-h', `${el.offsetHeight}px`);
+        });
+        ro.observe(el);
+        return () => {
+            ro.disconnect();
+            document.documentElement.style.removeProperty('--ara-composer-h');
+        };
+    }, []);
+
     return (
         <div
+            ref={ref}
             className={[
-                'fixed inset-x-0 z-[45] bg-white border-t border-[#F0F0F0] transition-[bottom] duration-150',
+                'fixed inset-x-0 z-[45] bg-white border-t border-[#F0F0F0]',
                 className ?? '',
             ]
                 .filter(Boolean)
                 .join(' ')}
             style={{
                 bottom: aboveTabBar
-                    ? 'calc(max(var(--ara-keyboard-height, 0px), var(--ara-safe-bottom)) + 50px)'
-                    : 'max(var(--ara-keyboard-height, 0px), var(--ara-safe-bottom))',
-                paddingLeft: 'var(--ara-safe-left)',
-                paddingRight: 'var(--ara-safe-right)',
+                    ? `calc(max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET}) + 50px)`
+                    : `max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET})`,
+                paddingLeft: 'var(--ara-safe-left, env(safe-area-inset-left, 0px))',
+                paddingRight: 'var(--ara-safe-right, env(safe-area-inset-right, 0px))',
             }}
         >
             {children}
@@ -48,15 +69,20 @@ export function StickyComposer({ children, aboveTabBar = false, className }: Sti
     );
 }
 
-/** Spacer that prevents the last list item from sitting under the composer. */
-export function ComposerSpacer({ height = 64, aboveTabBar = false }: { height?: number; aboveTabBar?: boolean }) {
+/**
+ * Spacer that keeps the last list item from sitting under the composer,
+ * sized from the composer's measured height; `height` is the
+ * pre-measurement fallback.
+ */
+export function ComposerSpacer({ height = 96, aboveTabBar = false }: { height?: number; aboveTabBar?: boolean }) {
+    // No safe-bottom term: Screen's own paddingBottom already reserves it;
+    // adding it here double-counted the inset as a visible gap.
+    const base = `var(--ara-composer-h, ${height}px)`;
     return (
         <div
             aria-hidden
             style={{
-                height: aboveTabBar
-                    ? `calc(${height}px + 50px + var(--ara-safe-bottom))`
-                    : `calc(${height}px + var(--ara-safe-bottom))`,
+                height: aboveTabBar ? `calc(${base} + 50px)` : base,
             }}
         />
     );

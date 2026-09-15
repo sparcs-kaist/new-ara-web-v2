@@ -37,12 +37,14 @@ export function PageTransition({ pathname, children }: PageTransitionProps) {
     }, []);
 
     // Resolve direction *during* render so the first paint of the new
-    // pathname gets the right class. Mutating refs in render is safe here
-    // — they're read once per pathname change and never feed back into
-    // hooks. The alternative (useState + useEffect) would race the CSS.
-    let direction: Direction = 'forward';
+    // pathname gets the right class. It MUST live in a ref: a per-render
+    // local re-defaulted to 'forward', so any re-render after a back
+    // navigation (keyboard state changes, notably) swapped the class and
+    // restarted the slide animation — the page visibly slid in from the
+    // side every time the keyboard opened on a back-arrived page.
+    const directionRef = useRef<Direction>('forward');
     if (lastPathRef.current !== pathname) {
-        direction = popRef.current ? 'back' : 'forward';
+        directionRef.current = popRef.current ? 'back' : 'forward';
         popRef.current = false;
         lastPathRef.current = pathname;
     }
@@ -51,7 +53,7 @@ export function PageTransition({ pathname, children }: PageTransitionProps) {
         return <>{children}</>;
     }
 
-    const cls = direction === 'back' ? 'ara-page-slide-back-in' : 'ara-page-slide-in';
+    const cls = directionRef.current === 'back' ? 'ara-page-slide-back-in' : 'ara-page-slide-in';
     return (
         <div key={pathname} className={cls}>
             {children}

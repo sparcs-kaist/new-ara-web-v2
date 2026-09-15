@@ -32,7 +32,7 @@ const MAX_LINES = 5;
  *   │      │ #f8f8f8 rounded-10 input   │ send 30  │
  *   └──────────────────────────────────────────────┘
  *
- * Lifts above the keyboard via `StickyComposer`'s `--ara-keyboard-height`.
+ * Lifts above the keyboard via `StickyComposer` (--kb-inset / --ara-kb-shrink).
  */
 export function CommentComposer({
     postId,
@@ -107,6 +107,9 @@ export function CommentComposer({
         : replyToCommentId
           ? `'${replyToNickname ?? ''}'님께 답글을 작성하는 중`
           : '';
+
+    // No focus scroll hack: the composer is viewport-fixed, so it is on
+    // screen by definition and the browser's own focus reveal suffices.
 
     return (
         <StickyComposer aboveTabBar={false}>

@@ -30,13 +30,17 @@ export function Screen({ children, withTabBar = 'auto', className }: ScreenProps
 
     return (
         <main
-            className={['min-h-[100dvh] bg-white', className ?? ''].filter(Boolean).join(' ')}
+            className={['flex min-h-[100dvh] flex-col bg-white', className ?? '']
+                .filter(Boolean)
+                .join(' ')}
             style={{
                 paddingTop: 'var(--ara-safe-top)',
                 paddingLeft: 'var(--ara-safe-left)',
                 paddingRight: 'var(--ara-safe-right)',
                 paddingBottom: showTabBar
-                    ? 'calc(56px + var(--ara-safe-bottom))'
+                    // 50px tab bar + 20px breathing room. Was 56 — too tight,
+                    // last list item visually crowded the tab bar.
+                    ? 'calc(70px + var(--ara-safe-bottom))'
                     : 'var(--ara-safe-bottom)',
             }}
         >

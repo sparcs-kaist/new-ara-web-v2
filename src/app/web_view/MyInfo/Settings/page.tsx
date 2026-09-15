@@ -114,7 +114,7 @@ export default function SettingsPage() {
     return (
         <Screen withTabBar={false}>
             {/* Header — centered title with red back chevron. */}
-            <header className="sticky top-0 z-40 flex h-14 items-center bg-white">
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white">
                 <button
                     type="button"
                     onClick={onBack}
@@ -128,7 +128,7 @@ export default function SettingsPage() {
                 </h1>
             </header>
 
-            <div className="flex flex-col items-center pb-10">
+            <div className="flex flex-col items-center pb-[60px]">
                 <div className="h-[23px]" />
 
                 {/* 게시글 설정 */}

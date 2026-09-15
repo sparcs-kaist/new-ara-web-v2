@@ -110,7 +110,7 @@ export default function MyInfoPage() {
 
     return (
         <Screen withTabBar="auto">
-            <header className="sticky top-0 z-40 flex h-14 items-center bg-white px-5">
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-5">
                 <h1 className="flex-1 text-[28px] font-bold text-ara_red">
                     {me?.nickname ?? ''}
                 </h1>

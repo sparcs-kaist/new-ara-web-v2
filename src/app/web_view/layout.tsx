@@ -1,68 +1,31 @@
-'use client';
-
-import { useEffect, type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import type { Viewport } from 'next';
+import type { ReactNode } from 'react';
 import './_styles/tokens.css';
 import './_styles/transitions.css';
-import { BottomTabBar, isTabRoot } from './_components/BottomTabBar';
-import { getBridge, useBridgeEvent } from './_bridge';
-import useKeyboard from './hooks/keyboard/useKeyboard';
-import { WebViewQueryProvider } from './_query';
-import { PageTransition } from './_components/PageTransition';
+import { WebViewClientLayout } from './_components/WebViewClientLayout';
+
+// Strict viewport for the native-app shell. Has to be exported from a
+// SERVER component — Android Chromium evaluates the viewport meta once
+// at initial layout and ignores any later mutation, so the original
+// "set it from useEffect" approach was a no-op on real devices. With
+// `width=device-width, initial-scale=1` (Next.js's default) the WebView
+// kept layout viewport ≠ visual viewport, which surfaced as: pinch-zoom
+// works, sticky headers pin at off-screen coordinates, body has phantom
+// overflow, keyboard reflow makes the page slide back in from the side.
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover',
+    // Plain Android Chrome (>=108) defaults to resizes-visual: the keyboard
+    // shrinks only the visual viewport and fixed-bottom bars go behind it.
+    // resizes-content restores layout-viewport resizing so browsers behave
+    // like the adjustResize WebView shell. No effect inside the WebView
+    // (windowSoftInputMode rules there) or on iOS (never implemented).
+    interactiveWidget: 'resizes-content',
+};
 
 export default function WebViewLayout({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
-    const router = useRouter();
-    const showTabBar = isTabRoot(pathname);
-
-    // Mark <html> with the shell attribute so the scoped tokens apply, and
-    // sync the safe-area inset values reported by the native bridge.
-    useEffect(() => {
-        const root = document.documentElement;
-        root.setAttribute('data-ara-shell', '');
-        let cancelled = false;
-        getBridge()
-            .ready()
-            .then((cap) => {
-                if (cancelled || !cap) return;
-                root.style.setProperty('--ara-safe-top', `${cap.safeArea.top}px`);
-                root.style.setProperty('--ara-safe-bottom', `${cap.safeArea.bottom}px`);
-                root.style.setProperty('--ara-safe-left', `${cap.safeArea.left}px`);
-                root.style.setProperty('--ara-safe-right', `${cap.safeArea.right}px`);
-                root.setAttribute('data-ara-platform', cap.platform);
-            });
-        return () => {
-            cancelled = true;
-            root.removeAttribute('data-ara-shell');
-            root.removeAttribute('data-ara-platform');
-            root.style.removeProperty('--ara-safe-top');
-            root.style.removeProperty('--ara-safe-bottom');
-            root.style.removeProperty('--ara-safe-left');
-            root.style.removeProperty('--ara-safe-right');
-            root.style.removeProperty('--ara-keyboard-height');
-        };
-    }, []);
-
-    // Hardware back button on Android: navigate within the SPA history.
-    useBridgeEvent('back:pressed', () => {
-        if (typeof window === 'undefined') return;
-        if (window.history.length > 1) router.back();
-    });
-
-    // Keyboard height — visualViewport on web, optionally overridden by a
-    // native event when the host wants to push a sheet over the WebView.
-    const { keyboardHeight } = useKeyboard();
-    useEffect(() => {
-        document.documentElement.style.setProperty('--ara-keyboard-height', `${keyboardHeight}px`);
-    }, [keyboardHeight]);
-    useBridgeEvent('keyboard:changed', (p) => {
-        document.documentElement.style.setProperty('--ara-keyboard-height', `${p.height}px`);
-    });
-
-    return (
-        <WebViewQueryProvider>
-            <PageTransition pathname={pathname}>{children}</PageTransition>
-            {showTabBar && <BottomTabBar />}
-        </WebViewQueryProvider>
-    );
+    return <WebViewClientLayout>{children}</WebViewClientLayout>;
 }

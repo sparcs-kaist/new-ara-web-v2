@@ -44,7 +44,7 @@ export default function InquiryPage() {
 
     return (
         <Screen withTabBar={false}>
-            <header className="sticky top-0 z-40 flex h-14 items-center bg-white">
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white">
                 <button
                     type="button"
                     onClick={onBack}

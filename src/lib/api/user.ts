@@ -34,11 +34,11 @@ export const updateUser = async (
     formData.append("picture", picture);
   }
 
-  const { data } = await http.patch(`/user_profiles/${userId}/`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  // Don't set Content-Type manually. axios + the browser fill in the
+  // multipart boundary automatically when the body is a FormData; a
+  // manual `multipart/form-data` header overrides that and Django
+  // can't parse the body, so the PATCH silently no-ops.
+  const { data } = await http.patch(`/user_profiles/${userId}/`, formData);
 
   queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
