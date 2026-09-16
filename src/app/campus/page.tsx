@@ -1,8 +1,8 @@
 "use client";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import { useEffect, useState } from "react";
-import { CourseCard, DeptCard } from "./Card";
-import { DeptSelectModal } from "./DeptSelectModal";
+import { CourseCard, MajorCard } from "./Card";
+import { MajorSelectModal } from "./MajorSelectModal";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCourses } from "@/lib/api/user";
 
@@ -72,84 +72,88 @@ export default function Campus() {
     const courses: Course[] = data
 
     return (
-        <div className="max-w-[1280px] mx-auto">
-            <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white" />
-            <div className="flex gap-8 px-0 py-10">
-                <div className="flex-1 min-w-0 flex flex-col gap-12">
-                    <section className="flex flex-col gap-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
-                            <div className="flex gap-2">
-                                <FilterSelect
-                                    options={years}
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(e.target.value)}
-                                />
-                                <FilterSelect
-                                    options={seasons}
-                                    value={selectedSeason}
-                                    onChange={(e) => setSelectedSeason(e.target.value)}
-                                />
+
+        // <div className="bg-white rounded-lg shadow-sm md:p-6 sm:p-3">
+        <div className="min-h-screen">
+            <div className="container mx-auto md:px-20 sm:px-12 xs:px-8 px-4 py-0">
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex flex-col lg:w-2/3 xl:w-3/4 gap-16 py-8">
+                        <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white" />
+                        <section className="flex flex-col gap-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
+                                <div className="flex gap-2">
+                                    <FilterSelect
+                                        options={years}
+                                        value={selectedYear}
+                                        onChange={(e) => setSelectedYear(e.target.value)}
+                                    />
+                                    <FilterSelect
+                                        options={seasons}
+                                        value={selectedSeason}
+                                        onChange={(e) => setSelectedSeason(e.target.value)}
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-3 gap-6">
-                            {isLoading || courses.map((course) => (
-                                <CourseCard key={course.id} {...course} />
-                            ))}
-                        </div>
-                    </section>
+                            <div className="grid grid-cols-3 gap-6">
+                                {isLoading || courses.map((course) => (
+                                    <CourseCard key={course.id} {...course} />
+                                ))}
+                            </div>
+                        </section>
 
-                    <section className="flex flex-col gap-6">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-2xl font-bold">👨🏻‍🏫 학과 게시판</h2>
-                                <button
-                                    className="w-8 h-8 flex justify-center items-center bg-white rounded-2xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-50 transition-colors"
-                                    onClick={() => setIsModalOpen(true)}
-                                >
-                                    <svg
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 20 20"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
+                        <section className="flex flex-col gap-6">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-2xl font-bold">👨🏻‍🏫 학과 게시판</h2>
+                                    <button
+                                        className="w-8 h-8 flex justify-center items-center bg-white rounded-2xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-50 transition-colors"
+                                        onClick={() => setIsModalOpen(true)}
                                     >
-                                        <g clipPath="url(#clip0_191_5830)">
-                                            <path
-                                                d="M18.9399 15.7917L11.3566 8.2084C12.1066 6.29174 11.6899 4.04174 10.1066 2.4584C8.43989 0.791738 5.93989 0.458404 3.93989 1.37507L7.52322 4.9584L5.02322 7.4584L1.35656 3.87507C0.356557 5.87507 0.773224 8.37507 2.43989 10.0417C4.02322 11.6251 6.27322 12.0417 8.18989 11.2917L15.7732 18.8751C16.1066 19.2084 16.6066 19.2084 16.9399 18.8751L18.8566 16.9584C19.2732 16.6251 19.2732 16.0417 18.9399 15.7917Z"
-                                                fill="#808080"
-                                            />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_191_5830">
-                                                <rect width="20" height="20" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                </button>
+                                        <svg
+                                            width="20"
+                                            height="20"
+                                            viewBox="0 0 20 20"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <g clipPath="url(#clip0_191_5830)">
+                                                <path
+                                                    d="M18.9399 15.7917L11.3566 8.2084C12.1066 6.29174 11.6899 4.04174 10.1066 2.4584C8.43989 0.791738 5.93989 0.458404 3.93989 1.37507L7.52322 4.9584L5.02322 7.4584L1.35656 3.87507C0.356557 5.87507 0.773224 8.37507 2.43989 10.0417C4.02322 11.6251 6.27322 12.0417 8.18989 11.2917L15.7732 18.8751C16.1066 19.2084 16.6066 19.2084 16.9399 18.8751L18.8566 16.9584C19.2732 16.6251 19.2732 16.0417 18.9399 15.7917Z"
+                                                    fill="#808080"
+                                                />
+                                            </g>
+                                            <defs>
+                                                <clipPath id="clip0_191_5830">
+                                                    <rect width="20" height="20" fill="white" />
+                                                </clipPath>
+                                            </defs>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-3 gap-6">
-                            {new Array(9).fill(null).map((_, idx) => (
-                                <DeptCard key={idx} />
-                            ))}
-                        </div>
-                    </section>
+                            <div className="grid grid-cols-3 gap-6">
+                                {new Array(9).fill(null).map((_, idx) => (
+                                    <MajorCard key={idx} />
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+
+                    <Sidebar />
                 </div>
 
-                <Sidebar />
+                <MajorSelectModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={() => {
+                        alert("저장되었습니다!");
+                        setIsModalOpen(false);
+                    }}
+                />
             </div>
-
-            <DeptSelectModal
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSave={() => {
-                    alert("저장되었습니다!");
-                    setIsModalOpen(false);
-                }}
-            />
         </div>
-    )   
+    )
 }

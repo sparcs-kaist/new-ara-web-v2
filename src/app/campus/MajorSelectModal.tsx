@@ -3,13 +3,13 @@
 import Modal from "@/components/common/Modal";
 import { useState } from "react";
 
-interface DeptSelectModalProps {
+interface MajorSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: () => void;
 }
 
-export const DeptSelectModal = ({ isOpen, onClose, onSave }: DeptSelectModalProps) => {
+export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalProps) => {
     const departments = ["물리학과", "화학과", "수리과학과", "생명과학과", "전산학부", "전기및전자공학부", "물리학과", "화학과", "수리과학과", "생명과학과", "전산학부", "전기및전자공학부"];
     const [selected, setSelected] = useState(new Array(departments.length).fill(false));
 

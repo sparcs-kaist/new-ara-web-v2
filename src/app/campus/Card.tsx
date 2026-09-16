@@ -5,7 +5,7 @@ type CourseCardProps = Pick<Course, "id" | "course_code" | "title" | "professors
 
 export const CourseCard = ({ id, course_code, title, professors, credit, enrollment_count }: CourseCardProps) => {
     return (
-        <Link href={`/course_board/${id}`} className="flex flex-col gap-2.5 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10)] w-full bg-white rounded-2xl border border-gray-200 px-[11px] py-[8px] cursor-pointer">
+        <Link href={`/course_board/${id}`} className="flex flex-col gap-2.5 shadow-[0px_2px_2px_0px_rgba(0,0,0,0.10)] w-full bg-white rounded-2xl border border-gray-200 px-[11px] py-[8px] cursor-pointer">
             <div className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-[3px]">
                     <div className="flex flex-col gap-0">
@@ -33,9 +33,9 @@ export const CourseCard = ({ id, course_code, title, professors, credit, enrollm
 
 
 
-export const DeptCard = ({}) => {
+export const MajorCard = ({}) => {
     return (
-        <Link href={`/major_board/${1}`} className="flex flex-col gap-2.5 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10)] w-full bg-white rounded-2xl border border-gray-200 px-[11px] py-[8px] cursor-pointer">
+        <Link href={`/major_board/${1}`} className="flex flex-col gap-2.5 shadow-[0px_2px_2px_0px_rgba(0,0,0,0.10)] w-full bg-white rounded-2xl border border-gray-200 px-[11px] py-[8px] cursor-pointer">
             <div className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-[3px]">
                     <div className="flex flex-col gap-0">
