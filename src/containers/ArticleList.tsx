@@ -658,7 +658,7 @@ export function CourseArticleList({ pageSize = 10, query, courseId }: CourseArti
   }
 
   const { data } = useQuery({
-    queryKey: ["courses", pageSize, currentPage, query],
+    queryKey: ["courses", courseId, pageSize, currentPage, query],
     queryFn: () => fetchCourseArticles({ courseId, query, pageSize, page: currentPage }),
     placeholderData: keepPreviousData
   })
