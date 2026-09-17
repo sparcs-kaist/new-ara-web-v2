@@ -31,7 +31,7 @@ export const Pagination = ({ onPageChange, currentPage, totalPages }: Pagination
                     return (
                         <button
                             key={page}
-                            className={`px-2 py-1 text-lg rounded ${page === currentPage ? 'text-ara_red font-bold' : 'text-gray-700 hover:bg-gray-100'}`}
+                            className={`w-[35px] py-1 text-lg rounded ${page === currentPage ? 'text-ara_red font-bold' : 'text-gray-700 hover:bg-gray-100'}`}
                             onClick={() => onPageChange && onPageChange(page)}
                             disabled={page > totalPages}
                         >

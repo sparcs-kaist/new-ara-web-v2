@@ -300,3 +300,21 @@ export const uploadAttachments = async (
 
   return http.post("attachments/", generateFormData(attachments), httpOptions);
 };
+
+export const fetchCoursePost = async ({ courseId, postId }: { courseId: number, postId: number}) => {
+  const { data } = await http.get(`/courses/${courseId}/articles/${postId}`);
+  return data
+}
+
+export const createCoursePost = async ({
+  courseId,
+  newArticle,
+}: {
+  courseId: number;
+  newArticle: Record<string, unknown>;
+}) => {
+  const { data } = await http.post(`courses/${courseId}/articles/`, newArticle);
+
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+  return data;
+};

@@ -1,9 +1,8 @@
 //PostOptionBar.tsx
 'use client';
 
-import React, { useState, useEffect } from "react"; // useEffect import
-import Image from 'next/image'
-import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
+import React, { useState, useEffect } from "react";
+import { OptionCheckbox, OptionSelect } from "./Option";
 
 interface ApiBoard {
   id: number
@@ -12,10 +11,10 @@ interface ApiBoard {
   topics: Array<{ id: number; ko_name: string }>
 }
 
-interface PostOptionBarProps {
+interface BoardOptionBarProps {
   boards: ApiBoard[]
-  defaultBoardId?: number       // ← 추가
-  defaultCategoryId?: string    // ← 추가 (string '' 또는 숫자문자열)
+  defaultBoardId?: number
+  defaultCategoryId?: string
   onChangeBoard: (boardId: number) => void
   onChangeCategory: (category: string) => void
   onChangeAnonymous: (anonymous: boolean) => void
@@ -25,7 +24,7 @@ interface PostOptionBarProps {
   isEditMode?: boolean
 }
 
-const PostOptionBar: React.FC<PostOptionBarProps> = ({
+export const BoardOptionBar = ({
   boards,
   defaultBoardId,
   defaultCategoryId,
@@ -36,189 +35,80 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
   onChangeSexual,
   disabled = false,
   isEditMode = false,
-}) => {
-  // boards[0]가 로드되기 전까지 빈 상태 방지
-  const [selectedBoardId, setSelectedBoardId] = useState<number | null>(
-    // 부모에서 넘겨준 defaultBoardId 우선, 없으면 기존 로직
-    defaultBoardId ?? boards[0]?.id ?? null
-  );
+}: BoardOptionBarProps) => {
+  const [selectedBoardId, setSelectedBoardId] = useState<number | null>(defaultBoardId ?? boards[0]?.id ?? null);
   const currentBoard = boards.find(b => b.id === selectedBoardId) ?? null;
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    // defaultCategoryId가 '' 이면 null, 숫자문자열이면 그 숫자로
-    defaultCategoryId === '' || defaultCategoryId == null
-      ? null
-      : Number(defaultCategoryId)
+    defaultCategoryId === '' || defaultCategoryId == null ? null : Number(defaultCategoryId)
   );
 
+  useEffect(() => { if (defaultBoardId) setSelectedBoardId(defaultBoardId); }, [defaultBoardId]);
   useEffect(() => {
-    if (defaultBoardId) {
-      setSelectedBoardId(defaultBoardId);
-    }
-  }, [defaultBoardId]);
-
-  useEffect(() => {
-    setSelectedCategoryId(
-      defaultCategoryId === '' || defaultCategoryId == null
-        ? null
-        : Number(defaultCategoryId)
-    );
+    setSelectedCategoryId(defaultCategoryId === '' || defaultCategoryId == null ? null : Number(defaultCategoryId));
   }, [defaultCategoryId]);
 
-  // boolean toggles
   const [political, setPolitical] = useState(false);
   const [adult, setAdult] = useState(false);
-  // 익명 여부: board.name_type===3에서만 토글 가능
   const [anonymous, setAnonymous] = useState(false);
 
   const handleBoardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = Number(e.target.value);
     setSelectedBoardId(id);
-    // 보드 변경 시 항상 “말머리 없음” (빈 값)으로 초기화
     setSelectedCategoryId(null);
-    // board.name_type에 따라 익명 기본값 및 부모 콜백
-    const board = boards.find(b => b.id === id)!
-    if (board.name_type === 3) {
-      setAnonymous(false)
-      onChangeAnonymous(false)
-    } else {
-      // 1 또는 4: 익명 불가
-      setAnonymous(false)
-      onChangeAnonymous(false)
-    }
+    setAnonymous(false);
+    onChangeAnonymous(false);
     onChangeBoard(id);
     onChangeCategory('');
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(e.target.value);
-    setSelectedCategoryId(id);
-    onChangeCategory(id ? String(id) : '');
-    onChangeAnonymous(anonymous);
-  };
-
-  const handleAnonymousChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAnonymous(e.target.checked);
-    onChangeAnonymous(e.target.checked);
-  };
-
-  const handlePoliticalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPolitical(e.target.checked);
-    onChangeSocial(e.target.checked);
-  };
-
-  const handleAdultChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAdult(e.target.checked);
-    onChangeSexual(e.target.checked);
-  };
-
-  const [isBoardOpen, setIsBoardOpen] = useState(false);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-
-  const handleBoardFocus = () => setIsBoardOpen(true);
-  const handleBoardBlur = () => setIsBoardOpen(false);
-  const handleCategoryFocus = () => setIsCategoryOpen(true);
-  const handleCategoryBlur = () => setIsCategoryOpen(false);
-
   return (
     <div className="flex items-center gap-x-4 gap-y-2 sm:mb-6 mb-2 flex-wrap">
-      <div className="relative flex-shrink-0">
-        <select
-          className={`appearance-none px-3 py-2 pr-8 border border-gray-300 rounded text-black whitespace-nowrap ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
-            }`}
-          value={selectedBoardId ?? ''}
-          onChange={handleBoardChange}
-          onFocus={handleBoardFocus}
-          onBlur={handleBoardBlur}
-          disabled={isEditMode || disabled}
-        >
-          {boards.map(b => (
-            <option key={b.id} value={b.id}>
-              {b.ko_name}
-            </option>
-          ))}
-        </select>
-        <span
-          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200"
-          style={{
-            transform: isBoardOpen
-              ? "translateY(-50%) rotate(180deg)"
-              : "translateY(-50%) rotate(0deg)",
-          }}
-        >
-          <Image src={"/Icon/dropdown-arrow-down.svg"} alt="arrow" width={16} height={16} className="w-4 h-4" />
-        </span>
-      </div>
+      {/* 게시판 선택 */}
+      <OptionSelect
+        value={selectedBoardId ?? ''}
+        onChange={handleBoardChange}
+        disabled={isEditMode || disabled}
+        options={boards.map(b => ({ value: b.id, label: b.ko_name }))}
+      />
 
-      { /* topic dropdown */}
-      <div className="relative flex-shrink-0">
-        <select
-          className={`appearance-none px-4 py-2 pr-8 border rounded whitespace-nowrap ${selectedCategoryId === null
-            ? 'text-gray-500'
-            : 'text-black'
-            } ${isEditMode ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
-          value={selectedCategoryId ?? ''}
-          onChange={handleCategoryChange}
-          onFocus={handleCategoryFocus}
-          onBlur={handleCategoryBlur}
-          disabled={isEditMode || disabled}
-        >
-          {/* 항상 첫 번째에 "말머리 없음" */}
-          <option value="">말머리 없음</option>
-          {currentBoard?.topics.map(t => (
-            <option key={t.id} value={t.id}>
-              {t.ko_name}
-            </option>
-          ))}
-        </select>
-        <span
-          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200"
-          style={{
-            transform: isCategoryOpen
-              ? "translateY(-50%) rotate(180deg)"
-              : "translateY(-50%) rotate(0deg)",
-          }}
-        >
-          <Image src={DropdownArrowDown} alt="arrow" className="w-4 h-4" />
-        </span>
-      </div>
+      {/* 카테고리 선택 */}
+      <OptionSelect
+        className={selectedCategoryId === null ? 'text-gray-500' : 'text-black'}
+        value={selectedCategoryId ?? ''}
+        placeholder="말머리 없음"
+        onChange={(e) => {
+          const id = Number(e.target.value);
+          setSelectedCategoryId(id);
+          onChangeCategory(id ? String(id) : '');
+          onChangeAnonymous(anonymous);
+        }}
+        disabled={isEditMode || disabled}
+        options={(currentBoard?.topics ?? []).map((t) => ({ value: t.id, label: t.ko_name }))}
+      />
 
-      <div className="flex items-center gap-x-3 gap-y- px-2 flex-wrap">
-        {currentBoard && currentBoard.name_type === 3 && (
-          <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
-            <input
-              type="checkbox"
-              checked={anonymous}
-              onChange={handleAnonymousChange}
-              className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
-              disabled={disabled}
-            />
-            익명
-          </label>
+      {/* 옵션 토글 공통 레이아웃 */}
+      <div className="flex items-center gap-x-3 px-2 flex-wrap">
+        {currentBoard?.name_type === 3 && (
+          <OptionCheckbox
+            label="익명"
+            checked={anonymous}
+            onChange={(e) => { setAnonymous(e.target.checked); onChangeAnonymous(e.target.checked); }}
+            disabled={disabled}
+          />
         )}
-
-        <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
-          <input
-            type="checkbox"
-            checked={political}
-            onChange={handlePoliticalChange}
-            className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
-            disabled={disabled}
-          />
-          정치글
-        </label>
-
-        <label className="flex items-center gap-1 text-sm whitespace-nowrap flex-shrink-0">
-          <input
-            type="checkbox"
-            checked={adult}
-            onChange={handleAdultChange}
-            className={`accent-red-500 flex-shrink-0 ${disabled ? 'cursor-not-allowed' : ''}`}
-            disabled={disabled}
-          />
-          성인글
-        </label>
-
-        {currentBoard && currentBoard.name_type === 4 && (
+        <OptionCheckbox
+          label="정치글"
+          checked={political}
+          onChange={(e) => { setPolitical(e.target.checked); onChangeSocial(e.target.checked); }}
+          disabled={disabled}
+        />
+        <OptionCheckbox
+          label="성인글"
+          checked={adult}
+          onChange={(e) => { setAdult(e.target.checked); onChangeSexual(e.target.checked); }}
+          disabled={disabled}
+        />
+        {currentBoard?.name_type === 4 && (
           <span className="text-xs text-red-500 font-semibold whitespace-nowrap flex-shrink-0">
             실명제 게시판입니다
           </span>
@@ -228,4 +118,73 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
   );
 };
 
-export default PostOptionBar;
+interface CourseOptionBarProps {
+  courses: Course[]
+  defaultCourseId?: number
+  onChangeCourse: (boardId: number) => void
+  onChangeAnonymous: (anonymous: boolean) => void
+  onChangeSocial: (isSocial: boolean) => void
+  onChangeSexual: (isSexual: boolean) => void
+  disabled?: boolean
+  isEditMode?: boolean
+}
+
+export const CourseOptionBar = ({
+  courses,
+  defaultCourseId,
+  onChangeCourse,
+  onChangeAnonymous,
+  onChangeSocial,
+  onChangeSexual,
+  disabled = false,
+  isEditMode = false,
+}: CourseOptionBarProps) => {
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(defaultCourseId ?? courses[0]?.id ?? null);
+
+  useEffect(() => { if (defaultCourseId) setSelectedCourseId(defaultCourseId); }, [defaultCourseId]);
+  const [political, setPolitical] = useState(false);
+  const [adult, setAdult] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
+
+  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = Number(e.target.value);
+    setSelectedCourseId(id);
+    setAnonymous(false);
+    onChangeAnonymous(false);
+    onChangeCourse(id);
+  };
+
+  return (
+    <div className="flex items-center gap-x-4 gap-y-2 sm:mb-6 mb-2 flex-wrap">
+      {/* 게시판 선택 */}
+      <OptionSelect
+        value={selectedCourseId ?? ''}
+        onChange={handleCourseChange}
+        disabled={isEditMode || disabled}
+        options={courses.map(c => ({ value: c.id, label: c.title }))}
+      />
+
+      {/* 옵션 토글 공통 레이아웃 */}
+      <div className="flex items-center gap-x-3 px-2 flex-wrap">
+        <OptionCheckbox
+          label="익명"
+          checked={anonymous}
+          onChange={(e) => { setAnonymous(e.target.checked); onChangeAnonymous(e.target.checked); }}
+          disabled={disabled}
+        />
+        <OptionCheckbox
+          label="정치글"
+          checked={political}
+          onChange={(e) => { setPolitical(e.target.checked); onChangeSocial(e.target.checked); }}
+          disabled={disabled}
+        />
+        <OptionCheckbox
+          label="성인글"
+          checked={adult}
+          onChange={(e) => { setAdult(e.target.checked); onChangeSexual(e.target.checked); }}
+          disabled={disabled}
+        />
+      </div>
+    </div>
+  );
+};

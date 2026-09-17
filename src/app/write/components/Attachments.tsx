@@ -6,6 +6,7 @@ import React, {
   forwardRef,
   useRef,
   useEffect,
+  useCallback,
 } from "react";
 import Image from "next/image";
 import { uploadAttachments } from "@/lib/api/post";
@@ -67,56 +68,8 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
-
-    // Paste 이벤트 리스너
-    useEffect(() => {
-      const pasteListener = (event: ClipboardEvent) => {
-        const dataTransfer = event.clipboardData;
-        if (!dataTransfer) return;
-
-        const fileItems = Array.from(dataTransfer.items).filter(
-          (item) => item.kind === "file",
-        );
-
-        if (fileItems.length === 0) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const pastedFiles = fileItems
-          .map((item) => item.getAsFile())
-          .filter(Boolean) as File[];
-
-        handleUpload(pastedFiles);
-      };
-
-      document.addEventListener("paste", pasteListener);
-      return () => {
-        document.removeEventListener("paste", pasteListener);
-        // blobUrl 해제
-        files.forEach((file) => {
-          if (file.blobUrl) {
-            URL.revokeObjectURL(file.blobUrl);
-          }
-        });
-      };
-    }, [files]);
-
-    // Merge initial files from parent (edit mode)
-    useEffect(() => {
-      if (!initialFiles || initialFiles.length === 0) return;
-      setFiles((prev) => {
-        const existing = new Set(prev.map((f) => f.key));
-        const merged = [...prev];
-        initialFiles.forEach((f) => {
-          if (!existing.has(f.key)) merged.push(f);
-        });
-        return merged;
-      });
-    }, [initialFiles]);
-
-    // 파일 업로드 처리
-    const handleUpload = async (fileList: FileList | File[]) => {
+// 파일 업로드 처리
+    const handleUpload = useCallback(async (fileList: FileList | File[]) => {
       const filesArray = Array.from(fileList);
 
       const [success, error] = filesArray.reduce<
@@ -182,7 +135,56 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
       // onAdd 콜백
       onAdd?.(updated);
       return updated;
-    };
+    }, [onAdd]);
+    
+    // Paste 이벤트 리스너
+    useEffect(() => {
+      const pasteListener = (event: ClipboardEvent) => {
+        const dataTransfer = event.clipboardData;
+        if (!dataTransfer) return;
+
+        const fileItems = Array.from(dataTransfer.items).filter(
+          (item) => item.kind === "file",
+        );
+
+        if (fileItems.length === 0) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const pastedFiles = fileItems
+          .map((item) => item.getAsFile())
+          .filter(Boolean) as File[];
+
+        handleUpload(pastedFiles);
+      };
+
+      document.addEventListener("paste", pasteListener);
+      return () => {
+        document.removeEventListener("paste", pasteListener);
+        // blobUrl 해제
+        files.forEach((file) => {
+          if (file.blobUrl) {
+            URL.revokeObjectURL(file.blobUrl);
+          }
+        });
+      };
+    }, [files, handleUpload]);
+
+    // Merge initial files from parent (edit mode)
+    useEffect(() => {
+      if (!initialFiles || initialFiles.length === 0) return;
+      setFiles((prev) => {
+        const existing = new Set(prev.map((f) => f.key));
+        const merged = [...prev];
+        initialFiles.forEach((f) => {
+          if (!existing.has(f.key)) merged.push(f);
+        });
+        return merged;
+      });
+    }, [initialFiles]);
+
+    
 
     //drag enter/leave 이벤트 헨들러
     const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
