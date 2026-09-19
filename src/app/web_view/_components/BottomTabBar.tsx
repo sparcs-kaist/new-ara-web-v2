@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { fetchNotifications } from '@/lib/api/notification';
-import { HomeIcon, MemberIcon, NotificationIcon, PostListIcon } from './icons';
+import { ChatIcon, HomeIcon, MemberIcon, NotificationIcon, PostListIcon } from './icons';
 
 interface Tab {
     path: string;
@@ -21,6 +21,11 @@ const TABS: Tab[] = [
         path: '/web_view/Board',
         matcher: /^\/web_view\/Board(\/|$)/,
         icon: (active) => <PostListIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
+        path: '/web_view/Chat',
+        matcher: /^\/web_view\/Chat\/?$/,
+        icon: (active) => <ChatIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
         path: '/web_view/Notifications',
@@ -66,7 +71,7 @@ export function BottomTabBar() {
         <nav
             role="tablist"
             aria-label="primary"
-            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 items-stretch border-t border-[#F0F0F0] bg-white"
+            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 items-stretch border-t border-[#F0F0F0] bg-white"
             style={{ height: 'calc(50px + var(--ara-safe-bottom))', paddingBottom: 'var(--ara-safe-bottom)' }}
         >
             {TABS.map((t) => {
