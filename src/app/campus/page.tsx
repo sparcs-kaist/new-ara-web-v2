@@ -1,10 +1,11 @@
 "use client";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import { useEffect, useRef, useState } from "react";
-import { CourseCard, MajorCard } from "./Card";
 import { MajorSelectModal } from "./MajorSelectModal";
-import { useQuery } from "@tanstack/react-query";
-import { fetchCourses } from "@/lib/api/user";
+import { CourseBoardGrid, MajorBoardGrid } from "@/containers/Campus";
+import { useCourseTerms } from "@/lib/query/campus";
+
+const expandMotion = "duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
 
 interface FilterSelectProps {
     options: number[] | string[];
@@ -27,30 +28,59 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     }, []);
 
     return (
-        <div className="relative w-32 group" ref={containerRef}>
-            <button
-                type="button"
-                className="
-                w-32 px-3.5 py-2 bg-white rounded-[30px] 
-                outline outline-1 outline-offset-[-1px] outline-black/20 
-                text-zinc-800 text-sm font-normal font-['Pretendard']
-                
-                text-left cursor-pointer 
-                hover:bg-zinc-50 transition-colors
-                focus:outline-zinc-400
-                "
-                onClick={() => setIsOpen((prev) => !prev)}
+        <div className="relative w-32 h-9" ref={containerRef}>
+            <div
+                className={`
+                absolute top-0 left-0 w-full z-50 overflow-hidden bg-white
+                outline outline-1 outline-offset-[-1px] outline-black/20
+                transition-[border-radius] ${expandMotion}
+                ${isOpen ? "rounded-[20px]" : "rounded-[30px]"}
+                `}
             >
-                {value}
-            </button>
+                <button
+                    type="button"
+                    className="
+                    w-full px-3.5 py-2
+                    text-zinc-800 text-sm font-normal font-['Pretendard']
+                    text-left cursor-pointer
+                    hover:bg-zinc-50 transition-colors
+                    "
+                    onClick={() => setIsOpen((prev) => !prev)}
+                >
+                    {value}
+                </button>
 
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                <div
+                    className={`grid transition-[grid-template-rows] ${expandMotion} ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                >
+                    <div className={`overflow-hidden transition-[opacity,transform] ${expandMotion} ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
+                        {options
+                            .filter((option) => String(option) !== String(value))
+                            .map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    className="block w-full px-3.5 py-2 border-t border-gray-200 text-zinc-800 text-sm font-normal font-['Pretendard'] text-left hover:bg-zinc-50 transition-colors"
+                                    onClick={() => {
+                                        onChange(String(option));
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="absolute right-4 top-[18px] -translate-y-1/2 z-[51] pointer-events-none">
                 <svg
                     width="10"
                     height="6"
                     viewBox="0 0 10 6"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform ${expandMotion} ${isOpen ? "rotate-180" : ""}`}
                 >
                     <path
                         d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
@@ -58,55 +88,23 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                     />
                 </svg>
             </div>
-
-            {/* 닫힌 알약 자리에서 그대로 펼쳐지도록 top-0 에 겹쳐 둔다 */}
-            <div
-                className={`
-                absolute top-0 left-0 w-32 z-50 overflow-hidden
-                bg-white rounded-[20px]
-                outline outline-1 outline-offset-[-1px] outline-black/20
-                divide-y divide-gray-200
-                transition-all duration-200 ease-out
-                ${isOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}
-                `}
-            >
-                {options.map((option) => (
-                    <button
-                        key={option}
-                        type="button"
-                        className={`block w-full px-3.5 py-2 text-left text-sm font-['Pretendard'] hover:bg-zinc-50 transition-colors ${String(option) === String(value) ? "text-zinc-800 font-medium bg-zinc-50" : "text-zinc-800 font-normal"}`}
-                        onClick={() => {
-                            onChange(String(option));
-                            setIsOpen(false);
-                        }}
-                    >
-                        {option}
-                    </button>
-                ))}
-            </div>
         </div>
     );
 }
 
-const seasons = ["봄", "여름", "가을", "겨울"];
+// semester 1~4 의 표시 이름
+const SEASON_LABELS = ["봄", "여름", "가을", "겨울"];
 
 export default function Campus() {
-    const [years, setYears] = useState<string[]>([]);
-    const [selectedYear, setSelectedYear] = useState<string>("2026년");
-    const [selectedSeason, setSelectedSeason] = useState("봄");
+    const { data: terms = [] } = useCourseTerms();
+    const [pickedYear, setPickedYear] = useState<number>();
+    const [pickedSemester, setPickedSemester] = useState<number>();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        setYears(["2024년", "2025년", "2026년"]);
-    }, []);
-
-    const { data, isLoading } = useQuery({
-        queryKey: ["courses"],
-        queryFn: () => fetchCourses(),
-        staleTime: 0 //1000 * 60 * 60 * 24
-    })
-
-    const courses: Course[] = data
+    const years = [...new Set(terms.map((term) => term.year))];
+    const selectedYear = pickedYear !== undefined && years.includes(pickedYear) ? pickedYear : years[0];
+    const semesters = terms.filter((term) => term.year === selectedYear).map((term) => term.semester);
+    const selectedSemester = pickedSemester !== undefined && semesters.includes(pickedSemester) ? pickedSemester : semesters[0];
 
     return (
 
@@ -121,23 +119,19 @@ export default function Campus() {
                                 <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
                                 <div className="flex gap-2">
                                     <FilterSelect
-                                        options={years}
-                                        value={selectedYear}
-                                        onChange={(v) => setSelectedYear(v)}
+                                        options={years.map((year) => `${year}년`)}
+                                        value={selectedYear === undefined ? "" : `${selectedYear}년`}
+                                        onChange={(v) => setPickedYear(Number(v.replace("년", "")))}
                                     />
                                     <FilterSelect
-                                        options={seasons}
-                                        value={selectedSeason}
-                                        onChange={(v) => setSelectedSeason(v)}
+                                        options={semesters.map((semester) => SEASON_LABELS[semester - 1])}
+                                        value={selectedSemester === undefined ? "" : SEASON_LABELS[selectedSemester - 1]}
+                                        onChange={(v) => setPickedSemester(SEASON_LABELS.indexOf(v) + 1)}
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {isLoading || courses.map((course) => (
-                                    <CourseCard key={course.id} {...course} />
-                                ))}
-                            </div>
+                            <CourseBoardGrid year={selectedYear} semester={selectedSemester} />
                         </section>
 
                         <section className="flex flex-col gap-6">
@@ -171,11 +165,7 @@ export default function Campus() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {new Array(9).fill(null).map((_, idx) => (
-                                    <MajorCard key={idx} />
-                                ))}
-                            </div>
+                            <MajorBoardGrid />
                         </section>
                     </div>
 
@@ -183,14 +173,7 @@ export default function Campus() {
                     <Sidebar className="lg:pt-[60px]" />
                 </div>
 
-                <MajorSelectModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={() => {
-                        alert("저장되었습니다!");
-                        setIsModalOpen(false);
-                    }}
-                />
+                <MajorSelectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             </div>
         </div>
     )

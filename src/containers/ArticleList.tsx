@@ -8,6 +8,7 @@ import {
   fetchAllArticlesExcludingPortalNotice,
   useArticles,
   fetchCourseArticles,
+  fetchMajorArticles,
 } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
 import { fetchMe } from "@/lib/api/user";
@@ -660,6 +661,53 @@ export function CourseArticleList({ pageSize = 10, query, courseId }: CourseArti
   const { data } = useQuery({
     queryKey: ["courses", courseId, pageSize, currentPage, query],
     queryFn: () => fetchCourseArticles({ courseId, query, pageSize, page: currentPage }),
+    placeholderData: keepPreviousData
+  })
+
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
+
+  return (
+    <ArticleList
+      posts={posts}
+      showTimeAgo={true}
+      showProfile={true}
+      showWriter={true}
+      showStatus={true}
+      showAnswerStatus={true}
+      showHit={true}
+      titleFontSize="text-[16px]"
+      showTopic={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={totalPages ?? 1}
+      onPageChange={handlePageChange}
+    />
+  )
+}
+
+interface MajorArticleListProps {
+  pageSize?: number;
+  query?: string;
+  stdDeptId: number | string;
+}
+
+// 학과 게시판 페이지 - 게시글 목록
+export function MajorArticleList({ pageSize = 10, query, stdDeptId }: MajorArticleListProps) {
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+
+  const { data } = useQuery({
+    queryKey: ["majorArticles", stdDeptId, pageSize, currentPage, query],
+    queryFn: () => fetchMajorArticles({ stdDeptId, query, pageSize, page: currentPage }),
     placeholderData: keepPreviousData
   })
 

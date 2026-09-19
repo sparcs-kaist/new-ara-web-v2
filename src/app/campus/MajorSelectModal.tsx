@@ -1,7 +1,8 @@
 "use client";
 
 import Modal from "@/components/common/Modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useMajors, useUserMajorMutation } from "@/lib/query/campus";
 
 const CheckIcon = () => (
     <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -12,12 +13,35 @@ const CheckIcon = () => (
 interface MajorSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: () => void;
 }
 
-export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalProps) => {
-    const departments = ["물리학과", "화학과", "수리과학과", "생명과학과", "전산학부", "전기및전자공학부", "물리학과", "화학과", "수리과학과", "생명과학과", "전산학부", "전기및전자공학부"];
-    const [selected, setSelected] = useState(new Array(departments.length).fill(false));
+export const MajorSelectModal = ({ isOpen, onClose }: MajorSelectModalProps) => {
+    const { data: majors } = useMajors();
+    const { mutate } = useUserMajorMutation();
+    const [selected, setSelected] = useState<Set<number>>(new Set());
+
+    useEffect(() => {
+        if (majors) setSelected(new Set(majors.filter((m) => m.is_added).map((m) => m.std_dept_id)));
+    }, [majors, isOpen]);
+
+    const departments = majors ?? [];
+
+    const toggle = (dept: Major) => {
+        if (dept.is_mine) return;
+        setSelected((selected) => {
+            const newSelected = new Set(selected);
+            if (!newSelected.delete(dept.std_dept_id)) newSelected.add(dept.std_dept_id);
+            return newSelected;
+        });
+    };
+
+    const save = () => {
+        departments.forEach((dept) => {
+            const checked = selected.has(dept.std_dept_id);
+            if (checked !== dept.is_added) mutate({ stdDeptId: dept.std_dept_id, add: checked });
+        });
+        onClose();
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
@@ -29,17 +53,11 @@ export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalPr
                 {/* 2. Content: 스크롤 가능한 리스트 영역 (h-[459px]) */}
                 <div className="self-stretch h-[459px] px-6 overflow-y-auto scrollbar-hide">
                     {departments.map((dept, index) => (
-                        <div key={index} className="flex flex-col" onClick={
-                            () => setSelected(selected => {
-                                const newSelected = [...selected];
-                                newSelected[index] = !newSelected[index];
-                                return newSelected;
-                            })
-                        }>
+                        <div key={dept.std_dept_id} className="flex flex-col" onClick={() => toggle(dept)}>
                             <div
-                                className={`self-stretch px-2.5 py-3 flex justify-start items-center gap-5 cursor-pointer transition-colors group ${selected[index] ? 'bg-rose-50' : 'hover:bg-zinc-50'}`}
+                                className={`self-stretch px-2.5 py-3 flex justify-start items-center gap-5 transition-colors group ${dept.is_mine ? 'cursor-default' : 'cursor-pointer'} ${selected.has(dept.std_dept_id) ? 'bg-rose-50' : 'hover:bg-zinc-50'}`}
                             >
-                                {selected[index] ? (
+                                {selected.has(dept.std_dept_id) ? (
                                     <div className="w-5 h-5 bg-red-500 rounded-xl flex items-center justify-center">
                                         <CheckIcon />
                                     </div>
@@ -48,7 +66,7 @@ export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalPr
                                 )}
 
                                 <div className="text-black text-base font-normal leading-4">
-                                    {dept}
+                                    {dept.major_name}
                                 </div>
                             </div>
 
@@ -67,7 +85,7 @@ export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalPr
                         <span className="text-red-500 text-xl font-normal">취소</span>
                     </button>
                     <button
-                        onClick={onSave}
+                        onClick={save}
                         className="flex-1 px-2.5 py-3 border-t border-gray-200 flex justify-center items-center hover:bg-zinc-50 transition-colors"
                     >
                         <span className="text-red-500 text-xl font-bold">저장</span>
