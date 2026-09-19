@@ -3,6 +3,12 @@
 import Modal from "@/components/common/Modal";
 import { useState } from "react";
 
+const CheckIcon = () => (
+    <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5.13042 10.5833L3.10625 8.27C2.87875 8.01 2.51125 8.01 2.28375 8.27C2.05625 8.53 2.05625 8.95 2.28375 9.21L4.72209 11.9967C4.94959 12.2567 5.31709 12.2567 5.54459 11.9967L11.7163 4.94333C11.9438 4.68333 11.9438 4.26333 11.7163 4.00333C11.4888 3.74333 11.1213 3.74333 10.8938 4.00333L5.13042 10.5833Z" fill="white"/>
+    </svg>
+);
+
 interface MajorSelectModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -31,12 +37,15 @@ export const MajorSelectModal = ({ isOpen, onClose, onSave }: MajorSelectModalPr
                             })
                         }>
                             <div
-                                className="self-stretch px-2.5 py-3 flex justify-start items-center gap-5 cursor-pointer hover:bg-zinc-50 transition-colors group"
+                                className={`self-stretch px-2.5 py-3 flex justify-start items-center gap-5 cursor-pointer transition-colors group ${selected[index] ? 'bg-rose-50' : 'hover:bg-zinc-50'}`}
                             >
-                                <div
-                                    className={`w-5 h-5 rounded-xl border flex items-center justify-center transition-all ${selected[index] ? 'border-red-500 bg-red-50' : 'border-neutral-300'}`}
-                                />
-                                
+                                {selected[index] ? (
+                                    <div className="w-5 h-5 bg-red-500 rounded-xl flex items-center justify-center">
+                                        <CheckIcon />
+                                    </div>
+                                ) : (
+                                    <div className="w-5 h-5 rounded-full border border-gray-300" />
+                                )}
 
                                 <div className="text-black text-base font-normal leading-4">
                                     {dept}

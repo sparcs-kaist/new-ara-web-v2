@@ -1,6 +1,6 @@
 "use client";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CourseCard, MajorCard } from "./Card";
 import { MajorSelectModal } from "./MajorSelectModal";
 import { useQuery } from "@tanstack/react-query";
@@ -9,29 +9,40 @@ import { fetchCourses } from "@/lib/api/user";
 interface FilterSelectProps {
     options: number[] | string[];
     value: number | string;
-    onChange: React.ChangeEventHandler<HTMLSelectElement>;
+    onChange: (value: string) => void;
 }
 
 const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
-        <div className="relative inline-flex items-center group">
-            <select
+        <div className="relative inline-flex items-center group" ref={containerRef}>
+            <button
+                type="button"
                 className="
                 w-32 px-3.5 py-2 bg-white rounded-[30px] 
                 outline outline-1 outline-offset-[-1px] outline-black/20 
                 text-zinc-800 text-sm font-normal font-['Pretendard']
                 
-                appearance-none cursor-pointer 
+                text-left cursor-pointer 
                 hover:bg-zinc-50 transition-colors
                 focus:outline-zinc-400
                 "
-                value={value}
-                onChange={onChange}
+                onClick={() => setIsOpen((prev) => !prev)}
             >
-                {options.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                ))}
-            </select>
+                {value}
+            </button>
 
             <div className="absolute right-4 pointer-events-none flex items-center justify-center">
                 <svg
@@ -40,6 +51,7 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                     viewBox="0 0 10 6"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
                 >
                     <path
                         d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
@@ -47,6 +59,24 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                     />
                 </svg>
             </div>
+
+            {isOpen && (
+                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden divide-y divide-gray-200 z-50">
+                    {options.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            className="block w-full px-3.5 py-2 text-left text-zinc-800 text-sm font-normal font-['Pretendard'] hover:bg-gray-100 transition-colors"
+                            onClick={() => {
+                                onChange(String(option));
+                                setIsOpen(false);
+                            }}
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
@@ -76,27 +106,27 @@ export default function Campus() {
         // <div className="bg-white rounded-lg shadow-sm md:p-6 sm:p-3">
         <div className="min-h-screen">
             <div className="container mx-auto md:px-20 sm:px-12 xs:px-8 px-4 py-0">
-                <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex flex-col lg:w-2/3 xl:w-3/4 gap-16 py-8">
+                <div className="flex flex-col lg:flex-row gap-4 py-8">
+                    <div className="flex flex-col lg:w-2/3 xl:w-3/4 gap-16">
                         <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white" />
                         <section className="flex flex-col gap-6">
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-wrap justify-between items-center gap-2">
                                 <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
                                 <div className="flex gap-2">
                                     <FilterSelect
                                         options={years}
                                         value={selectedYear}
-                                        onChange={(e) => setSelectedYear(e.target.value)}
+                                        onChange={(v) => setSelectedYear(v)}
                                     />
                                     <FilterSelect
                                         options={seasons}
                                         value={selectedSeason}
-                                        onChange={(e) => setSelectedSeason(e.target.value)}
+                                        onChange={(v) => setSelectedSeason(v)}
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {isLoading || courses.map((course) => (
                                     <CourseCard key={course.id} {...course} />
                                 ))}
@@ -108,7 +138,7 @@ export default function Campus() {
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-2xl font-bold">👨🏻‍🏫 학과 게시판</h2>
                                     <button
-                                        className="w-8 h-8 flex justify-center items-center bg-white rounded-2xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.10)] outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-50 transition-colors"
+                                        className="w-8 h-8 flex justify-center items-center bg-white rounded-2xl outline outline-1 outline-offset-[-1px] outline-gray-200 hover:bg-gray-50 transition-colors"
                                         onClick={() => setIsModalOpen(true)}
                                     >
                                         <svg
@@ -134,7 +164,7 @@ export default function Campus() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {new Array(9).fill(null).map((_, idx) => (
                                     <MajorCard key={idx} />
                                 ))}

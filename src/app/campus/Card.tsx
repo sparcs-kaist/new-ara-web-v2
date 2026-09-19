@@ -9,18 +9,18 @@ export const CourseCard = ({ id, course_code, title, professors, credit, enrollm
             <div className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-[3px]">
                     <div className="flex flex-col gap-0">
-                        <span className="text-[#808080] text-base font-normal">{course_code}</span>
-                        <span className="text-black text-2xl font-bold">{title}</span>
+                        <span className="text-[#808080] text-base font-normal truncate">{course_code}</span>
+                        <span className="text-black text-2xl font-bold break-keep break-words">{title}</span>
                     </div>
                     <hr className="border-neutral-200" />
                 </div>
 
                 <div className="flex justify-between items-center pb-1">
-                    <div className="flex items-center gap-1.5 text-base font-medium">
-                        <span className="text-[#808080]">교수자</span>
-                        <span className="text-black">{professors.map(p => p.name).join(", ")}</span>
+                    <div className="flex items-center gap-1.5 text-base font-medium min-w-0">
+                        <span className="text-[#808080] shrink-0">교수자</span>
+                        <span className="text-black truncate">{professors.map(p => p.name).join(", ")}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[#808080] text-base font-medium">
+                    <div className="flex items-center gap-1.5 text-[#808080] text-base font-medium shrink-0">
                         <span>{enrollment_count} 명</span>
                         <div className="w-px h-4 bg-zinc-500" />
                         <span>{credit} 학점</span>
@@ -39,8 +39,8 @@ export const MajorCard = ({}) => {
             <div className="flex flex-col gap-3.5">
                 <div className="flex flex-col gap-[3px]">
                     <div className="flex flex-col gap-0">
-                        <span className="text-[#808080] text-base font-normal">{"Industrial Design"}</span>
-                        <span className="text-black text-2xl font-bold">{"산업디자인학과"}</span>
+                        <span className="text-[#808080] text-base font-normal truncate">{"Industrial Design"}</span>
+                        <span className="text-black text-2xl font-bold break-keep break-words">{"산업디자인학과"}</span>
                     </div>
                     <hr className="border-neutral-200" />
                 </div>
