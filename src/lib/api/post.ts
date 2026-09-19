@@ -318,3 +318,16 @@ export const createCoursePost = async ({
   queryClient.invalidateQueries({ queryKey: ["me"] });
   return data;
 };
+
+export const createMajorPost = async ({
+  stdDeptId,
+  newArticle,
+}: {
+  stdDeptId: number | string;
+  newArticle: Record<string, unknown>;
+}) => {
+  const { data } = await http.post(`majors/${stdDeptId}/articles/`, newArticle);
+
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+  return data;
+};
