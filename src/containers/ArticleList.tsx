@@ -655,9 +655,11 @@ interface MajorArticleListProps {
 function ScopedArticleList({
   queryKey,
   fetchPage,
+  postHref,
 }: {
   queryKey: unknown[];
   fetchPage: (page: number) => Promise<any>;
+  postHref: (post: any) => string;
 }) {
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
@@ -690,6 +692,7 @@ function ScopedArticleList({
       currentPage={currentPage}
       totalPages={data?.num_pages || 1}
       onPageChange={handlePageChange}
+      postHref={postHref}
     />
   )
 }
@@ -699,6 +702,7 @@ export function CourseArticleList({ pageSize = 10, query, courseId }: CourseArti
     <ScopedArticleList
       queryKey={["courses", courseId, pageSize, query]}
       fetchPage={(page) => fetchCourseArticles({ courseId, query, pageSize, page })}
+      postHref={(post) => `/post/${post.id}?course_id=${courseId}`}
     />
   )
 }
@@ -708,6 +712,7 @@ export function MajorArticleList({ pageSize = 10, query, stdDeptId }: MajorArtic
     <ScopedArticleList
       queryKey={["majorArticles", stdDeptId, pageSize, query]}
       fetchPage={(page) => fetchMajorArticles({ stdDeptId, query, pageSize, page })}
+      postHref={(post) => `/post/${post.id}?std_dept_id=${stdDeptId}`}
     />
   )
 }
