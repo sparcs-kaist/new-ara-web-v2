@@ -23,6 +23,7 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
   const { data } = useMe();
 
   useEffect(() => {
+    if (!data) return;
     (async () => {
       try {
         console.log("fetchMe data:", data);
@@ -37,7 +38,7 @@ const PostSetting: React.FC<PostSettingProps> = ({ onSettingChange }) => {
         setLoading(false);
       }
     })();
-  }, [t]);
+  }, [data, t]);
 
   const saveSettings = async (newSexual: boolean, newSocial: boolean) => {
     if (!userData) return;

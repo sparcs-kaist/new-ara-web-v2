@@ -16,6 +16,7 @@ export default function TOSPage() {
   const { data: userData } = useMe();
 
   useEffect(() => {
+    if (!userData) return;
     //User 정보 가져오기
     const fetchUserData = async () => {
       try {
@@ -26,7 +27,7 @@ export default function TOSPage() {
       }
     };
     fetchUserData();
-  }, []);
+  }, [userData]);
   useEffect(() => {
     // URL에서 언어 파라미터 가져오기
     const urlParams = new URLSearchParams(window.location.search);
