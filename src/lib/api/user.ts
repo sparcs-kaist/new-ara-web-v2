@@ -152,12 +152,12 @@ export const searchUser = async (query: string = "") => {
   return data;
 };
 
-const SEASON = ["봄", "여름", "가을", "겨울"] as const;
-export const fetchCourses = async (year?: number, semester?: typeof SEASON[number]) => {
+// semester : 1=봄, 2=여름, 3=가을, 4=겨울
+export const fetchCourses = async (year?: number, semester?: number) => {
   const params = new URLSearchParams();
 
   if (year !== undefined) params.append("year", year.toString());
-  if (semester !== undefined) params.append("semester", (SEASON.indexOf(semester) + 1).toString());
+  if (semester !== undefined) params.append("semester", semester.toString());
 
   const queryString = params.toString();
   const url = `/courses/${queryString ? `?${queryString}` : ""}`;

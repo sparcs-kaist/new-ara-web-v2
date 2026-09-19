@@ -92,18 +92,19 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     );
 }
 
-const SEASONS = ["봄", "여름", "가을", "겨울"] as const;
+// semester 1~4 의 표시 이름
+const SEASON_LABELS = ["봄", "여름", "가을", "겨울"];
 
 export default function Campus() {
     const { data: terms = [] } = useCourseTerms();
     const [pickedYear, setPickedYear] = useState<number>();
-    const [pickedSeason, setPickedSeason] = useState<typeof SEASONS[number]>();
+    const [pickedSemester, setPickedSemester] = useState<number>();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const years = [...new Set(terms.map((term) => term.year))];
     const selectedYear = pickedYear !== undefined && years.includes(pickedYear) ? pickedYear : years[0];
-    const seasons = terms.filter((term) => term.year === selectedYear).map((term) => SEASONS[term.semester - 1]);
-    const selectedSeason = pickedSeason && seasons.includes(pickedSeason) ? pickedSeason : seasons[0];
+    const semesters = terms.filter((term) => term.year === selectedYear).map((term) => term.semester);
+    const selectedSemester = pickedSemester !== undefined && semesters.includes(pickedSemester) ? pickedSemester : semesters[0];
 
     return (
 
@@ -123,14 +124,14 @@ export default function Campus() {
                                         onChange={(v) => setPickedYear(Number(v.replace("년", "")))}
                                     />
                                     <FilterSelect
-                                        options={seasons}
-                                        value={selectedSeason ?? ""}
-                                        onChange={(v) => setPickedSeason(v as typeof SEASONS[number])}
+                                        options={semesters.map((semester) => SEASON_LABELS[semester - 1])}
+                                        value={selectedSemester === undefined ? "" : SEASON_LABELS[selectedSemester - 1]}
+                                        onChange={(v) => setPickedSemester(SEASON_LABELS.indexOf(v) + 1)}
                                     />
                                 </div>
                             </div>
 
-                            <CourseBoardGrid year={selectedYear} semester={selectedSeason} />
+                            <CourseBoardGrid year={selectedYear} semester={selectedSemester} />
                         </section>
 
                         <section className="flex flex-col gap-6">

@@ -12,7 +12,7 @@ export const useCourseTerms = () => {
   });
 };
 
-export const useCourses = (year?: number, semester?: "봄" | "여름" | "가을" | "겨울") => {
+export const useCourses = (year?: number, semester?: number) => {
   return useQuery({
     queryKey: ["courseList", year, semester],
     queryFn: () => fetchCourses(year, semester),
