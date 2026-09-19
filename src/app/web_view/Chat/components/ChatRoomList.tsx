@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import UserSearchDialog from '@/app/chat/components/UserSearchDialog';
 import RoomCreateDialog from '@/app/chat/components/RoomCreateDialog';
-import { AddIcon, InformationIcon } from '@/app/web_view/_components';
+import { PlusIcon, InformationIcon } from '@/app/web_view/_components';
 import { fetchChatRoomList, createGroupDM, createDM, getDmByUserId } from '@/lib/api/chat';
 import InvitationListDialog from '@/app/chat/components/InvitationListDialog';
 
@@ -139,7 +139,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                             aria-label="새 채팅"
                             className="flex h-11 w-11 items-center justify-center text-ara_red"
                         >
-                            <AddIcon size={28} />
+                            <PlusIcon size={32} />
                         </button>
                         {showTypePopover && (
                             <div
@@ -222,7 +222,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                                 </div>
                                 <div className="ml-3 min-w-0 flex-1">
                                     <div className="flex h-6 items-center">
-                                        <div className="min-w-0 flex-1 truncate text-[16px] font-bold">
+                                        <div className="min-w-0 flex-1 truncate text-[16px] font-semibold">
                                             {room.room_title}
                                         </div>
                                         <div className="ml-2 shrink-0 text-[12px] text-[#B1B1B1]">
