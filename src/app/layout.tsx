@@ -10,6 +10,8 @@ import "@/i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { fetchMe } from "@/lib/api/user";
+import { isInShell } from "@/app/web_view/_bridge/isInShell";
+import { ShellBackHandler } from "@/app/web_view/_components/ShellBackHandler";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -46,7 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         setIsLoggedIn(true);
       } catch {
         console.error("인증 실패, 로그인 페이지로 리다이렉트합니다.");
-        window.location.href = "/login";
+        window.location.href = isInShell() ? "/web_view/Login" : "/login";
       }
     }
 
@@ -102,7 +104,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body className="h-screen">{renderContent()}</body>
+      <body className="h-screen">
+        {!pathname.startsWith("/web_view") && <ShellBackHandler />}
+        {renderContent()}
+      </body>
     </html>
   );
 }

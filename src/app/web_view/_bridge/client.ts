@@ -21,6 +21,7 @@ import {
     PROTOCOL_VERSION,
     RequestEnvelope,
 } from './types';
+import { isInShell } from './isInShell';
 
 type Listener<T extends EventType> = (payload: EventPayload<T>) => void;
 
@@ -142,7 +143,7 @@ class AraBridge {
     }
 
     private canPost(): boolean {
-        return typeof window !== 'undefined' && typeof window.FlutterChannel?.postMessage === 'function';
+        return isInShell();
     }
 
     private post(env: RequestEnvelope): void {
