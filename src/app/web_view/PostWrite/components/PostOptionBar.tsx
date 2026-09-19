@@ -178,7 +178,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
               : "translateY(-50%) rotate(0deg)",
           }}
         >
-          <DropdownArrowDown className="w-4 h-4" />
+          <DropdownArrowDown className="block w-4 h-4" />
         </span>
       </div>
 
