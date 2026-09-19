@@ -27,7 +27,7 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     }, []);
 
     return (
-        <div className="relative inline-flex items-center group" ref={containerRef}>
+        <div className="relative w-32 group" ref={containerRef}>
             <button
                 type="button"
                 className="
@@ -44,14 +44,13 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                 {value}
             </button>
 
-            <div className="absolute right-4 pointer-events-none flex items-center justify-center">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
                 <svg
                     width="10"
                     height="6"
                     viewBox="0 0 10 6"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
                 >
                     <path
                         d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
@@ -60,23 +59,31 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                 </svg>
             </div>
 
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden divide-y divide-gray-200 z-50">
-                    {options.map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            className="block w-full px-3.5 py-2 text-left text-zinc-800 text-sm font-normal font-['Pretendard'] hover:bg-gray-100 transition-colors"
-                            onClick={() => {
-                                onChange(String(option));
-                                setIsOpen(false);
-                            }}
-                        >
-                            {option}
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* 닫힌 알약 자리에서 그대로 펼쳐지도록 top-0 에 겹쳐 둔다 */}
+            <div
+                className={`
+                absolute top-0 left-0 w-32 z-50 overflow-hidden
+                bg-white rounded-[20px]
+                outline outline-1 outline-offset-[-1px] outline-black/20
+                divide-y divide-gray-200
+                transition-all duration-200 ease-out
+                ${isOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}
+                `}
+            >
+                {options.map((option) => (
+                    <button
+                        key={option}
+                        type="button"
+                        className={`block w-full px-3.5 py-2 text-left text-sm font-['Pretendard'] hover:bg-zinc-50 transition-colors ${String(option) === String(value) ? "text-zinc-800 font-medium bg-zinc-50" : "text-zinc-800 font-normal"}`}
+                        onClick={() => {
+                            onChange(String(option));
+                            setIsOpen(false);
+                        }}
+                    >
+                        {option}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }
@@ -172,7 +179,8 @@ export default function Campus() {
                         </section>
                     </div>
 
-                    <Sidebar />
+                    {/* 헤더(36px) + section gap-6(24px) 만큼 내려 카드 시작점에 맞춘다 */}
+                    <Sidebar className="lg:pt-[60px]" />
                 </div>
 
                 <MajorSelectModal
