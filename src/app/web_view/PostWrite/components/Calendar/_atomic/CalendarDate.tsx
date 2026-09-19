@@ -32,7 +32,7 @@ const getDateBg = (type?: CalendarDateProps["type"]) => {
 
 const getDateText = (type?: CalendarDateProps["type"]) => {
   if (type === "Default") return "text-black";
-  if (type === "Past/Future") return "text-gray-300";
+  if (type === "Past/Future") return "text-[#B1B1B1]";
   if (type === "Selected") return "text-[#ed3a3a]"; //ara 색상 코드
   return "text-white";
 };
@@ -51,7 +51,7 @@ const getWrapperHeight = (size?: "lg" | "md" | "sm") => {
 
 const getExistDotColor = (type?: CalendarDateProps["type"]) => {
   if (type === "Default") return "bg-primary";
-  if (type === "Past/Future") return "bg-gray-300";
+  if (type === "Past/Future") return "bg-[#F0F0F0]";
   return "bg-white";
 };
 
