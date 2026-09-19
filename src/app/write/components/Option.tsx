@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import DropdownArrowDown from '@/assets/Icon/dropdown-arrow-down.svg';
 
 interface OptionSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
@@ -31,7 +30,7 @@ export const OptionSelect: React.FC<OptionSelectProps> = ({ options, placeholder
         className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200"
         style={{ transform: isOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)' }}
       >
-        <Image src={DropdownArrowDown} alt="arrow" width={16} height={16} className="w-4 h-4" />
+        <DropdownArrowDown width={16} height={16} className="w-4 h-4" />
       </span>
     </div>
   );

@@ -1,7 +1,8 @@
 import http from "@/lib/api/http";
 
-// fetchCourseTerms : 내 수강 이력이 있는 (연도, 학기) 목록
+// fetchCourseTerms : 내 수강 이력이 있는 (연도, 학기) 목록. /me/ 가 현재 학기 enrollment 를 먼저 sync 한다
 export const fetchCourseTerms = async (): Promise<{ year: number; semester: number }[]> => {
+  await http.get("/courses/me/");
   const { data } = await http.get("/courses/semester/");
   return data;
 };

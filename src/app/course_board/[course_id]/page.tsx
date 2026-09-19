@@ -24,7 +24,9 @@ export default function CourseBoard() {
         queryFn: () => fetchCourses(),
         staleTime: 1000 * 60 * 60 * 24
     }).data ?? []
-    
+
+    const course = courses.find((c) => c.id === courseId);
+
     const handleSearch = () => {
         const trimmed = searchInput.trim();
 
@@ -58,16 +60,18 @@ export default function CourseBoard() {
                                         </svg>
                                     </Link>
                                     <div>
-                                        <h3 className="text-3xl font-extrabold text-black mb-[10px]">분자생물학 ID.20017(A)</h3>
+                                        <h3 className="text-3xl font-extrabold text-black mb-[10px]">
+                                            {course ? `${course.title} ${course.course_code}` : ''}
+                                        </h3>
                                         <div className="text-lg font-normal text-gray-500 leading-snug">
                                             <div className="flex gap-2">
                                                 <span>학과</span>
-                                                <span>산업디자인학과</span>
+                                                <span>{course?.department_name ?? ''}</span>
                                             </div>
 
                                             <div className="flex gap-2">
                                                 <span>교수</span>
-                                                <span>배석형</span>
+                                                <span>{course?.professors.map((p) => p.name).join(', ') ?? ''}</span>
                                             </div>
                                         </div>
                                     </div>

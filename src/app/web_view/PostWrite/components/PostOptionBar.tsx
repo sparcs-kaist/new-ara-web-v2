@@ -178,7 +178,7 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
               : "translateY(-50%) rotate(0deg)",
           }}
         >
-          <Image src={DropdownArrowDown} alt="arrow" className="w-4 h-4" />
+          <DropdownArrowDown className="w-4 h-4" />
         </span>
       </div>
 
