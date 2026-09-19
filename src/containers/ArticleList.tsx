@@ -345,6 +345,7 @@ export function ProfileMyArticleList({
 
   // 유저 정보 가져오기
   useEffect(() => {
+    if (!user) return;
     const fetchUser = async () => {
       try {
         setUserId(user.user);
@@ -353,7 +354,7 @@ export function ProfileMyArticleList({
       }
     };
     fetchUser();
-  }, []);
+  }, [user]);
 
   // 내가 쓴 글 가져오기 (debounce 적용)
   useEffect(() => {
