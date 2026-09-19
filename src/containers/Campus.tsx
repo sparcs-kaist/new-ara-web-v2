@@ -1,4 +1,4 @@
-import { CourseCard, MajorCard } from "@/app/campus/Card";
+import { CourseCard, MajorCard } from "@/components/Campus/Card";
 import BoardGrid from "@/components/Campus/BoardGrid";
 import { useCourses, useMyMajors } from "@/lib/query/campus";
 
