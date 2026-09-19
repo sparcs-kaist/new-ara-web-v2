@@ -80,6 +80,9 @@ export function HomeIcon(p: IconProps) {
 export function PostListIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/post_list.svg`} fallback={32} {...p} />;
 }
+export function ChatIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/chat.svg`} fallback={32} {...p} />;
+}
 export function NotificationIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/notification.svg`} fallback={32} {...p} />;
 }

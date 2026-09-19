@@ -10,8 +10,10 @@ import {
 } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
+import { createDM, getDmByUserId } from '@/lib/api/chat';
 import { blockUser } from '@/lib/api/user';
 import { fetchUserProfile, fetchUserPosts } from '@/lib/api/user_profile';
+import { useMe } from '@/app/web_view/_query';
 import type { ResponsePost } from '@/lib/types/post';
 
 interface UserProfile {
@@ -26,7 +28,7 @@ interface UserProfile {
 /**
  * Mirrors `lib/pages/user_view_page.dart` — view another user's profile and
  * the list of articles they've written. The trailing kebab opens a tiny
- * popover with 차단 / 쪽지 actions.
+ * popover with 차단 / 채팅 actions.
  */
 export default function UserViewPage() {
     const router = useRouter();
@@ -40,6 +42,7 @@ export default function UserViewPage() {
               ? Number(idParam[0])
               : NaN;
 
+    const { data: me } = useMe();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [posts, setPosts] = useState<ResponsePost[]>([]);
     const [page, setPage] = useState(1);
@@ -109,9 +112,25 @@ export default function UserViewPage() {
         }
     };
 
-    const onMessage = () => {
+    const onMessage = async () => {
+        if (!user?.user || busy) return;
         setMenuOpen(false);
-        if (typeof window !== 'undefined') window.alert('쪽지 기능은 준비 중이에요.');
+        setBusy(true);
+        try {
+            const { dm_room } = await getDmByUserId(user.user);
+            if (dm_room != null) {
+                router.push(`/web_view/Chat/${dm_room}`);
+                return;
+            }
+            const room = await createDM(user.user);
+            router.push(`/web_view/Chat/${room.id}`);
+        } catch (e) {
+            console.warn('createDM failed', e);
+            if (typeof window !== 'undefined')
+                window.alert(e instanceof Error ? e.message : '채팅방을 열지 못했어요.');
+        } finally {
+            setBusy(false);
+        }
     };
 
     return (
@@ -119,37 +138,39 @@ export default function UserViewPage() {
             <AppHeader
                 title={user?.nickname ?? ''}
                 trailing={
-                    <div className="relative">
-                        <button
-                            type="button"
-                            onClick={() => setMenuOpen((v) => !v)}
-                            aria-label="더보기"
-                            className="flex h-11 w-11 items-center justify-center bg-transparent text-black"
-                        >
-                            <MoreIcon size={20} />
-                        </button>
-                        {menuOpen && (
-                            <div
-                                role="menu"
-                                className="absolute right-0 top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-[10px] border border-[#F0F0F0] bg-white"
+                    user?.user != null && me?.user !== user.user && (
+                        <div className="relative">
+                            <button
+                                type="button"
+                                onClick={() => setMenuOpen((v) => !v)}
+                                aria-label="더보기"
+                                className="flex h-11 w-11 items-center justify-center bg-transparent text-black"
                             >
-                                <button
-                                    type="button"
-                                    onClick={onBlock}
-                                    className="block w-full bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
+                                <MoreIcon size={20} />
+                            </button>
+                            {menuOpen && (
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 top-full z-50 mt-1 min-w-[120px] overflow-hidden rounded-[10px] border border-[#F0F0F0] bg-white"
                                 >
-                                    차단
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={onMessage}
-                                    className="block w-full border-t border-[#F0F0F0] bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
-                                >
-                                    쪽지
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={onBlock}
+                                        className="block w-full bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
+                                    >
+                                        차단
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={onMessage}
+                                        className="block w-full border-t border-[#F0F0F0] bg-transparent px-[14px] py-[10px] text-left text-[14px] text-black"
+                                    >
+                                        채팅
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )
                 }
             />
 
