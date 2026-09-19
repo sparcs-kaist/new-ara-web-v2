@@ -683,7 +683,6 @@ function ScopedArticleList({
       showProfile={true}
       showWriter={true}
       showStatus={true}
-      showAnswerStatus={true}
       showHit={true}
       titleFontSize="text-[16px]"
       showTopic={true}
