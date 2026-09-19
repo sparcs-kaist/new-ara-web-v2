@@ -27,62 +27,65 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     }, []);
 
     return (
-        <div className="relative w-32 group" ref={containerRef}>
-            <button
-                type="button"
-                className="
-                w-32 px-3.5 py-2 bg-white rounded-[30px] 
-                outline outline-1 outline-offset-[-1px] outline-black/20 
-                text-zinc-800 text-sm font-normal font-['Pretendard']
-                
-                text-left cursor-pointer 
-                hover:bg-zinc-50 transition-colors
-                focus:outline-zinc-400
-                "
-                onClick={() => setIsOpen((prev) => !prev)}
+        <div className="relative w-32 h-9" ref={containerRef}>
+            <div
+                className={`
+                absolute top-0 left-0 w-full z-50 overflow-hidden bg-white
+                outline outline-1 outline-offset-[-1px] outline-black/20
+                transition-[border-radius] duration-200 ease-out
+                ${isOpen ? "rounded-[20px]" : "rounded-[30px]"}
+                `}
             >
-                {value}
-            </button>
+                <button
+                    type="button"
+                    className="
+                    w-full px-3.5 py-2
+                    text-zinc-800 text-sm font-normal font-['Pretendard']
+                    text-left cursor-pointer
+                    hover:bg-zinc-50 transition-colors
+                    "
+                    onClick={() => setIsOpen((prev) => !prev)}
+                >
+                    {value}
+                </button>
 
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                <div
+                    className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                >
+                    <div className="overflow-hidden">
+                        {options
+                            .filter((option) => String(option) !== String(value))
+                            .map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    className="block w-full px-3.5 py-2 border-t border-gray-200 text-zinc-800 text-sm font-normal font-['Pretendard'] text-left hover:bg-zinc-50 transition-colors"
+                                    onClick={() => {
+                                        onChange(String(option));
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="absolute right-4 top-[18px] -translate-y-1/2 z-[51] pointer-events-none">
                 <svg
                     width="10"
                     height="6"
                     viewBox="0 0 10 6"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform duration-200 ease-out ${isOpen ? "rotate-180" : ""}`}
                 >
                     <path
                         d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
                         fill="#141414"
                     />
                 </svg>
-            </div>
-
-            {/* 닫힌 알약 자리에서 그대로 펼쳐지도록 top-0 에 겹쳐 둔다 */}
-            <div
-                className={`
-                absolute top-0 left-0 w-32 z-50 overflow-hidden
-                bg-white rounded-[20px]
-                outline outline-1 outline-offset-[-1px] outline-black/20
-                divide-y divide-gray-200
-                transition-all duration-200 ease-out
-                ${isOpen ? "max-h-64 opacity-100" : "max-h-0 opacity-0 pointer-events-none"}
-                `}
-            >
-                {options.map((option) => (
-                    <button
-                        key={option}
-                        type="button"
-                        className={`block w-full px-3.5 py-2 text-left text-sm font-['Pretendard'] hover:bg-zinc-50 transition-colors ${String(option) === String(value) ? "text-zinc-800 font-medium bg-zinc-50" : "text-zinc-800 font-normal"}`}
-                        onClick={() => {
-                            onChange(String(option));
-                            setIsOpen(false);
-                        }}
-                    >
-                        {option}
-                    </button>
-                ))}
             </div>
         </div>
     );
