@@ -170,19 +170,19 @@ export const CourseOptionBar = ({
           label="익명"
           checked={anonymous}
           onChange={(e) => { setAnonymous(e.target.checked); onChangeAnonymous(e.target.checked); }}
-          disabled={disabled}
+          disabled={disabled || isEditMode}
         />
         <OptionCheckbox
           label="정치글"
           checked={political}
           onChange={(e) => { setPolitical(e.target.checked); onChangeSocial(e.target.checked); }}
-          disabled={disabled}
+          disabled={disabled || isEditMode}
         />
         <OptionCheckbox
           label="성인글"
           checked={adult}
           onChange={(e) => { setAdult(e.target.checked); onChangeSexual(e.target.checked); }}
-          disabled={disabled}
+          disabled={disabled || isEditMode}
         />
       </div>
     </div>

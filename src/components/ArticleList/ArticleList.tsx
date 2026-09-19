@@ -26,6 +26,7 @@ interface ArticleListProps {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   pageSize?: number;
+  postHref?: (post: ResponsePost) => string;
 
   gapBetweenPosts?: number; // 게시글들 사이 간격
   gapBetweenTitleAndMeta?: number; // 제목과 메타데이터 사이 간격
@@ -61,6 +62,7 @@ export default function ArticleList({
   pageSize = 10, // 페이지당 게시글 수
   totalPages = 1, // 전체 페이지 수
   onPageChange, // 페이지 변경 핸들러
+  postHref, // 게시글 링크 경로 (미지정 시 /post/{id})
   gapBetweenPosts = 8, // 게시글들 사이 간격 (px 단위)
   gapBetweenTitleAndMeta = 4, // 제목과 메타데이터 사이 간격 (px 단위)
   dateType = "relative", // 날짜 표시 방식 ("relative" 또는 "absolute")
@@ -165,7 +167,10 @@ export default function ArticleList({
                 paddingTop: `${gapBetweenPosts}px`,
               }}
             >
-              <Link href={`/post/${post.id}`} className="block h-full">
+              <Link
+                href={postHref ? postHref(post) : `/post/${post.id}`}
+                className="block h-full"
+              >
                 <div className="flex items-center h-full">
                   {showRank && (
                     <span className="mr-4 text-ara_red font-bold text-xl">

@@ -62,14 +62,16 @@ export default function CourseWrite() {
     useEffect(() => {
         if (!editPostId) return; 
         setIsEditMode(true);
-        fetchCoursePost({ courseId, postId: parseInt(editPostId) }) 
+        const editCourseId = Number(courseParam);
+        setCourseId(editCourseId);
+        fetchCoursePost({ courseId: editCourseId, postId: parseInt(editPostId) })
             .then((data) => {
                 setTitle(data.title);
                 setInitialContent(data.content); // JSON 문자열 그대로 저장
 
                 // 익명/실명 여부 설정
                 if (data.name_type === 3) setNameType("ANONYMOUS");
-                else if (data.parent_board.name_type === 4) setNameType("REALNAME");
+                else if (data.parent_board?.name_type === 4) setNameType("REALNAME");
                 else setNameType("REGULAR");
 
                 setIsSexual(data.is_content_sexual);
@@ -102,7 +104,7 @@ export default function CourseWrite() {
                 console.error("게시물 로드 실패:", err);
                 alert("수정할 게시물을 불러오는 데 실패했습니다.");
             });
-    }, [editPostId]);
+    }, [editPostId, courseParam]);
 
     // TextEditor가 이미지 업로드 요청 시 호출
     const handleOpenImageUpload = () => {
@@ -175,9 +177,10 @@ export default function CourseWrite() {
                 await updatePost({
                     postId: Number(editPostId),
                     newArticle: articleData,
+                    scope: { courseId },
                 });
                 alert("글이 수정되었습니다.");
-                router.push(`/post/${editPostId}`); // 수정된 게시글로 이동
+                router.push(`/post/${editPostId}?course_id=${courseId}`); // 수정된 게시글로 이동
             } else {
                 // 생성 모드
                 const newArticle = {
@@ -190,7 +193,7 @@ export default function CourseWrite() {
                 };
                 const result = await createCoursePost({ courseId, newArticle });
                 alert(`글이 저장되었습니다.`);
-                router.push(`/post/${result.id}`);
+                router.push(`/post/${result.id}?course_id=${courseId}`);
             }
         } catch (err) {
             console.error(err);

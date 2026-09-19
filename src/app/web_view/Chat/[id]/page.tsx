@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import ChatRoomDetail from '@/app/chat/components/ChatRoomDetail';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { fetchChatRoomList } from '@/lib/api/chat';
 import { SocketUrl } from '@/lib/socket/setting';
 import { chatSocket } from '@/lib/socket/chat';
@@ -30,7 +31,7 @@ type ChatRoom = {
  */
 export default function WebViewChatRoomPage() {
     const params = useParams<{ id: string }>();
-    const router = useRouter();
+    const onBack = useSafeBack();
     const roomId = useMemo(() => {
         const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
         return id ? parseInt(id, 10) : null;
@@ -146,7 +147,7 @@ export default function WebViewChatRoomPage() {
                 roomId={roomId}
                 room={currentRoom}
                 exitTo="/web_view/Chat"
-                onMenuClick={() => router.push('/web_view/Chat')}
+                onMenuClick={onBack}
             />
         </div>
     );

@@ -1,20 +1,39 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { Editor } from "@tiptap/react";
 import TextEditor from "../../../components/TextEditor/TextEditor";
 import { OptionCheckbox } from "../components/Option";
-import { createMajorPost } from "@/lib/api/post";
+import { createMajorPost, fetchPost, updatePost } from "@/lib/api/post";
 
 export default function MajorWrite() {
     const router = useRouter();
-    const stdDeptId = useSearchParams().get("std_dept_id");
+    const searchParams = useSearchParams();
+    const stdDeptId = searchParams.get("std_dept_id");
+    const editPostId = searchParams.get("edit");
 
     const editorRef = useRef<Editor | null>(null);
 
     const [title, setTitle] = useState<string>("");
     const [anonymous, setAnonymous] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [initialContent, setInitialContent] = useState("");
+
+    useEffect(() => {
+        if (!editPostId || !stdDeptId) return;
+        setIsEditMode(true);
+        fetchPost({ postId: Number(editPostId), scope: { stdDeptId } })
+            .then((data) => {
+                setTitle(data.title);
+                setInitialContent(data.content);
+                setAnonymous(data.name_type === 3);
+            })
+            .catch((err) => {
+                console.error("게시물 로드 실패:", err);
+                alert("수정할 게시물을 불러오는 데 실패했습니다.");
+            });
+    }, [editPostId, stdDeptId]);
 
     const handleSavePost = async () => {
         if (!stdDeptId) {
@@ -25,19 +44,32 @@ export default function MajorWrite() {
         setSaving(true);
 
         try {
-            const result = await createMajorPost({
-                stdDeptId,
-                newArticle: {
-                    title,
-                    content: JSON.stringify(editorRef.current.getJSON()),
-                    name_type: anonymous ? "ANONYMOUS" : "REGULAR",
-                },
-            });
-            alert("글이 저장되었습니다.");
-            router.push(`/post/${result.id}`);
+            if (isEditMode && editPostId) {
+                await updatePost({
+                    postId: Number(editPostId),
+                    newArticle: {
+                        title,
+                        content: JSON.stringify(editorRef.current.getJSON()),
+                    },
+                    scope: { stdDeptId },
+                });
+                alert("글이 수정되었습니다.");
+                router.push(`/post/${editPostId}?std_dept_id=${stdDeptId}`);
+            } else {
+                const result = await createMajorPost({
+                    stdDeptId,
+                    newArticle: {
+                        title,
+                        content: JSON.stringify(editorRef.current.getJSON()),
+                        name_type: anonymous ? "ANONYMOUS" : "REGULAR",
+                    },
+                });
+                alert("글이 저장되었습니다.");
+                router.push(`/post/${result.id}?std_dept_id=${stdDeptId}`);
+            }
         } catch (err) {
             console.error(err);
-            alert("글 저장에 실패했습니다.");
+            alert(isEditMode ? "글 수정에 실패했습니다." : "글 저장에 실패했습니다.");
         } finally {
             setSaving(false);
         }
@@ -46,7 +78,9 @@ export default function MajorWrite() {
     return (
         <div className="flex flex-col items-center bg-white sm:p-8 p-4 w-full min-h-screen">
             <div className="sm:w-[70vw] w-full max-w-7xl">
-                <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">게시물 작성하기</p>
+                <p className="text-2xl font-bold mb-4 text-[#ed3a3a]">
+                    {isEditMode ? "게시물 수정하기" : "게시물 작성하기"}
+                </p>
                 <hr className="border-t border-gray-300 sm:mb-6 mb-4" />
 
                 <div className="flex items-center gap-x-4 gap-y-2 sm:mb-6 mb-2 flex-wrap">
@@ -54,7 +88,7 @@ export default function MajorWrite() {
                         label="익명"
                         checked={anonymous}
                         onChange={(e) => setAnonymous(e.target.checked)}
-                        disabled={saving}
+                        disabled={saving || isEditMode}
                     />
                 </div>
 
@@ -67,7 +101,7 @@ export default function MajorWrite() {
                     disabled={saving}
                 />
 
-                <TextEditor editable={true} ref={editorRef} />
+                <TextEditor editable={true} ref={editorRef} content={initialContent} />
 
                 <div className="mt-6 text-right">
                     <button
@@ -81,7 +115,13 @@ export default function MajorWrite() {
             "
                         disabled={saving}
                     >
-                        {saving ? "등록 중..." : "게시글 등록하기"}
+                        {saving
+                            ? isEditMode
+                                ? "수정 중..."
+                                : "등록 중..."
+                            : isEditMode
+                                ? "게시글 수정하기"
+                                : "게시글 등록하기"}
                     </button>
                 </div>
             </div>
