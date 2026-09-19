@@ -1,10 +1,11 @@
 "use client";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import { useEffect, useRef, useState } from "react";
-import { CourseCard, MajorCard } from "./Card";
 import { MajorSelectModal } from "./MajorSelectModal";
-import { useQuery } from "@tanstack/react-query";
-import { fetchCourses } from "@/lib/api/user";
+import { CourseBoardGrid, MajorBoardGrid } from "@/containers/Campus";
+import { useCourseTerms } from "@/lib/query/campus";
+
+const expandMotion = "duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
 
 interface FilterSelectProps {
     options: number[] | string[];
@@ -32,7 +33,7 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                 className={`
                 absolute top-0 left-0 w-full z-50 overflow-hidden bg-white
                 outline outline-1 outline-offset-[-1px] outline-black/20
-                transition-[border-radius] duration-200 ease-out
+                transition-[border-radius] ${expandMotion}
                 ${isOpen ? "rounded-[20px]" : "rounded-[30px]"}
                 `}
             >
@@ -50,9 +51,9 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                 </button>
 
                 <div
-                    className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                    className={`grid transition-[grid-template-rows] ${expandMotion} ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
                 >
-                    <div className="overflow-hidden">
+                    <div className={`overflow-hidden transition-[opacity,transform] ${expandMotion} ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
                         {options
                             .filter((option) => String(option) !== String(value))
                             .map((option) => (
@@ -79,7 +80,7 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
                     viewBox="0 0 10 6"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform duration-200 ease-out ${isOpen ? "rotate-180" : ""}`}
+                    className={`transition-transform ${expandMotion} ${isOpen ? "rotate-180" : ""}`}
                 >
                     <path
                         d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
@@ -91,25 +92,18 @@ const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
     );
 }
 
-const seasons = ["봄", "여름", "가을", "겨울"];
+const SEASONS = ["봄", "여름", "가을", "겨울"] as const;
 
 export default function Campus() {
-    const [years, setYears] = useState<string[]>([]);
-    const [selectedYear, setSelectedYear] = useState<string>("2026년");
-    const [selectedSeason, setSelectedSeason] = useState("봄");
+    const { data: terms = [] } = useCourseTerms();
+    const [pickedYear, setPickedYear] = useState<number>();
+    const [pickedSeason, setPickedSeason] = useState<typeof SEASONS[number]>();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    useEffect(() => {
-        setYears(["2024년", "2025년", "2026년"]);
-    }, []);
-
-    const { data, isLoading } = useQuery({
-        queryKey: ["courses"],
-        queryFn: () => fetchCourses(),
-        staleTime: 0 //1000 * 60 * 60 * 24
-    })
-
-    const courses: Course[] = data
+    const years = [...new Set(terms.map((term) => term.year))];
+    const selectedYear = pickedYear !== undefined && years.includes(pickedYear) ? pickedYear : years[0];
+    const seasons = terms.filter((term) => term.year === selectedYear).map((term) => SEASONS[term.semester - 1]);
+    const selectedSeason = pickedSeason && seasons.includes(pickedSeason) ? pickedSeason : seasons[0];
 
     return (
 
@@ -124,23 +118,19 @@ export default function Campus() {
                                 <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
                                 <div className="flex gap-2">
                                     <FilterSelect
-                                        options={years}
-                                        value={selectedYear}
-                                        onChange={(v) => setSelectedYear(v)}
+                                        options={years.map((year) => `${year}년`)}
+                                        value={selectedYear === undefined ? "" : `${selectedYear}년`}
+                                        onChange={(v) => setPickedYear(Number(v.replace("년", "")))}
                                     />
                                     <FilterSelect
                                         options={seasons}
-                                        value={selectedSeason}
-                                        onChange={(v) => setSelectedSeason(v)}
+                                        value={selectedSeason ?? ""}
+                                        onChange={(v) => setPickedSeason(v as typeof SEASONS[number])}
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {isLoading || courses.map((course) => (
-                                    <CourseCard key={course.id} {...course} />
-                                ))}
-                            </div>
+                            <CourseBoardGrid year={selectedYear} semester={selectedSeason} />
                         </section>
 
                         <section className="flex flex-col gap-6">
@@ -174,11 +164,7 @@ export default function Campus() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {new Array(9).fill(null).map((_, idx) => (
-                                    <MajorCard key={idx} />
-                                ))}
-                            </div>
+                            <MajorBoardGrid />
                         </section>
                     </div>
 
@@ -186,14 +172,7 @@ export default function Campus() {
                     <Sidebar className="lg:pt-[60px]" />
                 </div>
 
-                <MajorSelectModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={() => {
-                        alert("저장되었습니다!");
-                        setIsModalOpen(false);
-                    }}
-                />
+                <MajorSelectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
             </div>
         </div>
     )
