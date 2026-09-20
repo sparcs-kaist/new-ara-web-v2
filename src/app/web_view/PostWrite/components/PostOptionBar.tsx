@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronDownIcon } from './icons';
+import ExpandSelect from '@/components/ExpandSelect';
 
 interface ApiBoard {
     id: number;
@@ -21,12 +21,12 @@ interface PostOptionBarProps {
     isEditMode?: boolean;
 }
 
-const PILL =
-    'h-[34px] w-full appearance-none rounded-[20px] bg-[#F8F8F8] pl-[15px] pr-[28px] text-[16px] font-medium leading-[34px] focus:outline-none';
+const PILL = 'h-[34px] min-w-0 flex-1';
+const PILL_BOX = 'bg-[#F8F8F8] rounded-[17px] text-[16px] font-medium leading-[18px] text-black';
 
 /**
  * Flutter `_buildMenubar` (post_write_page.dart 785-910): 34px 높이의 두 pill.
- * 왼쪽은 게시판(브랜드 레드), 오른쪽은 말머리(검정), 사이 간격 10px.
+ * 왼쪽은 게시판, 오른쪽은 말머리, 사이 간격 10px.
  */
 const PostOptionBar: React.FC<PostOptionBarProps> = ({
     boards,
@@ -42,45 +42,28 @@ const PostOptionBar: React.FC<PostOptionBarProps> = ({
 
     return (
         <div className="flex h-[34px] items-center gap-[10px] px-[15px]">
-            <div className="relative min-w-0 flex-1">
-                <select
-                    className={`${PILL} ${locked || !currentBoard ? 'text-[#BBBBBB]' : 'text-ara_red'}`}
-                    value={currentBoard ? String(currentBoard.id) : ''}
-                    onChange={(e) => onChangeBoard(Number(e.target.value))}
-                    disabled={locked}
-                >
-                    {!currentBoard && <option value="">게시판 선택</option>}
-                    {boards.map((b) => (
-                        <option key={b.id} value={b.id}>
-                            {b.ko_name}
-                        </option>
-                    ))}
-                </select>
-                <ChevronDownIcon
-                    size={16}
-                    className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#BBBBBB]"
-                />
-            </div>
+            <ExpandSelect
+                options={boards.map((b) => ({ value: String(b.id), label: b.ko_name }))}
+                value={boardId != null ? String(boardId) : ''}
+                onChange={(v) => onChangeBoard(Number(v))}
+                placeholder="게시판 선택"
+                disabled={locked}
+                className={PILL}
+                boxClassName={PILL_BOX}
+            />
 
-            <div className="relative min-w-0 flex-1">
-                <select
-                    className={`${PILL} ${locked || topicId === '' ? 'text-[#BBBBBB]' : 'text-black'}`}
-                    value={topicId}
-                    onChange={(e) => onChangeCategory(e.target.value)}
-                    disabled={locked}
-                >
-                    <option value="">말머리</option>
-                    {currentBoard?.topics.map((t) => (
-                        <option key={t.id} value={t.id}>
-                            {t.ko_name}
-                        </option>
-                    ))}
-                </select>
-                <ChevronDownIcon
-                    size={16}
-                    className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#BBBBBB]"
-                />
-            </div>
+            <ExpandSelect
+                options={[
+                    { value: '', label: '말머리 없음' },
+                    ...(currentBoard?.topics.map((t) => ({ value: String(t.id), label: t.ko_name })) ?? []),
+                ]}
+                value={topicId}
+                onChange={onChangeCategory}
+                placeholder="말머리"
+                disabled={locked}
+                className={PILL}
+                boxClassName={PILL_BOX}
+            />
         </div>
     );
 };

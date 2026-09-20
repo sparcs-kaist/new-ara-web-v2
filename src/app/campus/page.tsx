@@ -1,96 +1,14 @@
 "use client";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import { useEffect, useRef, useState } from "react";
+import ExpandSelect from "@/components/ExpandSelect";
+import { useState } from "react";
 import { MajorSelectModal } from "./MajorSelectModal";
 import { CourseBoardGrid, MajorBoardGrid } from "@/containers/Campus";
 import { useCourseTerms } from "@/lib/query/campus";
 
-const expandMotion = "duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
-
-interface FilterSelectProps {
-    options: number[] | string[];
-    value: number | string;
-    onChange: (value: string) => void;
-}
-
-const FilterSelect = ({ options, value, onChange }: FilterSelectProps) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-        <div className="relative w-32 h-9" ref={containerRef}>
-            <div
-                className={`
-                absolute top-0 left-0 w-full z-50 overflow-hidden bg-white
-                outline outline-1 outline-offset-[-1px] outline-black/20
-                transition-[border-radius] ${expandMotion}
-                ${isOpen ? "rounded-[20px]" : "rounded-[30px]"}
-                `}
-            >
-                <button
-                    type="button"
-                    className="
-                    w-full px-3.5 py-2
-                    text-zinc-800 text-sm font-normal font-['Pretendard']
-                    text-left cursor-pointer
-                    hover:bg-zinc-50 transition-colors
-                    "
-                    onClick={() => setIsOpen((prev) => !prev)}
-                >
-                    {value}
-                </button>
-
-                <div
-                    className={`grid transition-[grid-template-rows] ${expandMotion} ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-                >
-                    <div className={`overflow-hidden transition-[opacity,transform] ${expandMotion} ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}>
-                        {options
-                            .filter((option) => String(option) !== String(value))
-                            .map((option) => (
-                                <button
-                                    key={option}
-                                    type="button"
-                                    className="block w-full px-3.5 py-2 border-t border-gray-200 text-zinc-800 text-sm font-normal font-['Pretendard'] text-left hover:bg-zinc-50 transition-colors"
-                                    onClick={() => {
-                                        onChange(String(option));
-                                        setIsOpen(false);
-                                    }}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="absolute right-4 top-[18px] -translate-y-1/2 z-[51] pointer-events-none">
-                <svg
-                    width="10"
-                    height="6"
-                    viewBox="0 0 10 6"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform ${expandMotion} ${isOpen ? "rotate-180" : ""}`}
-                >
-                    <path
-                        d="M4.76856 6.00426L3.80093e-05 0.00853585L9.52631 -8.01353e-06L4.76856 6.00426Z"
-                        fill="#141414"
-                    />
-                </svg>
-            </div>
-        </div>
-    );
-}
+const FILTER_CLASS = "w-32 h-9";
+const FILTER_BOX_CLASS =
+    "bg-white outline outline-1 outline-offset-[-1px] outline-black/20 rounded-[18px] text-zinc-800 text-sm font-normal font-['Pretendard']";
 
 // semester 1~4 의 표시 이름
 const SEASON_LABELS = ["봄", "여름", "가을", "겨울"];
@@ -118,15 +36,21 @@ export default function Campus() {
                             <div className="flex flex-wrap justify-between items-center gap-2">
                                 <h2 className="text-2xl font-bold">📚 수업 게시판</h2>
                                 <div className="flex gap-2">
-                                    <FilterSelect
-                                        options={years.map((year) => `${year}년`)}
-                                        value={selectedYear === undefined ? "" : `${selectedYear}년`}
-                                        onChange={(v) => setPickedYear(Number(v.replace("년", "")))}
+                                    <ExpandSelect
+                                        options={years.map((year) => ({ value: String(year), label: `${year}년` }))}
+                                        value={selectedYear === undefined ? "" : String(selectedYear)}
+                                        onChange={(v) => setPickedYear(Number(v))}
+                                        className={FILTER_CLASS}
+                                        boxClassName={FILTER_BOX_CLASS}
+                                        itemClassName="hover:bg-zinc-50 transition-colors"
                                     />
-                                    <FilterSelect
-                                        options={semesters.map((semester) => SEASON_LABELS[semester - 1])}
-                                        value={selectedSemester === undefined ? "" : SEASON_LABELS[selectedSemester - 1]}
-                                        onChange={(v) => setPickedSemester(SEASON_LABELS.indexOf(v) + 1)}
+                                    <ExpandSelect
+                                        options={semesters.map((semester) => ({ value: String(semester), label: SEASON_LABELS[semester - 1] }))}
+                                        value={selectedSemester === undefined ? "" : String(selectedSemester)}
+                                        onChange={(v) => setPickedSemester(Number(v))}
+                                        className={FILTER_CLASS}
+                                        boxClassName={FILTER_BOX_CLASS}
+                                        itemClassName="hover:bg-zinc-50 transition-colors"
                                     />
                                 </div>
                             </div>
