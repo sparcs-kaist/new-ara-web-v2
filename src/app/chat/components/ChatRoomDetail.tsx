@@ -40,6 +40,7 @@ interface ChatRoomDetailProps {
     onMenuClick?: () => void; // 메뉴 클릭 핸들러 prop 추가
     /** 나가기/차단/삭제 후 이동할 목록 경로. 웹뷰 셸은 '/web_view/Chat'을 넘긴다. */
     exitTo?: string;
+    profileHref?: (userId: number) => string;
 }
 
 interface Message {
@@ -95,7 +96,7 @@ interface MessageDeletedPayload {
 
 // type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
 
-export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/chat' }: ChatRoomDetailProps) {
+export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/chat', profileHref }: ChatRoomDetailProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -784,6 +785,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 onBlockAndLeave={handleBlockAndLeave}
                 onDeleteRoom={handleDeleteRoom}
                 onInviteClick={() => setInviteDialogOpen(true)} // 추가
+                profileHref={profileHref}
             />
 
             {/* 컨텍스트 메뉴 렌더링 */}

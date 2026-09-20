@@ -164,6 +164,9 @@ export function Close2Icon(p: IconProps) {
 export function AddIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/add.svg`} fallback={20} {...p} />;
 }
+export function PlusIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/plus.svg`} fallback={32} {...p} />;
+}
 export function MenuIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/menu_1.svg`} fallback={32} {...p} />;
 }

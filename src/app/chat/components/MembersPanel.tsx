@@ -34,6 +34,7 @@ interface MembersPanelProps {
     onBlockAndLeave: () => void;
     onDeleteRoom: () => void;
     onInviteClick: () => void; // 추가
+    profileHref?: (userId: number) => string;
 }
 
 // 마지막 접속 시간을 간결하게 포맷하는 함수
@@ -66,6 +67,7 @@ export default function MembersPanel({
     onBlockAndLeave,
     onDeleteRoom,
     onInviteClick, // 추가
+    profileHref = (userId: number) => `/profile/${userId}`,
 }: MembersPanelProps) {
     const [menu, setMenu] = useState<{ visible: boolean; x: number; y: number }>({ visible: false, x: 0, y: 0 });
 
@@ -133,7 +135,7 @@ export default function MembersPanel({
                         <ul className="space-y-4">
                             {members.map((m) => (
                                 <li key={m.user.id} className="flex items-center justify-between gap-3">
-                                    <Link href={`/profile/${m.user.id}`} className="flex items-center gap-3 min-w-0 rounded-lg cursor-pointer">
+                                    <Link href={profileHref(m.user.id)} className="flex items-center gap-3 min-w-0 rounded-lg cursor-pointer">
                                         <div className="relative w-9 h-9">
                                             <Image
                                                 src={m.user.profile?.picture || '/default-room.png'}

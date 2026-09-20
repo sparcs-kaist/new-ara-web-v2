@@ -29,6 +29,7 @@ export default function ChatInput({
   const [isUploading, setIsUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasSentTypingStartRef = useRef(false);
 
@@ -86,6 +87,7 @@ export default function ChatInput({
         await sendMessage(roomId, input);
         setInput("");
       }
+      textareaRef.current?.focus();
       onMessageSent();
     } catch (err: any) {
       alert(err.message || "메시지 전송 실패");
@@ -235,6 +237,7 @@ export default function ChatInput({
         )}
         {!pending && (
           <TextareaAutosize
+            ref={textareaRef}
             className="w-full px-2 py-1.5 focus:outline-none resize-none bg-transparent disabled:bg-gray-100"
             placeholder={pending ? "" : "메시지를 입력하세요..."}
             value={input}
@@ -253,6 +256,7 @@ export default function ChatInput({
         type="button"
         className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition flex items-center justify-center gap-1 disabled:opacity-50 self-end"
         aria-label="메시지 전송"
+        onMouseDown={(e) => e.preventDefault()}
         onClick={handleSend}
         disabled={isUploading || (!input.trim() && !pending)}
       >
