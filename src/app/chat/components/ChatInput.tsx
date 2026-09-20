@@ -2,12 +2,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import TextareaAutosize from "react-textarea-autosize";
 import { sendMessage, sendAttachmentMessage } from "@/lib/api/chat";
 import { uploadAttachments } from "@/lib/api/post";
 import { chatSocket } from "@/lib/socket/chat";
 import {
+  CameraIcon,
   ClipBadgeIcon,
   Close2Icon,
   ImageBadgeIcon,
@@ -29,7 +31,10 @@ export default function ChatInput({
   compact = false,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [sheetMounted, setSheetMounted] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState<null | {
     id: number;
     url: string;
@@ -38,10 +43,21 @@ export default function ChatInput({
   }>(null);
   const [isUploading, setIsUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasSentTypingStartRef = useRef(false);
+  const sheetCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({
+    startY: 0,
+    height: 0,
+    dy: 0,
+    lastY: 0,
+    lastT: 0,
+    vy: 0,
+  });
 
   // 소켓으로 타이핑 이벤트 전송
   const sendTypingEvent = (type: "typing_start" | "typing_stop") => {
@@ -76,7 +92,7 @@ export default function ChatInput({
 
   const handleSend = async () => {
     if (!roomId || (input.trim() === "" && !pending)) return;
-    setPanelOpen(false);
+    closeSheet();
 
     // 메시지 전송 시 즉시 '입력 중' 상태 해제
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -143,16 +159,94 @@ export default function ChatInput({
     }
   };
 
-  // + 를 누르면 키보드를 내리고 그 자리에 첨부 패널을 띄운다
-  const toggleAttachPanel = () => {
-    if (panelOpen) {
-      setPanelOpen(false);
-      return;
+  // 마운트한 다음 프레임에 열어야 시트가 아래에서 올라온다
+  useEffect(() => {
+    if (!sheetMounted) return;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setSheetOpen(true));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [sheetMounted]);
+
+  useEffect(
+    () => () => {
+      if (sheetCloseTimerRef.current) clearTimeout(sheetCloseTimerRef.current);
+    },
+    [],
+  );
+
+  const openSheet = () => {
+    if (sheetCloseTimerRef.current) {
+      clearTimeout(sheetCloseTimerRef.current);
+      sheetCloseTimerRef.current = null;
     }
     if (document.activeElement === textareaRef.current) {
       textareaRef.current?.blur();
     }
-    setPanelOpen(true);
+    if (sheetMounted) setSheetOpen(true);
+    else setSheetMounted(true);
+  };
+
+  const unmountSheet = () => {
+    if (sheetCloseTimerRef.current) {
+      clearTimeout(sheetCloseTimerRef.current);
+      sheetCloseTimerRef.current = null;
+    }
+    setSheetMounted(false);
+  };
+
+  const closeSheet = () => {
+    if (!sheetOpen) return;
+    setSheetOpen(false);
+    if (sheetCloseTimerRef.current) clearTimeout(sheetCloseTimerRef.current);
+    sheetCloseTimerRef.current = setTimeout(unmountSheet, 400);
+  };
+
+  // 아래로 끌어 닫기: 높이의 1/3을 넘기거나 빠르게 놓으면 닫는다
+  const onSheetTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const y = e.touches[0].clientY;
+    dragRef.current = {
+      startY: y,
+      height: sheetRef.current?.getBoundingClientRect().height ?? 0,
+      dy: 0,
+      lastY: y,
+      lastT: e.timeStamp,
+      vy: 0,
+    };
+    setDragging(true);
+  };
+
+  const onSheetTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    const y = e.touches[0].clientY;
+    const dt = e.timeStamp - d.lastT;
+    if (dt > 0) d.vy = (y - d.lastY) / dt;
+    d.lastY = y;
+    d.lastT = e.timeStamp;
+    d.dy = Math.max(0, y - d.startY);
+    setDragY(d.dy);
+  };
+
+  const onSheetTouchEnd = () => {
+    const { dy, height, vy } = dragRef.current;
+    setDragging(false);
+    setDragY(0);
+    if (dy > 8 && (dy > height / 3 || vy > 0.5)) closeSheet();
+    dragRef.current.dy = 0;
+  };
+
+  const onSheetTouchCancel = () => {
+    setDragging(false);
+    setDragY(0);
+  };
+
+  const pickFrom = (ref: React.RefObject<HTMLInputElement | null>) => {
+    closeSheet();
+    ref.current?.click();
   };
 
   const hiddenFileInputs = (
@@ -176,6 +270,30 @@ export default function ChatInput({
 
   if (compact) {
     const canSend = !isUploading && (input.trim() !== "" || !!pending);
+    const scrimOpacity =
+      dragging && dragRef.current.height > 0
+        ? Math.max(0, 1 - dragY / dragRef.current.height)
+        : 1;
+    const attachRows = [
+      {
+        label: "사진",
+        color: "bg-ara_red",
+        Icon: ImageBadgeIcon,
+        inputRef: imageInputRef,
+      },
+      {
+        label: "카메라",
+        color: "bg-ara_blue",
+        Icon: CameraIcon,
+        inputRef: cameraInputRef,
+      },
+      {
+        label: "파일",
+        color: "bg-[#636363]",
+        Icon: ClipBadgeIcon,
+        inputRef: fileInputRef,
+      },
+    ];
 
     return (
       <div className="shrink-0">
@@ -215,14 +333,11 @@ export default function ChatInput({
           <button
             type="button"
             aria-label="첨부"
-            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${isUploading ? "text-[#BBBBBB]" : "text-ara_red"}`}
-            onClick={toggleAttachPanel}
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${isUploading ? "text-[#BBBBBB]" : "text-[#636363]"}`}
+            onClick={openSheet}
             disabled={isUploading}
           >
-            <PlusIcon
-              size={36}
-              className={`transition-transform duration-200 ${panelOpen ? "rotate-45" : ""}`}
-            />
+            <PlusIcon size={32} />
           </button>
 
           <TextareaAutosize
@@ -234,7 +349,7 @@ export default function ChatInput({
               setInput(e.target.value)
             }
             onKeyDown={handleKeyDown}
-            onFocus={() => setPanelOpen(false)}
+            onFocus={closeSheet}
             disabled={!!pending || isUploading}
             maxRows={5}
             rows={1}
@@ -252,43 +367,75 @@ export default function ChatInput({
           </button>
         </form>
 
-        {panelOpen && (
-          <div className="border-t border-[#F0F0F0] bg-white px-[20px] py-[16px]">
-            <div className="flex gap-[24px]">
-              <button
-                type="button"
-                className="flex flex-col items-center gap-[6px]"
-                onClick={() => {
-                  setPanelOpen(false);
-                  imageInputRef.current?.click();
+        {sheetMounted &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <>
+              <div
+                className={`fixed inset-0 z-[70] bg-black/30 ${dragging ? "" : "transition-opacity duration-200"} ${sheetOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                style={dragging ? { opacity: scrimOpacity } : undefined}
+                onClick={closeSheet}
+              />
+              <div
+                ref={sheetRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label="첨부"
+                className={`fixed inset-x-0 z-[71] rounded-t-[20px] bg-white ${dragging ? "" : "transition-transform duration-[250ms] ease-out"} ${sheetOpen ? "translate-y-0" : "translate-y-full pointer-events-none"}`}
+                style={{
+                  bottom: "max(var(--kb-inset, 0px), 0px)",
+                  paddingBottom:
+                    "calc(8px + max(0px, var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px) - var(--kb-inset, 0px)))",
+                  touchAction: "none",
+                  ...(dragY > 0
+                    ? { transform: `translateY(${dragY}px)` }
+                    : null),
+                }}
+                onTouchStart={onSheetTouchStart}
+                onTouchMove={onSheetTouchMove}
+                onTouchEnd={onSheetTouchEnd}
+                onTouchCancel={onSheetTouchCancel}
+                onTransitionEnd={(e) => {
+                  if (e.propertyName === "transform" && !sheetOpen)
+                    unmountSheet();
                 }}
               >
-                <span className="w-[54px] h-[54px] rounded-full bg-[#F6F6F6] flex items-center justify-center text-[#636363]">
-                  <ImageBadgeIcon size={26} />
-                </span>
-                <span className="text-[12px] font-medium text-[#636363]">
-                  사진
-                </span>
-              </button>
-              <button
-                type="button"
-                className="flex flex-col items-center gap-[6px]"
-                onClick={() => {
-                  setPanelOpen(false);
-                  fileInputRef.current?.click();
-                }}
-              >
-                <span className="w-[54px] h-[54px] rounded-full bg-[#F6F6F6] flex items-center justify-center text-[#636363]">
-                  <ClipBadgeIcon size={26} />
-                </span>
-                <span className="text-[12px] font-medium text-[#636363]">
-                  파일
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
+                <div className="mx-auto mt-[10px] h-[4px] w-[36px] rounded-full bg-[#D9D9D9]" />
+                <div className="pt-[6px]">
+                  {attachRows.map(({ label, color, Icon, inputRef }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className="flex w-full items-center gap-[16px] px-[20px] h-[64px] text-left active:bg-[#F6F6F6]"
+                      onClick={() => {
+                        if (dragRef.current.dy > 8) return;
+                        pickFrom(inputRef);
+                      }}
+                    >
+                      <span
+                        className={`w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-white ${color}`}
+                      >
+                        <Icon size={18} />
+                      </span>
+                      <span className="text-[16px] font-medium text-black">
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>,
+            document.body,
+          )}
 
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={onPickImage}
+        />
         {hiddenFileInputs}
       </div>
     );
