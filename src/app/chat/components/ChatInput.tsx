@@ -7,19 +7,29 @@ import TextareaAutosize from "react-textarea-autosize";
 import { sendMessage, sendAttachmentMessage } from "@/lib/api/chat";
 import { uploadAttachments } from "@/lib/api/post";
 import { chatSocket } from "@/lib/socket/chat";
+import {
+  ClipBadgeIcon,
+  Close2Icon,
+  ImageBadgeIcon,
+  PlusIcon,
+  SendIcon,
+} from "@/app/web_view/_components/icons";
 
 interface ChatInputProps {
   roomId: number;
   myId: number | null; // myId prop 추가
   onMessageSent: () => void;
+  compact?: boolean; // 웹뷰 전용 좁은 폭 컴포저
 }
 
 export default function ChatInput({
   roomId,
   myId,
   onMessageSent,
+  compact = false,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
   const [pending, setPending] = useState<null | {
     id: number;
     url: string;
@@ -66,6 +76,7 @@ export default function ChatInput({
 
   const handleSend = async () => {
     if (!roomId || (input.trim() === "" && !pending)) return;
+    setPanelOpen(false);
 
     // 메시지 전송 시 즉시 '입력 중' 상태 해제
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -131,6 +142,157 @@ export default function ChatInput({
       handleSend();
     }
   };
+
+  // + 를 누르면 키보드를 내리고 그 자리에 첨부 패널을 띄운다
+  const toggleAttachPanel = () => {
+    if (panelOpen) {
+      setPanelOpen(false);
+      return;
+    }
+    if (document.activeElement === textareaRef.current) {
+      textareaRef.current?.blur();
+    }
+    setPanelOpen(true);
+  };
+
+  const hiddenFileInputs = (
+    <>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onPickImage}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".txt,.docx,.doc,.pptx,.ppt,.pdf,.hwp,.zip,.7z,.png,.jpg,.jpeg,.gif"
+        className="hidden"
+        onChange={onPickFile}
+      />
+    </>
+  );
+
+  if (compact) {
+    const canSend = !isUploading && (input.trim() !== "" || !!pending);
+
+    return (
+      <div className="shrink-0">
+        {pending && (
+          <div className="flex items-center gap-[8px] px-[10px] py-[8px] border-t border-[#F0F0F0]">
+            {pending.type === "IMAGE" ? (
+              <Image
+                src={pending.url}
+                alt={pending.name || "image"}
+                width={64}
+                height={64}
+                className="w-[64px] h-[64px] rounded-[10px] object-cover"
+              />
+            ) : (
+              <div className="min-w-0 flex items-center gap-[6px] rounded-[10px] bg-[#F6F6F6] px-[10px] py-[6px] text-[14px] font-medium text-black">
+                <ClipBadgeIcon size={18} className="text-[#636363]" />
+                <span className="truncate">{pending.name || "파일"}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              aria-label="첨부 취소"
+              className="shrink-0 w-[24px] h-[24px] flex items-center justify-center text-[#9E9E9E]"
+              onClick={() => setPending(null)}
+            >
+              <Close2Icon size={16} />
+            </button>
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+          className="flex items-end gap-[7px] border-t border-[#F0F0F0] px-[10px] py-[7px] min-h-[50px]"
+        >
+          <button
+            type="button"
+            aria-label="첨부"
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${isUploading ? "text-[#BBBBBB]" : "text-ara_red"}`}
+            onClick={toggleAttachPanel}
+            disabled={isUploading}
+          >
+            <PlusIcon
+              size={36}
+              className={`transition-transform duration-200 ${panelOpen ? "rotate-45" : ""}`}
+            />
+          </button>
+
+          <TextareaAutosize
+            ref={textareaRef}
+            className="flex-1 min-w-0 resize-none rounded-[10px] bg-[#F6F6F6] px-[10px] py-[8px] text-[16px] font-medium leading-[20px] placeholder:text-[#BBBBBB] focus:outline-none"
+            placeholder={pending ? "" : isUploading ? "업로드 중…" : "메시지를 입력하세요"}
+            value={input}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setInput(e.target.value)
+            }
+            onKeyDown={handleKeyDown}
+            onFocus={() => setPanelOpen(false)}
+            disabled={!!pending || isUploading}
+            maxRows={5}
+            rows={1}
+          />
+
+          <button
+            type="button"
+            aria-label="전송"
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${canSend ? "text-ara_red" : "text-[#BBBBBB]"}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleSend}
+            disabled={isUploading || (!input.trim() && !pending)}
+          >
+            <SendIcon size={28} />
+          </button>
+        </form>
+
+        {panelOpen && (
+          <div className="border-t border-[#F0F0F0] bg-white px-[20px] py-[16px]">
+            <div className="flex gap-[24px]">
+              <button
+                type="button"
+                className="flex flex-col items-center gap-[6px]"
+                onClick={() => {
+                  setPanelOpen(false);
+                  imageInputRef.current?.click();
+                }}
+              >
+                <span className="w-[54px] h-[54px] rounded-full bg-[#F6F6F6] flex items-center justify-center text-[#636363]">
+                  <ImageBadgeIcon size={26} />
+                </span>
+                <span className="text-[12px] font-medium text-[#636363]">
+                  사진
+                </span>
+              </button>
+              <button
+                type="button"
+                className="flex flex-col items-center gap-[6px]"
+                onClick={() => {
+                  setPanelOpen(false);
+                  fileInputRef.current?.click();
+                }}
+              >
+                <span className="w-[54px] h-[54px] rounded-full bg-[#F6F6F6] flex items-center justify-center text-[#636363]">
+                  <ClipBadgeIcon size={26} />
+                </span>
+                <span className="text-[12px] font-medium text-[#636363]">
+                  파일
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {hiddenFileInputs}
+      </div>
+    );
+  }
 
   return (
     <form
@@ -264,20 +426,7 @@ export default function ChatInput({
         <Image src="/Send.svg" alt="전송" width={20} height={20} />
       </button>
 
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={onPickImage}
-      />
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".txt,.docx,.doc,.pptx,.ppt,.pdf,.hwp,.zip,.7z,.png,.jpg,.jpeg,.gif"
-        className="hidden"
-        onChange={onPickFile}
-      />
+      {hiddenFileInputs}
     </form>
   );
 }

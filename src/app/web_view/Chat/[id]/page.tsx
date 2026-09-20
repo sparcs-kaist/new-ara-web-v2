@@ -149,6 +149,7 @@ export default function WebViewChatRoomPage() {
                 exitTo="/web_view/Chat"
                 profileHref={(id) => `/web_view/User/${id}`}
                 onMenuClick={onBack}
+                compact
             />
         </div>
     );
