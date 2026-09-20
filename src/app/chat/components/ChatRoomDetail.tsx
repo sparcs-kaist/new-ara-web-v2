@@ -598,7 +598,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
         <div className={`w-full ${compact ? '' : 'lg:w-3/4 p-4 lg:p-6 '}bg-white flex flex-col min-h-0 relative overflow-hidden h-full`}>
             {/* 채팅방 정보 헤더 */}
-            <div className={`flex items-center border-b border-gray-100 pb-4 mb-4${compact ? ' px-4' : ''}`}>
+            <div className={`flex items-center border-b border-gray-100 pb-4 mb-4${compact ? ' px-4 pt-4' : ''}`}>
                 {/* 모바일용 메뉴 버튼 (햄버거 아이콘) */}
                 <button
                     onClick={onMenuClick}
