@@ -41,6 +41,8 @@ interface ChatRoomDetailProps {
     /** 나가기/차단/삭제 후 이동할 목록 경로. 웹뷰 셸은 '/web_view/Chat'을 넘긴다. */
     exitTo?: string;
     profileHref?: (userId: number) => string;
+    /** 웹뷰 전용. 반응형을 끄고 가장 좁은 폭 기준 UI 하나로 고정한다. */
+    compact?: boolean;
 }
 
 interface Message {
@@ -96,7 +98,7 @@ interface MessageDeletedPayload {
 
 // type ChatRoomPayloads = UserJoinPayload | UserLeavePayload | MessageDeletedPayload
 
-export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/chat', profileHref }: ChatRoomDetailProps) {
+export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/chat', profileHref, compact = false }: ChatRoomDetailProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -594,13 +596,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
-        <div className="w-full lg:w-3/4 bg-white p-4 lg:p-6 flex flex-col min-h-0 relative overflow-hidden h-full">
+        <div className={`w-full ${compact ? '' : 'lg:w-3/4 p-4 lg:p-6 '}bg-white flex flex-col min-h-0 relative overflow-hidden h-full`}>
             {/* 채팅방 정보 헤더 */}
-            <div className="flex items-center border-b border-gray-100 pb-4 mb-4">
+            <div className={`flex items-center border-b border-gray-100 pb-4 mb-4${compact ? ' px-4' : ''}`}>
                 {/* 모바일용 메뉴 버튼 (햄버거 아이콘) */}
                 <button
                     onClick={onMenuClick}
-                    className="lg:hidden mr-3 p-2 rounded-full hover:bg-gray-100"
+                    className={`${compact ? '' : 'lg:hidden '}mr-3 p-2 rounded-full hover:bg-gray-100`}
                     aria-label="채팅방 목록 보기"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -645,7 +647,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             </div>
 
             {/* 채팅 메시지 영역 */}
-            <div ref={messageContainerRef} className="flex-1 overflow-y-auto mb-2 no-scrollbar">
+            <div ref={messageContainerRef} className={`flex-1 overflow-y-auto mb-2 no-scrollbar${compact ? ' px-4' : ''}`}>
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (
@@ -772,7 +774,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             </div>
 
             {/* 입력창 */}
-            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} />
+            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} />
 
             <MembersPanel
                 isOpen={isPanelOpen}
