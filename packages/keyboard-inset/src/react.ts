@@ -9,6 +9,7 @@ import {
 } from './tracker';
 import { publishKeyboardCssVars, type PublishCssVarsOptions } from './css-vars';
 import { createBottomAnchor, type ScrollPinMode } from './scroll-anchor';
+import { getSharedKeyboardGlide, type KeyboardGlideOptions } from './motion';
 
 // useSyncExternalStore requires a REFERENTIALLY STABLE server snapshot —
 // returning a fresh object per call triggers React's "getServerSnapshot
@@ -34,11 +35,13 @@ export function useKeyboard(tracker?: KeyboardTracker): KeyboardState {
 /**
  * Publish `--kb-inset` / `--kb-visible` / `--kb-visual-height` on `<html>`
  * (or `opts.target`) for the lifetime of the calling component. Options are
- * read once on mount.
+ * read once on mount. Pass `glide` to smooth reported jumps (see
+ * `withKeyboardGlide`) — give the same glide options to
+ * `useWindowBottomAnchoredScroll`, or the two run on different clocks.
  */
-export function useKeyboardCssVars(opts?: PublishCssVarsOptions): void {
+export function useKeyboardCssVars(opts?: PublishCssVarsOptions & KeyboardGlideOptions): void {
     useEffect(
-        () => publishKeyboardCssVars(getSharedKeyboardTracker(), opts),
+        () => publishKeyboardCssVars(getSharedKeyboardGlide(opts), opts),
         // Options are intentionally mount-time-only: the publisher tears
         // down/rebuilds on identity change otherwise, and callers pass
         // object literals.
@@ -96,13 +99,23 @@ export interface WindowBottomAnchoredScrollOptions {
  * pages that scroll the window rather than an inner column (a post with a
  * fixed comment composer). Never moves the page on mount; shrink
  * compensation is keyboard-gated so browser chrome noise can't drift it.
+ * The glide options must match the ones given to `useKeyboardCssVars`: the
+ * fold and the composer have to move on one clock.
  */
 export function useWindowBottomAnchoredScroll(
-    opts: WindowBottomAnchoredScrollOptions = {},
+    opts: WindowBottomAnchoredScrollOptions & KeyboardGlideOptions = {},
 ): void {
-    const { pin = 'always', slack = 40 } = opts;
-    useEffect(() => createBottomAnchor(window, { pin, slack }), [pin, slack]);
+    const { pin = 'always', slack = 40, glide, glideThresholdPx, glideDurationMs } = opts;
+    useEffect(
+        () => createBottomAnchor(window, {
+            pin,
+            slack,
+            tracker: getSharedKeyboardGlide({ glide, glideThresholdPx, glideDurationMs }),
+        }),
+        [pin, slack, glide, glideThresholdPx, glideDurationMs],
+    );
 }
 
 export type { KeyboardState, KeyboardTracker, KeyboardViewportMode, KeyboardTrackerOptions } from './tracker';
 export type { ScrollPinMode, BottomAnchorOptions } from './scroll-anchor';
+export type { KeyboardGlideOptions } from './motion';

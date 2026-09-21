@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Core: `withKeyboardGlide` / `getSharedKeyboardGlide` — opt-in easing of reported jumps in
+  `insetPx` / `visualHeight` (120ms ease-out, target always the real report)
+- React: `glide` options on `useKeyboardCssVars` and `useWindowBottomAnchoredScroll`
+
 ## 0.2.0
 
 - Core: `createBottomAnchor(target, opts)` — bottom-anchored scrolling across

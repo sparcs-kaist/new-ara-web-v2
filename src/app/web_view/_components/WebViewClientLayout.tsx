@@ -6,6 +6,7 @@ import { BottomTabBar, isTabRoot } from './BottomTabBar';
 import { getBridge, useBridgeEvent } from '../_bridge';
 import { getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
+import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
@@ -157,7 +158,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
 
     // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
     // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
-    useKeyboardCssVars();
+    useKeyboardCssVars(KEYBOARD_GLIDE);
     // The shell doesn't emit keyboard:changed today; if it ever does, the
     // tracker normalizes the raw height so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {

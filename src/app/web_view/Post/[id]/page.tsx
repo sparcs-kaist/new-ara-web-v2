@@ -17,6 +17,7 @@ import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { usePost } from '@/app/web_view/_query';
 import { useWindowBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
+import { KEYBOARD_GLIDE } from '@/app/web_view/_components/keyboardMotion';
 import { ArticleHeader } from './_components/ArticleHeader';
 import { Attachments } from './_components/Attachments';
 import { CommentComposer } from './_components/CommentComposer';
@@ -64,7 +65,7 @@ export default function WebViewPostDetailPage() {
 
     // Messenger-style fold: preserve the bottom-edge content (comments above the
     // fixed composer) when the keyboard resizes the document, wherever the user is.
-    useWindowBottomAnchoredScroll();
+    useWindowBottomAnchoredScroll(KEYBOARD_GLIDE);
 
     /** Optimistic mutate of the cached post so VoteRow / scrap buttons stay snappy. */
     const patchPost = useCallback(
