@@ -9,7 +9,30 @@ export interface KeyboardGlideOptions {
 }
 
 type Triple = [number, number, number];
-interface Glide { from: Triple; to: Triple; startedAt: number; endsAt: number }
+/** `m0` is the start tangent in px per segment (dp/dt, t in [0,1]); the end tangent is 0. */
+interface Glide { from: Triple; m0: Triple; to: Triple; startedAt: number; duration: number }
+
+const progressOf = (g: Glide, now: number): number =>
+    g.duration > 0 ? Math.min(1, (now - g.startedAt) / g.duration) : 1;
+
+// Cubic Hermite with m1 = 0: p(t) = h00·p0 + h10·m0 + h01·p1. At m0 = 3(p1−p0)
+// it is exactly ease-out-cubic, so a segment started from rest is unchanged.
+const sample = (g: Glide, t: number, i: number): number =>
+    (2 * t ** 3 - 3 * t ** 2 + 1) * g.from[i]
+    + (t ** 3 - 2 * t ** 2 + t) * g.m0[i]
+    + (-2 * t ** 3 + 3 * t ** 2) * g.to[i];
+
+/** dp/dtime, so a retarget can hand the live velocity to the next segment's m0. */
+const slope = (g: Glide, t: number, i: number): number => (g.duration > 0
+    ? ((6 * t ** 2 - 6 * t) * g.from[i]
+        + (3 * t ** 2 - 4 * t + 1) * g.m0[i]
+        + (-6 * t ** 2 + 6 * t) * g.to[i]) / g.duration
+    : 0);
+
+const positionAt = (g: Glide, now: number): Triple => {
+    const t = progressOf(g, now);
+    return [sample(g, t, 0), sample(g, t, 1), sample(g, t, 2)];
+};
 
 /** Wrap a tracker so reported jumps ease in: moves over 24px glide over 120ms, both tunable. */
 export function withKeyboardGlide(
@@ -57,19 +80,11 @@ export function withKeyboardGlide(
         publish(s.insetPx, s.visualHeight, s.layoutHeight);
     };
 
-    const positionAt = (g: Glide, now: number): Triple => {
-        const span = g.endsAt - g.startedAt;
-        const t = span > 0 ? Math.min(1, (now - g.startedAt) / span) : 1;
-        const p = 1 - (1 - t) ** 3;
-        const at = (i: number) => g.from[i] + (g.to[i] - g.from[i]) * p;
-        return [at(0), at(1), at(2)];
-    };
-
     const tick = (): void => {
         rafId = null;
         if (!glide) return;
         const now = performance.now();
-        const done = now >= glide.endsAt;
+        const done = now >= glide.startedAt + glide.duration;
         const [inset, visual, layout] = positionAt(glide, now);
         if (done) stop();
         publish(inset, visual, layout);
@@ -99,11 +114,18 @@ export function withKeyboardGlide(
         const from: Triple = stepped ? [to[0], to[1], at[2]] : [at[0], at[1], at[2]];
         const jumped = to.some((v, i) => Math.abs(v - from[i]) > threshold);
         if (!glide && !jumped) { snap(next); return; }
-        // Absolute deadline, kept when the target barely moved: a per-frame report stream must not reset t.
-        const endsAt = current && to.every((v, i) => Math.abs(v - current.to[i]) <= threshold)
-            ? Math.max(current.endsAt, now + 16)
-            : now + duration;
-        glide = { from, to, startedAt: now, endsAt };
+        // Retarget carries the live velocity into the fresh segment, so a step stream
+        // renders as one curve instead of a saw-tooth of restarted ease-outs.
+        const t = current ? progressOf(current, now) : 0;
+        // A carried velocity above the ease-out's own start slope (3Δ) would overshoot the target.
+        const tangent = (i: number, snapped: boolean): number => {
+            const cap = 3 * Math.abs(to[i] - from[i]);
+            if (snapped) return 0;
+            if (!current) return 3 * (to[i] - from[i]);
+            return Math.max(-cap, Math.min(cap, slope(current, t, i) * duration));
+        };
+        const m0: Triple = [tangent(0, stepped), tangent(1, stepped), tangent(2, false)];
+        glide = { from, m0, to, startedAt: now, duration };
         if (rafId === null) rafId = requestAnimationFrame(tick);
         // The fields that are not interpolated belong to the report, not to the next frame.
         publish(from[0], from[1], from[2]);

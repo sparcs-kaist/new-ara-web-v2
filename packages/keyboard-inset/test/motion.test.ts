@@ -103,20 +103,27 @@ describe('withKeyboardGlide', () => {
         expect(seen.length).toBe(settled);
     });
 
-    it('retargets mid-glide: a small move keeps the deadline, a large one restarts it', () => {
+    it('runs the first segment as ease-out cubic', () => {
         const { raw, glided } = make();
-        raw.emit({ insetPx: 300, visualHeight: 500, visible: true }); // deadline 1120
-        frame(40);
-        raw.emit({ insetPx: 310, visualHeight: 490, visible: true });
-        frame(80); // 1120 — the kept deadline, not a fresh 120ms
-        expect(rafQueue.size).toBe(0);
-        expect(geo(glided)).toEqual([310, 490]);
-        raw.emit({ insetPx: 100, visualHeight: 700, visible: true });
-        frame(40);
+        raw.emit({ insetPx: 300, visualHeight: 500, visible: true });
+        frame(60); // half the 120ms segment: 1 − 0.5³ = 0.875 of the way
+        expect(geo(glided)).toEqual([263, 538]);
+    });
+
+    it('retargets mid-glide with continuous velocity, landing on the new target', () => {
+        const { raw, glided } = make();
+        raw.emit({ insetPx: 300, visualHeight: 500, visible: true });
+        frame(80); // late in the segment, where an ease-out restart saw-tooths
+        const a = glided.getState().insetPx;
+        frame(16);
+        const b = glided.getState().insetPx;
+        const pre = b - a;
         raw.emit({ insetPx: 420, visualHeight: 380, visible: true });
-        frame(80);
-        expect(rafQueue.size).toBe(1); // the duration restarted
-        frame(40);
+        frame(16);
+        const post = glided.getState().insetPx - b;
+        expect(post).toBeGreaterThan(0);
+        expect(Math.abs(post - pre)).toBeLessThanOrEqual(0.3 * pre);
+        frame(120);
         expect(rafQueue.size).toBe(0);
         expect(geo(glided)).toEqual([420, 380]);
     });
@@ -132,7 +139,7 @@ describe('withKeyboardGlide', () => {
             p.push(glided.getState().insetPx);
         }
         for (let i = 1; i < p.length; i++) expect(p[i]).toBeGreaterThan(p[i - 1]);
-        frame(120); // the last report's deadline, not one pushed out by the stream
+        frame(120); // the last report's own segment
         expect(geo(glided)).toEqual([360, 440]);
         expect(rafQueue.size).toBe(0);
     });

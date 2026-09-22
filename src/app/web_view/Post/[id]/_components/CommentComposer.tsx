@@ -160,6 +160,8 @@ export function CommentComposer({
                             inputMode="text"
                             autoCapitalize="sentences"
                             className="block w-full resize-none border-0 bg-transparent text-[14px] leading-[22px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
+                            // Chromium scrolls an ancestor to reveal the caret on every resize step; the composer rides the column instead.
+                            style={{ scrollMarginBottom: '-9999px' }}
                         />
                     </div>
 
