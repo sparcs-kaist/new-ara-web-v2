@@ -353,6 +353,8 @@ export default function ChatInput({
             disabled={!!pending || isUploading}
             maxRows={5}
             rows={1}
+            // Chromium scrolls an ancestor to reveal the caret on every resize step; the composer rides the column instead.
+            style={{ scrollMarginBottom: '-9999px' }}
           />
 
           <button
