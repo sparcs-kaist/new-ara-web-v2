@@ -253,7 +253,8 @@ See the TypeScript declarations for full docs. Summary:
 - `createBottomAnchor(target, { pin?, slack?, startAtBottom?, tracker? })` → detach — bottom-pins an `HTMLElement` or `window` across keyboard resizes
 - `withKeyboardGlide(tracker, { glide?, glideThresholdPx?, glideDurationMs? })` / `getSharedKeyboardGlide(opts?)` — smooth reported jumps (off by default; returns the input tracker)
 - `isEditableElement(el)` — the focus heuristic used internally
-- `KeyboardState` — `{ visible, insetPx, mode: 'resize'|'overlay'|'unknown', visualHeight, editableFocused, source }`
+- `KeyboardState` — `{ visible, insetPx, mode: 'resize'|'overlay'|'unknown', visualHeight, layoutHeight, editableFocused, source }`
+  - `layoutHeight` is `window.innerHeight`; under `glide` it eases across a host's coarse resize steps while `insetPx` / `visualHeight` snap to them
 - `ScrollPinMode` — `'at-bottom' | 'always'`
 - Options: `minKeyboardHeight` (50), `residualEpsilon` (32), `iosDismissFix` (true)
 - React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack?, glide? })`

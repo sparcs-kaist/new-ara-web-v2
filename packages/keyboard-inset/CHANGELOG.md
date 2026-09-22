@@ -5,6 +5,8 @@
 - Core: `withKeyboardGlide` / `getSharedKeyboardGlide` — opt-in easing of reported jumps in
   `insetPx` / `visualHeight` (120ms ease-out, target always the real report)
 - React: `glide` options on `useKeyboardCssVars` and `useWindowBottomAnchoredScroll`
+- Core: `KeyboardState.layoutHeight` — the layout viewport height; under the glide it eases
+  across a host's late, coarse resize steps (`insetPx` / `visualHeight` still snap to them)
 
 ## 0.2.0
 

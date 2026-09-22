@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomTabBar, isTabRoot } from './BottomTabBar';
 import { getBridge, useBridgeEvent } from '../_bridge';
-import { getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
+import { getSharedKeyboardGlide, getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { WebViewQueryProvider } from '../_query';
@@ -73,30 +73,32 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         return () => window.clearTimeout(t);
     }, [exitToastAt]);
 
-    // Publish --ara-kb-shrink (layout-viewport shrink in px) SYNCHRONOUSLY
-    // from the resize event. Fixed bottom bars subtract it from their
-    // resting safe-area offset, so the rising keyboard picks them up
-    // continuously mid-flight; the tracker's binary --kb-visible lands
-    // rAF + stability frames later and stepping on it made the bar snap
-    // by the safe-bottom height mid-animation. Width changes reset the
-    // baseline (rotation must re-measure, not read as a giant shrink).
-    // Also stamps data-ara-kb on <html> while a keyboard is plausibly up
-    // (layout shrink, or tracker-visible on overlay hosts) — tokens.css
-    // keys the scroll-anchoring opt-out on it so native anchoring is
-    // disabled only while our folds own the scroll position.
+    // Publish --ara-kb-shrink / --ara-kb-column from the GLIDED layout height.
+    // The shell resizes the layout viewport late and in coarse steps, so the
+    // raw innerHeight staircase is not something to follow: --ara-kb-column is
+    // the eased height the chat column and the fixed composer ride (it can
+    // exceed the raw innerHeight mid-glide, on purpose), and --ara-kb-shrink
+    // is its distance below the ratcheted unshrunk height. Only keyboard-
+    // plausible resizes ratchet; width changes re-baseline. data-ara-kb marks
+    // the episode — tokens.css keys the scroll-anchoring opt-out on it.
     useEffect(() => {
         const root = document.documentElement;
-        const tracker = getSharedKeyboardTracker();
+        const tracker = getSharedKeyboardGlide(KEYBOARD_GLIDE);
         let baseWidth = window.innerWidth;
         let maxHeight = window.innerHeight;
-        let shrink = 0;
         // Latched through blur so the close animation stays continuous:
         // the last resize frames arrive after focus is gone.
         let engaged = false;
         let settleTimer: number | undefined;
-        const apply = () => {
-            root.style.setProperty('--ara-kb-shrink', `${shrink}px`);
-            if (shrink > 0 || tracker.getState().visible) {
+        const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
+            const state = tracker.getState();
+            root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
+            if (engaged || height !== window.innerHeight) {
+                root.style.setProperty('--ara-kb-column', `${height}px`);
+            } else {
+                root.style.removeProperty('--ara-kb-column');
+            }
+            if (maxHeight > height || state.visible) {
                 root.setAttribute('data-ara-kb', '');
             } else {
                 root.removeAttribute('data-ara-kb');
@@ -109,26 +111,26 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         // making this a no-op there.
         const releaseIfStuck = () => {
             settleTimer = undefined;
-            if (shrink === 0) return;
+            if (window.innerHeight >= maxHeight) return;
             if (isEditableElement(document.activeElement) || tracker.getState().visible) return;
             maxHeight = window.innerHeight;
-            shrink = 0;
             engaged = false;
-            root.style.removeProperty('--ara-kb-column');
             apply();
         };
         const onTrackerChange = () => {
             apply();
-            if (shrink > 0 && !tracker.getState().visible && settleTimer === undefined) {
+            if (window.innerHeight < maxHeight && !tracker.getState().visible && settleTimer === undefined) {
                 settleTimer = window.setTimeout(releaseIfStuck, 600);
             }
         };
         const onResize = () => {
-            const wasEngaged = engaged;
             if (window.innerWidth !== baseWidth) {
                 baseWidth = window.innerWidth;
                 maxHeight = window.innerHeight;
                 engaged = false;
+                // The eased height is rAF-late; a rotation must not leave it on the column for a frame.
+                apply(window.innerHeight);
+                return;
             }
             // Only a keyboard-plausible resize counts: browser-chrome
             // (URL bar / toolbar) height moves with no editable focused,
@@ -138,19 +140,9 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             // the tracker's own flag is rAF-late by design.
             if (isEditableElement(document.activeElement) || tracker.getState().visible || engaged) {
                 maxHeight = Math.max(maxHeight, window.innerHeight);
-                shrink = Math.max(0, maxHeight - window.innerHeight);
-                engaged = shrink > 0;
-                // Resize hosts: innerHeight is the truth while vv.height skews
-                // for a frame mid-animation. Dropped after the episode so
-                // overlay hosts fall back to the tracker's var.
-                if (engaged) {
-                    root.style.setProperty('--ara-kb-column', `${window.innerHeight}px`);
-                } else if (wasEngaged) {
-                    root.style.removeProperty('--ara-kb-column');
-                }
+                engaged = maxHeight > window.innerHeight;
             } else {
                 maxHeight = window.innerHeight;
-                shrink = 0;
             }
             apply();
         };

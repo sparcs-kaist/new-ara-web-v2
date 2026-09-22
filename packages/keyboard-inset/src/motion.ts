@@ -1,4 +1,4 @@
-// Reports land in one late jump, so consumers snap: ease insetPx / visualHeight toward them.
+// Reports land in one late jump, so consumers snap: ease insetPx / visualHeight / layoutHeight toward them.
 
 import { getSharedKeyboardTracker, type KeyboardState, type KeyboardTracker } from './tracker';
 
@@ -8,7 +8,8 @@ export interface KeyboardGlideOptions {
     glideDurationMs?: number;
 }
 
-interface Glide { from: [number, number]; to: [number, number]; startedAt: number; endsAt: number }
+type Triple = [number, number, number];
+interface Glide { from: Triple; to: Triple; startedAt: number; endsAt: number }
 
 /** Wrap a tracker so reported jumps ease in: moves over 24px glide over 120ms, both tunable. */
 export function withKeyboardGlide(
@@ -29,11 +30,17 @@ export function withKeyboardGlide(
     let cacheHeight = window.innerHeight;
     let unmeasured = raw.visualHeight === 0;
 
-    const publish = (inset: number, visual: number): void => {
+    const publish = (inset: number, visual: number, layout: number): void => {
         const p = published;
-        const n: KeyboardState = { ...raw, insetPx: Math.round(inset), visualHeight: Math.round(visual) };
+        const n: KeyboardState = {
+            ...raw,
+            insetPx: Math.round(inset),
+            visualHeight: Math.round(visual),
+            layoutHeight: Math.round(layout),
+        };
         if (p.visible === n.visible && p.insetPx === n.insetPx && p.mode === n.mode
-            && p.visualHeight === n.visualHeight && p.editableFocused === n.editableFocused
+            && p.visualHeight === n.visualHeight && p.layoutHeight === n.layoutHeight
+            && p.editableFocused === n.editableFocused
             && p.source === n.source) return;
         published = Object.freeze(n);
         for (const cb of listeners) cb(published);
@@ -47,14 +54,15 @@ export function withKeyboardGlide(
 
     const snap = (s: KeyboardState): void => {
         stop();
-        publish(s.insetPx, s.visualHeight);
+        publish(s.insetPx, s.visualHeight, s.layoutHeight);
     };
 
-    const positionAt = (g: Glide, now: number): [number, number] => {
+    const positionAt = (g: Glide, now: number): Triple => {
         const span = g.endsAt - g.startedAt;
         const t = span > 0 ? Math.min(1, (now - g.startedAt) / span) : 1;
         const p = 1 - (1 - t) ** 3;
-        return [g.from[0] + (g.to[0] - g.from[0]) * p, g.from[1] + (g.to[1] - g.from[1]) * p];
+        const at = (i: number) => g.from[i] + (g.to[i] - g.from[i]) * p;
+        return [at(0), at(1), at(2)];
     };
 
     const tick = (): void => {
@@ -62,9 +70,9 @@ export function withKeyboardGlide(
         if (!glide) return;
         const now = performance.now();
         const done = now >= glide.endsAt;
-        const [inset, visual] = positionAt(glide, now);
+        const [inset, visual, layout] = positionAt(glide, now);
         if (done) stop();
-        publish(inset, visual);
+        publish(inset, visual, layout);
         if (!done) rafId = requestAnimationFrame(tick);
     };
 
@@ -72,29 +80,33 @@ export function withKeyboardGlide(
         raw = next;
         // The seed (visualHeight 0) is not a position anything was ever painted at.
         if (unmeasured) { unmeasured = false; snap(next); return; }
-        // Rotation, or a host resizing the layout viewport: not one scale to glide across.
-        if (window.innerWidth !== cacheWidth || window.innerHeight !== cacheHeight) {
+        // Rotation: not one scale to glide across.
+        if (window.innerWidth !== cacheWidth) {
             [cacheWidth, cacheHeight] = [window.innerWidth, window.innerHeight];
             snap(next);
             return;
         }
-        const jumped = Math.abs(next.insetPx - published.insetPx) > threshold
-            || Math.abs(next.visualHeight - published.visualHeight) > threshold;
-        if (!glide && !jumped) { snap(next); return; }
         const now = performance.now();
         const current = glide;
-        const from: [number, number] = current
-            ? positionAt(current, now) : [published.insetPx, published.visualHeight];
+        const at: Triple = current
+            ? positionAt(current, now)
+            : [published.insetPx, published.visualHeight, published.layoutHeight];
+        const to: Triple = [next.insetPx, next.visualHeight, next.layoutHeight];
+        // A host that resized the layout viewport already moved inset/visual with it —
+        // only the column is left to ease across the step.
+        const stepped = window.innerHeight !== cacheHeight;
+        cacheHeight = window.innerHeight;
+        const from: Triple = stepped ? [to[0], to[1], at[2]] : [at[0], at[1], at[2]];
+        const jumped = to.some((v, i) => Math.abs(v - from[i]) > threshold);
+        if (!glide && !jumped) { snap(next); return; }
         // Absolute deadline, kept when the target barely moved: a per-frame report stream must not reset t.
-        const endsAt = current
-            && Math.abs(next.insetPx - current.to[0]) <= threshold
-            && Math.abs(next.visualHeight - current.to[1]) <= threshold
+        const endsAt = current && to.every((v, i) => Math.abs(v - current.to[i]) <= threshold)
             ? Math.max(current.endsAt, now + 16)
             : now + duration;
-        glide = { from, to: [next.insetPx, next.visualHeight], startedAt: now, endsAt };
+        glide = { from, to, startedAt: now, endsAt };
         if (rafId === null) rafId = requestAnimationFrame(tick);
         // The fields that are not interpolated belong to the report, not to the next frame.
-        publish(from[0], from[1]);
+        publish(from[0], from[1], from[2]);
     };
 
     return {

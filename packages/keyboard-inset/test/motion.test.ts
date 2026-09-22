@@ -49,7 +49,7 @@ function make(): { raw: FakeTracker; glided: KeyboardTracker; seen: KeyboardStat
     const glided = withKeyboardGlide(raw, { glide: true });
     const seen: KeyboardState[] = [];
     glided.subscribe((s) => seen.push(s));
-    raw.emit({ visualHeight: 800 });
+    raw.emit({ visualHeight: 800, layoutHeight: 800 });
     seen.length = 0;
     return { raw, glided, seen };
 }
@@ -150,6 +150,43 @@ describe('withKeyboardGlide', () => {
         expect(rafQueue.size).toBe(1);
         frame(120);
         expect(overlay.glided.getState().visualHeight).toBe(500);
+    });
+
+    it('snaps inset/visual to a host layout-viewport step while gliding layoutHeight', () => {
+        const { raw, glided } = make();
+        resize(390, 500);
+        raw.emit({ insetPx: 0, visualHeight: 500, layoutHeight: 500, visible: true });
+        expect(geo(glided)).toEqual([0, 500]);
+        expect(glided.getState().layoutHeight).toBe(800);
+        frame(60);
+        const mid = glided.getState().layoutHeight;
+        expect(mid).toBeGreaterThan(500);
+        expect(mid).toBeLessThan(800);
+        frame(60);
+        expect(glided.getState().layoutHeight).toBe(500);
+        expect(rafQueue.size).toBe(0);
+    });
+
+    it('keeps the layout glide alive when a report lands at unchanged innerHeight', () => {
+        const { raw, glided } = make();
+        resize(390, 500);
+        raw.emit({ insetPx: 0, visualHeight: 500, layoutHeight: 500, visible: true });
+        frame(30);
+        // The visualViewport skew the host emits one frame after a step must not end the ease.
+        raw.emit({ insetPx: 0, visualHeight: 474, layoutHeight: 500, visible: true });
+        const mid = glided.getState().layoutHeight;
+        expect(mid).toBeGreaterThan(500);
+        expect(mid).toBeLessThan(800);
+        frame(120);
+        expect(glided.getState().layoutHeight).toBe(500);
+    });
+
+    it('snaps layoutHeight on rotation', () => {
+        const { raw, glided } = make();
+        resize(844, 390);
+        raw.emit({ insetPx: 0, visualHeight: 390, layoutHeight: 390, visible: false });
+        expect(glided.getState().layoutHeight).toBe(390);
+        expect(rafQueue.size).toBe(0);
     });
 
     it('drops `visible` with the dismissal report and eases the inset to 0', () => {

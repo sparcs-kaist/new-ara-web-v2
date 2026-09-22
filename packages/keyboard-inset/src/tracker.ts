@@ -40,6 +40,8 @@ export interface KeyboardState {
      * Pan-invariant — size full-screen containers (chat) from this.
      */
     visualHeight: number;
+    /** Layout viewport height in CSS px; eases across host resizes under `withKeyboardGlide`. */
+    layoutHeight: number;
     /** An editable element owns focus (re-derived from activeElement). */
     editableFocused: boolean;
     /** Where insetPx came from. */
@@ -85,6 +87,7 @@ export const INITIAL_KEYBOARD_STATE: KeyboardState = Object.freeze({
     insetPx: 0,
     mode: 'unknown' as KeyboardViewportMode,
     visualHeight: 0,
+    layoutHeight: 0,
     editableFocused: false,
     source: 'geometry' as const,
 });
@@ -325,6 +328,7 @@ class DomKeyboardTracker implements KeyboardTracker {
             insetPx,
             mode,
             visualHeight: Math.round(visualHeight),
+            layoutHeight: innerHeight,
             editableFocused: focused,
             source,
         });
@@ -337,6 +341,7 @@ class DomKeyboardTracker implements KeyboardTracker {
             && prev.insetPx === next.insetPx
             && prev.mode === next.mode
             && prev.visualHeight === next.visualHeight
+            && prev.layoutHeight === next.layoutHeight
             && prev.editableFocused === next.editableFocused
             && prev.source === next.source
         ) {

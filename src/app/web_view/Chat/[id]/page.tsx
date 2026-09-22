@@ -20,9 +20,9 @@ type ChatRoom = {
 };
 
 /**
- * Mobile chat room shell: one column taking the lowest of the app's
- * synchronous resize term, the tracker's visual height and 100dvh−inset, so
- * it is right on resize, overlay and bridge-override hosts, with
+ * Mobile chat room shell: one column sized from the app's eased layout height
+ * (--ara-kb-column) on resize hosts, falling back to the lower of the tracker's
+ * visual height and 100dvh−inset on overlay and bridge-override hosts, with
  * ChatRoomDetail's in-flow input riding the column bottom. Document scroll is
  * locked while open; the rAF-coalesced corrector resets the programmatic
  * scroll/pan the UA still applies to reveal a focused caret. It converges and
@@ -129,9 +129,7 @@ export default function WebViewChatRoomPage() {
         <div
             className="relative flex w-full flex-col overflow-hidden bg-white"
             style={{
-                // min() picks whichever signal already shrank: the app's
-                // synchronous resize term first, then the tracker vars.
-                height: 'min(var(--ara-kb-column, var(--kb-visual-height, 100dvh)), calc(100dvh - var(--kb-inset, 0px)))',
+                height: 'var(--ara-kb-column, min(var(--kb-visual-height, 100dvh), calc(100dvh - var(--kb-inset, 0px))))',
                 // Keep the room header out from under the fixed safe-top cap.
                 paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
                 // Home-indicator clearance, handed off continuously to the
