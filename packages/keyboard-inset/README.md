@@ -203,6 +203,22 @@ function PostPage() {
 }
 ```
 
+### Smoothing the jump
+
+Reports do not stream: iOS hands over the keyboard height once, at the end of its own
+animation, so consumers following them snap into place. Pass `glide: true` to interpolate
+`insetPx` / `visualHeight` from the last published values to the reported ones over ~120ms
+(`glideDurationMs`); moves of 24px or less (`glideThresholdPx`) pass straight through.
+Nothing is predicted — the target is always the real report, and `visible` still flips with
+it. Pass the SAME options to every hook, so they share one clock:
+
+```tsx
+const KEYBOARD_GLIDE = { glide: true } as const;
+
+useKeyboardCssVars(KEYBOARD_GLIDE);        // in the shell
+useWindowBottomAnchoredScroll(KEYBOARD_GLIDE); // in the page that folds
+```
+
 ## WebView bridge feed (optional)
 
 If your native host reports keyboard geometry, feed it in — the tracker normalizes it so a
@@ -235,11 +251,12 @@ See the TypeScript declarations for full docs. Summary:
 - `getSharedKeyboardTracker()` — lazy shared instance (used by the React hooks); HMR-safe
 - `publishKeyboardCssVars(tracker, { target?, prefix? })` → unsubscribe
 - `createBottomAnchor(target, { pin?, slack?, startAtBottom?, tracker? })` → detach — bottom-pins an `HTMLElement` or `window` across keyboard resizes
+- `withKeyboardGlide(tracker, { glide?, glideThresholdPx?, glideDurationMs? })` / `getSharedKeyboardGlide(opts?)` — smooth reported jumps (off by default; returns the input tracker)
 - `isEditableElement(el)` — the focus heuristic used internally
 - `KeyboardState` — `{ visible, insetPx, mode: 'resize'|'overlay'|'unknown', visualHeight, editableFocused, source }`
 - `ScrollPinMode` — `'at-bottom' | 'always'`
 - Options: `minKeyboardHeight` (50), `residualEpsilon` (32), `iosDismissFix` (true)
-- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack? })`
+- React: `useKeyboard(tracker?)`, `useKeyboardCssVars(opts?)`, `useBottomAnchoredScroll(ref, { pin?, slack?, startAtBottom? })`, `useWindowBottomAnchoredScroll({ pin?, slack?, glide? })`
 
 ## Known limits
 

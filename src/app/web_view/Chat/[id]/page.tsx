@@ -20,14 +20,14 @@ type ChatRoom = {
 };
 
 /**
- * Mobile chat room shell: one column sized by `--kb-visual-height`, so it
- * shrinks above the keyboard on every host (the visual-viewport height is
- * pan-invariant, unlike 100dvh−inset math), with ChatRoomDetail's in-flow
- * input riding the column bottom. Document scroll is locked while open;
- * the rAF-coalesced corrector resets the programmatic scroll/pan the UA
- * still applies to reveal a focused caret. It converges and cannot loop —
- * unlike the old per-visualViewport-event scrollTo(0,0), which fought the
- * OS mid-animation and caused the jump/side-slide artifacts.
+ * Mobile chat room shell: one column taking the lowest of the app's
+ * synchronous resize term, the tracker's visual height and 100dvh−inset, so
+ * it is right on resize, overlay and bridge-override hosts, with
+ * ChatRoomDetail's in-flow input riding the column bottom. Document scroll is
+ * locked while open; the rAF-coalesced corrector resets the programmatic
+ * scroll/pan the UA still applies to reveal a focused caret. It converges and
+ * cannot loop — unlike the old per-visualViewport-event scrollTo(0,0), which
+ * fought the OS mid-animation and caused the jump/side-slide artifacts.
  */
 export default function WebViewChatRoomPage() {
     const params = useParams<{ id: string }>();
@@ -129,7 +129,9 @@ export default function WebViewChatRoomPage() {
         <div
             className="relative flex w-full flex-col overflow-hidden bg-white"
             style={{
-                height: 'var(--kb-visual-height, 100dvh)',
+                // min() picks whichever signal already shrank: the app's
+                // synchronous resize term first, then the tracker vars.
+                height: 'min(var(--ara-kb-column, var(--kb-visual-height, 100dvh)), calc(100dvh - var(--kb-inset, 0px)))',
                 // Keep the room header out from under the fixed safe-top cap.
                 paddingTop: 'var(--ara-safe-top, env(safe-area-inset-top, 0px))',
                 // Home-indicator clearance, handed off continuously to the

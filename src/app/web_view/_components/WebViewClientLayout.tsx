@@ -6,6 +6,7 @@ import { BottomTabBar, isTabRoot } from './BottomTabBar';
 import { getBridge, useBridgeEvent } from '../_bridge';
 import { getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
+import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
@@ -113,6 +114,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             maxHeight = window.innerHeight;
             shrink = 0;
             engaged = false;
+            root.style.removeProperty('--ara-kb-column');
             apply();
         };
         const onTrackerChange = () => {
@@ -122,6 +124,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             }
         };
         const onResize = () => {
+            const wasEngaged = engaged;
             if (window.innerWidth !== baseWidth) {
                 baseWidth = window.innerWidth;
                 maxHeight = window.innerHeight;
@@ -137,6 +140,14 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
                 maxHeight = Math.max(maxHeight, window.innerHeight);
                 shrink = Math.max(0, maxHeight - window.innerHeight);
                 engaged = shrink > 0;
+                // Resize hosts: innerHeight is the truth while vv.height skews
+                // for a frame mid-animation. Dropped after the episode so
+                // overlay hosts fall back to the tracker's var.
+                if (engaged) {
+                    root.style.setProperty('--ara-kb-column', `${window.innerHeight}px`);
+                } else if (wasEngaged) {
+                    root.style.removeProperty('--ara-kb-column');
+                }
             } else {
                 maxHeight = window.innerHeight;
                 shrink = 0;
@@ -151,13 +162,14 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             window.removeEventListener('resize', onResize);
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
             root.style.removeProperty('--ara-kb-shrink');
+            root.style.removeProperty('--ara-kb-column');
             root.removeAttribute('data-ara-kb');
         };
     }, []);
 
     // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
     // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
-    useKeyboardCssVars();
+    useKeyboardCssVars(KEYBOARD_GLIDE);
     // The shell doesn't emit keyboard:changed today; if it ever does, the
     // tracker normalizes the raw height so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
