@@ -195,6 +195,11 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     useBridgeEvent('keyboard:changed', (p) => {
         getSharedKeyboardTracker().setOverride(p.visible ? p.height : null);
     });
+    // The shell hands over the in-app path in data.route; anything outside /web_view is ignored.
+    useBridgeEvent('push:opened', (p) => {
+        const to = typeof p.data?.route === 'string' ? p.data.route : p.deepLink;
+        if (to && to.startsWith('/web_view/')) router.push(to);
+    });
 
     return (
         <WebViewQueryProvider>
