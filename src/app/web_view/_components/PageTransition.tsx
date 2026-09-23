@@ -21,7 +21,7 @@ type Direction = 'forward' | 'back';
  * way the very first render with the new pathname already has the
  * correct animation class (no forward-then-back flash).
  *
- * Tab roots (Main / Board / Chat / Notifications / MyInfo) render without an
+ * Tab roots (Main / Board / Chat / MyInfo) render without an
  * animation — Flutter's bottom-nav swap is also a direct cut.
  */
 export function PageTransition({ pathname, children }: PageTransitionProps) {

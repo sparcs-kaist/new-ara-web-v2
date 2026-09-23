@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import {
     CommentIcon,
     InformationIcon,
+    LeftChevronIcon,
     NotificationIcon,
     Screen,
     VerifiedIcon,
 } from '@/app/web_view/_components';
 import { fetchNotifications, readAllNotifications } from '@/lib/api/notification';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
+import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 
 interface NotificationItem {
     id: number;
@@ -32,7 +34,8 @@ function getTargetArticleId(n: NotificationItem): number | null {
 /**
  * Mirrors `lib/pages/notification_page.dart`.
  *
- * - 28/w700 brand-red "알림" title in the AppBar (no shadow, no border).
+ * - 28/w700 brand-red "알림" title behind a back chevron (entered from the
+ *   home bell, no tab to return by).
  * - List of cards (radius 15, hairline #F0F0F0, soft shadow rgba(0,0,0,0.04))
  *   with a 40x40 round status badge on the left.
  * - Date headers between cards when the day changes.
@@ -40,6 +43,7 @@ function getTargetArticleId(n: NotificationItem): number | null {
  */
 export default function NotificationsPage() {
     const router = useRouter();
+    const safeBack = useSafeBack();
     const [items, setItems] = useState<NotificationItem[]>([]);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(true);
@@ -91,8 +95,16 @@ export default function NotificationsPage() {
     };
 
     return (
-        <Screen withTabBar="auto">
-            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-5">
+        <Screen withTabBar={false}>
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-2">
+                <button
+                    type="button"
+                    aria-label="뒤로"
+                    onClick={safeBack}
+                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                >
+                    <LeftChevronIcon size={28} />
+                </button>
                 <h1 className="text-[28px] font-bold text-ara_red">알림</h1>
             </header>
 
@@ -179,7 +191,7 @@ export default function NotificationsPage() {
                     hasUnread ? 'text-ara_red' : 'text-[#B1B1B1]',
                 ].join(' ')}
                 style={{
-                    bottom: 'calc(20px + 50px + var(--ara-safe-bottom))',
+                    bottom: 'calc(20px + var(--ara-safe-bottom))',
                     boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
                 }}
             >
