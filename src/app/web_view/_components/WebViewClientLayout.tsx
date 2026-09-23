@@ -7,6 +7,7 @@ import { getBridge, useBridgeEvent } from '../_bridge';
 import { getSharedKeyboardGlide, getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from './keyboardMotion';
+import { createKeyboardPredictor } from './keyboardPredict';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
@@ -80,7 +81,8 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // exceed the raw innerHeight mid-glide, on purpose), and --ara-kb-shrink
     // is its distance below the ratcheted unshrunk height. Only keyboard-
     // plausible resizes ratchet; width changes re-baseline. data-ara-kb marks
-    // the episode — tokens.css keys the scroll-anchoring opt-out on it.
+    // the episode — tokens.css keys the scroll-anchoring opt-out on it. The
+    // predictor owns both vars from focusin until the staircase settles.
     useEffect(() => {
         const root = document.documentElement;
         const tracker = getSharedKeyboardGlide(KEYBOARD_GLIDE);
@@ -90,15 +92,28 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         // the last resize frames arrive after focus is gone.
         let engaged = false;
         let settleTimer: number | undefined;
+        let learnTimer: number | undefined;
+        const predictor = createKeyboardPredictor({
+            tracker: getSharedKeyboardTracker(),
+            publish: (column, shrink) => {
+                root.style.setProperty('--ara-kb-shrink', `${Math.max(0, shrink)}px`);
+                if (column === null) root.style.removeProperty('--ara-kb-column');
+                else root.style.setProperty('--ara-kb-column', `${column}px`);
+            },
+            getMaxHeight: () => maxHeight,
+            isEditable: isEditableElement,
+        });
         const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
             const state = tracker.getState();
-            root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
-            if (engaged || height !== window.innerHeight) {
-                root.style.setProperty('--ara-kb-column', `${height}px`);
-            } else {
-                root.style.removeProperty('--ara-kb-column');
+            if (!predictor.active) {
+                root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
+                if (engaged || height !== window.innerHeight) {
+                    root.style.setProperty('--ara-kb-column', `${height}px`);
+                } else {
+                    root.style.removeProperty('--ara-kb-column');
+                }
             }
-            if (maxHeight > height || state.visible) {
+            if (maxHeight > height || state.visible || predictor.active) {
                 root.setAttribute('data-ara-kb', '');
             } else {
                 root.removeAttribute('data-ara-kb');
@@ -123,6 +138,16 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
                 settleTimer = window.setTimeout(releaseIfStuck, 600);
             }
         };
+        // The settled shrink of a keyboard episode is what the predictor replays next time.
+        const scheduleLearn = () => {
+            if (learnTimer !== undefined) window.clearTimeout(learnTimer);
+            learnTimer = window.setTimeout(() => {
+                learnTimer = undefined;
+                if (engaged && window.innerHeight < maxHeight) {
+                    predictor.learn(maxHeight - window.innerHeight);
+                }
+            }, 150);
+        };
         const onResize = () => {
             if (window.innerWidth !== baseWidth) {
                 baseWidth = window.innerWidth;
@@ -141,6 +166,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             if (isEditableElement(document.activeElement) || tracker.getState().visible || engaged) {
                 maxHeight = Math.max(maxHeight, window.innerHeight);
                 engaged = maxHeight > window.innerHeight;
+                scheduleLearn();
             } else {
                 maxHeight = window.innerHeight;
             }
@@ -152,7 +178,9 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         return () => {
             unsubscribe();
             window.removeEventListener('resize', onResize);
+            predictor.destroy();
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
+            if (learnTimer !== undefined) window.clearTimeout(learnTimer);
             root.style.removeProperty('--ara-kb-shrink');
             root.style.removeProperty('--ara-kb-column');
             root.removeAttribute('data-ara-kb');

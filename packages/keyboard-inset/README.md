@@ -209,8 +209,10 @@ Reports do not stream: iOS hands over the keyboard height once, at the end of it
 animation, so consumers following them snap into place. Pass `glide: true` to interpolate
 `insetPx` / `visualHeight` from the last published values to the reported ones over ~120ms
 (`glideDurationMs`); moves of 24px or less (`glideThresholdPx`) pass straight through.
-Nothing is predicted — the target is always the real report, and `visible` still flips with
-it. Pass the SAME options to every hook, so they share one clock:
+A report landing mid-glide retargets it without losing the current velocity, so a host that
+reports in steps still renders as one curve. Nothing is predicted — the target is always the
+real report, and `visible` still flips with it. Pass the SAME options to every hook, so they
+share one clock:
 
 ```tsx
 const KEYBOARD_GLIDE = { glide: true } as const;

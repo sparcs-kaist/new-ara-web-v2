@@ -7,6 +7,8 @@
 - React: `glide` options on `useKeyboardCssVars` and `useWindowBottomAnchoredScroll`
 - Core: `KeyboardState.layoutHeight` — the layout viewport height; under the glide it eases
   across a host's late, coarse resize steps (`insetPx` / `visualHeight` still snap to them)
+- Core: the glide segment is a cubic Hermite that carries its live velocity across a retarget,
+  so a stream of host resize steps renders as one curve instead of restarted ease-outs
 
 ## 0.2.0
 
