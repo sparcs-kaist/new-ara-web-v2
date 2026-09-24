@@ -206,6 +206,16 @@ export default function ChatInput({
     sheetCloseTimerRef.current = setTimeout(unmountSheet, 400);
   };
 
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeSheet();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetOpen]);
+
   // 아래로 끌어 닫기: 높이의 1/3을 넘기거나 빠르게 놓으면 닫는다
   const onSheetTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     const y = e.touches[0].clientY;
