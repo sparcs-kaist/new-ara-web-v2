@@ -1,31 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 interface MessageContextMenuProps {
-    x: number;
-    y: number;
+    text?: string;
+    canDelete: boolean;
     onDelete: () => void;
     onClose: () => void;
 }
 
-const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ x, y, onDelete, onClose }) => {
-    const menuRef = useRef<HTMLDivElement>(null);
+const copyText = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        // clipboard API가 없거나 거부되는 환경(비보안 컨텍스트 등) 대비
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+};
 
-    // 메뉴 바깥을 클릭하면 닫기
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [onClose]);
-
+const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete, onDelete, onClose }) => {
     // Escape 키를 누르면 닫기
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -39,31 +41,40 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ x, y, onDelete,
         };
     }, [onClose]);
 
+    const canCopy = typeof text === 'string' && text.length > 0;
+    if (!canCopy && !canDelete) return null;
+
+    const handleCopyClick = async () => {
+        if (canCopy) await copyText(text);
+        onClose();
+    };
+
     const handleDeleteClick = () => {
         onDelete();
         onClose();
     };
 
+    const rowClass = 'flex h-14 w-full items-center px-6 text-left text-[16px] rounded-none';
+
     const menuContent = (
-        <div
-            ref={menuRef}
-            className="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg py-1"
-            style={{ top: y, left: x }}
-        >
-            <ul>
-                <li>
-                    <button
-                        onClick={handleDeleteClick}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        <span>삭제하기</span>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-6" onClick={onClose}>
+            <div
+                role="dialog"
+                aria-modal="true"
+                className="w-full max-w-[320px] overflow-hidden rounded-[20px] bg-white py-2"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {canCopy && (
+                    <button type="button" className={`${rowClass} text-black`} onClick={handleCopyClick}>
+                        복사하기
                     </button>
-                </li>
-            </ul>
+                )}
+                {canDelete && (
+                    <button type="button" className={`${rowClass} text-ara_red`} onClick={handleDeleteClick}>
+                        삭제하기
+                    </button>
+                )}
+            </div>
         </div>
     );
 

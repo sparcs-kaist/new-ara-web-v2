@@ -112,10 +112,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map()); // [userId, nickname]
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
-        x: number;
-        y: number;
         messageId: number | null;
-    }>({ visible: false, x: 0, y: 0, messageId: null });
+    }>({ visible: false, messageId: null });
 
     const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user.id !== myId) : null;
 
@@ -500,14 +498,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         e.preventDefault();
         setContextMenu({
             visible: true,
-            x: e.pageX,
-            y: e.pageY,
             messageId: messageId,
         });
     };
 
     const closeContextMenu = () => {
-        setContextMenu({ visible: false, x: 0, y: 0, messageId: null });
+        setContextMenu({ visible: false, messageId: null });
     };
 
     // 초대장 생성 핸들러
@@ -594,6 +590,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         typingText = '여러 명이 입력 중';
     }
 
+    const menuMessage = contextMenu.visible ? messages.find(m => m.id === contextMenu.messageId) : undefined;
+
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
         <div className={`w-full ${compact ? '' : 'lg:w-3/4 p-4 lg:p-6 '}bg-white flex flex-col min-h-0 relative overflow-hidden h-full`}>
@@ -677,6 +675,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
                         // 메시지 타입에 따라 내용 구성
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | undefined;
+                        const hasText = mtype !== 'IMAGE' && mtype !== 'FILE' && !!msg.message_content;
+                        const hasMenu = !!msg.id && (hasText || isMe);
 
                         return (
                             <React.Fragment key={messageKey}>  
@@ -688,8 +688,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                     <div className="flex-1 h-px bg-gray-200" />
                                 </div>}
                                 <div
-                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}`}
-                                    onContextMenu={isMe && msg.id ? (e) => handleContextMenu(e, msg.id) : undefined}
+                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}${hasMenu && compact ? ' select-none [-webkit-touch-callout:none]' : ''}`}
+                                    onContextMenu={hasMenu ? (e) => handleContextMenu(e, msg.id) : undefined}
                                 >
                                     {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
                                     {!isMe && (
@@ -791,10 +791,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             />
 
             {/* 컨텍스트 메뉴 렌더링 */}
-            {contextMenu.visible && (
+            {menuMessage && (
                 <MessageContextMenu
-                    x={contextMenu.x}
-                    y={contextMenu.y}
+                    text={menuMessage.message_type !== 'IMAGE' && menuMessage.message_type !== 'FILE' ? menuMessage.message_content : undefined}
+                    canDelete={menuMessage.created_by?.id === myId}
                     onDelete={handleDeleteMessage}
                     onClose={closeContextMenu}
                 />

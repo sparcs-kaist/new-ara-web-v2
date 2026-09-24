@@ -5,9 +5,6 @@ import { getBridge, type Platform } from '../_bridge';
 import { MIN_APP_VERSION, STORE_URL, isBelow } from './appVersion';
 import { InformationIcon } from './icons';
 
-const SNOOZE_KEY = 'ara:update-snooze-until';
-const SNOOZE_MS = 24 * 60 * 60 * 1000;
-
 export function UpdatePrompt() {
     const [platform, setPlatform] = useState<Platform | null>(null);
 
@@ -19,9 +16,6 @@ export function UpdatePrompt() {
                 if (cancelled || !cap) return;
                 const min = MIN_APP_VERSION[cap.platform];
                 if (!min || !isBelow(cap.appVersion, min)) return;
-                try {
-                    if (Date.now() < Number(window.localStorage.getItem(SNOOZE_KEY))) return;
-                } catch { /* blocked storage */ }
                 setPlatform(cap.platform);
             });
         return () => {
@@ -29,14 +23,19 @@ export function UpdatePrompt() {
         };
     }, []);
 
+    useEffect(() => {
+        if (!platform) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setPlatform(null);
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [platform]);
+
     if (!platform) return null;
 
-    const close = () => {
-        try {
-            window.localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
-        } catch { /* blocked storage */ }
-        setPlatform(null);
-    };
+    // Shown once per app launch (the layout stays mounted across in-app navigation).
+    const close = () => setPlatform(null);
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-8">

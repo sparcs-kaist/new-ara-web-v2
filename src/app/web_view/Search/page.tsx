@@ -115,18 +115,18 @@ function SearchInner() {
             )}
 
             {!loading && !error && results.length > 0 && (
-                <ul className="px-5">
+                <ul>
                     {results.map((post, idx) => (
                         <li key={post.id}>
                             <button
                                 type="button"
                                 onClick={() => router.push(`/web_view/Post/${post.id}`)}
-                                className="block w-full bg-transparent py-[11px] text-left"
+                                className="block w-full rounded-none bg-transparent px-5 py-[11px] text-left"
                             >
                                 <PostPreview post={post} />
                             </button>
                             {idx < results.length - 1 && (
-                                <div className="h-px bg-[#F0F0F0]" />
+                                <div className="mx-5 h-px bg-[#F0F0F0]" />
                             )}
                         </li>
                     ))}

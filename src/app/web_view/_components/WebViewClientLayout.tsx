@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomTabBar, isTabRoot } from './BottomTabBar';
-import { getBridge, useBridgeEvent } from '../_bridge';
+import { getBridge, useBridgeEvent, type EventPayload } from '../_bridge';
 import { getSharedKeyboardGlide, getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { createKeyboardPredictor } from './keyboardPredict';
-import { createKeyboardReplay, type KeyboardReplay } from './keyboardReplay';
+import { createKeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 import { PushTokenRegistrar } from './PushTokenRegistrar';
@@ -33,7 +33,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const showTabBar = isTabRoot(pathname);
     const [exitToastAt, setExitToastAt] = useState<number | null>(null);
     const lastBackAtRef = useRef<number | null>(null);
-    const replayRef = useRef<KeyboardReplay | null>(null);
+    const keyboardEventRef = useRef<((p: EventPayload<'keyboard:changed'>) => void) | null>(null);
 
     // Mark <html> with the shell attribute so the scoped tokens apply, and
     // sync the safe-area inset values reported by the native bridge.
@@ -66,18 +66,22 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
 
     // The shipped shell only forwards hardware back as `back:pressed` and
     // never pops natively; newer shells decide natively and never emit this.
-    useBridgeEvent('back:pressed', (p) => {
-        // Replays from before hydration were already handled natively (the shell falls back at 300ms).
-        if (p?.ts && Date.now() - p.ts > 150) return;
-        if (p?.id != null) getBridge().send('back:handled', { id: p.id });
+    useBridgeEvent('back:pressed', () => {
         if (typeof window === 'undefined') return;
-        const onMain = MAIN_PATH.test(pathname ?? '');
-        if (!onMain && window.history.length > 1) {
-            router.back();
+        // An open panel/sheet/prompt closes first, like a native screen; they all listen for Escape.
+        if (document.querySelector('[role="dialog"]')) {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             return;
         }
-        // We're at Main (or an unexpected dead-end with no history).
-        // First press shows the toast; a second within 2s actually exits.
+        // Main and Login are the only pages a back press may leave the app from.
+        const onRoot = MAIN_PATH.test(pathname ?? '') || pathname === '/web_view/Login';
+        if (!onRoot) {
+            // A sub-page never exits: with no history to pop, go home instead.
+            if (window.history.length > 1) router.back();
+            else router.replace('/web_view/Main');
+            return;
+        }
+        // At Main: first press shows the toast; a second within 2s actually exits.
         const now = Date.now();
         if (lastBackAtRef.current && now - lastBackAtRef.current < EXIT_TOAST_MS) {
             getBridge().send('exit');
@@ -93,6 +97,16 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         return () => window.clearTimeout(t);
     }, [exitToastAt]);
 
+    // A press before backgrounding must not count as the first half of a double press after resume.
+    useEffect(() => {
+        const reset = () => {
+            lastBackAtRef.current = null;
+            setExitToastAt(null);
+        };
+        document.addEventListener('visibilitychange', reset);
+        return () => document.removeEventListener('visibilitychange', reset);
+    }, []);
+
     // Publish --ara-kb-shrink / --ara-kb-column from the GLIDED layout height.
     // The shell resizes the layout viewport late and in coarse steps, so the
     // raw innerHeight staircase is not something to follow: --ara-kb-column is
@@ -102,7 +116,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // plausible resizes ratchet; width changes re-baseline. data-ara-kb marks
     // the episode — tokens.css keys the scroll-anchoring opt-out on it. The
     // predictor owns both vars from focusin until the staircase settles.
-    // A shell keyboard:changed event drives the inset replay instead of the predictor.
+    // A shell keyboard:changed event hands the predictor's lift over to the inset replay.
     useEffect(() => {
         const root = document.documentElement;
         const tracker = getSharedKeyboardGlide(KEYBOARD_GLIDE);
@@ -114,22 +128,41 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         let settleTimer: number | undefined;
         let learnTimer: number | undefined;
         const replay = createKeyboardReplay({ tracker: getSharedKeyboardTracker() });
-        replayRef.current = replay;
         const predictor = createKeyboardPredictor({
             tracker: getSharedKeyboardTracker(),
             publish: (column, shrink) => {
                 root.style.setProperty('--ara-kb-shrink', `${Math.max(0, shrink)}px`);
-                if (column === null) root.style.removeProperty('--ara-kb-column');
-                else root.style.setProperty('--ara-kb-column', `${column}px`);
+                // The predicted lift the layout has not realized yet lifts the fixed post composer.
+                if (!replay.holding) {
+                    const layout = Math.max(0, maxHeight - window.innerHeight);
+                    root.style.setProperty('--ara-kb-layout', `${layout}px`);
+                    root.style.setProperty('--ara-kb-pending', `${Math.max(0, shrink - layout)}px`);
+                }
+                if (column !== null) root.style.setProperty('--ara-kb-column', `${column}px`);
+                // Under a hold apply() writes the holding formula right after; a gap would drop the composer.
+                else if (!replay.holding) root.style.removeProperty('--ara-kb-column');
             },
             getMaxHeight: () => maxHeight,
             isEditable: isEditableElement,
-            enabled: () => !replay.received,
+            enabled: () => !replay.holding,
+            // iOS never resizes the layout viewport, so it gets no default.
+            fallbackPx: () => (root.getAttribute('data-ara-platform') === 'android' ? 240 : 0),
         });
         const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
             const state = tracker.getState();
             if (!predictor.active) {
-                root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
+                const shrink = `${Math.max(0, maxHeight - height)}px`;
+                // Only the predictor's decaying seed holds the pad down: the replay itself leads --kb-inset by a frame.
+                root.style.setProperty(
+                    '--ara-kb-shrink',
+                    replay.holding ? `max(${shrink}, var(--ara-kb-lead, 0px))` : shrink,
+                );
+                const layout = Math.max(0, maxHeight - window.innerHeight);
+                root.style.setProperty('--ara-kb-layout', `${layout}px`);
+                root.style.setProperty(
+                    '--ara-kb-pending',
+                    replay.holding ? `max(0px, calc(var(--ara-kb-replay, 0px) - ${layout}px))` : '0px',
+                );
                 if (replay.holding) {
                     // Whichever leads: the replayed curve, or the eased layout when a resize step outruns it.
                     root.style.setProperty(
@@ -201,6 +234,15 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             }
             apply();
         };
+        // The replay continues from the predictor's current lift, so the handover never jumps.
+        keyboardEventRef.current = (p) => {
+            const lift = predictor.lift;
+            predictor.stop();
+            replay.play(p, lift ?? undefined);
+            // Only a resize host learns: on iOS a learned height would arm a lift the layout never confirms.
+            if (p.visible && root.getAttribute('data-ara-platform') === 'android') predictor.learn(p.height);
+            apply();
+        };
         onResize();
         window.addEventListener('resize', onResize);
         const unsubscribe = tracker.subscribe(onTrackerChange);
@@ -209,10 +251,12 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             window.removeEventListener('resize', onResize);
             predictor.destroy();
             replay.destroy();
-            replayRef.current = null;
+            keyboardEventRef.current = null;
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
             if (learnTimer !== undefined) window.clearTimeout(learnTimer);
             root.style.removeProperty('--ara-kb-shrink');
+            root.style.removeProperty('--ara-kb-pending');
+            root.style.removeProperty('--ara-kb-layout');
             root.style.removeProperty('--ara-kb-column');
             root.removeAttribute('data-ara-kb');
         };
@@ -223,7 +267,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     useKeyboardCssVars(KEYBOARD_GLIDE);
     // Sent once at IME animation start; the replay normalizes so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
-        replayRef.current?.play(p);
+        keyboardEventRef.current?.(p);
     });
     // The shell hands the push data over untouched; anything outside /web_view is ignored.
     useBridgeEvent('push:opened', (p) => {

@@ -16,11 +16,14 @@ export interface KeyboardPredictorOptions {
     getMaxHeight: () => number;
     isEditable: (el: Element | null) => boolean;
     enabled?: () => boolean;
+    fallbackPx?: () => number;
 }
 
 export interface KeyboardPredictor {
     readonly active: boolean;
+    readonly lift: number | null;
     learn(kbPx: number): void;
+    stop(): void;
     destroy(): void;
 }
 
@@ -54,7 +57,7 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (u:
 export const imeCurve = cubicBezier(0.2, 0, 0, 1);
 
 export function createKeyboardPredictor(opts: KeyboardPredictorOptions): KeyboardPredictor {
-    const { tracker, publish, getMaxHeight, isEditable, enabled = () => true } = opts;
+    const { tracker, publish, getMaxHeight, isEditable, enabled = () => true, fallbackPx } = opts;
     const memo = new Map<string, number>();
     let rafId: number | null = null;
     let running = false;
@@ -117,10 +120,10 @@ export function createKeyboardPredictor(opts: KeyboardPredictorOptions): Keyboar
     }
 
     const onFocusIn = (e: FocusEvent): void => {
-        // A learned height exists only after a real resize episode, so overlay hosts never arm.
+        // The last learned height, else the host's default; with neither, never arm.
         if (running || !enabled() || !isEditable(e.target as Element | null)) return;
         if (window.innerHeight !== getMaxHeight() || tracker.getState().visible) return;
-        learnedPx = load(key());
+        learnedPx = load(key()) || (fallbackPx?.() ?? 0);
         if (!learnedPx) return;
         running = true;
         release = null;
@@ -151,11 +154,15 @@ export function createKeyboardPredictor(opts: KeyboardPredictorOptions): Keyboar
 
     return {
         get active() { return running; },
+        get lift() { return running && !release ? getMaxHeight() - column : null; },
         learn(kbPx: number) {
             if (!(kbPx >= MIN_KB_PX)) return;
             const k = key();
             memo.set(k, Math.round(kbPx));
             try { window.localStorage.setItem(k, String(Math.round(kbPx))); } catch { /* blocked storage */ }
+        },
+        stop() {
+            if (running) finish();
         },
         destroy() {
             window.removeEventListener('focusin', onFocusIn);

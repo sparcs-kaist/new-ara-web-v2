@@ -8,7 +8,7 @@ import { cubicBezier, imeCurve } from './keyboardPredict';
  * resize host's staircase landing mid-replay never double-lifts.
  */
 export interface KeyboardReplay {
-    play(p: { height: number; visible: boolean; durationMs?: number; curve?: string }): void;
+    play(p: { height: number; visible: boolean; durationMs?: number; curve?: string }, from?: number): void;
     readonly received: boolean;
     readonly holding: boolean;
     destroy(): void;
@@ -22,16 +22,23 @@ export function createKeyboardReplay({ tracker }: { tracker: KeyboardTracker }):
     let rafId: number | null = null;
     let settleTimer: number | undefined;
     let current: number | null = null;
+    let lead = 0;
     let received = false;
     let holding = false;
 
-    const set = (px: number | null): void => {
+    const set = (px: number | null, ahead = 0): void => {
         current = px;
+        lead = ahead;
         tracker.setOverride(px);
         // The unclamped curve; the tracker's inset clamps at 0 when a resize step outruns it.
         const root = document.documentElement.style;
-        if (px === null) root.removeProperty('--ara-kb-replay');
-        else root.setProperty('--ara-kb-replay', `${px}px`);
+        if (px === null) {
+            root.removeProperty('--ara-kb-replay');
+            root.removeProperty('--ara-kb-lead');
+        } else {
+            root.setProperty('--ara-kb-replay', `${px}px`);
+            root.setProperty('--ara-kb-lead', `${ahead}px`);
+        }
     };
 
     const stop = (): void => {
@@ -50,11 +57,14 @@ export function createKeyboardReplay({ tracker }: { tracker: KeyboardTracker }):
     return {
         get received() { return received; },
         get holding() { return holding; },
-        play(p) {
+        play(p, from) {
             received = true;
             stop();
             // Without a live override, start from what geometry shows (an overlay host's open keyboard).
-            const from = current ?? tracker.getState().insetPx;
+            const base = current ?? tracker.getState().insetPx;
+            const start = from ?? base;
+            // The part of the start the predictor seeded (or what is left of it); 0 on an unseeded replay.
+            const seed = from === undefined ? lead : from - base;
             const to = p.visible ? p.height : 0;
             const duration = p.durationMs ?? DEFAULT_MS;
             const curve = p.curve === 'ios' ? iosCurve : imeCurve;
@@ -63,7 +73,8 @@ export function createKeyboardReplay({ tracker }: { tracker: KeyboardTracker }):
             const tick = (): void => {
                 rafId = null;
                 const u = duration > 0 ? Math.min(1, (performance.now() - startedAt) / duration) : 1;
-                set(from + (to - from) * curve(u));
+                const c = curve(u);
+                set(start + (to - start) * c, seed * (1 - c));
                 if (u < 1) { rafId = requestAnimationFrame(tick); return; }
                 if (p.visible) settleTimer = window.setTimeout(release, SETTLE_MS);
                 else release();

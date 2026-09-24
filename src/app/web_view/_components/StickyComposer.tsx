@@ -16,7 +16,7 @@ interface StickyComposerProps {
 // instead made the bar snap by the safe-bottom height mid-animation — that
 // flag lands rAF + stability frames after the geometry moves.
 const CLOSED_RESTING_OFFSET =
-    'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-shrink, 0px)))';
+    'max(0px, calc(var(--ara-safe-bottom, env(safe-area-inset-bottom, 0px)) - var(--ara-kb-layout, var(--ara-kb-shrink, 0px))))';
 
 /**
  * Bottom-anchored bar that auto-lifts above the software keyboard:
@@ -58,8 +58,8 @@ export function StickyComposer({ children, aboveTabBar = false, className }: Sti
                 .join(' ')}
             style={{
                 bottom: aboveTabBar
-                    ? `calc(max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET}) + 50px)`
-                    : `max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET})`,
+                    ? `calc(max(var(--kb-inset, 0px), var(--ara-kb-pending, 0px), ${CLOSED_RESTING_OFFSET}) + 50px)`
+                    : `max(var(--kb-inset, 0px), var(--ara-kb-pending, 0px), ${CLOSED_RESTING_OFFSET})`,
                 paddingLeft: 'var(--ara-safe-left, env(safe-area-inset-left, 0px))',
                 paddingRight: 'var(--ara-safe-right, env(safe-area-inset-right, 0px))',
             }}
