@@ -88,7 +88,7 @@ export type EventMap = {
     'back:pressed': { id?: number; ts?: number };
     'appstate:changed': { state: AppLifecycleState };
     'network:changed': { online: boolean; type?: NetworkType };
-    'keyboard:changed': { height: number; visible: boolean };
+    'keyboard:changed': { height: number; visible: boolean; durationMs?: number; curve?: 'android' | 'ios' };
     'push:received': { title?: string; body?: string; data?: Record<string, unknown>; foreground: boolean };
     'push:opened': { data: Record<string, unknown>; deepLink?: string };
     'deeplink:received': { url: string };

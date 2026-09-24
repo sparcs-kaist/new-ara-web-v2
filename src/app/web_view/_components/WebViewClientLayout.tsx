@@ -8,6 +8,7 @@ import { getSharedKeyboardGlide, getSharedKeyboardTracker, isEditableElement } f
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { createKeyboardPredictor } from './keyboardPredict';
+import { createKeyboardReplay, type KeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 
@@ -20,6 +21,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const showTabBar = isTabRoot(pathname);
     const [exitToastAt, setExitToastAt] = useState<number | null>(null);
     const lastBackAtRef = useRef<number | null>(null);
+    const replayRef = useRef<KeyboardReplay | null>(null);
 
     // Mark <html> with the shell attribute so the scoped tokens apply, and
     // sync the safe-area inset values reported by the native bridge.
@@ -86,6 +88,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // plausible resizes ratchet; width changes re-baseline. data-ara-kb marks
     // the episode — tokens.css keys the scroll-anchoring opt-out on it. The
     // predictor owns both vars from focusin until the staircase settles.
+    // A shell keyboard:changed event drives the inset replay instead of the predictor.
     useEffect(() => {
         const root = document.documentElement;
         const tracker = getSharedKeyboardGlide(KEYBOARD_GLIDE);
@@ -96,6 +99,8 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         let engaged = false;
         let settleTimer: number | undefined;
         let learnTimer: number | undefined;
+        const replay = createKeyboardReplay({ tracker: getSharedKeyboardTracker() });
+        replayRef.current = replay;
         const predictor = createKeyboardPredictor({
             tracker: getSharedKeyboardTracker(),
             publish: (column, shrink) => {
@@ -105,12 +110,19 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             },
             getMaxHeight: () => maxHeight,
             isEditable: isEditableElement,
+            enabled: () => !replay.received,
         });
         const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
             const state = tracker.getState();
             if (!predictor.active) {
                 root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
-                if (engaged || height !== window.innerHeight) {
+                if (replay.holding) {
+                    // Whichever leads: the replayed curve, or the eased layout when a resize step outruns it.
+                    root.style.setProperty(
+                        '--ara-kb-column',
+                        `min(${height}px, calc(${maxHeight}px - var(--ara-kb-replay, 0px)))`,
+                    );
+                } else if (engaged || height !== window.innerHeight) {
                     root.style.setProperty('--ara-kb-column', `${height}px`);
                 } else {
                     root.style.removeProperty('--ara-kb-column');
@@ -182,6 +194,8 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             unsubscribe();
             window.removeEventListener('resize', onResize);
             predictor.destroy();
+            replay.destroy();
+            replayRef.current = null;
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
             if (learnTimer !== undefined) window.clearTimeout(learnTimer);
             root.style.removeProperty('--ara-kb-shrink');
@@ -193,10 +207,9 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // Publish --kb-inset / --kb-visible / --kb-visual-height on <html>
     // (host-agnostic keyboard geometry, see @sparcs-kaist/keyboard-inset).
     useKeyboardCssVars(KEYBOARD_GLIDE);
-    // The shell doesn't emit keyboard:changed today; if it ever does, the
-    // tracker normalizes the raw height so a resize-mode host can't double-lift.
+    // Sent once at IME animation start; the replay normalizes so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
-        getSharedKeyboardTracker().setOverride(p.visible ? p.height : null);
+        replayRef.current?.play(p);
     });
     // The shell hands over the in-app path in data.route; anything outside /web_view is ignored.
     useBridgeEvent('push:opened', (p) => {
