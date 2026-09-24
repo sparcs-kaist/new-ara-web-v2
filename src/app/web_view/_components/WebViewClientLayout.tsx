@@ -12,6 +12,7 @@ import { createKeyboardReplay, type KeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 import { PushTokenRegistrar } from './PushTokenRegistrar';
+import { UpdatePrompt } from './UpdatePrompt';
 import { installPressFeedback } from './pressFeedback';
 
 const MAIN_PATH = /^\/web_view\/Main\/?$/;
@@ -233,6 +234,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     return (
         <WebViewQueryProvider>
             <PushTokenRegistrar />
+            <UpdatePrompt />
             {/* Fixed white cap over the status-bar / camera-notch zone.
                 Without it, scrolling the body lifts the page content into
                 the safe-area on Android (the InAppWebView paints behind
