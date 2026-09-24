@@ -21,6 +21,9 @@ The web calls
 window.FlutterChannel.postMessage(JSON.stringify(envelope))
 ```
 
+or, when `window.FlutterChannel` is absent (flutter_inappwebview `addJavaScriptHandler`),
+`window.flutter_inappwebview.callHandler('FlutterChannel', JSON.stringify(envelope))`.
+
 `envelope` shape:
 ```ts
 {
@@ -80,6 +83,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `log`                     | `{ level, message, data? }`               | —                                      | Forward to native console. |
 | `goBack`                  | —                                         | —                                      | Pop a native screen if any; otherwise `history.back()`. |
 | `exit`                    | —                                         | —                                      | Replaces legacy `'PostWritePageExit'` / `'meal_page_exit'` strings. |
+| `back:handled`            | `{ id }`                                  | —                                      | Ack for `back:pressed` `{ id }`; must arrive within 300ms or the shell handles the press natively. |
 | `setStatusBar`            | `{ color: '#RRGGBB', style: 'light'\|'dark' }` | —                                  | Tint status bar. |
 | `setSafeArea`             | `{ top, bottom, left, right }`            | —                                      | Reserved for future. |
 | `openExternal`            | `{ url: string }`                         | —                                      | Open in external browser. |
@@ -105,7 +109,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `type`                | `payload`                                                  | When |
 |-----------------------|------------------------------------------------------------|------|
 | `bridge:ready`        | `{ platform, osVersion, appVersion, locale, safeArea }`    | After web sends `ready`. |
-| `back:pressed`        | —                                                          | Android hardware back button. Web returns `{ handled: boolean }` via the response channel; if `false`, native pops/exits. |
+| `back:pressed`        | `{ id, ts }`                                               | Android hardware back button. The web must send `back:handled { id }` within 300ms; otherwise the shell handles the press natively (WebView `goBack`, else double-press exit prompt). The web ignores events whose `ts` is older than 150ms (a replay from before hydration). |
 | `appstate:changed`    | `{ state: 'foreground'\|'background'\|'inactive' }`        | App lifecycle changes. |
 | `network:changed`     | `{ online: boolean, type?: 'wifi'\|'cellular' }`           | Connectivity changes. |
 | `keyboard:changed`    | `{ height: number, visible: boolean }`                     | Optional; not emitted by the current shell. `height` is the RAW native keyboard height — the web side normalizes it against any layout-viewport shrink (`@sparcs-kaist/keyboard-inset` setOverride), so resize-mode hosts can emit it safely. |

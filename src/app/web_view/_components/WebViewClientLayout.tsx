@@ -50,7 +50,10 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
 
     // The shipped shell only forwards hardware back as `back:pressed` and
     // never pops natively; newer shells decide natively and never emit this.
-    useBridgeEvent('back:pressed', () => {
+    useBridgeEvent('back:pressed', (p) => {
+        // Replays from before hydration were already handled natively (the shell falls back at 300ms).
+        if (p?.ts && Date.now() - p.ts > 150) return;
+        if (p?.id != null) getBridge().send('back:handled', { id: p.id });
         if (typeof window === 'undefined') return;
         const onMain = MAIN_PATH.test(pathname ?? '');
         if (!onMain && window.history.length > 1) {

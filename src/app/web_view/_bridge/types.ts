@@ -40,6 +40,7 @@ export type CommandMap = {
     log: { req: { level: 'debug' | 'info' | 'warn' | 'error'; message: string; data?: unknown }; res: void };
     goBack: { req: void; res: void };
     exit: { req: void; res: void };
+    'back:handled': { req: { id: number }; res: void };
     setStatusBar: { req: { color: string; style: StatusBarStyle }; res: void };
     setSafeArea: { req: SafeAreaInsets; res: void };
     openExternal: { req: { url: string }; res: void };
@@ -84,7 +85,7 @@ export type EventMap = {
         locale: string;
         safeArea: SafeAreaInsets;
     };
-    'back:pressed': void;
+    'back:pressed': { id?: number; ts?: number };
     'appstate:changed': { state: AppLifecycleState };
     'network:changed': { online: boolean; type?: NetworkType };
     'keyboard:changed': { height: number; visible: boolean };

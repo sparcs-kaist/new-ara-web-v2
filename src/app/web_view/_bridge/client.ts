@@ -32,6 +32,8 @@ interface FlutterChannelLike {
 declare global {
     interface Window {
         FlutterChannel?: FlutterChannelLike;
+        // flutter_inappwebview exposes addJavaScriptHandler handlers only here.
+        flutter_inappwebview?: { callHandler: (name: string, ...args: unknown[]) => Promise<unknown> };
         AraBridge?: AraBridge;
     }
 }
@@ -149,7 +151,12 @@ class AraBridge {
     private post(env: RequestEnvelope): void {
         if (!this.canPost()) return;
         try {
-            window.FlutterChannel!.postMessage(JSON.stringify(env));
+            const msg = JSON.stringify(env);
+            if (window.FlutterChannel) window.FlutterChannel.postMessage(msg);
+            else
+                window.flutter_inappwebview!.callHandler('FlutterChannel', msg).catch((e) =>
+                    console.warn('[AraBridge] callHandler failed', e),
+                );
         } catch (e) {
             console.warn('[AraBridge] postMessage failed', e);
         }
