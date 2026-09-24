@@ -200,17 +200,17 @@ export default function UserViewPage() {
 
             <h2 className="px-5 py-[15px] text-[16px] font-bold text-black">작성한 글</h2>
 
-            <ul className="px-5">
+            <ul>
                 {posts.map((p, idx) => (
                     <li key={p.id}>
                         <button
                             type="button"
                             onClick={() => router.push(`/web_view/Post/${p.id}`)}
-                            className="block w-full bg-transparent py-[11px] text-left"
+                            className="block w-full rounded-none bg-transparent px-5 py-[11px] text-left"
                         >
                             <PostPreview post={p} />
                         </button>
-                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
+                        {idx < posts.length - 1 && <div className="mx-5 h-px bg-[#F0F0F0]" />}
                     </li>
                 ))}
             </ul>
