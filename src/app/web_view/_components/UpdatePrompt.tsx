@@ -30,11 +30,10 @@ export function UpdatePrompt() {
 
     if (!platform) return null;
 
-    const close = (update: boolean) => {
+    const close = () => {
         try {
             window.localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_MS));
         } catch { /* blocked storage */ }
-        if (update) getBridge().send('openExternal', { url: STORE_URL[platform] });
         setPlatform(null);
     };
 
@@ -49,25 +48,26 @@ export function UpdatePrompt() {
                 <h2 id="ara-update-title" className="text-[18px] font-semibold text-black">
                     새 버전이 나왔어요
                 </h2>
-                <p className="mt-2 text-[14px] leading-5 text-[#646464]">
+                <p className="mt-2 break-keep text-[14px] leading-5 text-[#646464]">
                     더 나은 사용을 위해 최신 버전으로 업데이트해 주세요.
                 </p>
                 <div className="mt-6 flex gap-2">
                     <button
                         type="button"
-                        onClick={() => close(false)}
+                        onClick={close}
                         className="h-[44px] flex-1 rounded-[10px] bg-[#F6F6F6] text-[15px] font-medium text-[#646464]"
                     >
                         나중에
                     </button>
-                    <button
-                        type="button"
+                    {/* A real link: the shell hands non-http and off-domain navigations to the OS even without the bridge. */}
+                    <a
+                        href={STORE_URL[platform]}
                         data-press="strong"
-                        onClick={() => close(true)}
-                        className="h-[44px] flex-1 rounded-[10px] bg-ara_red text-[15px] font-medium text-white"
+                        onClick={close}
+                        className="flex h-[44px] flex-1 items-center justify-center rounded-[10px] bg-ara_red text-[15px] font-medium text-white"
                     >
-                        업데이트
-                    </button>
+                        {platform === 'ios' ? 'App Store로 이동' : 'Google Play로 이동'}
+                    </a>
                 </div>
             </div>
         </div>
