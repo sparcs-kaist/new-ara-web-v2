@@ -114,7 +114,8 @@
 }
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed] {
     --ara-press-a: 0.06;
-    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 100ms ease-out;
+    /* background-color keeps Tailwind transition-colors elements (the Settings switch) fading while pressed. */
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 100ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="strong"][data-pressed] {
     --ara-press-a: 0.12;
@@ -122,7 +123,7 @@
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
     --ara-press-a: 0;
     /* r/x/y stay listed: dropping them would cancel a quick tap's still-running growth. */
-    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 200ms ease-out;
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 200ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 /* Zero specificity so an element's own rounded-* wins; the ripple follows the radius. */
 :where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
