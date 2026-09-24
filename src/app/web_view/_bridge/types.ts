@@ -50,8 +50,9 @@ export type CommandMap = {
     'back:handled': { req: { id: number }; res: void };
     setStatusBar: { req: { color: string; style: StatusBarStyle }; res: void };
     setSafeArea: { req: SafeAreaInsets; res: void };
+    /** Opens any installed handler for the url (custom app schemes included);
+     *  rejects with `unavailable` when nothing opens it, which is the "not installed" signal. */
     openExternal: { req: { url: string }; res: void };
-    canOpen: { req: { url: string }; res: { canOpen: boolean } };
     share: { req: { title?: string; text?: string; url?: string }; res: { shared: boolean } };
     pickImage: {
         req: { source: 'gallery' | 'camera'; maxBytes?: number };

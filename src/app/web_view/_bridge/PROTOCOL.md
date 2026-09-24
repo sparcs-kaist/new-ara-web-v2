@@ -86,8 +86,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `back:handled`            | `{ id }`                                  | —                                      | Ack for `back:pressed` `{ id }`; must arrive within 300ms or the shell handles the press natively. |
 | `setStatusBar`            | `{ color: '#RRGGBB', style: 'light'\|'dark' }` | —                                  | Tint status bar. |
 | `setSafeArea`             | `{ top, bottom, left, right }`            | —                                      | Reserved for future. |
-| `openExternal`            | `{ url: string }`                         | —                                      | Open in the external browser / handling app; works for undeclared schemes, `unavailable` when nothing opens it. |
-| `canOpen`                 | `{ url: string }`                         | `{ canOpen: boolean }`                 | `true` only for schemes the app declares. |
+| `openExternal`            | `{ url: string }`                         | —                                      | Opens any installed handler (browser, `tel:`, custom app schemes); rejects with `unavailable` when nothing opens it — that rejection is the "not installed" signal, so a new app integration needs no shell change. |
 | `share`                   | `{ title?, text?, url? }`                 | `{ shared: boolean }`                  | OS share sheet. |
 | `pickImage`               | `{ source: 'gallery'\|'camera', maxBytes? }` | `{ uri: string, mime: string, name: string, base64?: string }` | Returns a temporary uri the web can upload directly via fetch. |
 | `pickFile`                | `{ accept?: string[], multiple?: boolean }` | `{ files: { uri, mime, name, size }[] }` | |
