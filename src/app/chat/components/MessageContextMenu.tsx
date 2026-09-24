@@ -66,12 +66,12 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete
             >
                 {canCopy && (
                     <button type="button" className={`${rowClass} text-black`} onClick={handleCopyClick}>
-                        복사
+                        복사하기
                     </button>
                 )}
                 {canDelete && (
                     <button type="button" className={`${rowClass} text-ara_red`} onClick={handleDeleteClick}>
-                        삭제
+                        삭제하기
                     </button>
                 )}
             </div>
