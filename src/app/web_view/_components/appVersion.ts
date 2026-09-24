@@ -1,4 +1,4 @@
-export const MIN_APP_VERSION = { android: '1.2.5', ios: '1.2.4' } as const;
+export const MIN_APP_VERSION = { android: '1.2.6', ios: '1.2.4' } as const;
 
 export const STORE_URL = {
     android: 'market://details?id=org.sparcs.newara',
