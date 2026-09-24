@@ -16,6 +16,15 @@ import { PushTokenRegistrar } from './PushTokenRegistrar';
 const MAIN_PATH = /^\/web_view\/Main\/?$/;
 const EXIT_TOAST_MS = 2000;
 
+// Backend push data convention: { type: 'chat' | 'comment' | 'article', target_id, article_id? }.
+function pushRoute(data?: Record<string, unknown>): string | undefined {
+    if (!data) return undefined;
+    if (data.type === 'chat' && data.target_id != null) return `/web_view/Chat/${data.target_id}`;
+    const articleId = data.article_id ?? data.target_id;
+    if ((data.type === 'comment' || data.type === 'article') && articleId != null) return `/web_view/Post/${articleId}`;
+    return undefined;
+}
+
 export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
@@ -212,9 +221,9 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     useBridgeEvent('keyboard:changed', (p) => {
         replayRef.current?.play(p);
     });
-    // The shell hands over the in-app path in data.route; anything outside /web_view is ignored.
+    // The shell hands the push data over untouched; anything outside /web_view is ignored.
     useBridgeEvent('push:opened', (p) => {
-        const to = typeof p.data?.route === 'string' ? p.data.route : p.deepLink;
+        const to = typeof p.data?.route === 'string' ? p.data.route : (pushRoute(p.data) ?? p.deepLink);
         if (to && to.startsWith('/web_view/')) router.push(to);
     });
 
