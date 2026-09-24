@@ -219,6 +219,14 @@ describe('withKeyboardGlide', () => {
         expect(rafQueue.size).toBe(0);
     });
 
+    it('publishes an override-sourced report as-is with no frame scheduled', () => {
+        const { raw, glided } = make();
+        raw.emit({ insetPx: 300, visualHeight: 800, visible: true, source: 'override' });
+        expect(geo(glided)).toEqual([300, 800]);
+        expect(glided.getState().source).toBe('override');
+        expect(rafQueue.size).toBe(0);
+    });
+
     it('cancels the in-flight frame and the raw subscription with the last listener', () => {
         const raw = new FakeTracker();
         const glided = withKeyboardGlide(raw, { glide: true });

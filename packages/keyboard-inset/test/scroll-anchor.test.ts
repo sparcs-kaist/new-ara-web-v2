@@ -608,6 +608,21 @@ describe('window / always', () => {
         expect(h.scrollY).toBe(1140); // returns to the true gap (max - 60), NOT 900
     });
 
+    it('completes a clamped fold when the host shrink lands while the inset drops (effectiveHeight unchanged)', () => {
+        const kb = makeFakeTracker({ insetPx: 0, visible: true });
+        const h = makeWindowHarness({ clientHeight: 800, scrollHeight: 1000, scrollY: 200 }); // bottom, max 200
+        mount(window, { pin: 'always', tracker: kb.tracker });
+
+        kb.state.insetPx = 300; // override inset ahead of the layout shrink: fold clamps at max 200
+        kb.fire();
+        expect(h.scrollY).toBe(200);
+
+        h.setClientHeight(500); // host resize lands; the normalized inset drops to 0 with it
+        kb.state.insetPx = 0;
+        h.resize();
+        expect(h.scrollY).toBe(500); // the extended scroll range lets the fold complete
+    });
+
     // --- regression (defect 3): SHRINK baseline read fresh, survives silent grow --
     // Content loads after mount and grows scrollHeight with no scroll/resize
     // event, so the stored gap is stale (still ~0). The first keyboard shrink

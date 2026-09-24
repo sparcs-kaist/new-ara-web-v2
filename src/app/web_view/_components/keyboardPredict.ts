@@ -15,6 +15,7 @@ export interface KeyboardPredictorOptions {
     publish: (column: number | null, shrink: number) => void;
     getMaxHeight: () => number;
     isEditable: (el: Element | null) => boolean;
+    enabled?: () => boolean;
 }
 
 export interface KeyboardPredictor {
@@ -31,7 +32,7 @@ const MAX_RUN_MS = 2000;
 const RELEASE_MS = 120;
 const MIN_KB_PX = 100;
 
-function cubicBezier(x1: number, y1: number, x2: number, y2: number): (u: number) => number {
+export function cubicBezier(x1: number, y1: number, x2: number, y2: number): (u: number) => number {
     const cx = 3 * x1;
     const bx = 3 * (x2 - x1) - cx;
     const ax = 1 - cx - bx;
@@ -50,10 +51,10 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number): (u: number
 }
 
 /** Android InsetsController SYNC_IME. */
-const imeCurve = cubicBezier(0.2, 0, 0, 1);
+export const imeCurve = cubicBezier(0.2, 0, 0, 1);
 
 export function createKeyboardPredictor(opts: KeyboardPredictorOptions): KeyboardPredictor {
-    const { tracker, publish, getMaxHeight, isEditable } = opts;
+    const { tracker, publish, getMaxHeight, isEditable, enabled = () => true } = opts;
     const memo = new Map<string, number>();
     let rafId: number | null = null;
     let running = false;
@@ -117,7 +118,7 @@ export function createKeyboardPredictor(opts: KeyboardPredictorOptions): Keyboar
 
     const onFocusIn = (e: FocusEvent): void => {
         // A learned height exists only after a real resize episode, so overlay hosts never arm.
-        if (running || !isEditable(e.target as Element | null)) return;
+        if (running || !enabled() || !isEditable(e.target as Element | null)) return;
         if (window.innerHeight !== getMaxHeight() || tracker.getState().visible) return;
         learnedPx = load(key());
         if (!learnedPx) return;

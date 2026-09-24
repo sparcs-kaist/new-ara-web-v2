@@ -212,7 +212,15 @@ function anchorWindow(
             gap = readGap();
             return;
         }
-        if (delta === 0) return;
+        if (delta === 0) {
+            if (carry > 0) {
+                const want = readGap() - carry;
+                writeGap(want);
+                carry = Math.max(0, readGap() - want);
+                gap = readGap();
+            }
+            return;
+        }
         if (delta > 0) {
             // Shrink baseline read fresh (never engine-clamped; survives
             // content growth that fired no scroll event). userGap is what
@@ -262,16 +270,19 @@ function anchorWindow(
 
     // Synchronous on purpose: resize-mode hosts fire per animation frame,
     // and compensating inside the event keeps the pin paint-atomic.
-    window.addEventListener('resize', evaluate);
-    window.visualViewport?.addEventListener('resize', evaluate);
+    // Under an override the tracker re-evaluates the same frame with the normalized inset;
+    // evaluating on the raw event first would fold by the whole step and unfold again.
+    const onResize = () => { if (tracker.getState().source !== 'override') evaluate(); };
+    window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
     window.addEventListener('scroll', onScroll, { passive: true });
     const unsubscribe = tracker.subscribe(evaluate); // overlay-mode inset changes
     gap = readGap();
 
     return () => {
         unsubscribe();
-        window.removeEventListener('resize', evaluate);
-        window.visualViewport?.removeEventListener('resize', evaluate);
+        window.removeEventListener('resize', onResize);
+        window.visualViewport?.removeEventListener('resize', onResize);
         window.removeEventListener('scroll', onScroll);
     };
 }

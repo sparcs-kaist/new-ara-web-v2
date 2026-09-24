@@ -14,7 +14,10 @@ export function ShellBackHandler() {
         let off: (() => void) | undefined;
         import('../_bridge/client').then(({ getBridge }) => {
             if (cancelled) return;
-            off = getBridge().on('back:pressed', () => {
+            off = getBridge().on('back:pressed', (p) => {
+                // Replays from before hydration were already handled natively (the shell falls back at 300ms).
+                if (p?.ts && Date.now() - p.ts > 150) return;
+                if (p?.id != null) getBridge().send('back:handled', { id: p.id });
                 if (window.history.length > 1) {
                     router.back();
                     return;

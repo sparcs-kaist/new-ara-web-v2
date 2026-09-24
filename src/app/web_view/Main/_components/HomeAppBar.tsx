@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AraLogo, NotificationIcon, PostIcon, SearchIcon } from '@/app/web_view/_components';
+import { useBridgeEvent } from '@/app/web_view/_bridge';
 import { fetchNotifications } from '@/lib/api/notification';
 
 /**
@@ -16,6 +17,8 @@ export function HomeAppBar() {
     // Mirrors NotificationProvider.checkIsNotReadExist: a single quick fetch
     // to know whether the bell icon needs the red dot.
     const [hasUnread, setHasUnread] = useState(false);
+    const [pushTick, setPushTick] = useState(0);
+    useBridgeEvent('push:received', () => setPushTick((t) => t + 1));
     useEffect(() => {
         let cancelled = false;
         fetchNotifications(1, 1)
@@ -28,7 +31,7 @@ export function HomeAppBar() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [pushTick]);
 
     return (
         <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-4">

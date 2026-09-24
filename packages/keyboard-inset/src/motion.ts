@@ -93,6 +93,8 @@ export function withKeyboardGlide(
 
     const onRaw = (next: KeyboardState): void => {
         raw = next;
+        // An override is already streamed per frame (the shell's IME replay); gliding it would lag its curve.
+        if (next.source === 'override') { snap(next); return; }
         // The seed (visualHeight 0) is not a position anything was ever painted at.
         if (unmeasured) { unmeasured = false; snap(next); return; }
         // Rotation: not one scale to glide across.
