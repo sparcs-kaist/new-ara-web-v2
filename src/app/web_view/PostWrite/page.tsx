@@ -437,7 +437,7 @@ function PostWriteInner() {
                     type="button"
                     aria-label="키보드 내리기"
                     onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
-                    className="ml-[7px] text-black"
+                    className="ml-[7px] rounded-full text-black"
                 >
                     <KeyboardDownIcon size={36} />
                 </button>

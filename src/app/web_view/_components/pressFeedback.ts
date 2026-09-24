@@ -1,9 +1,14 @@
 const DELAY_MS = 100;
 const MIN_VISIBLE_MS = 100;
-const FADE_MS = 150;
+const FADE_MS = 200;
 const MOVE_PX = 8;
 const SELECTOR = 'button, a[href], [role="button"], [role="tab"], summary, [data-press]';
 const SKIP = ':disabled, [aria-disabled="true"], [data-press="none"]';
+const GEOMETRY = ['--ara-press-tx', '--ara-press-ty', '--ara-press-cx', '--ara-press-cy', '--ara-press-max'];
+
+const clearGeometry = (target: Element | null) => {
+    if (target instanceof HTMLElement) GEOMETRY.forEach((p) => target.style.removeProperty(p));
+};
 
 export function installPressFeedback(): () => void {
     let el: Element | null = null;
@@ -23,6 +28,7 @@ export function installPressFeedback(): () => void {
         window.clearTimeout(timer);
         el?.removeAttribute('data-pressed');
         el?.removeAttribute('data-press-release');
+        clearGeometry(el);
         el = null;
         pointerId = null;
     };
@@ -38,6 +44,7 @@ export function installPressFeedback(): () => void {
             target.setAttribute('data-press-release', '');
             timer = window.setTimeout(() => {
                 target.removeAttribute('data-press-release');
+                clearGeometry(target);
                 el = null;
             }, FADE_MS);
         }, Math.max(0, pressedAt + MIN_VISIBLE_MS - performance.now()));
@@ -51,6 +58,17 @@ export function installPressFeedback(): () => void {
         pointerId = e.pointerId;
         startX = e.clientX;
         startY = e.clientY;
+        if (target instanceof HTMLElement) {
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            target.style.setProperty('--ara-press-tx', `${x}px`);
+            target.style.setProperty('--ara-press-ty', `${y}px`);
+            target.style.setProperty('--ara-press-cx', `${rect.width / 2}px`);
+            target.style.setProperty('--ara-press-cy', `${rect.height / 2}px`);
+            const max = Math.hypot(Math.max(x, rect.width - x), Math.max(y, rect.height - y));
+            target.style.setProperty('--ara-press-max', `${max}px`);
+        }
         timer = window.setTimeout(press, DELAY_MS);
     };
 
