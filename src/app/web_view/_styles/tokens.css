@@ -115,6 +115,17 @@
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="dim"][data-press-release] {
     animation: ara-press-dim-out 150ms ease-out;
 }
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="strong"][data-press-release] {
+    animation: ara-press-strong-out 150ms ease-out;
+}
+@keyframes ara-press-strong-out {
+    from {
+        box-shadow: inset 0 0 0 100vmax var(--ara-press-strong);
+    }
+    to {
+        box-shadow: inset 0 0 0 100vmax transparent;
+    }
+}
 @keyframes ara-press-out {
     from {
         box-shadow: inset 0 0 0 100vmax var(--ara-press);

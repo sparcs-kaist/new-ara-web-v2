@@ -1,4 +1,4 @@
-const DELAY_MS = 70;
+const DELAY_MS = 100;
 const MIN_VISIBLE_MS = 100;
 const FADE_MS = 150;
 const MOVE_PX = 8;
@@ -44,7 +44,7 @@ export function installPressFeedback(): () => void {
 
     const onDown = (e: PointerEvent) => {
         const target = (e.target as Element).closest?.(SELECTOR);
-        if (!target || e.button !== 0 || pointerId !== null || target.matches(SKIP)) return;
+        if (!target || e.button !== 0 || target.matches(SKIP)) return;
         cancel();
         el = target;
         pointerId = e.pointerId;
@@ -59,9 +59,14 @@ export function installPressFeedback(): () => void {
 
     const onUp = (e: PointerEvent) => {
         if (e.pointerId !== pointerId) return;
-        // A pan start also cancels the pointer; flashing the overlay then would mark a scroll as a tap.
-        if (e.type === 'pointercancel' && !el?.hasAttribute('data-pressed')) cancel();
+        // The browser cancels the pointer when a pan starts inside the touch slop, before any move exceeds MOVE_PX.
+        if (e.type === 'pointercancel') cancel();
         else release();
+    };
+
+    // Only a scroll under the finger is a pan; one after release (chat scroll-to-bottom, anchoring) keeps the flash.
+    const onScroll = () => {
+        if (pointerId !== null) cancel();
     };
 
     const onVisibility = () => {
@@ -76,7 +81,7 @@ export function installPressFeedback(): () => void {
     document.addEventListener('pointerup', onUp, capture);
     document.addEventListener('pointercancel', onUp, capture);
     // Capture: inner scrollers' scroll events do not bubble.
-    document.addEventListener('scroll', cancel, passive);
+    document.addEventListener('scroll', onScroll, passive);
     document.addEventListener('visibilitychange', onVisibility, { signal: ac.signal });
     window.addEventListener('blur', cancel, { signal: ac.signal });
     return () => {
