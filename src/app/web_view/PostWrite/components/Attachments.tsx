@@ -265,7 +265,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                                 type="button"
                                 onClick={pickFile}
                                 aria-label="첨부파일 추가"
-                                className="text-ara_red"
+                                className="rounded-full text-ara_red"
                             >
                                 <AddIcon size={34} />
                             </button>

@@ -200,7 +200,7 @@ export default function BoardIdPage() {
                                         : '/web_view/PostWrite',
                                 )
                             }
-                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
                             <PostIcon size={28} />
                         </button>
@@ -214,7 +214,7 @@ export default function BoardIdPage() {
                                         : '/web_view/Search',
                                 )
                             }
-                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
                             <SearchIcon size={28} />
                         </button>

@@ -41,7 +41,7 @@ export function HomeAppBar() {
                     type="button"
                     aria-label="알림"
                     onClick={() => router.push('/web_view/Notifications')}
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <span className="relative inline-flex">
                         <NotificationIcon size={35} />
@@ -54,7 +54,7 @@ export function HomeAppBar() {
                     type="button"
                     aria-label="글쓰기"
                     onClick={() => router.push('/web_view/PostWrite')}
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <PostIcon size={35} />
                 </button>
@@ -62,7 +62,7 @@ export function HomeAppBar() {
                     type="button"
                     aria-label="검색"
                     onClick={() => router.push('/web_view/Search')}
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <SearchIcon size={35} />
                 </button>

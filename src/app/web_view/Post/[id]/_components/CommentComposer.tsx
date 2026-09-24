@@ -126,8 +126,7 @@ export function CommentComposer({
                             type="button"
                             onClick={onCancelReply}
                             aria-label="취소"
-                            data-press="dim"
-                            className="mr-2 flex h-[30px] w-[30px] items-center justify-center bg-transparent text-ara_red"
+                            className="mr-2 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-transparent text-ara_red"
                         >
                             <Close1Icon size={22} />
                         </button>
@@ -171,9 +170,8 @@ export function CommentComposer({
                         onClick={submit}
                         disabled={disabled}
                         aria-label="전송"
-                        data-press="dim"
                         className={[
-                            'ml-3 flex h-[30px] w-[30px] shrink-0 items-center justify-center bg-transparent',
+                            'ml-3 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-transparent',
                             disabled ? 'text-[#BBBBBB]' : 'text-ara_red',
                         ].join(' ')}
                     >

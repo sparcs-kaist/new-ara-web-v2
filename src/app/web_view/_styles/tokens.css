@@ -30,9 +30,6 @@
     --ara-safe-left: env(safe-area-inset-left, 0px);
     --ara-safe-right: env(safe-area-inset-right, 0px);
 
-    --ara-press: rgba(0, 0, 0, 0.06);
-    --ara-press-strong: rgba(0, 0, 0, 0.12);
-
     background: #ffffff;
     color: #111111;
     -webkit-font-smoothing: antialiased;
@@ -98,47 +95,37 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Press state is set by pressFeedback.ts. */
+@property --ara-press-x { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
+@property --ara-press-y { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
+@property --ara-press-r { syntax: '<length-percentage>'; inherits: false; initial-value: 0px; }
+@property --ara-press-a { syntax: '<number>'; inherits: false; initial-value: 0; }
+/* Ripple: pressFeedback.ts sets the inline geometry vars (touch point, centre, covering radius). */
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press]) {
+    --ara-press-x: var(--ara-press-tx, 50%);
+    --ara-press-y: var(--ara-press-ty, 50%);
+    --ara-press-r: calc(var(--ara-press-max, 100vmax) * 0.3);
+}
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed],
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
+    --ara-press-x: var(--ara-press-cx, 50%);
+    --ara-press-y: var(--ara-press-cy, 50%);
+    --ara-press-r: calc(var(--ara-press-max, 100vmax) + 24px);
+    background-image: radial-gradient(circle at var(--ara-press-x) var(--ara-press-y), rgba(0, 0, 0, var(--ara-press-a)) calc(var(--ara-press-r) - 24px), transparent var(--ara-press-r));
+}
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed] {
-    box-shadow: inset 0 0 0 100vmax var(--ara-press);
+    --ara-press-a: 0.06;
+    /* background-color keeps Tailwind transition-colors elements (the Settings switch) fading while pressed. */
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 100ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="strong"][data-pressed] {
-    box-shadow: inset 0 0 0 100vmax var(--ara-press-strong);
-}
-[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="dim"][data-pressed] {
-    box-shadow: none;
-    opacity: 0.4;
+    --ara-press-a: 0.12;
 }
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
-    animation: ara-press-out 150ms ease-out;
+    --ara-press-a: 0;
+    /* r/x/y stay listed: dropping them would cancel a quick tap's still-running growth. */
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 200ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="dim"][data-press-release] {
-    animation: ara-press-dim-out 150ms ease-out;
-}
-[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="strong"][data-press-release] {
-    animation: ara-press-strong-out 150ms ease-out;
-}
-@keyframes ara-press-strong-out {
-    from {
-        box-shadow: inset 0 0 0 100vmax var(--ara-press-strong);
-    }
-    to {
-        box-shadow: inset 0 0 0 100vmax transparent;
-    }
-}
-@keyframes ara-press-out {
-    from {
-        box-shadow: inset 0 0 0 100vmax var(--ara-press);
-    }
-    to {
-        box-shadow: inset 0 0 0 100vmax transparent;
-    }
-}
-@keyframes ara-press-dim-out {
-    from {
-        opacity: 0.4;
-    }
-    to {
-        opacity: 1;
-    }
+/* Zero specificity so an element's own rounded-* wins; the ripple follows the radius. */
+:where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
+    border-radius: 10px;
 }
