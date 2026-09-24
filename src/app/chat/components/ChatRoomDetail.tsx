@@ -688,7 +688,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                     <div className="flex-1 h-px bg-gray-200" />
                                 </div>}
                                 <div
-                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}${hasMenu ? ' select-none [-webkit-touch-callout:none]' : ''}`}
+                                    className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}${hasMenu && compact ? ' select-none [-webkit-touch-callout:none]' : ''}`}
                                     onContextMenu={hasMenu ? (e) => handleContextMenu(e, msg.id) : undefined}
                                 >
                                     {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}

@@ -66,18 +66,22 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
 
     // The shipped shell only forwards hardware back as `back:pressed` and
     // never pops natively; newer shells decide natively and never emit this.
-    useBridgeEvent('back:pressed', (p) => {
-        // Replays from before hydration were already handled natively (the shell falls back at 300ms).
-        if (p?.ts && Date.now() - p.ts > 150) return;
-        if (p?.id != null) getBridge().send('back:handled', { id: p.id });
+    useBridgeEvent('back:pressed', () => {
         if (typeof window === 'undefined') return;
-        const onMain = MAIN_PATH.test(pathname ?? '');
-        if (!onMain && window.history.length > 1) {
-            router.back();
+        // An open panel/sheet/prompt closes first, like a native screen; they all listen for Escape.
+        if (document.querySelector('[role="dialog"]')) {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             return;
         }
-        // We're at Main (or an unexpected dead-end with no history).
-        // First press shows the toast; a second within 2s actually exits.
+        // Main and Login are the only pages a back press may leave the app from.
+        const onRoot = MAIN_PATH.test(pathname ?? '') || pathname === '/web_view/Login';
+        if (!onRoot) {
+            // A sub-page never exits: with no history to pop, go home instead.
+            if (window.history.length > 1) router.back();
+            else router.replace('/web_view/Main');
+            return;
+        }
+        // At Main: first press shows the toast; a second within 2s actually exits.
         const now = Date.now();
         if (lastBackAtRef.current && now - lastBackAtRef.current < EXIT_TOAST_MS) {
             getBridge().send('exit');
@@ -92,6 +96,16 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         const t = window.setTimeout(() => setExitToastAt(null), EXIT_TOAST_MS);
         return () => window.clearTimeout(t);
     }, [exitToastAt]);
+
+    // A press before backgrounding must not count as the first half of a double press after resume.
+    useEffect(() => {
+        const reset = () => {
+            lastBackAtRef.current = null;
+            setExitToastAt(null);
+        };
+        document.addEventListener('visibilitychange', reset);
+        return () => document.removeEventListener('visibilitychange', reset);
+    }, []);
 
     // Publish --ara-kb-shrink / --ara-kb-column from the GLIDED layout height.
     // The shell resizes the layout viewport late and in coarse steps, so the

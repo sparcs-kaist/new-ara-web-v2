@@ -186,6 +186,12 @@ class AraBridge {
         // Event dispatch
         const type = env.type as EventType;
         const payload = (env as { payload?: unknown }).payload as EventPayload<EventType>;
+        // Ack here, before any listener or hydration work: the shell handles the press natively
+        // (goBack / exit prompt) when no ack arrives within 300ms, which must never race the web.
+        if (type === 'back:pressed') {
+            const id = (payload as EventPayload<'back:pressed'> | undefined)?.id;
+            if (id != null) this.send('back:handled', { id });
+        }
         const set = this.listeners.get(type);
         if (set && set.size > 0) {
             for (const l of set) {
