@@ -37,7 +37,7 @@ const AllergyWarningIcon = ({ allergyIds }: AllergyWarningIconProps) => {
   const allergyNames = allergyIds.map(id => ALLERGEN_MAP[id]).filter(Boolean);
 
   return (
-    <div ref={iconRef} className="relative cursor-pointer" onClick={(e) => {
+    <div ref={iconRef} role="button" className="relative cursor-pointer" onClick={(e) => {
       e.stopPropagation(); // 부모 요소의 클릭 이벤트 전파 방지
       setShowPopover(!showPopover);
     }}>
@@ -183,6 +183,7 @@ export default function MenuList({
           {cafeteriaMenus.map((item, index) => (
             <div
               key={index}
+              role="button"
               onClick={() => toggleItem(index)}
               className={`
                 flex items-center justify-between py-1 px-2

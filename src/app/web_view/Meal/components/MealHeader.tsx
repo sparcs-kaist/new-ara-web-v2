@@ -110,7 +110,7 @@ export default function MealHeader({
     <>
       <div className="flex justify-between items-center h-12 w-full">
         {/* 뒤로가기 버튼 */}
-        <div className="flex items-center cursor-pointer" onClick={onBackClick}>
+        <div role="button" className="flex items-center cursor-pointer" onClick={onBackClick}>
           <BackIcon />
           <span className="text-red-500 text-base font-medium">{backLabel}</span>
         </div>
@@ -120,6 +120,7 @@ export default function MealHeader({
         
         {/* 알레르기 필터 버튼 */}
         <div 
+          role="button"
           className="p-2.5 flex items-center relative cursor-pointer" 
           onClick={handleAllergyFilterClick}
         >

@@ -71,6 +71,7 @@ const CalendarDate: React.FC<CalendarDateProps> = ({
 
   return (
     <div
+      role="button"
       className={`flex items-center justify-center flex-1 w-full ${getWrapperHeight(size)} ${exist ? "cursor-pointer" : "cursor-default"} ${(() => {
         if (type === "End") return "bg-gradient-to-l from-mint-300 to-transparent";
         if (type === "Start") return "bg-gradient-to-r from-mint-300 to-transparent";

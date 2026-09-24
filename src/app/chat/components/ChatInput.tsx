@@ -333,6 +333,7 @@ export default function ChatInput({
           <button
             type="button"
             aria-label="첨부"
+            data-press="dim"
             className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${isUploading ? "text-[#BBBBBB]" : "text-[#636363]"}`}
             onClick={openSheet}
             disabled={isUploading}
@@ -360,6 +361,7 @@ export default function ChatInput({
           <button
             type="button"
             aria-label="전송"
+            data-press="dim"
             className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${canSend ? "text-ara_red" : "text-[#BBBBBB]"}`}
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleSend}
@@ -408,7 +410,7 @@ export default function ChatInput({
                     <button
                       key={label}
                       type="button"
-                      className="flex w-full items-center gap-[16px] px-[20px] h-[64px] text-left active:bg-[#F6F6F6]"
+                      className="flex w-full items-center gap-[16px] px-[20px] h-[64px] text-left"
                       onClick={() => {
                         if (dragRef.current.dy > 8) return;
                         pickFrom(inputRef);

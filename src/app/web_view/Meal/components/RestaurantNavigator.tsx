@@ -22,6 +22,7 @@ interface TimeButtonProps {
 
 const TimeButton = ({ label, isSelected, onClick }: TimeButtonProps) => (
   <div 
+    role="button"
     className={`w-12 h-5 px-3 py-[3px] rounded-[10px] flex justify-center items-center cursor-pointer
       ${isSelected 
         ? 'bg-red-500 text-white' 
@@ -109,6 +110,7 @@ export default function RestaurantNavigator({
       {/* 식당 선택 영역 */}
       <div 
         ref={restaurantSelectorRef}
+        role="button"
         className="flex items-center cursor-pointer relative"
         onClick={handleRestaurantClick}
       >

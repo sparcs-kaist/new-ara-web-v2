@@ -12,6 +12,7 @@ import { createKeyboardReplay, type KeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 import { PushTokenRegistrar } from './PushTokenRegistrar';
+import { installPressFeedback } from './pressFeedback';
 
 const MAIN_PATH = /^\/web_view\/Main\/?$/;
 const EXIT_TOAST_MS = 2000;
@@ -38,6 +39,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     useEffect(() => {
         const root = document.documentElement;
         root.setAttribute('data-ara-shell', '');
+        const uninstallPress = installPressFeedback();
         let cancelled = false;
         getBridge()
             .ready()
@@ -51,6 +53,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             });
         return () => {
             cancelled = true;
+            uninstallPress();
             root.removeAttribute('data-ara-shell');
             root.removeAttribute('data-ara-platform');
             root.style.removeProperty('--ara-safe-top');

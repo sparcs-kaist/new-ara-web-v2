@@ -60,6 +60,7 @@ export default function RestaurantSelection({
       {restaurantNames.map((name, index) => (
         <div key={name}>
           <div 
+            role="button"
             className="self-stretch px-[5px] py-3 flex items-center gap-[5px] cursor-pointer hover:bg-gray-50"
             onClick={() => handleSelect(index)}
           >

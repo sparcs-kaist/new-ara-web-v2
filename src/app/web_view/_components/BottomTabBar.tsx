@@ -52,6 +52,7 @@ export function BottomTabBar() {
                         type="button"
                         role="tab"
                         aria-selected={active}
+                        data-press="none"
                         onClick={() => {
                             if (active) return;
                             const onMain = TABS[0].matcher.test(pathname ?? '');
