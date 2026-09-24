@@ -132,6 +132,13 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             tracker: getSharedKeyboardTracker(),
             publish: (column, shrink) => {
                 root.style.setProperty('--ara-kb-shrink', `${Math.max(0, shrink)}px`);
+                // The predicted lift the layout has not realized yet lifts the fixed post composer.
+                if (!replay.holding) {
+                    root.style.setProperty(
+                        '--ara-kb-pending',
+                        `${Math.max(0, shrink - (maxHeight - window.innerHeight))}px`,
+                    );
+                }
                 if (column !== null) root.style.setProperty('--ara-kb-column', `${column}px`);
                 // Under a hold apply() writes the holding formula right after; a gap would drop the composer.
                 else if (!replay.holding) root.style.removeProperty('--ara-kb-column');
@@ -145,7 +152,19 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
             const state = tracker.getState();
             if (!predictor.active) {
-                root.style.setProperty('--ara-kb-shrink', `${Math.max(0, maxHeight - height)}px`);
+                const shrink = `${Math.max(0, maxHeight - height)}px`;
+                // Under a hold the shrink follows the replayed curve too, so the handover from the
+                // predictor (which published its lift as shrink) does not snap the composer's bottom pad.
+                root.style.setProperty(
+                    '--ara-kb-shrink',
+                    replay.holding ? `max(${shrink}, var(--ara-kb-replay, 0px))` : shrink,
+                );
+                root.style.setProperty(
+                    '--ara-kb-pending',
+                    replay.holding
+                        ? `max(0px, calc(var(--ara-kb-replay, 0px) - ${Math.max(0, maxHeight - window.innerHeight)}px))`
+                        : '0px',
+                );
                 if (replay.holding) {
                     // Whichever leads: the replayed curve, or the eased layout when a resize step outruns it.
                     root.style.setProperty(
@@ -237,6 +256,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
             if (learnTimer !== undefined) window.clearTimeout(learnTimer);
             root.style.removeProperty('--ara-kb-shrink');
+            root.style.removeProperty('--ara-kb-pending');
             root.style.removeProperty('--ara-kb-column');
             root.removeAttribute('data-ara-kb');
         };

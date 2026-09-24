@@ -58,8 +58,8 @@ export function StickyComposer({ children, aboveTabBar = false, className }: Sti
                 .join(' ')}
             style={{
                 bottom: aboveTabBar
-                    ? `calc(max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET}) + 50px)`
-                    : `max(var(--kb-inset, 0px), ${CLOSED_RESTING_OFFSET})`,
+                    ? `calc(max(var(--kb-inset, 0px), var(--ara-kb-pending, 0px), ${CLOSED_RESTING_OFFSET}) + 50px)`
+                    : `max(var(--kb-inset, 0px), var(--ara-kb-pending, 0px), ${CLOSED_RESTING_OFFSET})`,
                 paddingLeft: 'var(--ara-safe-left, env(safe-area-inset-left, 0px))',
                 paddingRight: 'var(--ara-safe-right, env(safe-area-inset-right, 0px))',
             }}

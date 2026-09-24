@@ -21,6 +21,8 @@
     /* Layout-viewport shrink in px, published synchronously per resize
        frame by WebViewClientLayout (resize-mode host hand-off). */
     --ara-kb-shrink: 0px;
+    /* Shrink the layout has not realized yet (predicted / replayed lift); fixed bars ride it. */
+    --ara-kb-pending: 0px;
 }
 
 [data-ara-shell] {
