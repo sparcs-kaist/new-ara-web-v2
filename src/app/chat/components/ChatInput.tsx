@@ -333,8 +333,7 @@ export default function ChatInput({
           <button
             type="button"
             aria-label="첨부"
-            data-press="dim"
-            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${isUploading ? "text-[#BBBBBB]" : "text-[#636363]"}`}
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center rounded-full ${isUploading ? "text-[#BBBBBB]" : "text-[#636363]"}`}
             onClick={openSheet}
             disabled={isUploading}
           >
@@ -361,8 +360,7 @@ export default function ChatInput({
           <button
             type="button"
             aria-label="전송"
-            data-press="dim"
-            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center ${canSend ? "text-ara_red" : "text-[#BBBBBB]"}`}
+            className={`shrink-0 w-[36px] h-[36px] flex items-center justify-center rounded-full ${canSend ? "text-ara_red" : "text-[#BBBBBB]"}`}
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleSend}
             disabled={isUploading || (!input.trim() && !pending)}

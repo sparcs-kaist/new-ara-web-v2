@@ -144,7 +144,7 @@ export default function UserViewPage() {
                                 type="button"
                                 onClick={() => setMenuOpen((v) => !v)}
                                 aria-label="더보기"
-                                className="flex h-11 w-11 items-center justify-center bg-transparent text-black"
+                                className="flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-black"
                             >
                                 <MoreIcon size={20} />
                             </button>

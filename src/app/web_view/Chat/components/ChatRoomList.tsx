@@ -137,7 +137,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                             type="button"
                             onClick={() => setShowTypePopover((v) => !v)}
                             aria-label="새 채팅"
-                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
                             <PlusIcon size={32} />
                         </button>

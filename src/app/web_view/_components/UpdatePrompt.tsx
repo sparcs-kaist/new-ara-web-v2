@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getBridge, type Platform } from '../_bridge';
 import { MIN_APP_VERSION, STORE_URL, isBelow } from './appVersion';
+import { InformationIcon } from './icons';
 
 const SNOOZE_KEY = 'ara:update-snooze-until';
 const SNOOZE_MS = 24 * 60 * 60 * 1000;
@@ -51,6 +52,10 @@ export function UpdatePrompt() {
                 <p className="mt-2 break-keep text-[14px] leading-5 text-[#646464]">
                     더 나은 사용을 위해 최신 버전으로 업데이트해 주세요.
                 </p>
+                <p className="mt-3 flex items-start gap-1 break-keep text-[12px] leading-4 text-[#999999]">
+                    <InformationIcon size={14} className="mt-[1px] shrink-0" />
+                    업데이트하지 않으면 일부 기능이 동작하지 않을 수 있어요.
+                </p>
                 <div className="mt-6 flex gap-2">
                     <button
                         type="button"
@@ -66,7 +71,7 @@ export function UpdatePrompt() {
                         onClick={close}
                         className="flex h-[44px] flex-1 items-center justify-center rounded-[10px] bg-ara_red text-[15px] font-medium text-white"
                     >
-                        {platform === 'ios' ? 'App Store로 이동' : 'Google Play로 이동'}
+                        업데이트
                     </a>
                 </div>
             </div>

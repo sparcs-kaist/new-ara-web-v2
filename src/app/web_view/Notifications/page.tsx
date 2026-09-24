@@ -95,7 +95,7 @@ export default function NotificationsPage() {
                     type="button"
                     aria-label="뒤로"
                     onClick={safeBack}
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <LeftChevronIcon size={28} />
                 </button>

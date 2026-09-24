@@ -118,7 +118,7 @@ export default function MyInfoPage() {
                     type="button"
                     onClick={() => router.push('/web_view/MyInfo/Settings')}
                     aria-label="설정"
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <SettingIcon size={28} />
                 </button>

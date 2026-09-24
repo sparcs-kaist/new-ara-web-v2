@@ -142,3 +142,7 @@
         opacity: 1;
     }
 }
+/* Zero specificity so an element's own rounded-* wins; the inset box-shadow overlay follows the radius. */
+:where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
+    border-radius: 10px;
+}

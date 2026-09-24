@@ -12,6 +12,7 @@ export function installPressFeedback(): () => void {
     let startY = 0;
     let pressedAt = 0;
     let timer: number | undefined;
+    let deferTimer: number | undefined;
 
     const press = () => {
         el?.setAttribute('data-pressed', '');
@@ -69,6 +70,18 @@ export function installPressFeedback(): () => void {
         if (pointerId !== null) cancel();
     };
 
+    // Native "pressed, then act": a cached route otherwise replaces the element before its overlay ever paints.
+    const onClick = (e: MouseEvent) => {
+        const target = el;
+        const wait = pressedAt + MIN_VISIBLE_MS - performance.now();
+        if (!e.isTrusted || wait <= 0 || !target?.hasAttribute('data-pressed')) return;
+        if ((e.target as Element).closest?.(SELECTOR) !== target) return;
+        e.stopPropagation();
+        e.preventDefault();
+        const init = { bubbles: true, cancelable: true, composed: true, clientX: e.clientX, clientY: e.clientY, button: 0 };
+        deferTimer = window.setTimeout(() => target.dispatchEvent(new MouseEvent('click', init)), wait);
+    };
+
     const onVisibility = () => {
         if (document.visibilityState === 'hidden') cancel();
     };
@@ -80,12 +93,14 @@ export function installPressFeedback(): () => void {
     document.addEventListener('pointermove', onMove, passive);
     document.addEventListener('pointerup', onUp, capture);
     document.addEventListener('pointercancel', onUp, capture);
+    document.addEventListener('click', onClick, capture);
     // Capture: inner scrollers' scroll events do not bubble.
     document.addEventListener('scroll', onScroll, passive);
     document.addEventListener('visibilitychange', onVisibility, { signal: ac.signal });
     window.addEventListener('blur', cancel, { signal: ac.signal });
     return () => {
         cancel();
+        window.clearTimeout(deferTimer);
         ac.abort();
     };
 }
