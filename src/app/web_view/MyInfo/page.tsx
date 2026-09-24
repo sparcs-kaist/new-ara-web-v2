@@ -166,7 +166,7 @@ export default function MyInfoPage() {
                             aria-selected={active}
                             onClick={() => setTab(t.key)}
                             className={[
-                                'flex h-[44px] items-center justify-center bg-transparent text-[15px] font-medium',
+                                'flex h-[44px] items-center justify-center rounded-b-none bg-transparent text-[15px] font-medium',
                                 active
                                     ? '-mb-px border-b-2 border-ara_red text-ara_red'
                                     : 'text-[#B1B1B1]',
