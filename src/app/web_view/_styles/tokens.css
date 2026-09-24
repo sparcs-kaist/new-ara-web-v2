@@ -109,7 +109,7 @@
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
     --ara-press-x: var(--ara-press-cx, 50%);
     --ara-press-y: var(--ara-press-cy, 50%);
-    --ara-press-r: var(--ara-press-max, 100vmax);
+    --ara-press-r: calc(var(--ara-press-max, 100vmax) + 24px);
     background-image: radial-gradient(circle at var(--ara-press-x) var(--ara-press-y), rgba(0, 0, 0, var(--ara-press-a)) calc(var(--ara-press-r) - 24px), transparent var(--ara-press-r));
 }
 [data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed] {
