@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+    ChatIcon,
     CommentIcon,
     InformationIcon,
     LeftChevronIcon,
@@ -13,20 +14,9 @@ import {
 import { fetchNotifications, readAllNotifications } from '@/lib/api/notification';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
+import type { Notification } from '@/lib/types/notification';
 
-interface NotificationItem {
-    id: number;
-    type: string;
-    title: string;
-    content: string;
-    is_read: boolean;
-    created_at: string;
-    related_article?: { id: number; title?: string } | null;
-    related?: { parent_article?: number | null } | null;
-}
-
-function getTargetArticleId(n: NotificationItem): number | null {
-    if (n.related?.parent_article != null) return Number(n.related.parent_article);
+function getTargetArticleId(n: Notification): number | null {
     if (n.related_article?.id != null) return Number(n.related_article.id);
     return null;
 }
@@ -44,7 +34,7 @@ function getTargetArticleId(n: NotificationItem): number | null {
 export default function NotificationsPage() {
     const router = useRouter();
     const safeBack = useSafeBack();
-    const [items, setItems] = useState<NotificationItem[]>([]);
+    const [items, setItems] = useState<Notification[]>([]);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -54,7 +44,7 @@ export default function NotificationsPage() {
         setLoading(true);
         try {
             const data = await fetchNotifications(p, 20);
-            const results = (data?.results ?? []) as NotificationItem[];
+            const results = (data?.results ?? []) as Notification[];
             setItems((prev) => (p === 1 ? results : [...prev, ...results]));
             setHasNext(Boolean(data?.next));
             setPage(p);
@@ -89,7 +79,11 @@ export default function NotificationsPage() {
         }
     };
 
-    const onTap = (n: NotificationItem) => {
+    const onTap = (n: Notification) => {
+        if (n.type === 'chat_message' && n.related_chat_room) {
+            router.push(`/web_view/Chat/${n.related_chat_room.id}`);
+            return;
+        }
         const articleId = getTargetArticleId(n);
         if (articleId) router.push(`/web_view/Post/${articleId}`);
     };
@@ -137,7 +131,9 @@ export default function NotificationsPage() {
                                         ].join(' ')}
                                         aria-hidden
                                     >
-                                        {n.type === 'default' ? (
+                                        {n.type === 'chat_message' ? (
+                                            <ChatIcon size={28} className="text-white" />
+                                        ) : n.type === 'default' ? (
                                             <NotificationIcon size={28} className="text-white" />
                                         ) : (
                                             <CommentIcon size={28} className="text-white" />
@@ -150,12 +146,20 @@ export default function NotificationsPage() {
                                                 n.is_read ? 'text-[#B1B1B1]' : 'text-black',
                                             ].join(' ')}
                                         >
-                                            새 댓글
+                                            {n.type === 'chat_message'
+                                                ? '새 메시지'
+                                                : n.type === 'article_commented' || n.type === 'comment_commented'
+                                                  ? '새 댓글'
+                                                  : n.title}
                                         </div>
                                         <div className="truncate text-[14px] font-medium text-black">
                                             {n.content}
                                         </div>
-                                        {n.related_article?.title && (
+                                        {n.type === 'chat_message' && n.related_chat_room?.room_title ? (
+                                            <div className="truncate text-[12px] font-medium text-black">
+                                                | 채팅방: {n.related_chat_room.room_title}
+                                            </div>
+                                        ) : n.related_article?.title && (
                                             <div className="truncate text-[12px] font-medium text-black">
                                                 | 게시글: {n.related_article.title}
                                             </div>

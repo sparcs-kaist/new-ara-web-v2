@@ -110,7 +110,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `network:changed`     | `{ online: boolean, type?: 'wifi'\|'cellular' }`           | Connectivity changes. |
 | `keyboard:changed`    | `{ height: number, visible: boolean }`                     | Optional; not emitted by the current shell. `height` is the RAW native keyboard height — the web side normalizes it against any layout-viewport shrink (`@sparcs-kaist/keyboard-inset` setOverride), so resize-mode hosts can emit it safely. |
 | `push:received`       | `{ title?, body?, data?, foreground: boolean }`            | A push arrived (foreground or background-tap). |
-| `push:opened`         | `{ data, deepLink?: string }`                              | User tapped a push. |
+| `push:opened`         | `{ data, deepLink?: string }`                              | User tapped a push. `data.route` = in-app path (`/web_view/Chat/<room_id>` \| `/web_view/Post/<article_id>`), plus `data.type`, `data.notification_id`; the web opens `data.route` (falls back to `deepLink` when it is an in-app path). |
 | `deeplink:received`   | `{ url: string }`                                          | App opened via custom scheme or universal link. |
 | `auth:expired`        | —                                                          | Native detected a 401 (rare, web normally does this). |
 | `<requestType>:result`| see §3                                                     | Response to a Web→Native request. |
