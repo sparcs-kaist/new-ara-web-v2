@@ -23,6 +23,8 @@
     --ara-kb-shrink: 0px;
     /* Shrink the layout has not realized yet (predicted / replayed lift); fixed bars ride it. */
     --ara-kb-pending: 0px;
+    /* Shrink the layout viewport has actually realized (raw); the fixed bars' safe pad follows this one. */
+    --ara-kb-layout: 0px;
 }
 
 [data-ara-shell] {
