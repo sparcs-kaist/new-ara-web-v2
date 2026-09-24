@@ -86,6 +86,7 @@ export default function AllergySelection({
           return (
             <div key={index}>
               <div 
+                role="button"
                 className={`self-stretch px-2.5 py-3 flex items-center gap-5 cursor-pointer ${
                   isSelected ? 'bg-rose-50' : ''
                 }`}
