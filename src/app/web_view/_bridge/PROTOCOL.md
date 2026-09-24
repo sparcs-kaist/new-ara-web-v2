@@ -86,11 +86,14 @@ All commands are best-effort — native may respond with an error envelope.
 | `back:handled`            | `{ id }`                                  | —                                      | Ack for `back:pressed` `{ id }`; must arrive within 300ms or the shell handles the press natively. |
 | `setStatusBar`            | `{ color: '#RRGGBB', style: 'light'\|'dark' }` | —                                  | Tint status bar. |
 | `setSafeArea`             | `{ top, bottom, left, right }`            | —                                      | Reserved for future. |
-| `openExternal`            | `{ url: string }`                         | —                                      | Open in external browser. |
+| `openExternal`            | `{ url: string }`                         | —                                      | Open in the external browser / handling app; works for undeclared schemes, `unavailable` when nothing opens it. |
+| `canOpen`                 | `{ url: string }`                         | `{ canOpen: boolean }`                 | `true` only for schemes the app declares. |
 | `share`                   | `{ title?, text?, url? }`                 | `{ shared: boolean }`                  | OS share sheet. |
 | `pickImage`               | `{ source: 'gallery'\|'camera', maxBytes? }` | `{ uri: string, mime: string, name: string, base64?: string }` | Returns a temporary uri the web can upload directly via fetch. |
 | `pickFile`                | `{ accept?: string[], multiple?: boolean }` | `{ files: { uri, mime, name, size }[] }` | |
-| `requestPermission`       | `{ kind: 'camera'\|'photos'\|'notifications'\|'microphone' }` | `{ granted: boolean, status: 'granted'\|'denied'\|'permanentlyDenied' }` | |
+| `requestPermission`       | `{ kind: string }`                        | `{ granted: boolean, status: 'granted'\|'denied'\|'permanentlyDenied'\|'restricted'\|'limited'\|'provisional' }` | `kind` = any permission_handler name (`'notification'`, `'camera'`, `'photos'`, `'microphone'`, …; `'notifications'` alias). Unknown → `invalid_payload`. |
+| `getPermissionStatus`     | `{ kind: string }`                        | same as `requestPermission`            | Reads the status without prompting. |
+| `openAppSettings`         | —                                         | `{ opened: boolean }`                  | OS settings page for the app. |
 | `getPushToken`            | —                                         | `{ token: string\|null, platform: 'fcm'\|'apns' }` | |
 | `subscribeTopic`          | `{ topic: string }`                       | —                                      | |
 | `unsubscribeTopic`        | `{ topic: string }`                       | —                                      | |
@@ -113,6 +116,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `appstate:changed`    | `{ state: 'foreground'\|'background'\|'inactive' }`        | App lifecycle changes. |
 | `network:changed`     | `{ online: boolean, type?: 'wifi'\|'cellular' }`           | Connectivity changes. |
 | `keyboard:changed`    | `{ height, visible, durationMs?, curve?: 'android'\|'ios' }` | Emitted ONCE at IME animation start (Android API 30+ `WindowInsetsAnimation.Callback.onStart`, iOS `keyboardWillShow`/`keyboardWillHide`) with the FINAL keyboard `height` in CSS px, `visible`, the animation `durationMs` and its `curve` — never per frame. The web replays the curve locally into the tracker override (`@sparcs-kaist/keyboard-inset` setOverride), which normalizes against the layout-viewport shrink, so resize-mode hosts never double-lift. |
+| `push:token`          | `{ token: string, platform: 'fcm' }`                       | The push token rotated. |
 | `push:received`       | `{ title?, body?, data?, foreground: boolean }`            | A push arrived (foreground or background-tap). |
 | `push:opened`         | `{ data, deepLink?: string }`                              | User tapped a push. `data.route` = in-app path (`/web_view/Chat/<room_id>` \| `/web_view/Post/<article_id>`), plus `data.type`, `data.notification_id`; the web opens `data.route` (falls back to `deepLink` when it is an in-app path). |
 | `deeplink:received`   | `{ url: string }`                                          | App opened via custom scheme or universal link. |

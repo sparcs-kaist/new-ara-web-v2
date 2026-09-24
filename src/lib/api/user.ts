@@ -105,8 +105,8 @@ export const logout = async (userId: number | string) => {
 };
 
 // updateFCMToken , deleteFCMToken : FCM 토큰 관리
-export const updateFCMToken = async (token: string) => {
-  const { data } = await http.patch("/fcm_token/update", { token });
+export const updateFCMToken = async (token: string, isWeb = true) => {
+  const { data } = await http.patch("/fcm_token/update", { token, is_web: isWeb });
   return data;
 };
 

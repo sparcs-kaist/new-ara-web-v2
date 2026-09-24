@@ -9,8 +9,15 @@ export const PROTOCOL_VERSION = 1 as const;
 
 export type Platform = 'ios' | 'android';
 export type PushPlatform = 'fcm' | 'apns';
-export type PermissionKind = 'camera' | 'photos' | 'notifications' | 'microphone';
-export type PermissionStatus = 'granted' | 'denied' | 'permanentlyDenied';
+// Any permission_handler permission name ('notifications' is accepted as an alias).
+export type PermissionKind = 'notification' | 'camera' | 'photos' | 'microphone' | (string & {});
+export type PermissionStatus =
+    | 'granted'
+    | 'denied'
+    | 'permanentlyDenied'
+    | 'restricted'
+    | 'limited'
+    | 'provisional';
 export type StatusBarStyle = 'light' | 'dark';
 export type HapticKind = 'light' | 'medium' | 'heavy' | 'selection';
 export type AppLifecycleState = 'foreground' | 'background' | 'inactive';
@@ -44,6 +51,7 @@ export type CommandMap = {
     setStatusBar: { req: { color: string; style: StatusBarStyle }; res: void };
     setSafeArea: { req: SafeAreaInsets; res: void };
     openExternal: { req: { url: string }; res: void };
+    canOpen: { req: { url: string }; res: { canOpen: boolean } };
     share: { req: { title?: string; text?: string; url?: string }; res: { shared: boolean } };
     pickImage: {
         req: { source: 'gallery' | 'camera'; maxBytes?: number };
@@ -57,6 +65,11 @@ export type CommandMap = {
         req: { kind: PermissionKind };
         res: { granted: boolean; status: PermissionStatus };
     };
+    getPermissionStatus: {
+        req: { kind: PermissionKind };
+        res: { granted: boolean; status: PermissionStatus };
+    };
+    openAppSettings: { req: void; res: { opened: boolean } };
     getPushToken: { req: void; res: { token: string | null; platform: PushPlatform } };
     subscribeTopic: { req: { topic: string }; res: void };
     unsubscribeTopic: { req: { topic: string }; res: void };
@@ -90,6 +103,7 @@ export type EventMap = {
     'network:changed': { online: boolean; type?: NetworkType };
     'keyboard:changed': { height: number; visible: boolean; durationMs?: number; curve?: 'android' | 'ios' };
     'push:received': { title?: string; body?: string; data?: Record<string, unknown>; foreground: boolean };
+    'push:token': { token: string; platform: 'fcm' };
     'push:opened': { data: Record<string, unknown>; deepLink?: string };
     'deeplink:received': { url: string };
     'auth:expired': void;
