@@ -153,11 +153,10 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             const state = tracker.getState();
             if (!predictor.active) {
                 const shrink = `${Math.max(0, maxHeight - height)}px`;
-                // Under a hold the shrink follows the replayed curve too, so the handover from the
-                // predictor (which published its lift as shrink) does not snap the composer's bottom pad.
+                // Only the predictor's decaying seed holds the pad down: the replay itself leads --kb-inset by a frame.
                 root.style.setProperty(
                     '--ara-kb-shrink',
-                    replay.holding ? `max(${shrink}, var(--ara-kb-replay, 0px))` : shrink,
+                    replay.holding ? `max(${shrink}, var(--ara-kb-lead, 0px))` : shrink,
                 );
                 root.style.setProperty(
                     '--ara-kb-pending',
