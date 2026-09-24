@@ -8,7 +8,7 @@ import { cubicBezier, imeCurve } from './keyboardPredict';
  * resize host's staircase landing mid-replay never double-lifts.
  */
 export interface KeyboardReplay {
-    play(p: { height: number; visible: boolean; durationMs?: number; curve?: string }): void;
+    play(p: { height: number; visible: boolean; durationMs?: number; curve?: string }, from?: number): void;
     readonly received: boolean;
     readonly holding: boolean;
     destroy(): void;
@@ -50,11 +50,11 @@ export function createKeyboardReplay({ tracker }: { tracker: KeyboardTracker }):
     return {
         get received() { return received; },
         get holding() { return holding; },
-        play(p) {
+        play(p, from) {
             received = true;
             stop();
             // Without a live override, start from what geometry shows (an overlay host's open keyboard).
-            const from = current ?? tracker.getState().insetPx;
+            const start = from ?? current ?? tracker.getState().insetPx;
             const to = p.visible ? p.height : 0;
             const duration = p.durationMs ?? DEFAULT_MS;
             const curve = p.curve === 'ios' ? iosCurve : imeCurve;
@@ -63,7 +63,7 @@ export function createKeyboardReplay({ tracker }: { tracker: KeyboardTracker }):
             const tick = (): void => {
                 rafId = null;
                 const u = duration > 0 ? Math.min(1, (performance.now() - startedAt) / duration) : 1;
-                set(from + (to - from) * curve(u));
+                set(start + (to - start) * curve(u));
                 if (u < 1) { rafId = requestAnimationFrame(tick); return; }
                 if (p.visible) settleTimer = window.setTimeout(release, SETTLE_MS);
                 else release();

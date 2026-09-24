@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomTabBar, isTabRoot } from './BottomTabBar';
-import { getBridge, useBridgeEvent } from '../_bridge';
+import { getBridge, useBridgeEvent, type EventPayload } from '../_bridge';
 import { getSharedKeyboardGlide, getSharedKeyboardTracker, isEditableElement } from '@sparcs-kaist/keyboard-inset';
 import { useKeyboardCssVars } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from './keyboardMotion';
 import { createKeyboardPredictor } from './keyboardPredict';
-import { createKeyboardReplay, type KeyboardReplay } from './keyboardReplay';
+import { createKeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
 import { PushTokenRegistrar } from './PushTokenRegistrar';
@@ -33,7 +33,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const showTabBar = isTabRoot(pathname);
     const [exitToastAt, setExitToastAt] = useState<number | null>(null);
     const lastBackAtRef = useRef<number | null>(null);
-    const replayRef = useRef<KeyboardReplay | null>(null);
+    const keyboardEventRef = useRef<((p: EventPayload<'keyboard:changed'>) => void) | null>(null);
 
     // Mark <html> with the shell attribute so the scoped tokens apply, and
     // sync the safe-area inset values reported by the native bridge.
@@ -116,7 +116,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     // plausible resizes ratchet; width changes re-baseline. data-ara-kb marks
     // the episode — tokens.css keys the scroll-anchoring opt-out on it. The
     // predictor owns both vars from focusin until the staircase settles.
-    // A shell keyboard:changed event drives the inset replay instead of the predictor.
+    // A shell keyboard:changed event hands the predictor's lift over to the inset replay.
     useEffect(() => {
         const root = document.documentElement;
         const tracker = getSharedKeyboardGlide(KEYBOARD_GLIDE);
@@ -128,17 +128,19 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         let settleTimer: number | undefined;
         let learnTimer: number | undefined;
         const replay = createKeyboardReplay({ tracker: getSharedKeyboardTracker() });
-        replayRef.current = replay;
         const predictor = createKeyboardPredictor({
             tracker: getSharedKeyboardTracker(),
             publish: (column, shrink) => {
                 root.style.setProperty('--ara-kb-shrink', `${Math.max(0, shrink)}px`);
-                if (column === null) root.style.removeProperty('--ara-kb-column');
-                else root.style.setProperty('--ara-kb-column', `${column}px`);
+                if (column !== null) root.style.setProperty('--ara-kb-column', `${column}px`);
+                // Under a hold apply() writes the holding formula right after; a gap would drop the composer.
+                else if (!replay.holding) root.style.removeProperty('--ara-kb-column');
             },
             getMaxHeight: () => maxHeight,
             isEditable: isEditableElement,
-            enabled: () => !replay.received,
+            enabled: () => !replay.holding,
+            // iOS never resizes the layout viewport, so it gets no default.
+            fallbackPx: () => (root.getAttribute('data-ara-platform') === 'android' ? 240 : 0),
         });
         const apply = (height = tracker.getState().layoutHeight || window.innerHeight) => {
             const state = tracker.getState();
@@ -215,6 +217,14 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             }
             apply();
         };
+        // The replay continues from the predictor's current lift, so the handover never jumps.
+        keyboardEventRef.current = (p) => {
+            const lift = predictor.lift;
+            predictor.stop();
+            replay.play(p, lift ?? undefined);
+            if (p.visible) predictor.learn(p.height);
+            apply();
+        };
         onResize();
         window.addEventListener('resize', onResize);
         const unsubscribe = tracker.subscribe(onTrackerChange);
@@ -223,7 +233,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             window.removeEventListener('resize', onResize);
             predictor.destroy();
             replay.destroy();
-            replayRef.current = null;
+            keyboardEventRef.current = null;
             if (settleTimer !== undefined) window.clearTimeout(settleTimer);
             if (learnTimer !== undefined) window.clearTimeout(learnTimer);
             root.style.removeProperty('--ara-kb-shrink');
@@ -237,7 +247,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
     useKeyboardCssVars(KEYBOARD_GLIDE);
     // Sent once at IME animation start; the replay normalizes so a resize-mode host can't double-lift.
     useBridgeEvent('keyboard:changed', (p) => {
-        replayRef.current?.play(p);
+        keyboardEventRef.current?.(p);
     });
     // The shell hands the push data over untouched; anything outside /web_view is ignored.
     useBridgeEvent('push:opened', (p) => {
