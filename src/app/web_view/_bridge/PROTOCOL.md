@@ -94,7 +94,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `requestPermission`       | `{ kind: string }`                        | `{ granted: boolean, status: 'granted'\|'denied'\|'permanentlyDenied'\|'restricted'\|'limited'\|'provisional' }` | `kind` = any permission_handler name (`'notification'`, `'camera'`, `'photos'`, `'microphone'`, …; `'notifications'` alias). Unknown → `invalid_payload`. |
 | `getPermissionStatus`     | `{ kind: string }`                        | same as `requestPermission`            | Reads the status without prompting. |
 | `openAppSettings`         | —                                         | `{ opened: boolean }`                  | OS settings page for the app. |
-| `getPushToken`            | —                                         | `{ token: string\|null, platform: 'fcm'\|'apns' }` | |
+| `getPushToken`            | —                                         | `{ token: string\|null, platform: 'fcm' }` | FCM registration token on both OSes; `null` on iOS until the APNs token exists (then `push:token`). |
 | `subscribeTopic`          | `{ topic: string }`                       | —                                      | |
 | `unsubscribeTopic`        | `{ topic: string }`                       | —                                      | |
 | `setBadgeCount`           | `{ count: number }`                       | —                                      | iOS badge / Android indicator. |
@@ -117,7 +117,7 @@ All commands are best-effort — native may respond with an error envelope.
 | `network:changed`     | `{ online: boolean, type?: 'wifi'\|'cellular' }`           | Connectivity changes. |
 | `keyboard:changed`    | `{ height, visible, durationMs?, curve?: 'android'\|'ios' }` | Emitted ONCE at IME animation start (Android API 30+ `WindowInsetsAnimation.Callback.onStart`, iOS `keyboardWillShow`/`keyboardWillHide`) with the FINAL keyboard `height` in CSS px, `visible`, the animation `durationMs` and its `curve` — never per frame. The web replays the curve locally into the tracker override (`@sparcs-kaist/keyboard-inset` setOverride), which normalizes against the layout-viewport shrink, so resize-mode hosts never double-lift. |
 | `push:token`          | `{ token: string, platform: 'fcm' }`                       | The push token rotated. |
-| `push:received`       | `{ title?, body?, data?, foreground: boolean }`            | A push arrived (foreground or background-tap). |
+| `push:received`       | `{ title?, body?, data?, foreground: boolean }`            | A push arrived while the app is in the foreground; the shell shows no banner then, the web renders it. |
 | `push:opened`         | `{ data, deepLink?: string }`                              | User tapped a push. `data.route` = in-app path (`/web_view/Chat/<room_id>` \| `/web_view/Post/<article_id>`), plus `data.type`, `data.notification_id`; the web opens `data.route` (falls back to `deepLink` when it is an in-app path). |
 | `deeplink:received`   | `{ url: string }`                                          | App opened via custom scheme or universal link. |
 | `auth:expired`        | —                                                          | Native detected a 401 (rare, web normally does this). |
