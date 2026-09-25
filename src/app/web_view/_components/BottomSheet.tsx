@@ -64,10 +64,11 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
-                className={`fixed inset-x-0 z-[71] max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-white transition-transform duration-[250ms] ease-out ${shown ? 'translate-y-0' : 'pointer-events-none translate-y-full'}`}
+                className={`fixed inset-x-0 z-[71] overflow-y-auto rounded-t-[20px] bg-white transition-transform duration-[250ms] ease-out ${shown ? 'translate-y-0' : 'pointer-events-none translate-y-full'}`}
                 style={{
                     // Rides above an overlay keyboard like the chat attach sheet, for sheets with inputs.
                     bottom: 'var(--kb-inset, 0px)',
+                    maxHeight: 'calc(85dvh - var(--kb-inset, 0px))',
                     paddingBottom:
                         'calc(20px + max(0px, var(--ara-safe-bottom) - var(--ara-kb-shrink, 0px) - var(--kb-inset, 0px)))',
                 }}
