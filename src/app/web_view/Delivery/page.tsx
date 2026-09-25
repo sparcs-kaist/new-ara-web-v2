@@ -29,7 +29,7 @@ function DeliveryListInner() {
 
     const { data, isPending, isError, error, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } =
         useDeliveryParties({ search });
-    const parties = data?.pages.flatMap((p) => p.results) ?? [];
+    const parties = data?.pages.flatMap((p) => p.results).filter((p, i, all) => all.findIndex((q) => q.id === p.id) === i) ?? [];
     const penalty = useDeliveryPenalty();
 
     usePullToRefresh();

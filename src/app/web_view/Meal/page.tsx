@@ -10,9 +10,7 @@ import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Deliv
 import { apiDetail } from '@/lib/api/delivery';
 
 function todayLabel(d: Date) {
-    const h = d.getHours();
-    const meal = h < 10 ? '아침' : h < 14 ? '점심' : '저녁';
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 · ${meal}`;
+    return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
 export default function MealHomePage() {

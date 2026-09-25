@@ -22,15 +22,15 @@ const TABS: Tab[] = [
         icon: (active) => <PostListIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
-        // The hub only: its sub-routes (Menu, Delivery) are pushed screens.
-        path: '/web_view/Meal',
-        matcher: /^\/web_view\/Meal\/?$/,
-        icon: (active) => <MealIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
-    },
-    {
         path: '/web_view/Chat',
         matcher: /^\/web_view\/Chat\/?$/,
         icon: (active) => <ChatIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
+        // The hub only: /Meal/Menu is a pushed screen.
+        path: '/web_view/Meal',
+        matcher: /^\/web_view\/Meal\/?$/,
+        icon: (active) => <MealIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
         path: '/web_view/MyInfo',
