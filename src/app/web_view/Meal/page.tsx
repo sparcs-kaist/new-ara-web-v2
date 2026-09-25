@@ -8,18 +8,15 @@ import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
-
-function todayLabel(d: Date) {
-    return `${d.getMonth() + 1}월 ${d.getDate()}일`;
-}
+import { currentMealSlot, type MealSlot } from '@/lib/types/meal';
 
 export default function MealHomePage() {
     const router = useRouter();
     const { data, isPending, isError, error } = useDeliveryParties({ page_size: 3 });
     const parties = data?.pages[0]?.results ?? [];
-    // Set after mount: the page is prerendered at build time, so a render-time date would be the build date.
-    const [today, setToday] = useState('');
-    useEffect(() => setToday(todayLabel(new Date())), []);
+    // Set after mount: the page is prerendered at build time, so a render-time clock would be the build's.
+    const [slot, setSlot] = useState<MealSlot | null>(null);
+    useEffect(() => setSlot(currentMealSlot()), []);
 
     usePullToRefresh();
 
@@ -32,16 +29,22 @@ export default function MealHomePage() {
             <div className="px-5 pt-2">
                 <button
                     type="button"
-                    onClick={() => router.push('/web_view/Meal/Menu')}
-                    className="block w-full rounded-[15px] bg-ara_red_most_bright p-4 text-left"
+                    onClick={() => router.push(`/web_view/Meal/Menu?time=${encodeURIComponent((slot ?? currentMealSlot()).time)}`)}
+                    className="relative flex h-[112px] w-full flex-col justify-center overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FFF7F5] to-[#FFEDE8] px-5 text-left"
                 >
-                    <span className="block text-[12px] text-[#646464]">KAIST 학생식당</span>
-                    <span className="mt-1 block text-[18px] font-semibold text-black">오늘의 학식</span>
-                    <span className="mt-1 block min-h-[20px] text-[13px] leading-5 text-[#646464]">{today}</span>
+                    <span
+                        aria-hidden
+                        className="absolute right-[7px] top-[15px] h-[104px] w-[140px] origin-[70px_49px] rotate-[8deg] bg-[url('/webview/illust/meal_tray.svg')] bg-[length:100%_100%]"
+                    />
+                    <span className="relative text-[12px] font-medium leading-[17px] text-ara_red">KAIST 학생식당</span>
+                    <span className="relative mt-[3px] text-[18px] font-bold leading-[25px] text-black">오늘의 학식</span>
+                    <span className="relative mt-1 min-h-[18px] text-[13px] leading-[18px] text-[#646464]">
+                        {slot && `카이마루 · ${slot.time} ${slot.hours}`}
+                    </span>
                 </button>
             </div>
 
-            <div className="h-5" />
+            <div className="mx-5 my-5 h-px bg-[#F0F0F0]" />
 
             <section>
                 <MainPageTextButton label="함께 배달하기" onPress={() => router.push('/web_view/Delivery')} />
