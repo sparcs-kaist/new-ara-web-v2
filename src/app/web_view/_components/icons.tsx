@@ -80,6 +80,9 @@ export function HomeIcon(p: IconProps) {
 export function PostListIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/post_list.svg`} fallback={32} {...p} />;
 }
+export function MealIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/meal.svg`} fallback={32} {...p} />;
+}
 export function ChatIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/chat.svg`} fallback={32} {...p} />;
 }
@@ -190,6 +193,15 @@ export function LanguageIcon(p: IconProps) {
 }
 export function CameraIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/camera.svg`} fallback={24} {...p} />;
+}
+export function PinIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/pin.svg`} fallback={14} {...p} />;
+}
+export function ClockIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/clock.svg`} fallback={13} {...p} />;
+}
+export function CheckIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/check.svg`} fallback={16} {...p} />;
 }
 
 /* =========================================================================

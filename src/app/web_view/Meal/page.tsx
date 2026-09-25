@@ -1,201 +1,79 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Screen } from '@/app/web_view/_components';
+import { useDeliveryParties } from '@/app/web_view/_query';
+import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
+import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
+import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
+import { apiDetail } from '@/lib/api/delivery';
 
-import DateNavigator from "./components/DateNavigator";
-import MealHeader from "./components/MealHeader";
-import RestaurantNavigator from "./components/RestaurantNavigator";
-import MenuList from "./components/MenuList";
-import { Spinner } from '@/app/web_view/_components';
-
-import { fetchMeal } from '@/lib/api/meal';
-import {
-  MealResponse,
-  Course,
-  CafeteriaMenu,
-  getRestaurantIdFromDisplayName,
-  getMenuTypeFromRestaurantName,
-  timeStringToMealType,
-  ALLERGEN_MAP,
-} from '@/lib/types/meal';
-
-// WebView용 뒤로가기 기능 Handler
-const handleClick = () => {
-  // Flutter WebView로 시그널 전송
-  (window as any).FlutterChannel?.postMessage('meal_page_exit');
-};
-
-// 알러지 이름을 ID로 변환하는 함수
-function getAllergyIdsFromNames(allergyNames: string[]): string {
-  // ALLERGEN_MAP을 역으로 매핑 (이름 -> ID)
-  const nameToIdMap: Record<string, number> = {};
-  Object.entries(ALLERGEN_MAP).forEach(([id, name]) => {
-    nameToIdMap[name] = parseInt(id);
-  });
-
-  // 알러지 이름들을 ID로 변환
-  const ids = allergyNames
-    .map(name => nameToIdMap[name])
-    .filter(id => id !== undefined);
-
-  // 쉼표로 구분된 문자열로 반환
-  return ids.join(',');
+function todayLabel(d: Date) {
+    return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-// 날짜 formatting 함수 : convert into YYYYMMDD
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
-}
+export default function MealHomePage() {
+    const router = useRouter();
+    const { data, isPending, isError, error } = useDeliveryParties({ page_size: 3 });
+    const parties = data?.pages[0]?.results ?? [];
+    // Set after mount: the page is prerendered at build time, so a render-time date would be the build date.
+    const [today, setToday] = useState('');
+    useEffect(() => setToday(todayLabel(new Date())), []);
 
-// YYYY-MM-DD를 YYYYMMDD로 변환
-function convertDateFormat(dateStr: string): string {
-  // YYYY-MM-DD 형식이면 대시 제거
-  return dateStr.replace(/-/g, '');
-}
+    usePullToRefresh();
 
-export default function MealPage() {
-  // 학식 정보 - 캐시 역할 (key: "날짜-식당ID-식사시간")
-  const [mealData, setMealData] = useState<Record<string, MealResponse>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+    return (
+        <Screen>
+            <header className="sticky top-[var(--ara-safe-top)] z-40 flex h-14 items-center bg-white px-5">
+                <h1 className="text-[28px] font-bold text-ara_red">식사</h1>
+            </header>
 
-  // 현재 선택된 날짜와 식당
-  const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
-  const [selectedRestaurant, setSelectedRestaurant] = useState<string>('카이마루');
-  const [selectedTime, setSelectedTime] = useState<string>('점심');
-  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
+            <div className="px-5 pt-2">
+                <button
+                    type="button"
+                    onClick={() => router.push('/web_view/Meal/Menu')}
+                    className="block w-full rounded-[15px] bg-ara_red_most_bright p-4 text-left"
+                >
+                    <span className="block text-[12px] text-[#646464]">KAIST 학생식당</span>
+                    <span className="mt-1 block text-[18px] font-semibold text-black">오늘의 학식</span>
+                    <span className="mt-1 block min-h-[20px] text-[13px] leading-5 text-[#646464]">{today}</span>
+                </button>
+            </div>
 
-  // 메뉴 타입은 식당 이름으로 결정 (카페테리아가 포함되어 있으면 cafeteria)
-  const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
+            <div className="h-5" />
 
-  // 선택된 옵션이 바뀔 때마다 해당 데이터만 가져오기
-  useEffect(() => {
-    const fetchCurrentData = async () => {
-      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
-      const mealType = timeStringToMealType(selectedTime);
-      // 날짜를 YYYYMMDD 형식으로 변환
-      const formattedDate = convertDateFormat(selectedDate);
-      const key = `${formattedDate}-${restaurantId}-${mealType}`;
+            <section>
+                <MainPageTextButton label="함께 배달하기" onPress={() => router.push('/web_view/Delivery')} />
+                <div className="mt-3 space-y-3 px-5">
+                    {isPending ? (
+                        [0, 1, 2].map((i) => <DeliveryRoomCardSkeleton key={i} />)
+                    ) : parties.length === 0 ? (
+                        <p className="py-3 text-center text-[14px] text-[#BBBBBB]">
+                            {isError ? apiDetail(error) : '지금 모집 중인 함께 배달이 없어요'}
+                        </p>
+                    ) : (
+                        <>
+                            {parties.map((p) => (
+                                <DeliveryRoomCard
+                                    key={p.id}
+                                    party={p}
+                                    onPress={() => router.push(`/web_view/Delivery?party=${p.id}`)}
+                                />
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => router.push('/web_view/Delivery')}
+                                className="block w-full py-2 text-center text-[14px] text-[#BBBBBB]"
+                            >
+                                + 더보기
+                            </button>
+                        </>
+                    )}
+                </div>
+            </section>
 
-      // 이미 캐시에 있으면 다시 가져오지 않음
-      if (mealData[key]) {
-        console.log('Using cached data for:', key);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // 알러지 이름을 ID로 변환
-        const allergyCodes = selectedAllergies.length > 0
-          ? getAllergyIdsFromNames(selectedAllergies)
-          : undefined;
-
-        console.log('Fetching meal data:', { date: formattedDate, restaurantId, mealType, allergyCodes });
-        const data = await fetchMeal(formattedDate, restaurantId, mealType, allergyCodes);
-        console.log('Received data:', data);
-
-        setMealData(prev => ({
-          ...prev,
-          [key]: data
-        }));
-      } catch (error) {
-        console.error(`Error fetching ${key}:`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCurrentData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, selectedRestaurant, selectedTime, selectedAllergies]);
-
-  // 날짜 변경 핸들러
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date);
-  };
-
-  // 식당 변경 핸들러
-  const handleRestaurantChange = (restaurant: string) => {
-    setSelectedRestaurant(restaurant);
-  };
-
-  // 아침, 점심, 저녁 변경 핸들러
-  const handleMealTimeChange = (mealTime: string) => {
-    setSelectedTime(mealTime);
-  };
-
-  // 알러지 필터
-  const handleAllergyChange = (allergies: string[]) => {
-    setSelectedAllergies(allergies);
-  };
-
-  // 현재 Option에 맞는 Data 가져오기
-  const getCurrentMenuData = (): Course[] | CafeteriaMenu[] => {
-    try {
-      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
-      const mealType = timeStringToMealType(selectedTime);
-      const formattedDate = convertDateFormat(selectedDate);
-      const key = `${formattedDate}-${restaurantId}-${mealType}`;
-
-      const data = mealData[key];
-      if (!data) return [];
-
-      // 식당 이름으로 메뉴 타입 결정
-      const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
-
-      if (menuType === 'course') {
-        return data.courses || [];
-      } else {
-        return data.cafeteria_menus || [];
-      }
-    } catch (error) {
-      console.error("error:", error);
-      return [];
-    }
-  };
-
-  const currentMenuData = getCurrentMenuData();
-
-  return (
-    <div className="min-h-screen flex flex-col items-center bg-white">
-      <MealHeader
-        onBackClick={handleClick}
-        onAllergyChange={handleAllergyChange}
-      />
-
-      <DateNavigator
-        selectedDate={selectedDate}
-        onDateChange={handleDateChange}
-      />
-
-      <RestaurantNavigator
-        selectedRestaurant={selectedRestaurant}
-        selectedMealTime={selectedTime}
-        onRestaurantChange={handleRestaurantChange}
-        onMealTimeChange={handleMealTimeChange}
-      />
-
-      <div className="px-[15px] py-1 w-full">
-        {/* 로딩 상태 표시 */}
-        {isLoading ? (
-          <div className="flex justify-center items-center h-40">
-            <Spinner size={28} />
-          </div>
-        ) : currentMenuData.length === 0 ? (
-          <div className="flex justify-center items-center h-40">
-            <span className="text-gray-500">해당 시간의 학식 정보를 찾을 수 없습니다.</span>
-          </div>
-        ) : (
-          <MenuList
-            menuType={menuType}
-            menuData={currentMenuData}
-            selectedAllergies={selectedAllergies}
-          />
-        )}
-      </div>
-    </div>
-  );
+            <div className="h-5" />
+        </Screen>
+    );
 }

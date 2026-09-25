@@ -36,9 +36,7 @@ function MaskIcon({ src, size, fallback, style, ...rest }: MaskIconProps) {
     return <span aria-hidden {...rest} style={merged} />;
 }
 
-export function CheckIcon(p: IconProps) {
-    return <MaskIcon src={`${ICON_BASE}/check.svg`} fallback={16} {...p} />;
-}
+export { CheckIcon } from '@/app/web_view/_components/icons';
 export function ChevronUpIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/chevron_up.svg`} fallback={20} {...p} />;
 }

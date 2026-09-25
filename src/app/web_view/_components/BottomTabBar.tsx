@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ChatIcon, HomeIcon, MemberIcon, PostListIcon } from './icons';
+import { ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
 
 interface Tab {
     path: string;
@@ -27,6 +27,12 @@ const TABS: Tab[] = [
         icon: (active) => <ChatIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
+        // The hub only: /Meal/Menu is a pushed screen.
+        path: '/web_view/Meal',
+        matcher: /^\/web_view\/Meal\/?$/,
+        icon: (active) => <MealIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
         path: '/web_view/MyInfo',
         matcher: /^\/web_view\/MyInfo(\/|$)/,
         icon: (active) => <MemberIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
@@ -41,7 +47,7 @@ export function BottomTabBar() {
         <nav
             role="tablist"
             aria-label="primary"
-            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 items-stretch border-t border-[#F0F0F0] bg-white"
+            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 items-stretch border-t border-[#F0F0F0] bg-white"
             style={{ height: 'calc(50px + var(--ara-safe-bottom))', paddingBottom: 'var(--ara-safe-bottom)' }}
         >
             {TABS.map((t) => {

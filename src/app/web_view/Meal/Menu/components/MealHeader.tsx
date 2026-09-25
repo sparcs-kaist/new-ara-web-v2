@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
-import AllergySelection from '@/app/web_view/Meal/components/AllergySelection';
+import AllergySelection from '@/app/web_view/Meal/Menu/components/AllergySelection';
 
 // 뒤로가기 아이콘 컴포넌트
 const BackIcon = () => (

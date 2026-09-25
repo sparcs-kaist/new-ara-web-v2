@@ -2,6 +2,7 @@
 export class ChatSocketClient3 {
     private socket: WebSocket | null = null;
     private eventListeners: Record<string, Function[]> = {};
+    private queue: string[] = [];
     public currentRoomId: number | null = null;
 
 
@@ -14,7 +15,7 @@ export class ChatSocketClient3 {
     }
     connect(url: string) {
         // 이미 연결되어 있는 경우 중복 연결 방지
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
             console.log('WebSocket 이미 연결됨, 중복 연결 방지');
             return;
         }
@@ -24,11 +25,13 @@ export class ChatSocketClient3 {
 
         this.socket.onopen = () => {
             console.log('WebSocket 연결 성공');
+            this.queue.splice(0).forEach(data => this.socket?.send(data));
             this.emit('connect');
         };
 
         this.socket.onclose = (event) => {
             console.log('WebSocket 연결 종료:', event.code, event.reason);
+            this.queue = [];
             this.emit('disconnect', event);
         };
 
@@ -60,8 +63,7 @@ export class ChatSocketClient3 {
             console.log('WebSocket 메시지 전송:', data);
             this.socket.send(JSON.stringify(data));
         } else {
-            console.error('WebSocket 연결 상태가 아니라 메시지를 보낼 수 없음:',
-                this.socket ? this.socket.readyState : 'socket is null');
+            this.queue.push(JSON.stringify(data));
         }
     }
 
@@ -85,6 +87,7 @@ export class ChatSocketClient3 {
     }
 
     leave(roomId: number) {
+        if (!this.isConnected()) return;
         console.log(`채팅방 퇴장 요청: ${roomId}`);
         // 백엔드 스펙에 따라 'leave' 사용
         this.send({ type: 'leave', room_id: roomId });
