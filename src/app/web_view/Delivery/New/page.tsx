@@ -168,7 +168,7 @@ export default function DeliveryNewPage() {
                             disabled={minutes <= MIN_MINUTES}
                             onClick={() => pickMinutes(minutes - 1)}
                         />
-                        <label className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] bg-[#F6F6F6] px-4 text-[22px] font-bold text-[#222222]">
+                        <label className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] bg-[#F6F6F6] px-4 text-[16px] font-semibold text-[#222222]">
                             <input
                                 inputMode="numeric"
                                 value={minutesText}
@@ -207,7 +207,7 @@ export default function DeliveryNewPage() {
                     </div>
                 </Section>
 
-                <Section label="방장 메모" error={errors.memo}>
+                <Section label="메모" error={errors.memo}>
                     <textarea
                         value={form.memo}
                         onChange={(e) => set('memo')(e.target.value)}

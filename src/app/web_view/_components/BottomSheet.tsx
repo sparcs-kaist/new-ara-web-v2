@@ -3,6 +3,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
+const KB_LIFT = 'max(var(--kb-inset, 0px), var(--ara-kb-pending, 0px))';
+
 interface BottomSheetProps {
     open: boolean;
     onClose: () => void;
@@ -62,11 +64,10 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
                 aria-label={title}
                 className={`fixed inset-x-0 z-[71] overflow-y-auto rounded-t-[20px] bg-white transition-transform duration-[250ms] ease-out ${shown ? 'translate-y-0' : 'pointer-events-none translate-y-full'}`}
                 style={{
-                    // Rides above an overlay keyboard like the chat attach sheet, for sheets with inputs.
-                    bottom: 'var(--kb-inset, 0px)',
-                    maxHeight: 'calc(85dvh - var(--kb-inset, 0px))',
-                    paddingBottom:
-                        'calc(20px + max(0px, var(--ara-safe-bottom) - var(--ara-kb-shrink, 0px) - var(--kb-inset, 0px)))',
+                    // Rides the keyboard like the chat composer: the overlay inset on iOS, the predicted lift on Android.
+                    bottom: KB_LIFT,
+                    maxHeight: `calc(85dvh - ${KB_LIFT})`,
+                    paddingBottom: `calc(20px + max(0px, var(--ara-safe-bottom) - var(--ara-kb-shrink, 0px) - ${KB_LIFT}))`,
                 }}
                 onTransitionEnd={(e) => {
                     if (e.target === e.currentTarget && e.propertyName === 'transform' && !open) setMounted(false);
