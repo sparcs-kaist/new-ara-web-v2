@@ -21,7 +21,18 @@ export interface ChatPaymentRequest {
     targets: ChatPaymentTarget[];
     total_amount: number;
     is_settled: boolean;
+    canceled_at: string | null;
     created_at: string;
+}
+
+// Anonymous rooms (delivery included) name targets by anon_number, the others by user id.
+export type ChatPaymentTargetRef = { anon_number: number } | { user: number };
+
+export interface ChatPaymentCreateBody {
+    chat_room: number;
+    bank_name: string;
+    account_number: string;
+    targets: (ChatPaymentTargetRef & { amount: number })[];
 }
 
 export interface ChatVoteOption {

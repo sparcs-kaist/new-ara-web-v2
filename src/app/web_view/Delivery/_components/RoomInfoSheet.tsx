@@ -36,12 +36,14 @@ export function RoomInfoSheet({
     party,
     onAction,
     onSettle,
+    onGeneralSettle,
     onClose,
 }: {
     open: boolean;
     party: DeliveryParty;
     onAction: (action: DeliveryAction) => void;
     onSettle: () => void;
+    onGeneralSettle: () => void;
     onClose: () => void;
 }) {
     const now = useNow();
@@ -138,8 +140,8 @@ export function RoomInfoSheet({
                                 <CtaButton onClick={() => onAction({ kind: 'arrive' })}>배달 도착 알림</CtaButton>
                             )}
                             {(party.status === 'ORDERED' || party.status === 'ARRIVED') && (
-                                <SubButton disabled={party.payment_request !== null} onClick={onSettle}>
-                                    정산 요청
+                                <SubButton onClick={party.can_request_payment ? onSettle : onGeneralSettle}>
+                                    {party.can_request_payment ? '정산 요청' : '일반 정산 보내기'}
                                 </SubButton>
                             )}
                         </div>

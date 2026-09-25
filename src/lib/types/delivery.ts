@@ -54,6 +54,7 @@ export interface DeliveryParty extends DeliveryPartySummary {
     is_member: boolean;
     is_host: boolean;
     payment_request: number | null;
+    can_request_payment: boolean;
 }
 
 export interface Paginated<T> {

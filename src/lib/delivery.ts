@@ -24,6 +24,13 @@ export function formatWon(n: number): string {
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 
+// 이/가 follows the last syllable's final consonant; a trailing number is read aloud (2 이, 4 사, 5 오, 9 구 end open).
+export function withSubject(name: string): string {
+    const c = name.charCodeAt(name.length - 1);
+    const open = c >= 0xac00 && c <= 0xd7a3 ? (c - 0xac00) % 28 === 0 : /[2459]$/.test(name);
+    return `${name}${open ? '가' : '이'}`;
+}
+
 export function formatRemaining(deadlineAt: string, now: number): string {
     const total = Math.floor((new Date(deadlineAt).getTime() - now) / 1000);
     if (total <= 0) return '마감';

@@ -17,6 +17,7 @@ import ChatInput, { type ChatInputExtraRow } from './ChatInput';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import NoticeLine from './NoticeLine';
+import PaymentCreateSheet, { type PaymentMember } from './PaymentCreateSheet';
 import PaymentRequestCard from './PaymentRequestCard';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import VoteCard from './VoteCard';
@@ -160,6 +161,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [action, setAction] = useState<DeliveryAction | null>(null);
     const [promptedFor, setPromptedFor] = useState<string | null>(null);
     const [voteOpen, setVoteOpen] = useState(false);
+    const [paymentOpen, setPaymentOpen] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
     if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
@@ -229,6 +231,15 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             });
         };
 
+        // 서버(room_update messages/deleted)와 클라이언트 relay(message_deleted) 둘 다 여기로 온다
+        const removeMessage = (messageId: number) => {
+            // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다
+            if (messagesRef.current.some(m => m.id === messageId && m.message_type === 'PAYMENT_REQUEST')) {
+                qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+            }
+            setMessages(prev => prev.filter(m => m.id !== messageId));
+        };
+
         const syncMessage = async (messageId: number, append: boolean) => {
             const msg: Message = await fetchChatMessage(messageId);
             setMessages(prev =>
@@ -241,7 +252,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         // 서버 room_update는 {resource, change, data:{id}}로 id만 주므로 해당 리소스만 다시 가져온다
         const syncResource = async (resource: string, change: string, id: number) => {
             if (resource === 'messages') {
-                await syncMessage(id, change === 'created');
+                if (change === 'deleted') removeMessage(id);
+                else await syncMessage(id, change === 'created');
             } else if (resource === 'delivery') {
                 qc.invalidateQueries({ queryKey: DELIVERY_KEY });
             } else if (resource === 'vote' || resource === 'payment') {
@@ -251,7 +263,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 );
                 if (target) await syncMessage(target.id, false);
                 else await applyRecent();
-                if (resource === 'payment') qc.invalidateQueries({ queryKey: [...DELIVERY_KEY, 'payment'] });
+                // 취소되면 can_request_payment가 바뀔 수 있어 파티도 다시 가져온다
+                if (resource === 'payment') qc.invalidateQueries({ queryKey: DELIVERY_KEY });
             }
         };
 
@@ -357,14 +370,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
         // NEW: 메시지 삭제 이벤트 수신 핸들러
         const handleMessageDeleted = (payload: MessageDeletedPayload) => {
-            const deletedMessageId = payload.message_id;
-            if (deletedMessageId) {
-                // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다
-                if (messagesRef.current.some(m => m.id === deletedMessageId && m.message_type === 'PAYMENT_REQUEST')) {
-                    qc.invalidateQueries({ queryKey: DELIVERY_KEY });
-                }
-                setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
-            }
+            if (payload.message_id) removeMessage(payload.message_id);
         };
 
         // NEW: 타이핑 시작 이벤트 수신 핸들러
@@ -689,31 +695,40 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const menuMessage = contextMenu.visible ? messages.find(m => m.id === contextMenu.messageId) : undefined;
     const menuOrder = menuMessage?.message_type === 'DELIVERY_ORDER' ? (menuMessage.attachment as DeliveryOrder | null) : null;
-    // 누가 송금한 정산 요청은 서버가 삭제를 거절한다
-    const menuPaid =
-        menuMessage?.message_type === 'PAYMENT_REQUEST' &&
-        !!(menuMessage.attachment as ChatPaymentRequest | null)?.targets.some(t => t.paid_at);
     const editableOrder =
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
 
     const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
     const openSettlement = () => party && router.push(`/web_view/Delivery/${party.id}/Settlement`);
+    const openPaymentSheet = () => {
+        setSheet(null);
+        setPaymentOpen(true);
+    };
     const voteRow: ChatInputExtraRow = { label: '투표', icon: PostListIcon, color: 'bg-ara_blue', onSelect: () => setVoteOpen(true) };
+    const paymentRow: ChatInputExtraRow = { label: '송금 요청', icon: SendIcon, color: 'bg-[#636363]', onSelect: openPaymentSheet };
+    const settling = party?.status === 'ORDERED' || party?.status === 'ARRIVED';
     const deliveryRows: ChatInputExtraRow[] | undefined = party && [
         ...(ordersAllowed(party)
             ? [{ label: '주문 등록', icon: PostIcon, color: 'bg-ara_red', onSelect: () => setSheet({ kind: 'order' }) }]
             : []),
         voteRow,
-        ...(party.is_host
-            ? [{
-                label: '송금 요청',
-                icon: SendIcon,
-                color: 'bg-[#636363]',
-                onSelect: openSettlement,
-                disabled: !(party.status === 'ORDERED' || party.status === 'ARRIVED') || party.payment_request !== null,
-            }]
-            : []),
+        // 방장은 배달 정산을 다시 보낼 수 없으면 일반 정산으로 안내한다
+        party.is_host
+            ? party.can_request_payment
+                ? { ...paymentRow, onSelect: openSettlement }
+                : { ...paymentRow, label: settling ? '일반 정산 보내기' : '송금 요청', disabled: !settling }
+            : paymentRow,
     ];
+    // 배달방은 파티 참여자에게 익명 번호로, 다른 방은 방 멤버에게 청구한다
+    const paymentMembers: PaymentMember[] = party
+        ? party.members.filter(m => !m.is_mine).map(m => ({ name: m.display_name, target: { anon_number: m.anon_number } }))
+        : members.flatMap((m): PaymentMember[] => {
+            if (m.is_mine || (m.user && m.user.id === myId)) return [];
+            if (m.user) return [{ name: m.user.profile?.nickname ?? m.display_name ?? '', target: { user: m.user.id } }];
+            return m.anon_number != null ? [{ name: m.display_name ?? '', target: { anon_number: m.anon_number } }] : [];
+        });
+    const myRole = members.find(m => m.is_mine || (m.user && m.user.id === myId))?.role;
+    const isRoomAdmin = myRole === 'OWNER' || myRole === 'ADMIN';
     const paymentMessage = party?.payment_request != null
         ? messages.find(m => m.message_type === 'PAYMENT_REQUEST' && (m.attachment as ChatPaymentRequest | null)?.id === party.payment_request)
         : undefined;
@@ -725,6 +740,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         enabled: unloadedPaymentId !== null,
         staleTime: 5_000,
     });
+    const payments = messages.flatMap(m => (m.message_type === 'PAYMENT_REQUEST' && m.attachment ? [m.attachment as ChatPaymentRequest] : []));
+    if (unloadedPayment) payments.push(unloadedPayment);
 
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
@@ -788,11 +805,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             </div>
 
             {party && (
-                <DeliveryStatusBar
-                    party={party}
-                    myOrders={myOrders}
-                    payment={(paymentMessage?.attachment as ChatPaymentRequest | undefined) ?? unloadedPayment}
-                />
+                <DeliveryStatusBar party={party} myOrders={myOrders} payments={payments} />
             )}
 
             {/* 채팅 메시지 영역 */}
@@ -916,6 +929,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                                         payment={msg.attachment as ChatPaymentRequest}
                                                         party={party}
                                                         isHost={(msg.attachment as ChatPaymentRequest).requester.is_mine}
+                                                        canDelete={isMe || isRoomAdmin}
                                                         onChanged={(next) => handlePaymentChanged(msg.id, next)}
                                                     />
                                                 )}
@@ -967,11 +981,11 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                     <CtaButton onClick={() => setSheet({ kind: 'order' })}>주문 등록하기</CtaButton>
                 </div>
             ) : (
-                <DeliveryComposerNote party={party} />
+                <DeliveryComposerNote party={party} payments={payments} />
             ))}
 
             {/* 입력창 */}
-            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows ?? [voteRow]} />
+            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows ?? [voteRow, paymentRow]} />
 
             <MembersPanel
                 isOpen={isPanelOpen}
@@ -992,7 +1006,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             {menuMessage && (
                 <MessageContextMenu
                     text={menuMessage.message_type !== 'IMAGE' && menuMessage.message_type !== 'FILE' ? menuMessage.message_content : undefined}
-                    canDelete={isMine(menuMessage) && !UNDELETABLE_TYPES.includes(menuMessage.message_type) && !menuPaid}
+                    canDelete={isMine(menuMessage) && !UNDELETABLE_TYPES.includes(menuMessage.message_type)}
                     actions={editableOrder ? [
                         { label: '수정하기', onSelect: () => setSheet({ kind: 'order', order: editableOrder }) },
                         { label: '주문 취소하기', onSelect: () => setAction({ kind: 'cancelOrder', order: editableOrder }), danger: true },
@@ -1015,6 +1029,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         party={party}
                         onAction={startAction}
                         onSettle={openSettlement}
+                        onGeneralSettle={openPaymentSheet}
                         onClose={() => setSheet(null)}
                     />
                     <MembersSheet
@@ -1037,6 +1052,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             )}
 
             <VoteCreateSheet open={voteOpen} roomId={roomId} onClose={() => setVoteOpen(false)} />
+            <PaymentCreateSheet open={paymentOpen} roomId={roomId} members={paymentMembers} onClose={() => setPaymentOpen(false)} />
 
             {deleteError && (
                 <ConfirmDialog

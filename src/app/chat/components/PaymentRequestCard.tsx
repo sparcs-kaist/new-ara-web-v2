@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react';
+import { BottomSheet } from '@/app/web_view/_components/BottomSheet';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { getBridge, useIsNative } from '@/app/web_view/_bridge';
 import { Body, Rows } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
-import { INPUT_CLASS } from '@/app/web_view/Delivery/_components/fields';
-import { deleteMessage, setPaymentPaid, updatePaymentAccount } from '@/lib/api/chat';
+import { cancelPaymentRequest, deleteMessage, setPaymentPaid } from '@/lib/api/chat';
 import { apiDetail } from '@/lib/api/delivery';
-import { formatWon, orderTotal } from '@/lib/delivery';
-import type { ChatPaymentRequest } from '@/lib/types/chat';
+import { formatWon, orderTotal, withSubject } from '@/lib/delivery';
+import type { ChatPaymentRequest, ChatPaymentTarget } from '@/lib/types/chat';
 import type { DeliveryParty } from '@/lib/types/delivery';
 import { copyText } from './MessageContextMenu';
 
@@ -22,20 +22,22 @@ const BANK_APP_URLS: Record<string, string> = {
     농협은행: 'nhsmartbanking://',
 };
 
-type Dialog = 'paid' | 'unpaid' | 'delete';
+type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
 
 interface PaymentRequestCardProps {
     payment: ChatPaymentRequest;
     party?: DeliveryParty;
     isHost: boolean;
+    /** The author or a room admin, who gets 삭제 in the long-press sheet. */
+    canDelete?: boolean;
     /** The request after a change, or null once it was deleted. */
     onChanged: (next: ChatPaymentRequest | null) => void;
 }
 
-export default function PaymentRequestCard({ payment, party, isHost, onChanged }: PaymentRequestCardProps) {
+export default function PaymentRequestCard({ payment, party, isHost, canDelete = false, onChanged }: PaymentRequestCardProps) {
     const isNative = useIsNative();
     const [dialog, setDialog] = useState<Dialog | null>(null);
-    const [editing, setEditing] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,13 +48,21 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
         return () => window.clearTimeout(t);
     }, [copied]);
 
+    const canceled = payment.canceled_at !== null;
+    const canCancel = isHost && !canceled && !payment.is_settled;
     const mine = payment.targets.find((t) => t.user.is_mine);
     const amount = mine ? mine.amount : payment.total_amount;
-    const myOrders = party?.orders?.filter((o) => o.orderer.is_mine);
+    // Only the party's live request is known to be the delivery split; any other card may be a general one.
+    const myOrders = party && payment.id === party.payment_request ? party.orders?.filter((o) => o.orderer.is_mine) : undefined;
     const subtotal = myOrders && orderTotal(myOrders);
     const paidCount = payment.targets.filter((t) => t.paid_at).length;
     const account = `${payment.bank_name} ${payment.account_number}`;
     const bankAppUrl = isNative ? BANK_APP_URLS[payment.bank_name] : undefined;
+    const subtitle = !mine
+        ? `${payment.targets.length}명에게 청구`
+        : subtotal !== undefined
+          ? `주문 ${formatWon(subtotal)} + 배송비 ${formatWon(mine.amount - subtotal)}`
+          : `${withSubject(payment.requester.display_name)} 요청`;
 
     const closeDialog = () => {
         setDialog(null);
@@ -74,41 +84,66 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
     };
     const errorLine = error && <p className="mt-3 text-[13px] text-ara_red">{error}</p>;
 
+    const openMenu = (e: MouseEvent) => {
+        // Long-presses inside the portaled dialogs bubble up here as well.
+        if (!e.currentTarget.contains(e.target as Node)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setMenuOpen(true);
+    };
+    const pick = (next: Dialog) => {
+        setMenuOpen(false);
+        setDialog(next);
+    };
+
     return (
-        <div className="w-[260px] rounded-[15px] border border-[#F0F0F0] bg-white p-4 text-left text-black">
-            <p className="text-[12px] font-semibold text-ara_red">{payment.is_settled ? '정산 완료' : '정산 요청'}</p>
-            <p className="mt-2 text-[22px] font-bold leading-7">{formatWon(amount)}</p>
-            {mine && subtotal !== undefined && (
-                <p className="mt-1 text-[12px] text-[#646464]">
-                    주문 {formatWon(subtotal)} + 배송비 {formatWon(mine.amount - subtotal)}
-                </p>
+        <div
+            onContextMenu={canCancel || canDelete ? openMenu : undefined}
+            className={`w-[260px] rounded-[15px] border border-[#F0F0F0] p-4 text-left text-black ${canceled ? 'bg-[#F6F6F6]' : 'bg-white'}`}
+        >
+            <p className={`text-[12px] font-semibold ${canceled ? 'text-[#646464]' : 'text-ara_red'}`}>
+                {canceled ? '취소된 정산' : payment.is_settled ? '정산 완료' : '정산 요청'}
+            </p>
+            <p className={`mt-2 text-[22px] font-bold leading-7 ${canceled ? 'text-[#BBBBBB] line-through' : ''}`}>
+                {formatWon(amount)}
+            </p>
+            <p className={`mt-1 text-[12px] ${canceled ? 'text-[#BBBBBB]' : 'text-[#646464]'}`}>{subtitle}</p>
+
+            {canceled && (
+                <div className="mt-3 space-y-2 border-t border-[#F0F0F0] pt-3 text-[14px]">
+                    {mine ? (
+                        <PaidRow label="내 송금" target={mine} withTime />
+                    ) : (
+                        payment.targets.map((t, i) => (
+                            <PaidRow
+                                key={i}
+                                label={
+                                    <>
+                                        {t.user.display_name}
+                                        <span className="ml-2 font-semibold">{formatWon(t.amount)}</span>
+                                    </>
+                                }
+                                target={t}
+                            />
+                        ))
+                    )}
+                </div>
             )}
 
-            <div className="mt-3 border-t border-[#F0F0F0] pt-3">
-                {editing ? (
-                    <AccountForm
-                        payment={payment}
-                        onCancel={() => setEditing(false)}
-                        onSaved={(next) => {
-                            setEditing(false);
-                            onChanged(next);
-                        }}
-                    />
-                ) : (
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 break-all text-[14px] font-medium">{account}</span>
-                        <button
-                            type="button"
-                            onClick={() => copyText(account).then(() => setCopied(true))}
-                            className="shrink-0 text-[13px] font-semibold text-ara_red"
-                        >
-                            {copied ? '복사됨' : '복사'}
-                        </button>
-                    </div>
-                )}
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#F0F0F0] pt-3">
+                <span className={`min-w-0 break-all text-[14px] font-medium ${canceled ? 'text-[#646464]' : ''}`}>{account}</span>
+                <button
+                    type="button"
+                    onClick={() => copyText(account).then(() => setCopied(true))}
+                    className={`shrink-0 text-[13px] font-semibold ${canceled ? 'text-[#BBBBBB]' : 'text-ara_red'}`}
+                >
+                    {copied ? '복사됨' : '복사'}
+                </button>
             </div>
 
-            {mine ? (
+            {canceled ? (
+                <p className="mt-3 text-[12px] text-[#646464]">취소된 정산이라 송금할 수 없습니다</p>
+            ) : mine ? (
                 <div className="mt-4 flex items-center justify-end gap-3">
                     {bankAppUrl && (
                         <button
@@ -142,22 +177,35 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
             ) : (
                 isHost && (
                     <div className="mt-4 flex items-center justify-end gap-3 text-[12px] text-[#646464]">
-                        {paidCount === 0 && !editing && (
-                            <>
-                                <button type="button" onClick={() => setEditing(true)}>
-                                    계좌 수정
-                                </button>
-                                <button type="button" onClick={() => setDialog('delete')} className="mr-auto">
-                                    요청 삭제
-                                </button>
-                            </>
+                        {canCancel && (
+                            <button type="button" onClick={() => setDialog('cancel')}>
+                                요청 취소
+                            </button>
                         )}
+                        <button type="button" onClick={() => setDialog('delete')} className="mr-auto">
+                            요청 삭제
+                        </button>
                         <span className="text-[13px]">
                             {paidCount}/{payment.targets.length} 송금 완료
                         </span>
                     </div>
                 )
             )}
+
+            <BottomSheet open={menuOpen} onClose={() => setMenuOpen(false)}>
+                <div className="divide-y divide-[#F0F0F0] px-5">
+                    {canCancel && (
+                        <MenuRow title="정산 취소" description="카드는 채팅에 남고, 더 이상 송금받지 않습니다" onClick={() => pick('cancel')} />
+                    )}
+                    {canDelete && (
+                        <MenuRow
+                            title="삭제"
+                            description="메시지가 채팅에서 사라집니다. 계좌를 가릴 때 씁니다"
+                            onClick={() => pick('delete')}
+                        />
+                    )}
+                </div>
+            </BottomSheet>
 
             {dialog === 'paid' && (
                 <ConfirmDialog
@@ -166,7 +214,7 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
                     secondary={{ label: '아직이요', onClick: closeDialog }}
                     primary={{ label: '보냈어요', disabled: busy, onClick: () => run(() => setPaymentPaid(payment.id, true)) }}
                 >
-                    <Body>방장에게 송금 완료로 표시됩니다.</Body>
+                    <Body>{payment.requester.display_name}에게 송금 완료로 표시됩니다.</Body>
                     <Rows rows={[['보낼 곳', account]]} />
                     {errorLine}
                 </ConfirmDialog>
@@ -181,11 +229,28 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
                     {errorLine}
                 </ConfirmDialog>
             )}
+            {dialog === 'cancel' && (
+                <ConfirmDialog
+                    title="정산을 취소할까요?"
+                    onClose={closeDialog}
+                    secondary={{ label: '닫기', onClick: closeDialog }}
+                    primary={{ label: '정산 취소하기', disabled: busy, onClick: () => run(() => cancelPaymentRequest(payment.id)) }}
+                >
+                    <Body>카드는 채팅에 남고, 더 이상 송금받지 않습니다.</Body>
+                    <Rows
+                        rows={[
+                            ['청구', formatWon(payment.total_amount)],
+                            ['송금 완료', `${payment.targets.length}명 중 ${paidCount}명`],
+                        ]}
+                    />
+                    {errorLine}
+                </ConfirmDialog>
+            )}
             {dialog === 'delete' && (
                 <ConfirmDialog
-                    title="정산 요청을 삭제할까요?"
+                    title="정산을 삭제할까요?"
                     onClose={closeDialog}
-                    secondary={{ label: '돌아가기', onClick: closeDialog }}
+                    secondary={{ label: '닫기', onClick: closeDialog }}
                     primary={{
                         label: '삭제하기',
                         disabled: busy,
@@ -193,7 +258,8 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
                         onClick: () => run(() => deleteMessage(payment.message_id).then(() => null), (e) => (e as Error).message),
                     }}
                 >
-                    <Body>삭제한 뒤 금액을 고쳐 다시 요청할 수 있어요.</Body>
+                    <Body>메시지가 채팅에서 사라집니다. 되돌릴 수 없습니다.</Body>
+                    <Rows rows={[['계좌', account]]} />
                     {errorLine}
                 </ConfirmDialog>
             )}
@@ -201,62 +267,24 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
     );
 }
 
-function AccountForm({
-    payment,
-    onCancel,
-    onSaved,
-}: {
-    payment: ChatPaymentRequest;
-    onCancel: () => void;
-    onSaved: (next: ChatPaymentRequest) => void;
-}) {
-    const [bank, setBank] = useState(payment.bank_name);
-    const [account, setAccount] = useState(payment.account_number);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const valid = bank.trim() !== '' && account.trim() !== '';
-
-    const save = async () => {
-        setSaving(true);
-        setError(null);
-        try {
-            onSaved(await updatePaymentAccount(payment.id, { bank_name: bank.trim(), account_number: account.trim() }));
-        } catch (e) {
-            setError(apiDetail(e));
-            setSaving(false);
-        }
-    };
-
+function PaidRow({ label, target, withTime = false }: { label: ReactNode; target: ChatPaymentTarget; withTime?: boolean }) {
     return (
-        <div className="space-y-2">
-            <input value={bank} onChange={(e) => setBank(e.target.value)} placeholder="은행" maxLength={30} className={INPUT_CLASS} />
-            <input
-                value={account}
-                onChange={(e) => setAccount(e.target.value.replace(/[^\d-]/g, ''))}
-                placeholder="계좌번호"
-                inputMode="numeric"
-                maxLength={30}
-                className={INPUT_CLASS}
-            />
-            {error && <p className="text-[13px] text-ara_red">{error}</p>}
-            <div className="flex gap-2">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="h-10 flex-1 rounded-[10px] bg-[#F6F6F6] text-[14px] font-medium text-[#646464]"
-                >
-                    취소
-                </button>
-                <button
-                    type="button"
-                    data-press="strong"
-                    disabled={!valid || saving}
-                    onClick={save}
-                    className="h-10 flex-1 rounded-[10px] bg-ara_red text-[14px] font-medium text-white disabled:bg-[#F0F0F0] disabled:text-[#BBBBBB]"
-                >
-                    저장
-                </button>
-            </div>
+        <div className="flex items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-[#646464]">{label}</span>
+            {target.paid_at ? (
+                <span className="shrink-0 font-semibold">송금 완료{withTime && ` ${target.paid_at.slice(11, 16)}`}</span>
+            ) : (
+                <span className="shrink-0 text-[#BBBBBB]">미송금</span>
+            )}
         </div>
+    );
+}
+
+function MenuRow({ title, description, onClick }: { title: string; description: string; onClick: () => void }) {
+    return (
+        <button type="button" onClick={onClick} className="block w-full py-4 text-left">
+            <span className="block text-[16px] font-semibold text-black">{title}</span>
+            <span className="mt-1 block text-[13px] text-[#646464]">{description}</span>
+        </button>
     );
 }

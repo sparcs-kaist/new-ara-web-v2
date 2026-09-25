@@ -1,7 +1,7 @@
 import http from '@/lib/api/http';
 import { AxiosError } from 'axios'; // 추가
 import { queryBuilder } from '@/lib/utils/queryBuilder';
-import type { ChatPaymentRequest, ChatVote, ChatVoteCreateBody } from '@/lib/types/chat';
+import type { ChatPaymentCreateBody, ChatPaymentRequest, ChatVote, ChatVoteCreateBody } from '@/lib/types/chat';
 
 // 채팅방 리스트 가져오기
 export const fetchChatRoomList = async (page = 1, page_size = 15) => {
@@ -239,8 +239,14 @@ export const setPaymentPaid = async (id: number, paid: boolean) => {
     return data;
 };
 
-export const updatePaymentAccount = async (id: number, body: { bank_name?: string; account_number?: string }) => {
-    const { data } = await http.patch<ChatPaymentRequest>(`chat/payment/${id}/`, body);
+export const cancelPaymentRequest = async (id: number) => {
+    const { data } = await http.post<ChatPaymentRequest>(`chat/payment/${id}/cancel/`);
+    return data;
+};
+
+// 일반 정산: 받을 사람과 금액을 직접 정한다 (배달방에서도 가능)
+export const createPaymentRequest = async (body: ChatPaymentCreateBody) => {
+    const { data } = await http.post<ChatPaymentRequest>('chat/payment/', body);
     return data;
 };
 

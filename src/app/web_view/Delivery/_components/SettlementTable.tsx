@@ -60,7 +60,7 @@ export function SettlementTable({ orders, fee }: { orders: DeliveryOrder[]; fee:
             </div>
             <p className="mt-3 flex items-center gap-1 text-[12px] text-[#646464]">
                 <InformationIcon size={14} />
-                청구 금액은 사람마다 다릅니다. 배송비는 인원수로 나눕니다.
+                배송비는 주문한 사람 수로 나눕니다. 방장은 청구 대상이 아닙니다.
             </p>
         </section>
     );
