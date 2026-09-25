@@ -4,13 +4,11 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader, Screen } from '@/app/web_view/_components';
-import { DELIVERY_KEY } from '@/app/web_view/_query';
-import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
-import { apiDetail, createDeliveryParty, fetchDeliveryPenalty } from '@/lib/api/delivery';
-import { isPenaltyActive, penaltyMessage } from '@/lib/delivery';
+import { DELIVERY_KEY, useDeliveryPenalty } from '@/app/web_view/_query';
+import { apiDetail, createDeliveryParty } from '@/lib/api/delivery';
+import { isPenaltyActive } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from '../_components/BottomCta';
 import { INPUT_CLASS, NumberInput } from '../_components/fields';
-import { PenaltyDialog } from '../_components/PenaltyDialog';
 
 const MIN_MINUTES = 5;
 const MAX_MINUTES = 60;
@@ -33,7 +31,6 @@ const FIELDS: string[] = [...Object.keys(INITIAL_FORM), 'recruit_minutes'];
 
 export default function DeliveryNewPage() {
     const router = useRouter();
-    const back = useSafeBack();
     const qc = useQueryClient();
     const [form, setForm] = useState(INITIAL_FORM);
     const [minutes, setMinutes] = useState(30);
@@ -44,21 +41,12 @@ export default function DeliveryNewPage() {
     useEffect(() => {
         if (formError) errorRef.current?.scrollIntoView({ block: 'center' });
     }, [formError]);
-    // `leave`: the ban was already active on arrival, so 확인 takes the user back.
-    const [block, setBlock] = useState<{ message: string; leave: boolean } | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    const until = useDeliveryPenalty().data?.until;
     useEffect(() => {
-        let cancelled = false;
-        fetchDeliveryPenalty()
-            .then(({ until }) => {
-                if (!cancelled && isPenaltyActive(until)) setBlock({ message: penaltyMessage(until), leave: true });
-            })
-            .catch(() => {});
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+        if (isPenaltyActive(until)) router.replace('/web_view/Delivery/Restricted');
+    }, [until, router]);
 
     const set = (field: FormField) => (value: string) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -95,8 +83,11 @@ export default function DeliveryNewPage() {
             const res = (e as { response?: { status?: number; data?: unknown } }).response;
             const firstKey =
                 res?.status === 400 && res.data && typeof res.data === 'object' ? Object.keys(res.data)[0] : undefined;
-            if (res?.status === 403) setBlock({ message: apiDetail(e), leave: false });
-            else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
+            if (res?.status === 403) {
+                // Create answers 403 only for an active penalty; that page says why and for how long.
+                qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+                router.replace('/web_view/Delivery/Restricted');
+            } else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
             else setFormError(apiDetail(e));
             setSubmitting(false);
         }
@@ -223,10 +214,6 @@ export default function DeliveryNewPage() {
                     방 만들기
                 </CtaButton>
             </FixedBottomBar>
-
-            {block && (
-                <PenaltyDialog message={block.message} onConfirm={() => (block.leave ? back() : setBlock(null))} />
-            )}
         </Screen>
     );
 }

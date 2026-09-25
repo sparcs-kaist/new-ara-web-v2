@@ -44,12 +44,6 @@ export function isPenaltyActive(until: string | null | undefined): until is stri
     return !!until && new Date(until).getTime() > Date.now();
 }
 
-// The server's 403 wording, built from GET penalty's `until` (UTC) in the device's time zone.
-export function penaltyMessage(until: string): string {
-    const d = new Date(until);
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}까지 함께 배달 방을 만들 수 없어요.`;
-}
-
 // Best-effort public account formats, in the bank picker's order; a bank without prefixes is told apart by length alone.
 const BANK_FORMATS: [bank: string, prefixes: string[], lengths: number[]][] = [
     ['토스뱅크', ['1000'], [12]],

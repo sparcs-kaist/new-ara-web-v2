@@ -8,6 +8,7 @@ import type {
     DeliveryPartySummary,
     DeliveryPartyUpdateBody,
     DeliveryPaymentRequestBody,
+    DeliveryPenalty,
     Paginated,
 } from '@/lib/types/delivery';
 
@@ -46,7 +47,7 @@ export const updateDeliveryParty = async (id: number, body: DeliveryPartyUpdateB
 };
 
 export const fetchDeliveryPenalty = async () => {
-    const { data } = await http.get<{ until: string | null }>('/delivery/penalty/');
+    const { data } = await http.get<DeliveryPenalty>('/delivery/penalty/');
     return data;
 };
 

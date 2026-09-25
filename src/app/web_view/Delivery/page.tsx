@@ -6,11 +6,10 @@ import { AppHeader, Screen, SearchIcon, Spinner } from '@/app/web_view/_componen
 import { useDeliveryParties, useDeliveryPenalty } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { apiDetail } from '@/lib/api/delivery';
-import { isPenaltyActive, penaltyMessage } from '@/lib/delivery';
+import { isPenaltyActive } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from './_components/BottomCta';
 import { DeliveryDetailSheet } from './_components/DeliveryDetailSheet';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from './_components/DeliveryRoomCard';
-import { PenaltyDialog } from './_components/PenaltyDialog';
 
 function DeliveryListInner() {
     const router = useRouter();
@@ -19,7 +18,6 @@ function DeliveryListInner() {
     const [openId, setOpenId] = useState<number | null>(linkedId);
     const [draft, setDraft] = useState('');
     const [search, setSearch] = useState('');
-    const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -55,11 +53,8 @@ function DeliveryListInner() {
         if (linkedId) router.replace('/web_view/Delivery', { scroll: false });
     };
 
-    const openCreate = () => {
-        const until = penalty.data?.until;
-        if (isPenaltyActive(until)) setBlockedMessage(penaltyMessage(until));
-        else router.push('/web_view/Delivery/New');
-    };
+    const openCreate = () =>
+        router.push(isPenaltyActive(penalty.data?.until) ? '/web_view/Delivery/Restricted' : '/web_view/Delivery/New');
 
     return (
         <Screen withTabBar={false}>
@@ -127,7 +122,6 @@ function DeliveryListInner() {
             </FixedBottomBar>
 
             <DeliveryDetailSheet partyId={openId} onClose={closeSheet} />
-            {blockedMessage && <PenaltyDialog message={blockedMessage} onConfirm={() => setBlockedMessage(null)} />}
         </Screen>
     );
 }
