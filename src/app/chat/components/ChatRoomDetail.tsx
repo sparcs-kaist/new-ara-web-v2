@@ -12,30 +12,24 @@ import { fetchMe } from '@/lib/api/user';
 // import { sendAttachmentMessage } from '@/lib/api/chat';
 import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM, createInvitation } from '@/lib/api/chat';
 import ChatInput from './ChatInput';
+import DeliveryRoomOverlays from './DeliveryRoomOverlays';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import NoticeLine from './NoticeLine';
-import PaymentCreateSheet from './PaymentCreateSheet';
 import PaymentRequestCard from './PaymentRequestCard';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import VoteCard from './VoteCard';
-import VoteCreateSheet from './VoteCreateSheet';
 import { useChatRoomSocket } from '../hooks/useChatRoomSocket';
 import { useDeliveryPayments, useDeliveryRoom } from '../hooks/useDeliveryRoom';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
-import { Body } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { DELIVERY_KEY } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { DeliveryActionDialog } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { DeliveryComposerNote, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
-import { MembersSheet } from '@/app/web_view/Delivery/_components/MembersSheet';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
-import { OrderSheet } from '@/app/web_view/Delivery/_components/OrderSheet';
-import { RoomInfoSheet } from '@/app/web_view/Delivery/_components/RoomInfoSheet';
 import { ordersAllowed } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatVote } from '@/lib/types/chat';
 import type { DeliveryOrder } from '@/lib/types/delivery';
@@ -128,11 +122,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const qc = useQueryClient();
     const [detailRoom, setDetailRoom] = useState<ChatRoom | null>(null);
     const partyId = detailRoom?.id === roomId ? detailRoom.delivery_party ?? null : null;
-    const {
-        party, myOrders, sheet, setSheet, action, setAction, voteOpen, setVoteOpen, paymentOpen, setPaymentOpen,
-        rerequestBlocked, setRerequestBlocked, startAction, showOrderCta, openPaymentSheet, openSettlement,
-        voteRow, paymentRow, deliveryRows, paymentMembers,
-    } = useDeliveryRoom({ partyId, members, myId });
+    const delivery = useDeliveryRoom({ partyId, members, myId });
+    const { party, myOrders, setSheet, setAction, showOrderCta, voteRow, paymentRow, deliveryRows } = delivery;
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const isMine = (msg: Message) => msg.sender?.is_mine ?? msg.created_by?.id === myId;
@@ -629,70 +620,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 />
             )}
 
-            {party && (
-                <>
-                    <OrderSheet
-                        open={sheet?.kind === 'order'}
-                        party={party}
-                        order={sheet?.kind === 'order' ? sheet.order : undefined}
-                        onClose={() => setSheet(null)}
-                    />
-                    <RoomInfoSheet
-                        open={sheet?.kind === 'info'}
-                        party={party}
-                        onAction={startAction}
-                        onSettle={openSettlement}
-                        onClose={() => setSheet(null)}
-                    />
-                    <MembersSheet
-                        open={sheet?.kind === 'members'}
-                        party={party}
-                        onKick={(member) => startAction({ kind: 'kick', member })}
-                        onClose={() => setSheet(null)}
-                    />
-                    {action && (
-                        <DeliveryActionDialog
-                            key={action.kind}
-                            party={party}
-                            action={action}
-                            onAction={setAction}
-                            onClose={() => setAction(null)}
-                            onLeft={() => router.replace(exitTo)}
-                        />
-                    )}
-                </>
-            )}
-
-            <VoteCreateSheet open={voteOpen} roomId={roomId} onClose={() => setVoteOpen(false)} />
-            <PaymentCreateSheet open={paymentOpen} roomId={roomId} members={paymentMembers} onClose={() => setPaymentOpen(false)} />
-
-            {deleteError && (
-                <ConfirmDialog
-                    title={deleteError}
-                    primary={{ label: '확인', onClick: () => setDeleteError(null) }}
-                    onClose={() => setDeleteError(null)}
-                />
-            )}
-            {rerequestBlocked && party && (
-                <ConfirmDialog
-                    title={party.payment_request !== null ? '이미 정산을 요청했어요' : '배달 정산을 다시 보낼 수 없어요'}
-                    secondary={{ label: '닫기', onClick: () => setRerequestBlocked(false) }}
-                    primary={{
-                        label: '일반 정산 보내기',
-                        onClick: () => {
-                            setRerequestBlocked(false);
-                            openPaymentSheet();
-                        },
-                    }}
-                    onClose={() => setRerequestBlocked(false)}
-                >
-                    <Body>
-                        {party.payment_request !== null
-                            ? '잘못 보냈다면 정산을 취소하고 다시 보내주세요.'
-                            : '송금한 사람이 있어요. 필요한 사람에게 일반 정산을 보내주세요.'}
-                    </Body>
-                </ConfirmDialog>
-            )}
+            <DeliveryRoomOverlays delivery={delivery} roomId={roomId} deleteError={deleteError} setDeleteError={setDeleteError} onLeft={() => router.replace(exitTo)} />
 
             {forbidden && (
                 <ConfirmDialog
