@@ -11,7 +11,7 @@ import {
     Screen,
     VerifiedIcon,
 } from '@/app/web_view/_components';
-import { fetchNotifications, readAllNotifications } from '@/lib/api/notification';
+import { fetchNotifications, readAllNotifications, readNotification } from '@/lib/api/notification';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import type { Notification } from '@/lib/types/notification';
@@ -80,6 +80,10 @@ export default function NotificationsPage() {
     };
 
     const onTap = (n: Notification) => {
+        if (!n.is_read) {
+            setItems((prev) => prev.map((it) => (it.id === n.id ? { ...it, is_read: true } : it)));
+            readNotification(n.id).catch((e) => console.warn('readNotification failed', e));
+        }
         if (n.type === 'chat_message' && n.related_chat_room) {
             router.push(`/web_view/Chat/${n.related_chat_room.id}`);
             return;
