@@ -622,6 +622,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     // 컨텍스트 메뉴 핸들러
     const handleContextMenu = (e: React.MouseEvent, messageId: number) => {
+        // 포털(카드의 다이얼로그)에서 버블된 이벤트와 입력칸의 붙여넣기 메뉴는 그대로 둔다
+        if (!e.currentTarget.contains(e.target as Node) || (e.target as HTMLElement).closest('input, textarea')) return;
         e.preventDefault();
         setContextMenu({
             visible: true,
