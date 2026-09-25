@@ -1,4 +1,4 @@
-// PROVISIONAL: the chat report API is proposed to the backend; its field names live only here and in lib/api/report.ts.
+// Chat report API (new-ara-api chat/report); its field names live only here and in lib/api/report.ts.
 
 export type ReportType = 'violation_of_code' | 'impersonation' | 'insult' | 'spam' | 'others';
 
@@ -6,7 +6,7 @@ export type ReportType = 'violation_of_code' | 'impersonation' | 'insult' | 'spa
 export type ChatReportTarget = { kind: 'message'; messageId: number } | { kind: 'member'; roomId: number; anonNumber: number };
 
 export interface ChatReportBody {
-    parent_chat_message?: number;
+    message?: number;
     chat_room?: number;
     anon_number?: number;
     reported_user?: number;

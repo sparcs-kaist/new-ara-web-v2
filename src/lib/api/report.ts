@@ -6,9 +6,9 @@ import type { ChatReportBody, ChatReportTarget, ReportType } from '@/lib/types/r
 export const reportChat = async (target: ChatReportTarget, type: ReportType, content: string) => {
     const body: ChatReportBody =
         target.kind === 'message'
-            ? { parent_chat_message: target.messageId, type, content: content || undefined }
+            ? { message: target.messageId, type, content: content || undefined }
             : { chat_room: target.roomId, anon_number: target.anonNumber, type, content: content || undefined };
-    const { data } = await http.post<{ id: number }>('reports/', body);
+    const { data } = await http.post<{ id: number }>('chat/report/', body);
     return data;
 };
 
