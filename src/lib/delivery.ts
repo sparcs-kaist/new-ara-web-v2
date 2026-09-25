@@ -49,3 +49,27 @@ export function penaltyMessage(until: string): string {
     const d = new Date(until);
     return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}까지 함께 배달 방을 만들 수 없어요.`;
 }
+
+// Best-effort public account formats, in the bank picker's order; a bank without prefixes is told apart by length alone.
+const BANK_FORMATS: [bank: string, prefixes: string[], lengths: number[]][] = [
+    ['토스뱅크', ['1000'], [12]],
+    ['카카오뱅크', ['3333'], [13]],
+    ['국민은행', [], [12, 14]],
+    ['신한은행', ['110', '140'], [12]],
+    ['우리은행', ['1002', '1005', '1006'], [13]],
+    ['하나은행', [], [14]],
+    ['농협은행', ['301', '302', '312', '351', '352'], [13]],
+    ['기업은행', [], [14]],
+    ['새마을금고', ['9002', '9003', '9004'], [13]],
+    ['케이뱅크', ['100'], [12]],
+];
+
+export function suggestBanks(accountNumber: string): string[] {
+    const digits = accountNumber.replace(/\D/g, '');
+    const banks = BANK_FORMATS.filter(([, prefixes, lengths]) =>
+        prefixes.length
+            ? digits.length <= Math.max(...lengths) && prefixes.some((p) => p.startsWith(digits.slice(0, p.length)))
+            : lengths.includes(digits.length),
+    ).map(([bank]) => bank);
+    return banks.length <= 3 ? banks : [];
+}

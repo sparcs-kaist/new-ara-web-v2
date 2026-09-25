@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BottomSheet, CheckIcon, RightChevronIcon } from '@/app/web_view/_components';
+import { suggestBanks } from '@/lib/delivery';
 import { INPUT_CLASS } from './fields';
 
 const BANKS = ['토스뱅크', '카카오뱅크', '국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '새마을금고', '케이뱅크'];
@@ -49,11 +50,33 @@ export function AccountFields({
     onChange: (draft: AccountDraft) => void;
     onPickBank: () => void;
 }) {
+    // The bank the number picked by itself; it follows the number until the sheet or a chip is used.
+    const [autoBank, setAutoBank] = useState('');
+    const suggested = suggestBanks(draft.account);
+
+    const pickBank = (bank: string) => {
+        setAutoBank('');
+        onChange({ ...draft, bankChoice: bank });
+    };
+
+    const typeAccount = (account: string) => {
+        const banks = suggestBanks(account);
+        let bankChoice = draft.bankChoice;
+        if (bankChoice === autoBank && !banks.includes(bankChoice)) {
+            bankChoice = banks.length === 1 ? banks[0] : '';
+            setAutoBank(bankChoice);
+        }
+        onChange({ ...draft, account, bankChoice });
+    };
+
     return (
         <div className="space-y-2">
             <button
                 type="button"
-                onClick={onPickBank}
+                onClick={() => {
+                    setAutoBank('');
+                    onPickBank();
+                }}
                 className="flex h-12 w-full items-center justify-between rounded-[10px] bg-[#F6F6F6] px-4 text-[15px]"
             >
                 <span className={draft.bankChoice ? 'text-black' : 'text-[#BBBBBB]'}>{draft.bankChoice || '은행 선택'}</span>
@@ -70,12 +93,27 @@ export function AccountFields({
             )}
             <input
                 value={draft.account}
-                onChange={(e) => onChange({ ...draft, account: e.target.value.replace(/[^\d-]/g, '') })}
+                onChange={(e) => typeAccount(e.target.value.replace(/[^\d-]/g, ''))}
                 placeholder="계좌번호"
                 inputMode="numeric"
                 maxLength={30}
                 className={INPUT_CLASS}
             />
+            {suggested.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    {suggested.map((bank) => (
+                        <button
+                            key={bank}
+                            type="button"
+                            aria-pressed={bank === draft.bankChoice}
+                            onClick={() => pickBank(bank)}
+                            className={`h-8 rounded-[8px] border px-[10px] text-[14px] font-medium ${bank === draft.bankChoice ? 'border-ara_red bg-white text-ara_red' : 'border-transparent bg-[#F6F6F6] text-[#646464]'}`}
+                        >
+                            {bank}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
