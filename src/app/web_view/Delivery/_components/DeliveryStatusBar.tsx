@@ -28,11 +28,11 @@ const CANCEL_REASON: Record<DeliveryParty['cancel_reason'], string> = {
 };
 
 const sum = (shares: { amount: number }[]) => shares.reduce((total, s) => total + s.amount, 0);
-const latestCanceled = (payments: ChatPaymentRequest[]) => payments.filter((p) => p.canceled_at !== null).pop();
+const latestCanceled = (payments: ChatPaymentRequest[]) => payments.filter((p) => p.canceled_at != null).pop();
 
 // Every live request counts, the delivery one and general ones alike; canceled ones only explain an empty state.
 function settlingLines(party: DeliveryParty, myOrders: DeliveryOrder[], payments: ChatPaymentRequest[]): Lines | undefined {
-    const live = payments.filter((p) => p.canceled_at === null);
+    const live = payments.filter((p) => p.canceled_at == null);
     const shares = live.flatMap((p) => p.targets.filter((t) => t.user.is_mine).map((t) => ({ ...t, payment: p })));
     const unpaid = shares.filter((t) => !t.paid_at);
     if (unpaid.length) {
@@ -137,7 +137,7 @@ export function DeliveryStatusBar({
 }
 
 function settlingNote(party: DeliveryParty, payments: ChatPaymentRequest[]): string | undefined {
-    if (party.payment_request !== null || payments.some((p) => p.canceled_at === null)) return '송금 완료 후 퇴장 가능';
+    if (party.payment_request !== null || payments.some((p) => p.canceled_at == null)) return '송금 완료 후 퇴장 가능';
     // ORDERED/ARRIVED with no live delivery request is only refused when someone had paid the previous one.
     if (party.is_host && !party.can_request_payment) return '송금한 사람이 있어 배달 정산을 다시 보낼 수 없습니다';
     const canceled = latestCanceled(payments);

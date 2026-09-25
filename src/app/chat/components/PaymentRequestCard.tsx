@@ -48,7 +48,7 @@ export default function PaymentRequestCard({ payment, party, isHost, canDelete =
         return () => window.clearTimeout(t);
     }, [copied]);
 
-    const canceled = payment.canceled_at !== null;
+    const canceled = payment.canceled_at != null;
     const canCancel = isHost && !canceled && !payment.is_settled;
     const mine = payment.targets.find((t) => t.user.is_mine);
     const amount = mine ? mine.amount : payment.total_amount;
@@ -195,7 +195,11 @@ export default function PaymentRequestCard({ payment, party, isHost, canDelete =
             <BottomSheet open={menuOpen} onClose={() => setMenuOpen(false)}>
                 <div className="divide-y divide-[#F0F0F0] px-5">
                     {canCancel && (
-                        <MenuRow title="정산 취소" description="카드는 채팅에 남고, 더 이상 송금받지 않습니다" onClick={() => pick('cancel')} />
+                        <MenuRow
+                            title="정산 취소"
+                            description="카드는 채팅에 남고, 더 이상 송금받지 않습니다"
+                            onClick={() => pick('cancel')}
+                        />
                     )}
                     {canDelete && (
                         <MenuRow

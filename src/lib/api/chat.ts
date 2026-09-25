@@ -244,7 +244,6 @@ export const cancelPaymentRequest = async (id: number) => {
     return data;
 };
 
-// 일반 정산: 받을 사람과 금액을 직접 정한다 (배달방에서도 가능)
 export const createPaymentRequest = async (body: ChatPaymentCreateBody) => {
     const { data } = await http.post<ChatPaymentRequest>('chat/payment/', body);
     return data;

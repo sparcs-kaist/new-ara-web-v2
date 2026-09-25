@@ -231,11 +231,11 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             });
         };
 
-        // 서버(room_update messages/deleted)와 클라이언트 relay(message_deleted) 둘 다 여기로 온다
         const removeMessage = (messageId: number) => {
-            // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다
-            if (messagesRef.current.some(m => m.id === messageId && m.message_type === 'PAYMENT_REQUEST')) {
-                qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+            // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다; 안 불러온 메시지는 종류를 모르니 함께 다시 가져온다
+            const known = messagesRef.current.find(m => m.id === messageId);
+            if (!known || known.message_type === 'PAYMENT_REQUEST') {
+                qc.invalidateQueries({ queryKey: [...DELIVERY_KEY, 'party'] });
             }
             setMessages(prev => prev.filter(m => m.id !== messageId));
         };
@@ -264,7 +264,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 if (target) await syncMessage(target.id, false);
                 else await applyRecent();
                 // 취소되면 can_request_payment가 바뀔 수 있어 파티도 다시 가져온다
-                if (resource === 'payment') qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+                if (resource === 'payment') {
+                    qc.invalidateQueries({ queryKey: [...DELIVERY_KEY, 'party'] });
+                    qc.invalidateQueries({ queryKey: [...DELIVERY_KEY, 'payment'] });
+                }
             }
         };
 
@@ -712,7 +715,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             ? [{ label: '주문 등록', icon: PostIcon, color: 'bg-ara_red', onSelect: () => setSheet({ kind: 'order' }) }]
             : []),
         voteRow,
-        // 방장은 배달 정산을 다시 보낼 수 없으면 일반 정산으로 안내한다
         party.is_host
             ? party.can_request_payment
                 ? { ...paymentRow, onSelect: openSettlement }
@@ -723,7 +725,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const paymentMembers: PaymentMember[] = party
         ? party.members.filter(m => !m.is_mine).map(m => ({ name: m.display_name, target: { anon_number: m.anon_number } }))
         : members.flatMap((m): PaymentMember[] => {
-            if (m.is_mine || (m.user && m.user.id === myId)) return [];
+            if (m.is_mine || (m.user && m.user.id === myId) || m.role === 'BLOCKED' || m.role === 'BLOCKER') return [];
             if (m.user) return [{ name: m.user.profile?.nickname ?? m.display_name ?? '', target: { user: m.user.id } }];
             return m.anon_number != null ? [{ name: m.display_name ?? '', target: { anon_number: m.anon_number } }] : [];
         });
