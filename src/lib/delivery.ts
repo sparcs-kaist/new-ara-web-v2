@@ -84,7 +84,7 @@ export function suggestBanks(accountNumber: string): string[] {
     const banks = BANK_FORMATS.filter(([, prefixes, lengths]) =>
         prefixes.length
             ? digits.length <= Math.max(...lengths) && prefixes.some((p) => p.startsWith(digits.slice(0, p.length)))
-            : lengths.includes(digits.length),
+            : lengths.some((n) => n === digits.length || (n === 14 && digits.length === 13)),
     ).map(([bank]) => bank);
     return banks.length <= 3 ? banks : [];
 }

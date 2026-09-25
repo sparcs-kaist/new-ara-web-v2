@@ -97,8 +97,7 @@ function DeliveryListInner() {
                         role="tab"
                         aria-selected={tab.mine === mine}
                         onClick={() => tab.mine !== mine && router.replace(listUrl(tab.mine), { scroll: false })}
-                        // The ::after strip grows the 20px pill's touch target to 36px without changing its look.
-                        className={`relative flex h-5 items-center rounded-[10px] px-3 text-xs font-semibold after:absolute after:inset-x-0 after:-inset-y-2 ${tab.mine === mine ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
+                        className={`flex h-8 items-center rounded-full px-[14px] text-[13px] font-semibold ${tab.mine === mine ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
                     >
                         {tab.label}
                     </button>

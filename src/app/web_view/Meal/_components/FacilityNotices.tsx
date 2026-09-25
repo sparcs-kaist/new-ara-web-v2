@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomSheet, NotifyIcon, RightChevronIcon, Skeleton } from '@/app/web_view/_components';
 import { useBoardList, useBoardSection, usePost } from '@/app/web_view/_query';
-import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { pad } from '@/lib/delivery';
 import type { ResponsePost } from '@/lib/types/post';
 
@@ -23,7 +22,7 @@ function plainText(html: string): string {
     return text.length > 600 ? `${text.slice(0, 600)}…` : text;
 }
 
-/** The 입주업체 공지 board on the 식사 home: the newest article as the 공지 banner, the next two as 신메뉴 소식. */
+/** The 입주업체 공지 board on the 식사 home: the newest article as the 공지 banner. */
 export function FacilityNotices() {
     const router = useRouter();
     const boards = useBoardList();
@@ -50,7 +49,7 @@ export function FacilityNotices() {
             </>
         );
     }
-    const [notice, ...news] = articles.data ?? [];
+    const notice = articles.data?.[0];
     if (!notice) return null;
 
     return (
@@ -68,29 +67,6 @@ export function FacilityNotices() {
                 </button>
             </div>
 
-            {news.length > 0 && (
-                <>
-                    {divider}
-                    <section>
-                        <MainPageTextButton label="신메뉴 소식" onPress={() => router.push(`/web_view/Board/${boardId}`)} />
-                        <div className="mt-3 space-y-3 px-5">
-                            {news.map((post) => (
-                                <button
-                                    key={post.id}
-                                    type="button"
-                                    onClick={() => router.push(`/web_view/Post/${post.id}`)}
-                                    className="block min-h-[128px] w-full rounded-[15px] bg-[#F6F6F6] px-[18px] pb-5 pt-[22px] text-left"
-                                >
-                                    <span className="line-clamp-2 break-keep text-[16px] font-semibold leading-[1.4] text-[#333333]">{post.title}</span>
-                                    <span className="mt-2 block text-[13px] text-[#BBBBBB]">
-                                        {post.created_by.profile.nickname} · {monthDay(new Date(post.created_at))}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-                </>
-            )}
 
             <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="식당 공지">
                 <NoticeBody notice={notice} onMore={() => router.push(`/web_view/Post/${notice.id}`)} />
