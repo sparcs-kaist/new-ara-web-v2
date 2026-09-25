@@ -7,7 +7,7 @@ import { DELIVERY_KEY } from '@/app/web_view/_query';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import { apiDetail, updateDeliveryParty } from '@/lib/api/delivery';
 import { formatWon, orderTotal, ordersAllowed, pad } from '@/lib/delivery';
-import type { DeliveryParty, DeliveryStatus } from '@/lib/types/delivery';
+import type { DeliveryMember, DeliveryParty, DeliveryStatus } from '@/lib/types/delivery';
 import { AnonAvatar } from './AnonAvatar';
 import { CtaButton } from './BottomCta';
 import { InfoRow } from './DeliveryDetailSheet';
@@ -36,12 +36,14 @@ export function RoomInfoSheet({
     party,
     onAction,
     onSettle,
+    onReport,
     onClose,
 }: {
     open: boolean;
     party: DeliveryParty;
     onAction: (action: DeliveryAction) => void;
     onSettle: () => void;
+    onReport: (member: DeliveryMember) => void;
     onClose: () => void;
 }) {
     const now = useNow();
@@ -51,6 +53,7 @@ export function RoomInfoSheet({
     const ordersOpen = ordersAllowed(party);
     // The server refuses a host leave while recruiting; canceling is how the host gets out.
     const hostMustCancel = party.is_host && ordersOpen;
+    const host = party.is_host ? undefined : party.members.find((m) => m.role === 'OWNER');
 
     return (
         <BottomSheet open={open} onClose={onClose} title="방 정보">
@@ -152,6 +155,11 @@ export function RoomInfoSheet({
                 >
                     {hostMustCancel ? '모집 취소' : '방 나가기'}
                 </button>
+                {host && (
+                    <button type="button" onClick={() => onReport(host)} className="mt-4 block text-[14px] text-[#999999]">
+                        신고하기
+                    </button>
+                )}
             </div>
         </BottomSheet>
     );

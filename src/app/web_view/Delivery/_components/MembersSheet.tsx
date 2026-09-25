@@ -9,11 +9,13 @@ export function MembersSheet({
     open,
     party,
     onKick,
+    onReport,
     onClose,
 }: {
     open: boolean;
     party: DeliveryParty;
     onKick: (member: DeliveryMember) => void;
+    onReport: (member: DeliveryMember) => void;
     onClose: () => void;
 }) {
     const orders = party.orders ?? [];
@@ -45,11 +47,18 @@ export function MembersSheet({
                                 <span className="text-[15px] font-semibold text-black">
                                     {memberOrders.length ? formatWon(orderTotal(memberOrders)) : '-'}
                                 </span>
-                                {party.is_host && m.role !== 'OWNER' && (
-                                    <button type="button" onClick={() => onKick(m)} className="text-[12px] text-[#646464]">
-                                        내보내기
-                                    </button>
-                                )}
+                                <div className="flex gap-2">
+                                    {party.is_host && m.role !== 'OWNER' && (
+                                        <button type="button" onClick={() => onKick(m)} className="text-[12px] text-[#646464]">
+                                            내보내기
+                                        </button>
+                                    )}
+                                    {!m.is_mine && (
+                                        <button type="button" onClick={() => onReport(m)} className="text-[12px] text-[#646464]">
+                                            신고
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </li>
                     );
