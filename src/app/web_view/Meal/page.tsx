@@ -9,6 +9,8 @@ import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageText
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
 import { currentMealSlot, type MealSlot } from '@/lib/types/meal';
+import { FacilityNotices } from './_components/FacilityNotices';
+import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
 
 export default function MealHomePage() {
     const router = useRouter();
@@ -46,6 +48,10 @@ export default function MealHomePage() {
 
             <div className="mx-5 my-5 h-px bg-[#F0F0F0]" />
 
+            <MenuPhotoStrip slot={slot} />
+
+            <div className="mx-5 my-5 h-px bg-[#F0F0F0]" />
+
             <section>
                 <MainPageTextButton label="함께 배달하기" onPress={() => router.push('/web_view/Delivery')} />
                 <div className="mt-3 space-y-3 px-5">
@@ -75,6 +81,8 @@ export default function MealHomePage() {
                     )}
                 </div>
             </section>
+
+            <FacilityNotices />
 
             <div className="h-5" />
         </Screen>

@@ -1,5 +1,8 @@
+import http from '@/lib/api/http';
 import httpNoRedicrect from '@/lib/api/httpNoRedirect';
-import { MealResponse } from '@/lib/types/meal';
+import { queryBuilder } from '@/lib/utils/queryBuilder';
+import type { Paginated } from '@/lib/types/delivery';
+import { MealPhoto, MealResponse } from '@/lib/types/meal';
 
 type MealDate = string; // "YYYYMMDD" 형태 문자열 (ex: 20251128)
 export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER';
@@ -24,5 +27,15 @@ export const fetchMeal = async (
     `meal/?${params.toString()}`
   );
 
+  return data;
+};
+
+export const fetchMealPhotos = async (params: {
+  restaurant_id: number;
+  date: MealDate;
+  meal_time?: MealType;
+  page_size?: number;
+}) => {
+  const { data } = await http.get<Paginated<MealPhoto>>(`meal/photos/?${queryBuilder(params)}`);
   return data;
 };
