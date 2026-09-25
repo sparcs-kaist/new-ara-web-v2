@@ -64,7 +64,6 @@ function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[
     }
 }
 
-/** Party status strip under the delivery room header. */
 export function DeliveryStatusBar({
     party,
     myOrders,
@@ -113,7 +112,6 @@ function composerNote(party: DeliveryParty): string | null {
     }
 }
 
-/** One-line hint above the delivery room composer. */
 export function DeliveryComposerNote({ party }: { party: DeliveryParty }) {
     const note = composerNote(party);
     if (!note) return null;

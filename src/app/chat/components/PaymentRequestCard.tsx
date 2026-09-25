@@ -32,7 +32,6 @@ interface PaymentRequestCardProps {
     onChanged: (next: ChatPaymentRequest | null) => void;
 }
 
-/** PAYMENT_REQUEST message: what I owe (or, for the requester, what is collected) and the 송금 완료 flow. */
 export default function PaymentRequestCard({ payment, party, isHost, onChanged }: PaymentRequestCardProps) {
     const isNative = useIsNative();
     const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -202,7 +201,6 @@ export default function PaymentRequestCard({ payment, party, isHost, onChanged }
     );
 }
 
-/** The requester's inline bank/account fix, allowed until someone has paid. */
 function AccountForm({
     payment,
     onCancel,

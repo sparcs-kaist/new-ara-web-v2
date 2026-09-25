@@ -1,5 +1,3 @@
-// 함께 배달 API 타입 (apps/delivery serializers)
-
 export type DeliveryStatus =
     | 'RECRUITING'
     | 'WAITING_DECISION'

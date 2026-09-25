@@ -5,7 +5,6 @@ import { formatWon, orderTotal } from '@/lib/delivery';
 import type { DeliveryMember, DeliveryParty } from '@/lib/types/delivery';
 import { AnonAvatar } from './AnonAvatar';
 
-/** 참여자 sheet from the room header's person icon. */
 export function MembersSheet({
     open,
     party,

@@ -6,7 +6,7 @@ import { BottomSheet } from '@/app/web_view/_components';
 import { DELIVERY_KEY } from '@/app/web_view/_query';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import { apiDetail, updateDeliveryParty } from '@/lib/api/delivery';
-import { formatWon, orderTotal, ordersAllowed } from '@/lib/delivery';
+import { formatWon, orderTotal, ordersAllowed, pad } from '@/lib/delivery';
 import type { DeliveryParty, DeliveryStatus } from '@/lib/types/delivery';
 import { AnonAvatar } from './AnonAvatar';
 import { CtaButton } from './BottomCta';
@@ -23,8 +23,6 @@ const STATUS_TEXT: Record<DeliveryStatus, string> = {
     CANCELED: '취소됨',
 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
 function deadlineText(party: DeliveryParty, now: number): string {
     if (party.status !== 'RECRUITING') return STATUS_TEXT[party.status];
     const deadline = new Date(party.deadline_at);
@@ -33,7 +31,6 @@ function deadlineText(party: DeliveryParty, now: number): string {
     return `${pad(deadline.getHours())}:${pad(deadline.getMinutes())} (${Math.ceil(left / 60_000)}분 남음)`;
 }
 
-/** 방 정보 sheet from the room header: details, members, host actions and leaving. */
 export function RoomInfoSheet({
     open,
     party,
@@ -181,7 +178,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-/** The host's mini form for the fields the server lets them change while recruiting. */
 function InfoEditForm({ party, onDone }: { party: DeliveryParty; onDone: () => void }) {
     const qc = useQueryClient();
     const [form, setForm] = useState({

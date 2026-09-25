@@ -6,7 +6,6 @@ import { createPortal } from 'react-dom';
 interface MessageContextMenuProps {
     text?: string;
     canDelete: boolean;
-    /** Extra rows between 복사하기 and 삭제하기 (e.g. editing a delivery order). */
     actions?: { label: string; onSelect: () => void; danger?: boolean }[];
     onDelete: () => void;
     onClose: () => void;

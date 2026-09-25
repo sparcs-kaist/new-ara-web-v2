@@ -12,14 +12,12 @@ interface DialogAction {
 interface ConfirmDialogProps {
     title: string;
     children?: ReactNode;
-    /** Grey left button; omit it for a one-button notice. */
     secondary?: DialogAction;
     primary: DialogAction;
     /** Escape, which the layout also dispatches on hardware back. */
     onClose: () => void;
 }
 
-/** Centered card dialog in the UpdatePrompt / PenaltyDialog style. */
 export function ConfirmDialog({ title, children, secondary, primary, onClose }: ConfirmDialogProps) {
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {

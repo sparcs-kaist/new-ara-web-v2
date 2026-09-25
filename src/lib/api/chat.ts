@@ -244,14 +244,8 @@ export const updatePaymentAccount = async (id: number, body: { bank_name?: strin
     return data;
 };
 
-// 투표
 export const createVote = async (body: ChatVoteCreateBody) => {
     const { data } = await http.post<ChatVote>('chat/vote/', body);
-    return data;
-};
-
-export const fetchVote = async (id: number) => {
-    const { data } = await http.get<ChatVote>(`chat/vote/${id}/`);
     return data;
 };
 

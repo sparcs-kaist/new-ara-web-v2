@@ -24,7 +24,6 @@ export type DeliveryAction =
 
 const EXTEND_MINUTES = [5, 10, 15, 30];
 
-/** Confirmation for every in-room delivery action; runs the call and shows its error inline. */
 export function DeliveryActionDialog({
     party,
     action,

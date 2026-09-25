@@ -10,11 +10,6 @@ interface BottomSheetProps {
     children: ReactNode;
 }
 
-/**
- * Modal sheet that slides up from the bottom (the chat attach sheet's look):
- * scrim tap and Escape close it, and Escape is what the layout dispatches on
- * hardware back while a dialog is open.
- */
 export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
     const [mounted, setMounted] = useState(false);
     const [shown, setShown] = useState(false);
@@ -43,6 +38,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         };
     }, [mounted, open]);
 
+    // The layout dispatches Escape on hardware back while a dialog is open.
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {

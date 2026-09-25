@@ -12,10 +12,8 @@ import { ordersAllowed } from '@/lib/delivery';
 /** Prefix of every delivery query; invalidate it after any delivery mutation. */
 export const DELIVERY_KEY = ['webview', 'delivery'] as const;
 
-// Rooms fill up and close by the minute, so these refetch on mount once stale
-// (the client default is refetchOnMount: false).
-
-export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>, opts?: { enabled?: boolean }) {
+// Rooms fill up and close by the minute, so these refetch on mount (the client default is refetchOnMount: false).
+export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>) {
     return useInfiniteQuery({
         queryKey: [...DELIVERY_KEY, 'list', params],
         queryFn: ({ pageParam }) => fetchDeliveryParties({ ...params, page: pageParam }),
@@ -24,7 +22,6 @@ export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>, opt
         placeholderData: keepPreviousData,
         staleTime: 15_000,
         refetchOnMount: true,
-        enabled: opts?.enabled,
     });
 }
 

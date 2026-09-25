@@ -2,7 +2,6 @@
 
 import { MemberIcon } from '@/app/web_view/_components';
 
-/** Avatar for anonymous room members, who have no profile picture. */
 export function AnonAvatar({ size = 36 }: { size?: number }) {
     return (
         <span

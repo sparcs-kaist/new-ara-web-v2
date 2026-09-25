@@ -7,11 +7,11 @@ import {
     AppHeader,
     BottomSheet,
     CenteredSpinner,
+    CheckIcon,
     ConfirmDialog,
     RightChevronIcon,
     Screen,
 } from '@/app/web_view/_components';
-import { CheckIcon } from '@/app/web_view/PostWrite/components/icons';
 import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail, requestDeliveryPayment } from '@/lib/api/delivery';
@@ -24,12 +24,11 @@ const BANKS = ['토스뱅크', '카카오뱅크', '국민은행', '신한은행'
 const CUSTOM_BANK = '직접 입력';
 const ACCOUNT_KEY = 'ara:settle-account';
 
-/** Host's 정산 요청 page: account, delivery fee and the per-orderer preview, then the payment request. */
 export default function SettlementPage() {
     const id = Number(useParams<{ id: string }>().id);
     const back = useSafeBack();
     const qc = useQueryClient();
-    const { data: party } = useDeliveryParty(id || null);
+    const { data: party, error: loadError } = useDeliveryParty(id || null);
     const [bankChoice, setBankChoice] = useState('');
     const [customBank, setCustomBank] = useState('');
     const [account, setAccount] = useState('');
@@ -111,13 +110,15 @@ export default function SettlementPage() {
                     </section>
 
                     <SettlementTable orders={party.orders ?? []} fee={Number(fee) || 0} />
+                    {error && <p className="text-[13px] text-ara_red">{error}</p>}
                 </div>
+            ) : loadError ? (
+                <p className="px-5 py-10 text-center text-[14px] text-[#BBBBBB]">{apiDetail(loadError)}</p>
             ) : (
                 <CenteredSpinner />
             )}
 
             <FixedBottomBar>
-                {error && <p className="mb-2 text-[13px] text-ara_red">{error}</p>}
                 <CtaButton disabled={!valid || submitting} onClick={submit}>
                     정산 요청 보내기
                 </CtaButton>

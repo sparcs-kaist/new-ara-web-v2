@@ -98,7 +98,6 @@ export const arriveDeliveryParty = async (id: number) => {
     return data;
 };
 
-// Responds 201 with the chat payment request (ChatPaymentRequestSerializer).
 export const requestDeliveryPayment = async (id: number, body: DeliveryPaymentRequestBody) => {
     const { data } = await http.post(`/delivery/${id}/payment-request/`, body);
     return data;

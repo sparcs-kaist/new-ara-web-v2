@@ -5,7 +5,6 @@ import { useNow } from '@/app/web_view/hooks/useNow';
 import { formatRemaining, formatWon, isRecruitingOpen } from '@/lib/delivery';
 import type { DeliveryPartySummary } from '@/lib/types/delivery';
 
-/** Card contents without the frame; the detail sheet wraps it in its own border. */
 export function DeliveryRoomCardBody({ party }: { party: DeliveryPartySummary }) {
     const now = useNow();
     const open = isRecruitingOpen(party, now);

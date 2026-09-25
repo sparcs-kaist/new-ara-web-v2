@@ -3,7 +3,6 @@
 import { formatWon } from '@/lib/delivery';
 import type { DeliveryOrder } from '@/lib/types/delivery';
 
-/** DELIVERY_ORDER message body; the chat bubble around it comes from MessageBox. */
 export function OrderCard({ order, isMe }: { order: DeliveryOrder; isMe: boolean }) {
     const labelColor = order.is_canceled ? (isMe ? 'text-white/70' : 'text-[#BBBBBB]') : isMe ? 'text-white' : 'text-ara_red';
     const strike = order.is_canceled ? ' line-through' : '';

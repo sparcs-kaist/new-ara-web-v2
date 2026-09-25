@@ -23,7 +23,6 @@ function subscribe(listener: (now: number) => void) {
     };
 }
 
-/** Current time in ms, re-rendering once a second. */
 export function useNow(): number {
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => subscribe(setNow), []);

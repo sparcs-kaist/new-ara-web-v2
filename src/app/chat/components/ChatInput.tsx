@@ -31,7 +31,7 @@ interface ChatInputProps {
   myId: number | null; // myId prop 추가
   onMessageSent: () => void;
   compact?: boolean; // 웹뷰 전용 좁은 폭 컴포저
-  extraRows?: ChatInputExtraRow[]; // 첨부 시트에서 기본 항목 위에 붙는 항목 (배달방)
+  extraRows?: ChatInputExtraRow[];
 }
 
 export default function ChatInput({

@@ -2,7 +2,6 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-/** Full-width red call to action; grey when disabled. */
 export function CtaButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
     return (
         <button
@@ -14,7 +13,7 @@ export function CtaButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
     );
 }
 
-/** Pins its children to the bottom edge. Page content needs ~96px of bottom room so nothing hides behind it. */
+/** Page content needs ~96px of bottom room so nothing hides behind it. */
 export function FixedBottomBar({ children }: { children: ReactNode }) {
     return (
         <div

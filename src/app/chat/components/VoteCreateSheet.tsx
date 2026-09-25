@@ -9,7 +9,6 @@ import { apiDetail } from '@/lib/api/delivery';
 
 const MAX_OPTIONS = 20;
 
-/** 투표 만들기 sheet from the chat attach sheet; the server broadcasts the new VOTE message. */
 export default function VoteCreateSheet({ open, roomId, onClose }: { open: boolean; roomId: number; onClose: () => void }) {
     const [prevOpen, setPrevOpen] = useState(false);
     const [title, setTitle] = useState('');
@@ -45,6 +44,7 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
         setSubmitting(true);
         setError(null);
         try {
+            // The server broadcasts the new VOTE message, so nothing is added locally.
             await createVote({ chat_room: roomId, title: title.trim(), options: texts, max_choices: multi ? maxChoices : 1 });
             onClose();
         } catch (e) {

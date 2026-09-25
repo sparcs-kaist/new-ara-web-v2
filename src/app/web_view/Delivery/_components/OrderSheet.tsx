@@ -11,7 +11,6 @@ import type { DeliveryOrder, DeliveryParty } from '@/lib/types/delivery';
 import { CtaButton } from './BottomCta';
 import { INPUT_CLASS, NumberInput } from './fields';
 
-/** 주문 등록 sheet; given `order`, it edits that order instead. */
 export function OrderSheet({
     open,
     party,

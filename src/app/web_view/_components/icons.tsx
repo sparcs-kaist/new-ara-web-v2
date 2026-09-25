@@ -200,6 +200,9 @@ export function PinIcon(p: IconProps) {
 export function ClockIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/clock.svg`} fallback={13} {...p} />;
 }
+export function CheckIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/check.svg`} fallback={16} {...p} />;
+}
 
 /* =========================================================================
  * Post-preview badges + meatballs menu.

@@ -22,7 +22,7 @@ export function formatWon(n: number): string {
     return `${n.toLocaleString('ko-KR')}원`;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
+export const pad = (n: number) => String(n).padStart(2, '0');
 
 export function formatRemaining(deadlineAt: string, now: number): string {
     const total = Math.floor((new Date(deadlineAt).getTime() - now) / 1000);

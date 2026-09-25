@@ -4,35 +4,31 @@ import { useState } from 'react';
 import { castBallot } from '@/lib/api/chat';
 import type { ChatVote } from '@/lib/types/chat';
 
-// The vote as it will look once `ids` is my ballot, for the optimistic update.
 function withBallot(vote: ChatVote, ids: number[]): ChatVote {
     const delta = (id: number) => Number(ids.includes(id)) - Number(vote.my_option_ids.includes(id));
     const voterDelta = Number(ids.length > 0) - Number(vote.my_option_ids.length > 0);
     return {
         ...vote,
         my_option_ids: ids,
-        voter_count: vote.voter_count === null ? null : vote.voter_count + voterDelta,
-        options: vote.options.map((o) => ({ ...o, vote_count: o.vote_count === null ? null : o.vote_count + delta(o.id) })),
+        voter_count: vote.voter_count + voterDelta,
+        options: vote.options.map((o) => ({ ...o, vote_count: o.vote_count + delta(o.id) })),
     };
 }
 
-function participantsText(vote: ChatVote): string | null {
-    if (vote.voter_count === null) return null;
+function participantsText(vote: ChatVote): string {
     if (vote.voter_count === 0) return '아직 참여자가 없어요';
     const names = [
-        ...new Set(vote.options.flatMap((o) => o.voters ?? []).map((v) => v.display_name)),
+        ...new Set(vote.options.flatMap((o) => o.voters).map((v) => v.display_name)),
     ].slice(0, 2);
     if (names.length === 0) return `${vote.voter_count}명 참여`;
     const rest = vote.voter_count - names.length;
     return `${names.join(', ')}${rest > 0 ? ` 외 ${rest}명` : ''} 참여`;
 }
 
-/** VOTE message: tap an option to change my ballot; results show live unless the vote hides them. */
 export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChanged: (next: ChatVote) => void }) {
     const [pending, setPending] = useState<ChatVote | null>(null);
     const shown = pending ?? vote;
-    const maxCount = Math.max(1, ...shown.options.map((o) => o.vote_count ?? 0));
-    const participants = participantsText(shown);
+    const maxCount = Math.max(1, ...shown.options.map((o) => o.vote_count));
 
     const toggle = async (id: number) => {
         if (pending) return;
@@ -70,23 +66,19 @@ export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChange
                             className={`relative flex min-h-[38px] w-full items-center justify-between gap-2 overflow-hidden rounded-[10px] border bg-[#F6F6F6] px-3 py-2 text-left text-[14px] ${selected ? 'border-ara_red font-semibold' : 'border-transparent'}`}
                         >
                             <span className="min-w-0 break-words">{o.text}</span>
-                            {o.vote_count !== null && (
-                                <>
-                                    <span className={`shrink-0 text-[13px] ${selected ? 'font-semibold text-ara_red' : 'text-[#646464]'}`}>
-                                        {o.vote_count}표
-                                    </span>
-                                    <span
-                                        aria-hidden
-                                        className={`absolute bottom-0 left-0 h-[3px] ${selected ? 'bg-ara_red' : 'bg-[#D9D9D9]'}`}
-                                        style={{ width: `${(o.vote_count / maxCount) * 100}%` }}
-                                    />
-                                </>
-                            )}
+                            <span className={`shrink-0 text-[13px] ${selected ? 'font-semibold text-ara_red' : 'text-[#646464]'}`}>
+                                {o.vote_count}표
+                            </span>
+                            <span
+                                aria-hidden
+                                className={`absolute bottom-0 left-0 h-[3px] ${selected ? 'bg-ara_red' : 'bg-[#D9D9D9]'}`}
+                                style={{ width: `${(o.vote_count / maxCount) * 100}%` }}
+                            />
                         </button>
                     );
                 })}
             </div>
-            {participants && <p className="mt-3 text-[12px] text-[#BBBBBB]">{participants}</p>}
+            <p className="mt-3 text-[12px] text-[#BBBBBB]">{participantsText(shown)}</p>
         </div>
     );
 }

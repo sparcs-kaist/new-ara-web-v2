@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-/** Centered grey text between hairlines: the date divider and system notices. */
 export default function NoticeLine({ children, className = 'text-sm' }: { children: ReactNode; className?: string }) {
     return (
         <div className="flex items-center my-4">

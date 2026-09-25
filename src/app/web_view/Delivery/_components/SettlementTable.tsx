@@ -18,7 +18,6 @@ function splitByOrderer(orders: DeliveryOrder[], fee: number) {
 
 const num = (n: number) => n.toLocaleString('ko-KR');
 
-/** 참여자별 청구 금액: what each orderer will be asked to send for the given delivery fee. */
 export function SettlementTable({ orders, fee }: { orders: DeliveryOrder[]; fee: number }) {
     const { rows, share } = splitByOrderer(orders, fee);
     const total = rows.reduce((sum, r) => (r.orderer.role === 'OWNER' ? sum : sum + r.subtotal + share), 0);

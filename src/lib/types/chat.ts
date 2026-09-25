@@ -1,6 +1,3 @@
-// 채팅 투표·정산 API 타입 (apps/chatting serializers)
-
-/** A person as the room names them (nickname, real name or 익명N). */
 export interface Sender {
     display_name: string;
     anon_number: number | null;
@@ -27,12 +24,11 @@ export interface ChatPaymentRequest {
     created_at: string;
 }
 
-// null counts and voters mean hidden results (future anonymous votes).
 export interface ChatVoteOption {
     id: number;
     text: string;
-    vote_count: number | null;
-    voters: Sender[] | null;
+    vote_count: number;
+    voters: Sender[];
 }
 
 export interface ChatVote {
@@ -42,7 +38,7 @@ export interface ChatVote {
     title: string;
     max_choices: number | null;
     options: ChatVoteOption[];
-    voter_count: number | null;
+    voter_count: number;
     my_option_ids: number[];
     created_at: string;
 }

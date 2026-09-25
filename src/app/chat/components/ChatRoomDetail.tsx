@@ -6,7 +6,7 @@ import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
 import FileMessage from './FileMessage';
-import { fetchChatMessages, /* sendMessage, */ fetchRecentMessage, fetchChatRoomDetail, fetchChatMessage } from '@/lib/api/chat';
+import { fetchChatMessages, /* sendMessage, */ fetchRecentMessage, fetchChatRoomDetail, fetchChatMessage, fetchPaymentRequest } from '@/lib/api/chat';
 import { readChatRoom } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 import { chatSocket } from '@/lib/socket/chat';
@@ -22,7 +22,7 @@ import UserSearchDialog from './UserSearchDialog'; // 추가
 import VoteCard from './VoteCard';
 import VoteCreateSheet from './VoteCreateSheet';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { PostIcon, PostListIcon, SendIcon } from '@/app/web_view/_components/icons';
@@ -48,11 +48,11 @@ type ChatRoom = {
     picture: string;
     recent_message_at: string;
     recent_message: number;
-    delivery_party?: number | null; // 배달방이면 파티 id
+    delivery_party?: number | null;
 };
 
 // 기본 프로필 이미지
-const DEFAULT_ROOM_IMAGE = '/default-room.png';
+const DEFAULT_ROOM_IMAGE = '/Chatroom_default1.png';
 
 interface ChatRoomDetailProps {
     roomId: number;
@@ -103,7 +103,6 @@ type Member = {
 
 type NamedMember = Member & { user: NonNullable<Member['user']> };
 
-// 서버가 채우는 이벤트 주체: 익명 방이면 user가 null이고 sender로 구분한다
 type SocketSender = {
     user: number | null;
     sender?: { display_name: string; anon_number: number | null };
@@ -152,7 +151,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [forbidden, setForbidden] = useState(false);
     const messagesRef = useRef<Message[]>([]);
 
-    // 배달방: 방 상세의 room.delivery_party로 파티를 불러온다
     const qc = useQueryClient();
     const [detailRoom, setDetailRoom] = useState<ChatRoom | null>(null);
     const partyId = detailRoom?.id === roomId ? detailRoom.delivery_party ?? null : null;
@@ -173,7 +171,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         setAction(next);
     };
 
-    // 익명 방은 created_by가 null이라 sender.is_mine을 먼저 본다
     const isMine = (msg: Message) => msg.sender?.is_mine ?? msg.created_by?.id === myId;
 
     const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user?.id !== myId) : null;
@@ -199,7 +196,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             .finally(() => setLoadingMessages(false));
     }, [roomId]);
 
-    // 방 상세(참여자) 불러오기 (API 응답 구조 변경 반영)
     useEffect(() => {
         let alive = true;
         fetchChatRoomDetail(roomId)
@@ -212,7 +208,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         return () => { alive = false; };
     }, [roomId]);
 
-    // 소켓 이벤트 리스너 추가
     useEffect(() => {
         // 최신 1개만 가져와 반영
         const applyRecent = async () => {
@@ -234,7 +229,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             });
         };
 
-        // 메시지 하나를 다시 받아 교체한다. 새 메시지(append)면 목록에 없을 때 끝에 붙인다.
         const syncMessage = async (messageId: number, append: boolean) => {
             const msg: Message = await fetchChatMessage(messageId);
             setMessages(prev =>
@@ -257,10 +251,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 );
                 if (target) await syncMessage(target.id, false);
                 else await applyRecent();
+                if (resource === 'payment') qc.invalidateQueries({ queryKey: DELIVERY_KEY });
             }
         };
 
-        // 익명 방 이벤트는 user가 null이라 sender.anon_number로 구분한다
         const eventKey = (p: SocketSender) => p.user ?? p.sender?.anon_number ?? undefined;
         const myAnon = members.find(m => m.is_mine)?.anon_number;
         const isMyEvent = (p: SocketSender) =>
@@ -276,8 +270,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         };
 
         const handleRoomUpdate = async (payload: any) => {
-            console.log('소켓 update 이벤트 수신:', payload);
-
             // payload 필드가 있다면 그것을 사용 (서버 브로드캐스트 구조)
             const serverPayload = payload?.payload || payload;
 
@@ -291,8 +283,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 roomId;
 
             if (targetRoomId !== roomId) return;
-
-            console.log('update: 현재 방 이벤트 확인됨, 메시지 동기화');
 
             // 1) 반영: 서버 알림이면 해당 리소스, 클라이언트 relay면 최근 메시지 동기화
             if (serverPayload?.resource) {
@@ -361,7 +351,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 }
                 const newMap = new Map(prev);
                 newMap.delete(userId);
-                console.log(`User ${userId} left, removing from typing list.`);
                 return newMap;
             });
         };
@@ -370,7 +359,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         const handleMessageDeleted = (payload: MessageDeletedPayload) => {
             const deletedMessageId = payload.message_id;
             if (deletedMessageId) {
-                console.log(`메시지 삭제 이벤트 수신: ${deletedMessageId}`);
                 // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다
                 if (messagesRef.current.some(m => m.id === deletedMessageId && m.message_type === 'PAYMENT_REQUEST')) {
                     qc.invalidateQueries({ queryKey: DELIVERY_KEY });
@@ -429,7 +417,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             chatSocket.off('error', handleError);
             chatSocket.off('removed', handleRemoved);
         };
-    }, [roomId, myId, members, qc, router, exitTo]); // members 의존성 추가
+    }, [roomId, myId, members, qc, router, exitTo]);
 
     // "입력 중" 표시가 나타날 때 자동으로 스크롤하던 로직은 제거합니다.
     // 새 UI는 스크롤 영역 밖에 위치하므로 더 이상 필요하지 않습니다.
@@ -439,28 +427,18 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         if (!roomId || !myId) return;
 
         const joinRoom = () => {
-            // join 처리
-            console.log(`join room ${roomId}`);
-            // user_join/user_leave는 서버가 보낸다
             if (chatSocket.join) {
                 chatSocket.join(roomId);
                 chatSocket.currentRoomId = roomId;
             }
-
-            // 디버깅: 소켓 연결 확인
-            console.log(`소켓 연결 상태: ${chatSocket.isConnected()}, 현재 방: ${chatSocket.currentRoomId}`);
         };
 
         // 이미 연결된 상태면 바로 처리, 아니면 연결 이벤트 기다림
         if (chatSocket.isConnected?.()) {
-            console.log('소켓 이미 연결됨, 바로 방 입장');
             joinRoom();
-        } else {
-            console.log('소켓 연결 대기 중');
         }
 
         const handleConnect = () => {
-            console.log('소켓 연결 이벤트 발생, 방 입장 시도');
             joinRoom();
         };
         chatSocket.on('connect', handleConnect);
@@ -469,7 +447,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             chatSocket.off('connect', handleConnect);
             // 컴포넌트 언마운트 시 방 나가기
             if (chatSocket.currentRoomId === roomId) {
-                console.log(`컴포넌트 언마운트: ${roomId} 방에서 나갑니다.`);
                 if (chatSocket.leave) {
                     chatSocket.leave(roomId);
                     chatSocket.currentRoomId = null;
@@ -497,7 +474,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         // 전송 완료 후 update 소켓 이벤트 발신
         try {
             if (chatSocket.isConnected?.()) {
-                console.log('소켓 이벤트 전송 시도');
                 chatSocket.send({
                     type: 'update',
                     payload: {
@@ -505,8 +481,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         message: latest
                     }
                 });
-
-                console.log('소켓 이벤트 전송 완료');
             } else {
                 console.warn('소켓 연결 안됨, 이벤트 전송 실패');
             }
@@ -561,7 +535,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         messagesRef.current = messages;
     }, [messages]);
 
-    // 새 메시지가 붙거나 파티가 처음 올 때만 컨테이너 바닥으로 (투표·정산 카드가 제자리에서 바뀔 때는 읽던 위치 유지)
+    // 투표·정산 카드가 제자리에서 바뀔 때는 읽던 위치를 유지한다
     const lastMessageId = messages[messages.length - 1]?.id;
     const partyLoaded = !!party;
     useEffect(() => {
@@ -572,21 +546,16 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     // 컨테이너가 리사이즈될 때(키보드로 채팅 컬럼이 줄어들 때) 바닥 앵커 유지.
     // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
-    // 새 메시지 스크롤은 위의 [messages] 이펙트가 담당(컨텐츠 성장은 RO에 안 잡힘).
     useBottomAnchoredScroll(messageContainerRef, { pin: 'always' });
 
-    // 지운 메시지를 목록에서 빼고 알린다 (REST 삭제는 서버가 브로드캐스트하지 않는다)
+    // REST 삭제는 서버가 브로드캐스트하지 않는다
     const dropMessage = (messageId: number) => {
-        // UI에서 즉시 메시지 제거
         setMessages(prev => prev.filter(m => m.id !== messageId));
-
-        // 소켓으로 삭제 이벤트 브로드캐스트
         if (chatSocket.isConnected()) {
             chatSocket.send<MessageDeletedPayload>({
                 type: 'message_deleted',
                 message_id: messageId,
             });
-            console.log(`메시지 삭제 이벤트 전송: ${messageId}`);
         }
     };
 
@@ -609,7 +578,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         }
     };
 
-    // 투표·정산 카드가 받은 최신 상태로 그 메시지의 첨부를 바꾼다
     const updateAttachment = (messageId: number, attachment: ChatVote | ChatPaymentRequest) => {
         setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, attachment } : m)));
     };
@@ -746,10 +714,16 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             }]
             : []),
     ];
-    // 상태 바의 정산 금액은 현재 정산 요청 메시지의 첨부에서 읽는다
     const paymentMessage = party?.payment_request != null
         ? messages.find(m => m.message_type === 'PAYMENT_REQUEST' && (m.attachment as ChatPaymentRequest | null)?.id === party.payment_request)
         : undefined;
+    // 정산 요청 메시지가 불러온 최근 메시지 밖이면 상태 바가 '정산 대기'로 돌아가지 않게 따로 불러온다
+    const unloadedPaymentId = compact && party?.payment_request != null && !paymentMessage ? party.payment_request : null;
+    const { data: unloadedPayment } = useQuery({
+        queryKey: [...DELIVERY_KEY, 'payment', unloadedPaymentId],
+        queryFn: () => fetchPaymentRequest(unloadedPaymentId as number),
+        enabled: unloadedPaymentId !== null,
+    });
 
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
@@ -816,7 +790,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 <DeliveryStatusBar
                     party={party}
                     myOrders={myOrders}
-                    payment={paymentMessage?.attachment as ChatPaymentRequest | undefined}
+                    payment={(paymentMessage?.attachment as ChatPaymentRequest | undefined) ?? unloadedPayment}
                 />
             )}
 
@@ -858,7 +832,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                             <NoticeLine>{currentDate.map(v => v.toString().padStart(2, "0")).join("-")}</NoticeLine>
                         );
 
-                        // 작성자 없는 안내 줄: SYSTEM, 배달 도착
                         if (mtype === 'SYSTEM' || mtype === 'DELIVERY_ARRIVAL') {
                             const place = party && [party.place_name, party.place_detail].filter(Boolean).join(' ');
                             return (
