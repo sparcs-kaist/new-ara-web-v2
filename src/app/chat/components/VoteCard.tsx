@@ -1,0 +1,92 @@
+'use client';
+
+import { useState } from 'react';
+import { castBallot } from '@/lib/api/chat';
+import type { ChatVote } from '@/lib/types/chat';
+
+// The vote as it will look once `ids` is my ballot, for the optimistic update.
+function withBallot(vote: ChatVote, ids: number[]): ChatVote {
+    const delta = (id: number) => Number(ids.includes(id)) - Number(vote.my_option_ids.includes(id));
+    const voterDelta = Number(ids.length > 0) - Number(vote.my_option_ids.length > 0);
+    return {
+        ...vote,
+        my_option_ids: ids,
+        voter_count: vote.voter_count === null ? null : vote.voter_count + voterDelta,
+        options: vote.options.map((o) => ({ ...o, vote_count: o.vote_count === null ? null : o.vote_count + delta(o.id) })),
+    };
+}
+
+function participantsText(vote: ChatVote): string | null {
+    if (vote.voter_count === null) return null;
+    if (vote.voter_count === 0) return '아직 참여자가 없어요';
+    const names = [
+        ...new Set(vote.options.flatMap((o) => o.voters ?? []).map((v) => v.display_name)),
+    ].slice(0, 2);
+    if (names.length === 0) return `${vote.voter_count}명 참여`;
+    const rest = vote.voter_count - names.length;
+    return `${names.join(', ')}${rest > 0 ? ` 외 ${rest}명` : ''} 참여`;
+}
+
+/** VOTE message: tap an option to change my ballot; results show live unless the vote hides them. */
+export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChanged: (next: ChatVote) => void }) {
+    const [pending, setPending] = useState<ChatVote | null>(null);
+    const shown = pending ?? vote;
+    const maxCount = Math.max(1, ...shown.options.map((o) => o.vote_count ?? 0));
+    const participants = participantsText(shown);
+
+    const toggle = async (id: number) => {
+        if (pending) return;
+        const mine = vote.my_option_ids;
+        let next: number[];
+        if (mine.includes(id)) next = mine.filter((m) => m !== id);
+        else if (vote.max_choices === 1) next = [id];
+        else if (vote.max_choices !== null && mine.length >= vote.max_choices) return;
+        else next = [...mine, id];
+        setPending(withBallot(vote, next));
+        try {
+            onChanged(await castBallot(vote.id, next));
+        } catch {
+            // The server keeps the previous ballot; showing it again is the whole error state.
+        } finally {
+            setPending(null);
+        }
+    };
+
+    return (
+        <div className="w-[260px] rounded-[15px] border border-[#F0F0F0] bg-white p-4 text-left text-black">
+            <p className="text-[12px] font-semibold text-ara_red">
+                {vote.max_choices === null ? '복수 선택' : vote.max_choices === 1 ? '1개 선택' : `최대 ${vote.max_choices}개 선택`}
+            </p>
+            <p className="mt-2 break-words text-[16px] font-bold">{vote.title}</p>
+            <div className="mt-3 space-y-2">
+                {shown.options.map((o) => {
+                    const selected = shown.my_option_ids.includes(o.id);
+                    return (
+                        <button
+                            key={o.id}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => toggle(o.id)}
+                            className={`relative flex min-h-[38px] w-full items-center justify-between gap-2 overflow-hidden rounded-[10px] border bg-[#F6F6F6] px-3 py-2 text-left text-[14px] ${selected ? 'border-ara_red font-semibold' : 'border-transparent'}`}
+                        >
+                            <span className="min-w-0 break-words">{o.text}</span>
+                            {o.vote_count !== null && (
+                                <>
+                                    <span className={`shrink-0 text-[13px] ${selected ? 'font-semibold text-ara_red' : 'text-[#646464]'}`}>
+                                        {o.vote_count}표
+                                    </span>
+                                    <span
+                                        aria-hidden
+                                        className={`absolute bottom-0 left-0 h-[3px] ${selected ? 'bg-ara_red' : 'bg-[#D9D9D9]'}`}
+                                        style={{ width: `${(o.vote_count / maxCount) * 100}%` }}
+                                    />
+                                </>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+            {participants && <p className="mt-3 text-[12px] text-[#BBBBBB]">{participants}</p>}
+        </div>
+    );
+}

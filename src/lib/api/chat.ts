@@ -1,6 +1,7 @@
 import http from '@/lib/api/http';
 import { AxiosError } from 'axios'; // 추가
 import { queryBuilder } from '@/lib/utils/queryBuilder';
+import type { ChatPaymentRequest, ChatVote, ChatVoteCreateBody } from '@/lib/types/chat';
 
 // 채팅방 리스트 가져오기
 export const fetchChatRoomList = async (page = 1, page_size = 15) => {
@@ -225,4 +226,37 @@ export const deleteMessage = async (messageId: number) => {
         }
         throw new Error('메시지 삭제 중 오류가 발생했습니다.');
     }
+};
+
+// 정산 요청 (배달방 정산은 /delivery/{id}/payment-request/로 만든다)
+export const fetchPaymentRequest = async (id: number) => {
+    const { data } = await http.get<ChatPaymentRequest>(`chat/payment/${id}/`);
+    return data;
+};
+
+export const setPaymentPaid = async (id: number, paid: boolean) => {
+    const { data } = await http.patch<ChatPaymentRequest>(`chat/payment/${id}/paid/`, { paid });
+    return data;
+};
+
+export const updatePaymentAccount = async (id: number, body: { bank_name?: string; account_number?: string }) => {
+    const { data } = await http.patch<ChatPaymentRequest>(`chat/payment/${id}/`, body);
+    return data;
+};
+
+// 투표
+export const createVote = async (body: ChatVoteCreateBody) => {
+    const { data } = await http.post<ChatVote>('chat/vote/', body);
+    return data;
+};
+
+export const fetchVote = async (id: number) => {
+    const { data } = await http.get<ChatVote>(`chat/vote/${id}/`);
+    return data;
+};
+
+// 내 선택 전체로 바꾼다 (빈 배열이면 투표 취소)
+export const castBallot = async (id: number, option_ids: number[]) => {
+    const { data } = await http.put<ChatVote>(`chat/vote/${id}/ballot/`, { option_ids });
+    return data;
 };

@@ -3,13 +3,8 @@
 import { InformationIcon } from '@/app/web_view/_components';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import { formatRemaining, formatWon, isRecruitingOpen, orderTotal, ordersAllowed, remainingAmount } from '@/lib/delivery';
+import type { ChatPaymentRequest } from '@/lib/types/chat';
 import type { DeliveryOrder, DeliveryParty } from '@/lib/types/delivery';
-
-interface MyPayment {
-    amount: number;
-    feeShare: number;
-    paid: boolean;
-}
 
 interface Lines {
     label: string;
@@ -24,16 +19,30 @@ const CANCEL_REASON: Record<DeliveryParty['cancel_reason'], string> = {
     '': '모집이 취소됐어요',
 };
 
-function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[], myPayment?: MyPayment): Lines {
+function settlingLines(party: DeliveryParty, myOrders: DeliveryOrder[], payment: ChatPaymentRequest): Lines | undefined {
+    const mine = payment.targets.find((t) => t.user.is_mine);
+    if (mine) {
+        return {
+            label: '정산 중',
+            value: `보낼 금액 ${formatWon(mine.amount)}`,
+            bottom: mine.paid_at ? '송금 완료' : `배송비 ${formatWon(mine.amount - orderTotal(myOrders))} 포함`,
+        };
+    }
+    if (!party.is_host) return undefined;
+    const paid = payment.targets.filter((t) => t.paid_at).length;
+    return {
+        label: '정산 중',
+        value: `총 ${formatWon(payment.total_amount)}`,
+        bottom: `${paid}/${payment.targets.length} 송금 완료`,
+    };
+}
+
+function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[], payment?: ChatPaymentRequest): Lines {
     const total = `합계 ${formatWon(party.total_amount)}`;
     const toMin =
         party.total_amount >= party.min_order_amount ? '최소 금액 충족' : `주문까지 ${formatWon(remainingAmount(party))}`;
     const mine = `내 주문 ${formatWon(orderTotal(myOrders))}`;
-    const settling = myPayment && {
-        label: '정산 중',
-        value: `보낼 금액 ${formatWon(myPayment.amount)}`,
-        bottom: myPayment.paid ? '송금 완료' : `배송비 ${formatWon(myPayment.feeShare)} 포함`,
-    };
+    const settling = payment && settlingLines(party, myOrders, payment);
     switch (party.status) {
         case 'RECRUITING':
             return {
@@ -59,14 +68,14 @@ function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[
 export function DeliveryStatusBar({
     party,
     myOrders,
-    myPayment,
+    payment,
 }: {
     party: DeliveryParty;
     myOrders: DeliveryOrder[];
-    myPayment?: MyPayment;
+    payment?: ChatPaymentRequest;
 }) {
     const now = useNow();
-    const { label, value, top, bottom } = statusLines(party, now, myOrders, myPayment);
+    const { label, value, top, bottom } = statusLines(party, now, myOrders, payment);
     const min = party.min_order_amount;
     const progress = min > 0 ? Math.min(100, (party.total_amount / min) * 100) : 100;
 
@@ -96,9 +105,9 @@ function composerNote(party: DeliveryParty): string | null {
         case 'WAITING_DECISION':
             return party.is_host ? '연장하거나 확정해주세요' : '마감됐어요. 방장의 결정을 기다려요';
         case 'ORDERED':
-            return '주문 확정 이후 수정·취소 불가';
+            return party.payment_request ? '송금 완료 후 퇴장 가능' : '주문 확정 이후 수정·취소 불가';
         case 'ARRIVED':
-            return '방장의 정산 요청 대기';
+            return party.payment_request ? '송금 완료 후 퇴장 가능' : '방장의 정산 요청 대기';
         default:
             return null;
     }

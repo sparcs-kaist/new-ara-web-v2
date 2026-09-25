@@ -17,7 +17,10 @@ import ChatInput, { type ChatInputExtraRow } from './ChatInput';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import NoticeLine from './NoticeLine';
+import PaymentRequestCard from './PaymentRequestCard';
 import UserSearchDialog from './UserSearchDialog'; // 추가
+import VoteCard from './VoteCard';
+import VoteCreateSheet from './VoteCreateSheet';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
@@ -33,6 +36,7 @@ import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
 import { OrderSheet } from '@/app/web_view/Delivery/_components/OrderSheet';
 import { RoomInfoSheet } from '@/app/web_view/Delivery/_components/RoomInfoSheet';
 import { ordersAllowed } from '@/lib/delivery';
+import type { ChatPaymentRequest, ChatVote } from '@/lib/types/chat';
 import type { DeliveryOrder } from '@/lib/types/delivery';
 
 // ROOM 타입 정의
@@ -157,6 +161,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [sheet, setSheet] = useState<DeliverySheet | null>(null);
     const [action, setAction] = useState<DeliveryAction | null>(null);
     const [promptedFor, setPromptedFor] = useState<string | null>(null);
+    const [voteOpen, setVoteOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
     if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
         setPromptedFor(party.decision_deadline_at);
@@ -365,6 +371,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             const deletedMessageId = payload.message_id;
             if (deletedMessageId) {
                 console.log(`메시지 삭제 이벤트 수신: ${deletedMessageId}`);
+                // 정산 요청이 지워져도 서버는 파티 변경을 알리지 않는다
+                if (messagesRef.current.some(m => m.id === deletedMessageId && m.message_type === 'PAYMENT_REQUEST')) {
+                    qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+                }
                 setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
             }
         };
@@ -551,42 +561,63 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         messagesRef.current = messages;
     }, [messages]);
 
-    // messages가 변경될 때 컨테이너 내부만 스크롤
+    // 새 메시지가 붙거나 파티가 처음 올 때만 컨테이너 바닥으로 (투표·정산 카드가 제자리에서 바뀔 때는 읽던 위치 유지)
+    const lastMessageId = messages[messages.length - 1]?.id;
+    const partyLoaded = !!party;
     useEffect(() => {
         if (messageContainerRef.current) {
             messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [lastMessageId, partyLoaded]);
 
     // 컨테이너가 리사이즈될 때(키보드로 채팅 컬럼이 줄어들 때) 바닥 앵커 유지.
     // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
     // 새 메시지 스크롤은 위의 [messages] 이펙트가 담당(컨텐츠 성장은 RO에 안 잡힘).
     useBottomAnchoredScroll(messageContainerRef, { pin: 'always' });
 
+    // 지운 메시지를 목록에서 빼고 알린다 (REST 삭제는 서버가 브로드캐스트하지 않는다)
+    const dropMessage = (messageId: number) => {
+        // UI에서 즉시 메시지 제거
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+
+        // 소켓으로 삭제 이벤트 브로드캐스트
+        if (chatSocket.isConnected()) {
+            chatSocket.send<MessageDeletedPayload>({
+                type: 'message_deleted',
+                message_id: messageId,
+            });
+            console.log(`메시지 삭제 이벤트 전송: ${messageId}`);
+        }
+    };
+
     // 메시지 삭제 핸들러
     const handleDeleteMessage = async () => {
         if (!contextMenu.messageId) return;
+        const deletedType = messages.find(m => m.id === contextMenu.messageId)?.message_type;
 
         try {
             await deleteMessage(contextMenu.messageId);
-            // UI에서 즉시 메시지 제거
-            setMessages(prev => prev.filter(m => m.id !== contextMenu.messageId));
-
-            // 소켓으로 삭제 이벤트 브로드캐스트
-            if (chatSocket.isConnected()) {
-                chatSocket.send<MessageDeletedPayload>({
-                    type: 'message_deleted',
-                    message_id: contextMenu.messageId,
-                });
-                console.log(`메시지 삭제 이벤트 전송: ${contextMenu.messageId}`);
-            }
-
+            dropMessage(contextMenu.messageId);
+            if (deletedType === 'PAYMENT_REQUEST') qc.invalidateQueries({ queryKey: DELIVERY_KEY });
         } catch (error) {
             console.error("Failed to delete message:", error);
-            alert("메시지 삭제에 실패했습니다.");
+            // 투표·정산은 서버가 거절한 사유를 보여준다 (deleteMessage가 detail을 Error 메시지로 넘긴다)
+            if (deletedType === 'VOTE' || deletedType === 'PAYMENT_REQUEST') setDeleteError((error as Error).message);
+            else alert("메시지 삭제에 실패했습니다.");
         } finally {
             closeContextMenu();
         }
+    };
+
+    // 투표·정산 카드가 받은 최신 상태로 그 메시지의 첨부를 바꾼다
+    const updateAttachment = (messageId: number, attachment: ChatVote | ChatPaymentRequest) => {
+        setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, attachment } : m)));
+    };
+
+    const handlePaymentChanged = (messageId: number, next: ChatPaymentRequest | null) => {
+        if (next) updateAttachment(messageId, next);
+        else dropMessage(messageId);
+        qc.invalidateQueries({ queryKey: DELIVERY_KEY });
     };
 
     // 컨텍스트 메뉴 핸들러
@@ -688,19 +719,35 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const menuMessage = contextMenu.visible ? messages.find(m => m.id === contextMenu.messageId) : undefined;
     const menuOrder = menuMessage?.message_type === 'DELIVERY_ORDER' ? (menuMessage.attachment as DeliveryOrder | null) : null;
+    // 누가 송금한 정산 요청은 서버가 삭제를 거절한다
+    const menuPaid =
+        menuMessage?.message_type === 'PAYMENT_REQUEST' &&
+        !!(menuMessage.attachment as ChatPaymentRequest | null)?.targets.some(t => t.paid_at);
     const editableOrder =
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
 
     const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
+    const openSettlement = () => party && router.push(`/web_view/Delivery/${party.id}/Settlement`);
+    const voteRow: ChatInputExtraRow = { label: '투표', icon: PostListIcon, color: 'bg-ara_blue', onSelect: () => setVoteOpen(true) };
     const deliveryRows: ChatInputExtraRow[] | undefined = party && [
         ...(ordersAllowed(party)
             ? [{ label: '주문 등록', icon: PostIcon, color: 'bg-ara_red', onSelect: () => setSheet({ kind: 'order' }) }]
             : []),
-        { label: '투표', icon: PostListIcon, color: 'bg-ara_blue', onSelect: () => {}, disabled: true },
+        voteRow,
         ...(party.is_host
-            ? [{ label: '송금 요청', icon: SendIcon, color: 'bg-[#636363]', onSelect: () => {}, disabled: true }]
+            ? [{
+                label: '송금 요청',
+                icon: SendIcon,
+                color: 'bg-[#636363]',
+                onSelect: openSettlement,
+                disabled: !(party.status === 'ORDERED' || party.status === 'ARRIVED') || party.payment_request !== null,
+            }]
             : []),
     ];
+    // 상태 바의 정산 금액은 현재 정산 요청 메시지의 첨부에서 읽는다
+    const paymentMessage = party?.payment_request != null
+        ? messages.find(m => m.message_type === 'PAYMENT_REQUEST' && (m.attachment as ChatPaymentRequest | null)?.id === party.payment_request)
+        : undefined;
 
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
@@ -763,7 +810,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 </button>
             </div>
 
-            {party && <DeliveryStatusBar party={party} myOrders={myOrders} />}
+            {party && (
+                <DeliveryStatusBar
+                    party={party}
+                    myOrders={myOrders}
+                    payment={paymentMessage?.attachment as ChatPaymentRequest | undefined}
+                />
+            )}
 
             {/* 채팅 메시지 영역 */}
             <div ref={messageContainerRef} className={`flex-1 overflow-y-auto mb-2 no-scrollbar${compact ? ' px-4' : ''}`}>
@@ -795,7 +848,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
 
                         // 메시지 타입에 따라 내용 구성
-                        const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM' | 'DELIVERY_ARRIVAL' | 'DELIVERY_ORDER' | undefined;
+                        const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM' | 'DELIVERY_ARRIVAL' | 'DELIVERY_ORDER' | 'VOTE' | 'PAYMENT_REQUEST' | undefined;
                         const hasText = mtype !== 'IMAGE' && mtype !== 'FILE' && !!msg.message_content;
                         const hasMenu = !!msg.id && (hasText || isMe);
                         const senderName = msg.sender?.display_name ?? msg.created_by?.profile?.nickname;
@@ -869,6 +922,28 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                                 time={showTime ? currentTime : undefined}
                                                 readCount={readCount}
                                             />
+                                        ) : (mtype === 'VOTE' || mtype === 'PAYMENT_REQUEST') && msg.attachment ? (
+                                            <MessageBox
+                                                isMe={isMe}
+                                                time={showTime ? currentTime : undefined}
+                                                readCount={readCount}
+                                                isGrouped={isGroupedWithPrev}
+                                                bare
+                                            >
+                                                {mtype === 'VOTE' ? (
+                                                    <VoteCard
+                                                        vote={msg.attachment as ChatVote}
+                                                        onChanged={(next) => updateAttachment(msg.id, next)}
+                                                    />
+                                                ) : (
+                                                    <PaymentRequestCard
+                                                        payment={msg.attachment as ChatPaymentRequest}
+                                                        party={party}
+                                                        isHost={(msg.attachment as ChatPaymentRequest).requester.is_mine}
+                                                        onChanged={(next) => handlePaymentChanged(msg.id, next)}
+                                                    />
+                                                )}
+                                            </MessageBox>
                                         ) : (
                                             <MessageBox
                                                 isMe={isMe}
@@ -920,7 +995,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             ))}
 
             {/* 입력창 */}
-            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows} />
+            <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows ?? [voteRow]} />
 
             <MembersPanel
                 isOpen={isPanelOpen}
@@ -941,7 +1016,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             {menuMessage && (
                 <MessageContextMenu
                     text={menuMessage.message_type !== 'IMAGE' && menuMessage.message_type !== 'FILE' ? menuMessage.message_content : undefined}
-                    canDelete={isMine(menuMessage) && !UNDELETABLE_TYPES.includes(menuMessage.message_type)}
+                    canDelete={isMine(menuMessage) && !UNDELETABLE_TYPES.includes(menuMessage.message_type) && !menuPaid}
                     actions={editableOrder ? [
                         { label: '수정하기', onSelect: () => setSheet({ kind: 'order', order: editableOrder }) },
                         { label: '주문 취소하기', onSelect: () => setAction({ kind: 'cancelOrder', order: editableOrder }), danger: true },
@@ -959,7 +1034,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         order={sheet?.kind === 'order' ? sheet.order : undefined}
                         onClose={() => setSheet(null)}
                     />
-                    <RoomInfoSheet open={sheet?.kind === 'info'} party={party} onAction={startAction} onClose={() => setSheet(null)} />
+                    <RoomInfoSheet
+                        open={sheet?.kind === 'info'}
+                        party={party}
+                        onAction={startAction}
+                        onSettle={openSettlement}
+                        onClose={() => setSheet(null)}
+                    />
                     <MembersSheet
                         open={sheet?.kind === 'members'}
                         party={party}
@@ -977,6 +1058,16 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         />
                     )}
                 </>
+            )}
+
+            <VoteCreateSheet open={voteOpen} roomId={roomId} onClose={() => setVoteOpen(false)} />
+
+            {deleteError && (
+                <ConfirmDialog
+                    title={deleteError}
+                    primary={{ label: '확인', onClick: () => setDeleteError(null) }}
+                    onClose={() => setDeleteError(null)}
+                />
             )}
 
             {forbidden && (

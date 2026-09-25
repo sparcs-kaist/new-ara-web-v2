@@ -211,11 +211,11 @@ export function DeliveryActionDialog({
     }
 }
 
-function Body({ children }: { children: ReactNode }) {
+export function Body({ children }: { children: ReactNode }) {
     return <p className="mt-2 break-keep text-[14px] leading-5 text-[#646464]">{children}</p>;
 }
 
-function Rows({ rows }: { rows: [label: string, value: string, red?: boolean][] }) {
+export function Rows({ rows }: { rows: [label: string, value: string, red?: boolean][] }) {
     return (
         <dl className="mt-4 space-y-2 rounded-[10px] bg-[#F6F6F6] px-4 py-3">
             {rows.map(([label, value, red]) => (

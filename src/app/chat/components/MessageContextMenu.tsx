@@ -12,7 +12,7 @@ interface MessageContextMenuProps {
     onClose: () => void;
 }
 
-const copyText = async (text: string) => {
+export const copyText = async (text: string) => {
     try {
         await navigator.clipboard.writeText(text);
     } catch {

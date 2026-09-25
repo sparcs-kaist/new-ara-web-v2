@@ -10,4 +10,5 @@ export { Screen } from './Screen';
 export { StickyComposer, ComposerSpacer } from './StickyComposer';
 export { PostPreview } from './PostPreview';
 export { LittleText } from './LittleText';
+export { Toggle } from './Toggle';
 export * from './icons';

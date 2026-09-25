@@ -38,11 +38,13 @@ export function RoomInfoSheet({
     open,
     party,
     onAction,
+    onSettle,
     onClose,
 }: {
     open: boolean;
     party: DeliveryParty;
     onAction: (action: DeliveryAction) => void;
+    onSettle: () => void;
     onClose: () => void;
 }) {
     const now = useNow();
@@ -139,7 +141,9 @@ export function RoomInfoSheet({
                                 <CtaButton onClick={() => onAction({ kind: 'arrive' })}>배달 도착 알림</CtaButton>
                             )}
                             {(party.status === 'ORDERED' || party.status === 'ARRIVED') && (
-                                <SubButton disabled>정산 요청</SubButton>
+                                <SubButton disabled={party.payment_request !== null} onClick={onSettle}>
+                                    정산 요청
+                                </SubButton>
                             )}
                         </div>
                     </>
