@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader, Screen } from '@/app/web_view/_components';
@@ -39,6 +39,11 @@ export default function DeliveryNewPage() {
     const [minutes, setMinutes] = useState(30);
     const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
     const [formError, setFormError] = useState<string | null>(null);
+    const errorRef = useRef<HTMLParagraphElement>(null);
+    // 'center', not 'nearest': 'nearest' parks the line under the fixed bottom bar.
+    useEffect(() => {
+        if (formError) errorRef.current?.scrollIntoView({ block: 'center' });
+    }, [formError]);
     // `leave`: the ban was already active on arrival, so 확인 takes the user back.
     const [block, setBlock] = useState<{ message: string; leave: boolean } | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -210,10 +215,10 @@ export default function DeliveryNewPage() {
                         className={INPUT_CLASS}
                     />
                 </Section>
+                {formError && <p ref={errorRef} className="text-[13px] text-ara_red">{formError}</p>}
             </div>
 
             <FixedBottomBar>
-                {formError && <p className="mb-2 text-[13px] text-ara_red">{formError}</p>}
                 <CtaButton disabled={!valid || submitting} onClick={submit}>
                     방 만들기
                 </CtaButton>

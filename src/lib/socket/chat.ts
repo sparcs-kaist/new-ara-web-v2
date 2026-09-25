@@ -31,6 +31,7 @@ export class ChatSocketClient3 {
 
         this.socket.onclose = (event) => {
             console.log('WebSocket 연결 종료:', event.code, event.reason);
+            this.queue = [];
             this.emit('disconnect', event);
         };
 

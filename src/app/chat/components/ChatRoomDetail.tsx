@@ -251,7 +251,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 );
                 if (target) await syncMessage(target.id, false);
                 else await applyRecent();
-                if (resource === 'payment') qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+                if (resource === 'payment') qc.invalidateQueries({ queryKey: [...DELIVERY_KEY, 'payment'] });
             }
         };
 
@@ -723,6 +723,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         queryKey: [...DELIVERY_KEY, 'payment', unloadedPaymentId],
         queryFn: () => fetchPaymentRequest(unloadedPaymentId as number),
         enabled: unloadedPaymentId !== null,
+        staleTime: 5_000,
     });
 
     return (
