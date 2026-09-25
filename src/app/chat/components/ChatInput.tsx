@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import TextareaAutosize from "react-textarea-autosize";
@@ -15,13 +15,23 @@ import {
   ImageBadgeIcon,
   PlusIcon,
   SendIcon,
+  type IconProps,
 } from "@/app/web_view/_components/icons";
+
+export interface ChatInputExtraRow {
+  label: string;
+  icon: ComponentType<IconProps>;
+  color: string;
+  onSelect: () => void;
+  disabled?: boolean;
+}
 
 interface ChatInputProps {
   roomId: number;
   myId: number | null; // myId prop 추가
   onMessageSent: () => void;
   compact?: boolean; // 웹뷰 전용 좁은 폭 컴포저
+  extraRows?: ChatInputExtraRow[]; // 첨부 시트에서 기본 항목 위에 붙는 항목 (배달방)
 }
 
 export default function ChatInput({
@@ -29,6 +39,7 @@ export default function ChatInput({
   myId,
   onMessageSent,
   compact = false,
+  extraRows = [],
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [sheetMounted, setSheetMounted] = useState(false);
@@ -414,6 +425,33 @@ export default function ChatInput({
               >
                 <div className="mx-auto mt-[10px] h-[4px] w-[36px] rounded-full bg-[#D9D9D9]" />
                 <div className="pt-[6px]">
+                  {extraRows.map(({ label, icon: Icon, color, onSelect, disabled }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled={disabled}
+                      className="flex w-full items-center gap-[16px] px-[20px] h-[64px] text-left"
+                      onClick={() => {
+                        if (dragRef.current.dy > 8) return;
+                        closeSheet();
+                        onSelect();
+                      }}
+                    >
+                      <span
+                        className={`w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-white ${disabled ? "bg-[#D9D9D9]" : color}`}
+                      >
+                        <Icon size={18} />
+                      </span>
+                      <span
+                        className={`text-[16px] font-medium ${disabled ? "text-[#BBBBBB]" : "text-black"}`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                  {extraRows.length > 0 && (
+                    <div className="mx-[20px] my-[4px] h-px bg-[#F0F0F0]" />
+                  )}
                   {attachRows.map(({ label, color, Icon, inputRef }) => (
                     <button
                       key={label}

@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom';
 interface MessageContextMenuProps {
     text?: string;
     canDelete: boolean;
+    /** Extra rows between 복사하기 and 삭제하기 (e.g. editing a delivery order). */
+    actions?: { label: string; onSelect: () => void; danger?: boolean }[];
     onDelete: () => void;
     onClose: () => void;
 }
@@ -27,7 +29,7 @@ const copyText = async (text: string) => {
     }
 };
 
-const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete, onDelete, onClose }) => {
+const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete, actions = [], onDelete, onClose }) => {
     // Escape 키를 누르면 닫기
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -42,7 +44,7 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete
     }, [onClose]);
 
     const canCopy = typeof text === 'string' && text.length > 0;
-    if (!canCopy && !canDelete) return null;
+    if (!canCopy && !canDelete && actions.length === 0) return null;
 
     const handleCopyClick = async () => {
         if (canCopy) await copyText(text);
@@ -69,6 +71,19 @@ const MessageContextMenu: React.FC<MessageContextMenuProps> = ({ text, canDelete
                         복사하기
                     </button>
                 )}
+                {actions.map(({ label, onSelect, danger }) => (
+                    <button
+                        key={label}
+                        type="button"
+                        className={`${rowClass} ${danger ? 'text-ara_red' : 'text-black'}`}
+                        onClick={() => {
+                            onSelect();
+                            onClose();
+                        }}
+                    >
+                        {label}
+                    </button>
+                ))}
                 {canDelete && (
                     <button type="button" className={`${rowClass} text-ara_red`} onClick={handleDeleteClick}>
                         삭제하기

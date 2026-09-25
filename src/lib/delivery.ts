@@ -1,8 +1,17 @@
-import type { DeliveryPartySummary } from '@/lib/types/delivery';
+import type { DeliveryOrder, DeliveryPartySummary } from '@/lib/types/delivery';
 
 // status lags deadline_at by up to a minute (the sweep runs every minute), so the deadline decides.
 export function isRecruitingOpen(p: DeliveryPartySummary, now = Date.now()): boolean {
     return p.status === 'RECRUITING' && new Date(p.deadline_at).getTime() > now;
+}
+
+// RECRUITING past its deadline still takes orders until the sweep closes it.
+export function ordersAllowed(p: Pick<DeliveryPartySummary, 'status'>): boolean {
+    return p.status === 'RECRUITING' || p.status === 'WAITING_DECISION';
+}
+
+export function orderTotal(orders: DeliveryOrder[]): number {
+    return orders.reduce((sum, o) => sum + o.price, 0);
 }
 
 export function remainingAmount(p: DeliveryPartySummary): number {

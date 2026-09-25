@@ -181,6 +181,12 @@ export const fetchRecentMessage = async (roomId: number) => {
     return data;
 }
 
+// 서버 room_update 알림은 메시지 id만 주므로 하나씩 다시 가져온다
+export const fetchChatMessage = async (messageId: number) => {
+    const { data } = await http.get(`chat/message/${messageId}/`);
+    return data;
+}
+
 export type ChatMessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'EMOTICON';
 
 // 첨부 메시지 전송 (IMAGE/FILE) - contentUrl를 message_content로 전송

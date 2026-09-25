@@ -9,6 +9,7 @@ import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail, createDeliveryParty, fetchDeliveryPenalty } from '@/lib/api/delivery';
 import { isPenaltyActive, penaltyMessage } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from '../_components/BottomCta';
+import { INPUT_CLASS, NumberInput } from '../_components/fields';
 import { PenaltyDialog } from '../_components/PenaltyDialog';
 
 const MIN_MINUTES = 5;
@@ -29,9 +30,6 @@ const INITIAL_FORM = {
 type FormField = keyof typeof INITIAL_FORM;
 type Field = FormField | 'recruit_minutes';
 const FIELDS: string[] = [...Object.keys(INITIAL_FORM), 'recruit_minutes'];
-
-const INPUT_CLASS =
-    'h-12 w-full rounded-[10px] bg-[#F6F6F6] px-4 text-[15px] text-black placeholder:text-[#BBBBBB] focus:outline-none';
 
 export default function DeliveryNewPage() {
     const router = useRouter();
@@ -245,31 +243,6 @@ function Section({
             <div className="space-y-2">{children}</div>
             {error && <p className="mt-1 text-[13px] text-ara_red">{error}</p>}
         </section>
-    );
-}
-
-function NumberInput({
-    value,
-    onChange,
-    placeholder,
-    unit,
-}: {
-    value: string;
-    onChange: (digits: string) => void;
-    placeholder: string;
-    unit: string;
-}) {
-    return (
-        <label className="flex h-12 items-center rounded-[10px] bg-[#F6F6F6] px-4">
-            <input
-                inputMode="numeric"
-                value={value && Number(value).toLocaleString('ko-KR')}
-                onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                placeholder={placeholder}
-                className="min-w-0 flex-1 bg-transparent text-[15px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
-            />
-            {value && <span className="ml-1 shrink-0 text-[15px] text-black">{unit}</span>}
-        </label>
     );
 }
 

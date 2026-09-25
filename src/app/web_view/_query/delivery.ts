@@ -7,6 +7,7 @@ import {
     fetchDeliveryPenalty,
     type DeliveryListParams,
 } from '@/lib/api/delivery';
+import { ordersAllowed } from '@/lib/delivery';
 
 /** Prefix of every delivery query; invalidate it after any delivery mutation. */
 export const DELIVERY_KEY = ['webview', 'delivery'] as const;
@@ -27,13 +28,15 @@ export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>, opt
     });
 }
 
-export function useDeliveryParty(id: number | null) {
+export function useDeliveryParty(id: number | null, { poll = false } = {}) {
     return useQuery({
         queryKey: [...DELIVERY_KEY, 'party', id],
         queryFn: () => fetchDeliveryParty(id as number),
         enabled: id !== null,
         staleTime: 5_000,
         refetchOnMount: true,
+        // Backs up the socket in the room: the deadline sweep lands up to a minute late.
+        refetchInterval: (q) => (poll && q.state.data && ordersAllowed(q.state.data) ? 30_000 : false),
     });
 }
 

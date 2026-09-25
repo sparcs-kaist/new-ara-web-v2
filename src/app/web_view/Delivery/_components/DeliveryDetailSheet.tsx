@@ -134,7 +134,7 @@ export function DeliveryDetailBody({
     );
 }
 
-function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+export function InfoRow({ label, children }: { label: string; children: ReactNode }) {
     return (
         <div className="flex items-start justify-between gap-4">
             <dt className="shrink-0 text-[14px] text-[#BBBBBB]">{label}</dt>
