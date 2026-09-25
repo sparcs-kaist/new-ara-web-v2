@@ -45,7 +45,7 @@ export default function WebViewPostDetailPage() {
     const qc = useQueryClient();
     const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
     const [report, setReport] = useState<ReportSubject | null>(null);
-    // Stable, so page re-renders do not restart the report sheet's auto-close timer.
+    // Stable: a new identity would restart the report sheet's auto-close timer.
     const closeReport = useCallback(() => setReport(null), []);
 
     /**
@@ -223,7 +223,6 @@ export default function WebViewPostDetailPage() {
     const isBlockedAuthor = !!post.created_by?.is_blocked;
     const totalCommentCount = countComments(post.comments ?? []);
 
-    // Faithful Flutter AppBar: red chevron + small red board name on the left.
     const leading = (
         <button
             type="button"
@@ -277,7 +276,6 @@ export default function WebViewPostDetailPage() {
                 onDelete={handleDelete}
             />
 
-            {/* Divider before comment section. */}
             <div className="mx-5 mt-[15px] h-px bg-[#F0F0F0]" />
 
             <h3 className="px-5 pt-[15px] pb-[15px] text-[16px] font-bold text-black">

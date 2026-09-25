@@ -9,7 +9,6 @@ import {
 } from '@/lib/api/delivery';
 import { ordersAllowed } from '@/lib/delivery';
 
-/** Prefix of every delivery query; invalidate it after any delivery mutation. */
 export const DELIVERY_KEY = ['webview', 'delivery'] as const;
 
 // Rooms fill up and close by the minute, so these refetch on mount (the client default is refetchOnMount: false).
@@ -19,7 +18,7 @@ export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>) {
         queryFn: ({ pageParam }) => fetchDeliveryParties({ ...params, page: pageParam }),
         initialPageParam: 1,
         getNextPageParam: (last, all) => (last.next ? all.length + 1 : undefined),
-        // Keeps the rows while a search narrows them, not across 모집 중 / 내 배달, which list other rooms.
+        // Keep rows while searching, not across 모집 중 / 내 배달, which list other rooms.
         placeholderData: (prev, prevQuery) =>
             (prevQuery?.queryKey[3] as typeof params | undefined)?.joined === params.joined ? prev : undefined,
         staleTime: 15_000,

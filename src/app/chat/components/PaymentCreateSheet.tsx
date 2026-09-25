@@ -35,7 +35,6 @@ export default function PaymentCreateSheet({
 }: {
     open: boolean;
     roomId: number;
-    /** Everyone who can be charged, without me. */
     members: PaymentMember[];
     onClose: () => void;
 }) {

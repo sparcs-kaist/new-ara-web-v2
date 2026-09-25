@@ -5,7 +5,6 @@ import { useNow } from '@/app/web_view/hooks/useNow';
 import { formatRemaining, formatWon, isRecruitingOpen, isUrgent, statusLabel } from '@/lib/delivery';
 import type { DeliveryPartySummary } from '@/lib/types/delivery';
 
-/** `showStatus` (내 배달): a status chip, and no countdown once recruiting is over. */
 export function DeliveryRoomCardBody({ party, showStatus = false }: { party: DeliveryPartySummary; showStatus?: boolean }) {
     const now = useNow();
     const open = isRecruitingOpen(party, now);
@@ -67,12 +66,12 @@ export function DeliveryRoomCard({
     const now = useNow();
     const urgent = isUrgent(party, now);
     return (
-        // The glow sits on a wrapper: the press ripple paints the button's own background-image.
+        // Glow on a wrapper: the press ripple owns the button's background-image.
         <div data-urgent={urgent || undefined}>
             <button
                 type="button"
                 onClick={onPress}
-                // 15.5px inside the 1.5px ring keeps the content where the 1px-border card has it, so nothing shifts at 3:00.
+                // 1.5px ring + 15.5px = 1px border + p-4, so nothing shifts at 3:00.
                 className={`block w-full rounded-[15px] bg-white text-left ${urgent ? 'p-[15.5px]' : 'border border-[#F0F0F0] p-4'}`}
             >
                 <DeliveryRoomCardBody party={party} showStatus={showStatus} />

@@ -5,7 +5,7 @@ export function isRecruitingOpen(p: DeliveryPartySummary, now = Date.now()): boo
     return p.status === 'RECRUITING' && new Date(p.deadline_at).getTime() > now;
 }
 
-// Whole seconds like the countdown chip: the glow starts on the tick it reads 03:00 and stops when it reads 마감.
+// Whole seconds, so the glow starts at the chip's 03:00 and stops at 마감.
 export function isUrgent(p: DeliveryPartySummary, now: number): boolean {
     const seconds = Math.floor((new Date(p.deadline_at).getTime() - now) / 1000);
     return p.status === 'RECRUITING' && seconds > 0 && seconds <= 180;
@@ -20,7 +20,7 @@ const STATUS_LABELS: Record<DeliveryStatus, string> = {
     CANCELED: '취소됨',
 };
 
-// A RECRUITING room past its deadline is only waiting for the sweep, so it already reads 결정 대기.
+// RECRUITING past the deadline only awaits the sweep, so it reads 결정 대기.
 export function statusLabel(p: DeliveryPartySummary, now: number): string {
     return isRecruitingOpen(p, now) ? STATUS_LABELS.RECRUITING : STATUS_LABELS[p.status === 'RECRUITING' ? 'WAITING_DECISION' : p.status];
 }
@@ -44,7 +44,7 @@ export function formatWon(n: number): string {
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 
-// 이/가 follows the last syllable's final consonant; a trailing number is read aloud (2 이, 4 사, 5 오, 9 구 end open).
+// Digits 2, 4, 5, 9 are read 이, 사, 오, 구 and end open, so they take 가.
 export function withSubject(name: string): string {
     const c = name.charCodeAt(name.length - 1);
     const open = c >= 0xac00 && c <= 0xd7a3 ? (c - 0xac00) % 28 === 0 : /[2459]$/.test(name);
@@ -64,7 +64,7 @@ export function isPenaltyActive(until: string | null | undefined): until is stri
     return !!until && new Date(until).getTime() > Date.now();
 }
 
-// Best-effort public account formats, in the bank picker's order; a bank without prefixes is told apart by length alone.
+// Best-effort, in bank picker order; a bank without prefixes matches by length.
 const BANK_FORMATS: [bank: string, prefixes: string[], lengths: number[]][] = [
     ['토스뱅크', ['1000'], [12]],
     ['카카오뱅크', ['3333'], [13]],

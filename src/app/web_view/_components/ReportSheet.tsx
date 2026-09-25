@@ -10,9 +10,7 @@ import { CheckIcon } from './icons';
 
 export interface ReportSubject {
     target: ReportTarget;
-    /** 게시글, 댓글, 익명2의 메시지, 익명2 */
     label: string;
-    /** An article title, a comment's first line, a message's text, or 사진/파일. */
     preview?: string;
 }
 

@@ -21,7 +21,7 @@ const listUrl = (mine: boolean) => (mine ? '/web_view/Delivery?tab=mine' : '/web
 function DeliveryListInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    // ?tab=mine brings 내 배달 back after the chat; ?party=<id> (식사 home cards) opens that room's sheet.
+    // ?tab=mine survives a trip to the chat; ?party=<id> is the 식사 home deep link.
     const mine = searchParams.get('tab') === 'mine';
     const linkedId = Number(searchParams.get('party')) || null;
     const [openId, setOpenId] = useState<number | null>(linkedId);
@@ -88,7 +88,6 @@ function DeliveryListInner() {
                 </label>
             </div>
 
-            {/* The 학식 page's 아침/점심/저녁 TimeButton look (not exported there), sized to the label. */}
             <div role="tablist" className="flex items-center gap-1 px-5 pb-4 pt-1">
                 {TABS.map((tab) => (
                     <button

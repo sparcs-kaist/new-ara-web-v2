@@ -13,7 +13,7 @@ export function CtaButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
     );
 }
 
-/** Page content needs ~96px of bottom room so nothing hides behind it. `fade`: a list scrolls under it. */
+/** Page content needs ~96px of bottom room so nothing hides behind it. */
 export function FixedBottomBar({ children, fade = false }: { children: ReactNode; fade?: boolean }) {
     return (
         <div

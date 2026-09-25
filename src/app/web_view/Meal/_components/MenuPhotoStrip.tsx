@@ -7,7 +7,6 @@ import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageText
 import { formatMealDate, RESTAURANT_IDS, RESTAURANT_NAMES, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { OfficialBadge, PhotoCover, PhotoLabel } from './photoParts';
 
-/** 메뉴 사진 on the 식사 home: each restaurant's first photo (official first) for today's current meal. */
 export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
     const router = useRouter();
     const queries = useMealPhotos(slot && formatMealDate(), timeStringToMealType(slot?.time ?? ''));

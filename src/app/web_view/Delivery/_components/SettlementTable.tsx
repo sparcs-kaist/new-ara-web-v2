@@ -4,7 +4,7 @@ import { InformationIcon } from '@/app/web_view/_components';
 import { formatWon } from '@/lib/delivery';
 import type { DeliveryMember, DeliveryOrder } from '@/lib/types/delivery';
 
-// Mirrors the server: every orderer, the host included, owes their orders plus ceil(fee / orderers); the host is not charged.
+// Server rule: the host counts in ceil(fee / orderers) but is not charged.
 function splitByOrderer(orders: DeliveryOrder[], fee: number) {
     const rows = new Map<number, { orderer: DeliveryMember; subtotal: number }>();
     for (const o of orders) {

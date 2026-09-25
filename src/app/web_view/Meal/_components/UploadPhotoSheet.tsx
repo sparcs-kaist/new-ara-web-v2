@@ -14,7 +14,7 @@ import { ChoicePill, MealSegment } from './photoParts';
 
 const MAX_EDGE = 1600;
 
-// Re-encoded before upload: there are no server thumbnails (every tile loads this file), and it drops the EXIF location.
+// Re-encoded: there are no server thumbnails, and it drops the EXIF location.
 async function shrink(file: File): Promise<File> {
     try {
         const bitmap = await createImageBitmap(file);
@@ -31,7 +31,6 @@ async function shrink(file: File): Promise<File> {
 }
 
 interface UploadPhotoSheetProps {
-    /** The restaurant preselected when the sheet opens; null keeps it closed. */
     restaurant: RestaurantId | null;
     meal: MealSlot['time'];
     date: string;
@@ -47,7 +46,7 @@ export function UploadPhotoSheet({ restaurant, meal, date, onClose, onUploaded }
     );
 }
 
-// BottomSheet drops its children once closed, so each opening mounts a blank form with the new initial values.
+// BottomSheet unmounts children when closed, so each opening starts a fresh form.
 function UploadForm({
     initialRestaurant,
     initialMeal,
@@ -123,7 +122,6 @@ function UploadForm({
                     </div>
                 )}
             </div>
-            {/* The chat attach sheet's pickers: the gallery, and the camera through capture. */}
             <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
 

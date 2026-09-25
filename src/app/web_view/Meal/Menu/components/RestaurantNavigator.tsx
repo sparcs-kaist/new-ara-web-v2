@@ -49,13 +49,10 @@ export default function RestaurantNavigator({
   onRestaurantChange,
   onMealTimeChange
 }: RestaurantNavigatorProps) {
-  // 모달 표시 상태만 내부에서 관리
   const [showRestaurantModal, setShowRestaurantModal] = useState(false);
   
-  // 식당 선택 영역의 ref
   const restaurantSelectorRef = useRef<HTMLDivElement>(null);
 
-  // 외부 클릭 시 모달 닫기 이벤트 핸들러
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (restaurantSelectorRef.current && 
@@ -64,7 +61,6 @@ export default function RestaurantNavigator({
       }
     }
 
-    // 모달이 열려있을 때만 이벤트 리스너 추가
     if (showRestaurantModal) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -91,7 +87,6 @@ export default function RestaurantNavigator({
     }
   };
 
-  // 식당 이름 목록에서 현재 선택된 식당의 인덱스 찾기
   const getSelectedRestaurantIndex = () => {
     const restaurantNames = [
       '카이마루',
@@ -107,7 +102,6 @@ export default function RestaurantNavigator({
 
   return (
     <div className="flex justify-between items-center w-full py-2 relative px-[15px]">
-      {/* 식당 선택 영역 */}
       <div 
         ref={restaurantSelectorRef}
         role="button"
@@ -121,7 +115,6 @@ export default function RestaurantNavigator({
           <ArrowIcon />
         </div>
         
-        {/* 식당 선택 모달 - 버튼 아래에 위치하도록 배치 */}
         {showRestaurantModal && (
           <div className="absolute top-full left-0 mt-1 z-10">
             <RestaurantSelection 
@@ -132,7 +125,6 @@ export default function RestaurantNavigator({
         )}
       </div>
 
-      {/* 시간 선택 영역 */}
       <div className="flex items-center gap-1.5">
         {mealTimes.map((time, index) => (
           <TimeButton 

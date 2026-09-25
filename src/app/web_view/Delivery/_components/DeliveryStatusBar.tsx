@@ -34,7 +34,7 @@ const CANCEL_REASON: Record<DeliveryParty['cancel_reason'], string> = {
 const sum = (shares: { amount: number }[]) => shares.reduce((total, s) => total + s.amount, 0);
 const latestCanceled = (payments: ChatPaymentRequest[]) => payments.filter((p) => p.canceled_at != null).pop();
 
-// Every live request counts, the delivery one and general ones alike; canceled ones only explain an empty state.
+// General requests count too; canceled ones only explain an empty state.
 function settlingLines(party: DeliveryParty, myOrders: DeliveryOrder[], payments: ChatPaymentRequest[]): Lines | undefined {
     const live = payments.filter((p) => p.canceled_at == null);
     const shares = live.flatMap((p) => p.targets.filter((t) => t.user.is_mine).map((t) => ({ ...t, payment: p })));
@@ -81,7 +81,7 @@ function settlingLines(party: DeliveryParty, myOrders: DeliveryOrder[], payments
 
 function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[], payments: ChatPaymentRequest[]): Lines {
     const total = `합계 ${formatWon(party.total_amount)}`;
-    // Once met, the bar shows the 최소 금액 충족 pill instead.
+    // Once met, the 최소 금액 충족 pill takes this slot.
     const toMin = remainingAmount(party) > 0 ? `주문까지 ${formatWon(remainingAmount(party))}` : undefined;
     const mine = `내 주문 ${formatWon(orderTotal(myOrders))}`;
     const settling = settlingLines(party, myOrders, payments);
@@ -113,7 +113,6 @@ export function DeliveryStatusBar({
 }: {
     party: DeliveryParty;
     myOrders: DeliveryOrder[];
-    /** Every payment request in the loaded messages. */
     payments: ChatPaymentRequest[];
 }) {
     const now = useNow();
@@ -163,7 +162,7 @@ export function DeliveryStatusBar({
 
 function settlingNote(party: DeliveryParty, payments: ChatPaymentRequest[]): string | undefined {
     if (party.payment_request !== null || payments.some((p) => p.canceled_at == null)) return '송금 완료 후 퇴장 가능';
-    // ORDERED/ARRIVED with no live delivery request is only refused when someone had paid the previous one.
+    // can_request_payment is false here only if someone paid the last request.
     if (party.is_host && !party.can_request_payment) return '송금한 사람이 있어 배달 정산을 다시 보낼 수 없습니다';
     const canceled = latestCanceled(payments);
     if (canceled?.targets.some((t) => t.user.is_mine && t.paid_at)) {
@@ -197,7 +196,6 @@ export function DeliveryComposerNote({ party, payments }: { party: DeliveryParty
     );
 }
 
-// Pinned under the status bar so the 배민 함께주문 link is one tap away for everyone in the room.
 export function DeliveryLinkBar({ party }: { party: DeliveryParty }) {
     const isNative = useIsNative();
     if (!party.order_link) return null;

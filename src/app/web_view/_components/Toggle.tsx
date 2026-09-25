@@ -1,6 +1,5 @@
 'use client';
 
-/** 43×27 Cupertino-style switch with brand red active state. */
 export function Toggle({
     checked,
     onChange,

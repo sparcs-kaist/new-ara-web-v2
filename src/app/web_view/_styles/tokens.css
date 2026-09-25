@@ -138,7 +138,6 @@
 @keyframes ara-glow-spin {
     to { --ara-glow-angle: 360deg; }
 }
-/* Delivery rooms in their last 3 minutes (DeliveryRoomCard): a bright red sweep circles a 1.5px red ring. */
 [data-ara-shell] [data-urgent] {
     padding: 1.5px;
     border-radius: 16px;
@@ -153,7 +152,6 @@
     }
 }
 
-/* DeliveryStatusBar's 최소 금액 충족 pill, once, when the minimum is reached. */
 @keyframes ara-pop {
     from { transform: scale(0.85); }
 }

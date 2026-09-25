@@ -95,7 +95,7 @@ export default function DeliveryNewPage() {
             const firstKey =
                 res?.status === 400 && res.data && typeof res.data === 'object' ? Object.keys(res.data)[0] : undefined;
             if (res?.status === 403) {
-                // Create answers 403 only for an active penalty; that page says why and for how long.
+                // Create answers 403 only for an active penalty.
                 qc.invalidateQueries({ queryKey: DELIVERY_KEY });
                 router.replace('/web_view/Delivery/Restricted');
             } else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
@@ -178,7 +178,7 @@ export default function DeliveryNewPage() {
                                     setMinutesText(String(minutes));
                                 }}
                                 aria-label="마감까지 남은 시간(분)"
-                                // Sized to the digits so "30분 후" stays one centred group, like the static text it replaces.
+                                // Sized to the digits so "30분 후" stays one centred group.
                                 style={{ width: `${Math.max(minutesText.length, 1)}ch` }}
                                 className="min-w-0 bg-transparent text-right tabular-nums focus:outline-none"
                             />
@@ -246,7 +246,7 @@ export default function DeliveryNewPage() {
 
 function DeadlineTime({ minutes }: { minutes: number }) {
     const now = useNow();
-    // Clock text only after mount: the page is prerendered, and hydration would keep the server's time on screen.
+    // After mount only: the page is prerendered, and hydration keeps the build's time.
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
     if (!mounted) return null;
