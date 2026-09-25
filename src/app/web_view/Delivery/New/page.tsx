@@ -4,17 +4,18 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader, Screen } from '@/app/web_view/_components';
-import { DELIVERY_KEY } from '@/app/web_view/_query';
-import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
-import { apiDetail, createDeliveryParty, fetchDeliveryPenalty } from '@/lib/api/delivery';
-import { isPenaltyActive, penaltyMessage } from '@/lib/delivery';
+import { DELIVERY_KEY, useDeliveryPenalty } from '@/app/web_view/_query';
+import { tick } from '@/app/web_view/hooks/haptic';
+import { useNow } from '@/app/web_view/hooks/useNow';
+import { apiDetail, createDeliveryParty } from '@/lib/api/delivery';
+import { isPenaltyActive, pad } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from '../_components/BottomCta';
 import { INPUT_CLASS, NumberInput } from '../_components/fields';
-import { PenaltyDialog } from '../_components/PenaltyDialog';
 
 const MIN_MINUTES = 5;
 const MAX_MINUTES = 60;
-const MINUTES_STEP = 5;
+const QUICK_MINUTES = [10, 15, 30, 60];
+const clampMinutes = (m: number) => Math.min(MAX_MINUTES, Math.max(MIN_MINUTES, m));
 
 const INITIAL_FORM = {
     store_name: '',
@@ -33,10 +34,9 @@ const FIELDS: string[] = [...Object.keys(INITIAL_FORM), 'recruit_minutes'];
 
 export default function DeliveryNewPage() {
     const router = useRouter();
-    const back = useSafeBack();
     const qc = useQueryClient();
     const [form, setForm] = useState(INITIAL_FORM);
-    const [minutes, setMinutes] = useState(30);
+    const [minutesText, setMinutesText] = useState('30');
     const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
     const [formError, setFormError] = useState<string | null>(null);
     const errorRef = useRef<HTMLParagraphElement>(null);
@@ -44,23 +44,22 @@ export default function DeliveryNewPage() {
     useEffect(() => {
         if (formError) errorRef.current?.scrollIntoView({ block: 'center' });
     }, [formError]);
-    // `leave`: the ban was already active on arrival, so 확인 takes the user back.
-    const [block, setBlock] = useState<{ message: string; leave: boolean } | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    const until = useDeliveryPenalty().data?.until;
     useEffect(() => {
-        let cancelled = false;
-        fetchDeliveryPenalty()
-            .then(({ until }) => {
-                if (!cancelled && isPenaltyActive(until)) setBlock({ message: penaltyMessage(until), leave: true });
-            })
-            .catch(() => {});
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+        if (isPenaltyActive(until)) router.replace('/web_view/Delivery/Restricted');
+    }, [until, router]);
 
     const set = (field: FormField) => (value: string) => setForm((f) => ({ ...f, [field]: value }));
+
+    const typedMinutes = Number(minutesText);
+    const minutesOutOfRange = typedMinutes < MIN_MINUTES || typedMinutes > MAX_MINUTES;
+    const minutes = clampMinutes(typedMinutes);
+    const pickMinutes = (m: number) => {
+        if (m !== typedMinutes) tick();
+        setMinutesText(String(m));
+    };
 
     const maxParticipants = form.max_participants ? Number(form.max_participants) : null;
     const maxTooSmall = maxParticipants !== null && maxParticipants < 2;
@@ -95,8 +94,11 @@ export default function DeliveryNewPage() {
             const res = (e as { response?: { status?: number; data?: unknown } }).response;
             const firstKey =
                 res?.status === 400 && res.data && typeof res.data === 'object' ? Object.keys(res.data)[0] : undefined;
-            if (res?.status === 403) setBlock({ message: apiDetail(e), leave: false });
-            else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
+            if (res?.status === 403) {
+                // Create answers 403 only for an active penalty; that page says why and for how long.
+                qc.invalidateQueries({ queryKey: DELIVERY_KEY });
+                router.replace('/web_view/Delivery/Restricted');
+            } else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
             else setFormError(apiDetail(e));
             setSubmitting(false);
         }
@@ -158,35 +160,50 @@ export default function DeliveryNewPage() {
                     </Section>
                 </div>
 
-                <Section label="마감까지" error={errors.recruit_minutes}>
-                    <div className="flex items-center justify-between">
+                <Section label="마감까지" aside={<DeadlineTime minutes={minutes} />} error={errors.recruit_minutes}>
+                    <div className="flex items-center gap-2">
                         <StepButton
                             label="−"
-                            ariaLabel={`${MINUTES_STEP}분 줄이기`}
+                            ariaLabel="1분 줄이기"
                             disabled={minutes <= MIN_MINUTES}
-                            onClick={() => setMinutes((m) => Math.max(MIN_MINUTES, m - MINUTES_STEP))}
+                            onClick={() => pickMinutes(minutes - 1)}
                         />
-                        <span className="text-[22px] font-bold text-black">{minutes}분 후</span>
+                        <label className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-[10px] bg-[#F6F6F6] px-4 text-[22px] font-bold text-[#222222]">
+                            <input
+                                inputMode="numeric"
+                                value={minutesText}
+                                onChange={(e) => setMinutesText(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                                onBlur={() => {
+                                    if (minutesOutOfRange) tick();
+                                    setMinutesText(String(minutes));
+                                }}
+                                aria-label="마감까지 남은 시간(분)"
+                                // Sized to the digits so "30분 후" stays one centred group, like the static text it replaces.
+                                style={{ width: `${Math.max(minutesText.length, 1)}ch` }}
+                                className="min-w-0 bg-transparent text-right tabular-nums focus:outline-none"
+                            />
+                            <span className="shrink-0">분 후</span>
+                        </label>
                         <StepButton
                             label="+"
-                            ariaLabel={`${MINUTES_STEP}분 늘리기`}
+                            ariaLabel="1분 늘리기"
                             disabled={minutes >= MAX_MINUTES}
-                            onClick={() => setMinutes((m) => Math.min(MAX_MINUTES, m + MINUTES_STEP))}
+                            onClick={() => pickMinutes(minutes + 1)}
                         />
                     </div>
-                    <input
-                        type="range"
-                        min={MIN_MINUTES}
-                        max={MAX_MINUTES}
-                        step={MINUTES_STEP}
-                        value={minutes}
-                        onChange={(e) => setMinutes(Number(e.target.value))}
-                        aria-label="마감까지 남은 시간"
-                        className="w-full accent-ara_red"
-                    />
-                    <div className="flex justify-between text-[12px] text-[#BBBBBB]">
-                        <span>{MIN_MINUTES}분</span>
-                        <span>{MAX_MINUTES}분</span>
+                    {minutesOutOfRange && <p className="text-[13px] text-ara_red">5분에서 60분 사이로 정해 주세요</p>}
+                    <div className="flex gap-2">
+                        {QUICK_MINUTES.map((m) => (
+                            <button
+                                key={m}
+                                type="button"
+                                aria-pressed={m === typedMinutes}
+                                onClick={() => pickMinutes(m)}
+                                className={`h-10 flex-1 rounded-[10px] border text-[14px] font-medium ${m === typedMinutes ? 'border-ara_red bg-white text-ara_red' : 'border-transparent bg-[#F6F6F6] text-[#646464]'}`}
+                            >
+                                {m}분
+                            </button>
+                        ))}
                     </div>
                 </Section>
 
@@ -223,28 +240,43 @@ export default function DeliveryNewPage() {
                     방 만들기
                 </CtaButton>
             </FixedBottomBar>
-
-            {block && (
-                <PenaltyDialog message={block.message} onConfirm={() => (block.leave ? back() : setBlock(null))} />
-            )}
         </Screen>
+    );
+}
+
+function DeadlineTime({ minutes }: { minutes: number }) {
+    const now = useNow();
+    // Clock text only after mount: the page is prerendered, and hydration would keep the server's time on screen.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    if (!mounted) return null;
+    const deadline = new Date(now + minutes * 60_000);
+    return (
+        <span className="text-[13px] text-[#646464]">
+            마감 {pad(deadline.getHours())}:{pad(deadline.getMinutes())}
+        </span>
     );
 }
 
 function Section({
     label,
+    aside,
     error,
     className,
     children,
 }: {
     label: string;
+    aside?: ReactNode;
     error?: string;
     className?: string;
     children: ReactNode;
 }) {
     return (
         <section className={className}>
-            <h2 className="mb-2 text-[15px] font-semibold text-black">{label}</h2>
+            <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-[15px] font-semibold text-black">{label}</h2>
+                {aside}
+            </div>
             <div className="space-y-2">{children}</div>
             {error && <p className="mt-1 text-[13px] text-ara_red">{error}</p>}
         </section>
@@ -268,7 +300,7 @@ function StepButton({
             aria-label={ariaLabel}
             disabled={disabled}
             onClick={onClick}
-            className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#F6F6F6] text-[22px] font-medium text-black disabled:text-[#BBBBBB]"
+            className="flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#F6F6F6] text-[20px] font-bold text-[#555555] disabled:text-[#BBBBBB]"
         >
             {label}
         </button>

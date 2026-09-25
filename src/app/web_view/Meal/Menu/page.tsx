@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import DateNavigator from "./components/DateNavigator";
 import MealHeader from "./components/MealHeader";
@@ -17,7 +18,9 @@ import {
   getRestaurantIdFromDisplayName,
   getMenuTypeFromRestaurantName,
   timeStringToMealType,
+  currentMealSlot,
   ALLERGEN_MAP,
+  MEAL_SLOTS,
 } from '@/lib/types/meal';
 
 // 알러지 이름을 ID로 변환하는 함수
@@ -51,8 +54,9 @@ function convertDateFormat(dateStr: string): string {
   return dateStr.replace(/-/g, '');
 }
 
-export default function MealPage() {
+function MealPageInner() {
   const onBack = useSafeBack();
+  const timeParam = useSearchParams().get('time');
   // 학식 정보 - 캐시 역할 (key: "날짜-식당ID-식사시간")
   const [mealData, setMealData] = useState<Record<string, MealResponse>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -60,7 +64,10 @@ export default function MealPage() {
   // 현재 선택된 날짜와 식당
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [selectedRestaurant, setSelectedRestaurant] = useState<string>('카이마루');
-  const [selectedTime, setSelectedTime] = useState<string>('점심');
+  // ?time= comes from the 식사 home banner, so both show the same 끼니.
+  const [selectedTime, setSelectedTime] = useState<string>(
+    () => MEAL_SLOTS.find((slot) => slot.time === timeParam)?.time ?? currentMealSlot().time
+  );
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
 
   // 메뉴 타입은 식당 이름으로 결정 (카페테리아가 포함되어 있으면 cafeteria)
@@ -193,5 +200,13 @@ export default function MealPage() {
         )}
       </div>
     </Screen>
+  );
+}
+
+export default function MealPage() {
+  return (
+    <Suspense fallback={null}>
+      <MealPageInner />
+    </Suspense>
   );
 }

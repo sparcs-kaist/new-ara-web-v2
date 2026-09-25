@@ -1,6 +1,8 @@
 'use client';
 
-import { InformationIcon } from '@/app/web_view/_components';
+import { useEffect, useRef, useState } from 'react';
+import { CheckIcon, InformationIcon } from '@/app/web_view/_components';
+import { tick } from '@/app/web_view/hooks/haptic';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import {
     formatRemaining,
@@ -77,8 +79,8 @@ function settlingLines(party: DeliveryParty, myOrders: DeliveryOrder[], payments
 
 function statusLines(party: DeliveryParty, now: number, myOrders: DeliveryOrder[], payments: ChatPaymentRequest[]): Lines {
     const total = `합계 ${formatWon(party.total_amount)}`;
-    const toMin =
-        party.total_amount >= party.min_order_amount ? '최소 금액 충족' : `주문까지 ${formatWon(remainingAmount(party))}`;
+    // Once met, the bar shows the 최소 금액 충족 pill instead.
+    const toMin = remainingAmount(party) > 0 ? `주문까지 ${formatWon(remainingAmount(party))}` : undefined;
     const mine = `내 주문 ${formatWon(orderTotal(myOrders))}`;
     const settling = settlingLines(party, myOrders, payments);
     switch (party.status) {
@@ -116,6 +118,18 @@ export function DeliveryStatusBar({
     const { label, value, top, bottom } = statusLines(party, now, myOrders, payments);
     const min = party.min_order_amount;
     const progress = min > 0 ? Math.min(100, (party.total_amount / min) * 100) : 100;
+    const met = ordersAllowed(party) && remainingAmount(party) === 0;
+
+    // Pops on the change itself, not when a room opens already met.
+    const metBefore = useRef(met);
+    const [popped, setPopped] = useState(false);
+    useEffect(() => {
+        if (met && !metBefore.current) {
+            setPopped(true);
+            tick();
+        }
+        metBefore.current = met;
+    }, [met]);
 
     return (
         <div className="relative shrink-0 bg-[#F6F6F6] px-5 py-3">
@@ -125,10 +139,19 @@ export function DeliveryStatusBar({
             </div>
             <div className="mt-1 flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-[18px] font-bold text-[#222222]">{value}</span>
-                {bottom && <span className="shrink-0 text-[12px] text-[#888888]">{bottom}</span>}
+                {met ? (
+                    <span
+                        className={`flex h-6 shrink-0 items-center gap-[3px] rounded-full bg-ara_red px-2.5 text-[12px] font-semibold text-white ${popped ? 'motion-safe:animate-[ara-pop_180ms_ease-out]' : ''}`}
+                    >
+                        <CheckIcon size={14} />
+                        최소 금액 충족
+                    </span>
+                ) : (
+                    bottom && <span className="shrink-0 text-[12px] text-[#888888]">{bottom}</span>
+                )}
             </div>
             {ordersAllowed(party) && (
-                <div className="absolute inset-x-0 bottom-0 h-[2px] bg-[#F0F0F0]">
+                <div className={`absolute inset-x-0 bottom-0 bg-[#F0F0F0] ${met ? 'h-[3px]' : 'h-[2px]'}`}>
                     <div className="h-full bg-ara_red" style={{ width: `${progress}%` }} />
                 </div>
             )}

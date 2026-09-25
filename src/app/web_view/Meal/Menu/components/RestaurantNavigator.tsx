@@ -23,14 +23,14 @@ interface TimeButtonProps {
 const TimeButton = ({ label, isSelected, onClick }: TimeButtonProps) => (
   <div 
     role="button"
-    className={`w-12 h-5 px-3 py-[3px] rounded-[10px] flex justify-center items-center cursor-pointer
+    className={`w-[52px] h-7 px-3 rounded-full flex justify-center items-center cursor-pointer
       ${isSelected 
         ? 'bg-red-500 text-white' 
         : 'bg-white text-black outline outline-1 outline-zinc-100'
       }`}
     onClick={onClick}
   >
-    <div className="text-center text-xs font-semibold">
+    <div className="text-center text-[13px] font-semibold">
       {label}
     </div>
   </div>
@@ -133,7 +133,7 @@ export default function RestaurantNavigator({
       </div>
 
       {/* 시간 선택 영역 */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {mealTimes.map((time, index) => (
           <TimeButton 
             key={index}

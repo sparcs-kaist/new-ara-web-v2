@@ -1,8 +1,28 @@
-import type { DeliveryOrder, DeliveryPartySummary } from '@/lib/types/delivery';
+import type { DeliveryOrder, DeliveryPartySummary, DeliveryStatus } from '@/lib/types/delivery';
 
 // status lags deadline_at by up to a minute (the sweep runs every minute), so the deadline decides.
 export function isRecruitingOpen(p: DeliveryPartySummary, now = Date.now()): boolean {
     return p.status === 'RECRUITING' && new Date(p.deadline_at).getTime() > now;
+}
+
+// Whole seconds like the countdown chip: the glow starts on the tick it reads 03:00 and stops when it reads 마감.
+export function isUrgent(p: DeliveryPartySummary, now: number): boolean {
+    const seconds = Math.floor((new Date(p.deadline_at).getTime() - now) / 1000);
+    return p.status === 'RECRUITING' && seconds > 0 && seconds <= 180;
+}
+
+const STATUS_LABELS: Record<DeliveryStatus, string> = {
+    RECRUITING: '모집 중',
+    WAITING_DECISION: '결정 대기',
+    ORDERED: '주문 확정',
+    ARRIVED: '배달 도착',
+    SETTLED: '정산 완료',
+    CANCELED: '취소됨',
+};
+
+// A RECRUITING room past its deadline is only waiting for the sweep, so it already reads 결정 대기.
+export function statusLabel(p: DeliveryPartySummary, now: number): string {
+    return isRecruitingOpen(p, now) ? STATUS_LABELS.RECRUITING : STATUS_LABELS[p.status === 'RECRUITING' ? 'WAITING_DECISION' : p.status];
 }
 
 // RECRUITING past its deadline still takes orders until the sweep closes it.
@@ -42,12 +62,6 @@ export function formatRemaining(deadlineAt: string, now: number): string {
 
 export function isPenaltyActive(until: string | null | undefined): until is string {
     return !!until && new Date(until).getTime() > Date.now();
-}
-
-// The server's 403 wording, built from GET penalty's `until` (UTC) in the device's time zone.
-export function penaltyMessage(until: string): string {
-    const d = new Date(until);
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}까지 함께 배달 방을 만들 수 없어요.`;
 }
 
 // Best-effort public account formats, in the bank picker's order; a bank without prefixes is told apart by length alone.

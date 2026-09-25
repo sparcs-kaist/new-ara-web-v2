@@ -57,6 +57,13 @@ export interface DeliveryParty extends DeliveryPartySummary {
     can_request_payment: boolean;
 }
 
+export interface DeliveryPenalty {
+    until: string | null;
+    // Missing on servers older than backend d12131a.
+    reason?: 'HOST' | 'NO_DECISION' | null;
+    duration_hours?: 3 | 24 | null;
+}
+
 export interface Paginated<T> {
     num_pages: number;
     num_items: number;

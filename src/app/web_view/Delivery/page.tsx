@@ -6,20 +6,27 @@ import { AppHeader, Screen, SearchIcon, Spinner } from '@/app/web_view/_componen
 import { useDeliveryParties, useDeliveryPenalty } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { apiDetail } from '@/lib/api/delivery';
-import { isPenaltyActive, penaltyMessage } from '@/lib/delivery';
+import { isPenaltyActive } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from './_components/BottomCta';
 import { DeliveryDetailSheet } from './_components/DeliveryDetailSheet';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from './_components/DeliveryRoomCard';
-import { PenaltyDialog } from './_components/PenaltyDialog';
+
+const TABS = [
+    { mine: false, label: '모집 중' },
+    { mine: true, label: '내 배달' },
+];
+
+const listUrl = (mine: boolean) => (mine ? '/web_view/Delivery?tab=mine' : '/web_view/Delivery');
 
 function DeliveryListInner() {
     const router = useRouter();
-    // ?party=<id> deep link from the 식사 home cards opens that room's sheet.
-    const linkedId = Number(useSearchParams().get('party')) || null;
+    const searchParams = useSearchParams();
+    // ?tab=mine brings 내 배달 back after the chat; ?party=<id> (식사 home cards) opens that room's sheet.
+    const mine = searchParams.get('tab') === 'mine';
+    const linkedId = Number(searchParams.get('party')) || null;
     const [openId, setOpenId] = useState<number | null>(linkedId);
     const [draft, setDraft] = useState('');
     const [search, setSearch] = useState('');
-    const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -28,7 +35,7 @@ function DeliveryListInner() {
     }, [draft]);
 
     const { data, isPending, isError, error, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } =
-        useDeliveryParties({ search });
+        useDeliveryParties(mine ? { search, joined: true } : { search });
     const parties = data?.pages.flatMap((p) => p.results).filter((p, i, all) => all.findIndex((q) => q.id === p.id) === i) ?? [];
     const penalty = useDeliveryPenalty();
 
@@ -52,14 +59,11 @@ function DeliveryListInner() {
     const closeSheet = () => {
         setOpenId(null);
         // Drop the deep link so coming back from the chat room does not reopen the sheet.
-        if (linkedId) router.replace('/web_view/Delivery', { scroll: false });
+        if (linkedId) router.replace(listUrl(mine), { scroll: false });
     };
 
-    const openCreate = () => {
-        const until = penalty.data?.until;
-        if (isPenaltyActive(until)) setBlockedMessage(penaltyMessage(until));
-        else router.push('/web_view/Delivery/New');
-    };
+    const openCreate = () =>
+        router.push(isPenaltyActive(penalty.data?.until) ? '/web_view/Delivery/Restricted' : '/web_view/Delivery/New');
 
     return (
         <Screen withTabBar={false}>
@@ -84,6 +88,23 @@ function DeliveryListInner() {
                 </label>
             </div>
 
+            {/* The 학식 page's 아침/점심/저녁 TimeButton look (not exported there), sized to the label. */}
+            <div role="tablist" className="flex items-center gap-1 px-5 pb-4 pt-1">
+                {TABS.map((tab) => (
+                    <button
+                        key={tab.label}
+                        type="button"
+                        role="tab"
+                        aria-selected={tab.mine === mine}
+                        onClick={() => tab.mine !== mine && router.replace(listUrl(tab.mine), { scroll: false })}
+                        // The ::after strip grows the 20px pill's touch target to 36px without changing its look.
+                        className={`relative flex h-5 items-center rounded-[10px] px-3 text-xs font-semibold after:absolute after:inset-x-0 after:-inset-y-2 ${tab.mine === mine ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
             <div className="flex flex-1 flex-col px-5">
                 {isPending ? (
                     <div className="space-y-3">
@@ -97,6 +118,8 @@ function DeliveryListInner() {
                             <p className="text-[14px] text-[#BBBBBB]">{apiDetail(error)}</p>
                         ) : search ? (
                             <p className="text-[16px] font-semibold text-black">검색 결과가 없어요</p>
+                        ) : mine ? (
+                            <p className="text-[16px] font-semibold text-black">참여한 배달이 없어요</p>
                         ) : (
                             <>
                                 <p className="text-[16px] font-semibold text-black">지금 모집 중인 함께 배달이 없어요</p>
@@ -108,7 +131,7 @@ function DeliveryListInner() {
                     <ul className="space-y-3">
                         {parties.map((p) => (
                             <li key={p.id}>
-                                <DeliveryRoomCard party={p} onPress={() => setOpenId(p.id)} />
+                                <DeliveryRoomCard party={p} showStatus={mine} onPress={() => setOpenId(p.id)} />
                             </li>
                         ))}
                     </ul>
@@ -122,12 +145,11 @@ function DeliveryListInner() {
             </div>
             <div aria-hidden className="h-[96px] shrink-0" />
 
-            <FixedBottomBar>
+            <FixedBottomBar fade>
                 <CtaButton onClick={openCreate}>방 개설하기</CtaButton>
             </FixedBottomBar>
 
             <DeliveryDetailSheet partyId={openId} onClose={closeSheet} />
-            {blockedMessage && <PenaltyDialog message={blockedMessage} onConfirm={() => setBlockedMessage(null)} />}
         </Screen>
     );
 }

@@ -54,6 +54,8 @@ export const RESTAURANT_NAMES: Record<RestaurantId, string> = {
   5: '교수회관'
 };
 
+export const RESTAURANT_IDS = Object.keys(RESTAURANT_NAMES).map(Number) as RestaurantId[];
+
 // UI에서 사용하는 식당 표시 이름 배열
 export const RESTAURANT_DISPLAY_NAMES_ARRAY = [
   '카이마루',
@@ -113,6 +115,40 @@ export function timeStringToMealType(timeString: string): MealType {
   if (lowerTime === '점심') return 'LUNCH';
   if (lowerTime === '저녁') return 'DINNER';
   return 'LUNCH';
+}
+
+// The meal API has no serving hours: 점심 is the design's window, 아침/저녁 are placeholders until confirmed.
+export const MEAL_SLOTS = [
+  { time: '아침', hours: '08:00–09:30', endMinute: 9 * 60 + 30 },
+  { time: '점심', hours: '11:30–14:00', endMinute: 14 * 60 },
+  { time: '저녁', hours: '17:30–19:30', endMinute: 19 * 60 + 30 },
+] as const;
+
+export type MealSlot = (typeof MEAL_SLOTS)[number];
+
+// The meal being served or up next; after dinner it stays on 저녁, today's last menu.
+export function currentMealSlot(date: Date = new Date()): MealSlot {
+  const minute = date.getHours() * 60 + date.getMinutes();
+  return MEAL_SLOTS.find((slot) => minute < slot.endMinute) ?? MEAL_SLOTS[MEAL_SLOTS.length - 1];
+}
+
+// Local date, not toISOString(): the meal APIs key days by the KST calendar.
+export function formatMealDate(date: Date = new Date()): string {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export interface MealPhoto {
+  id: number;
+  restaurant: { id: number; name: string };
+  date: string;
+  meal_time: MealType;
+  image: string;
+  comment: string;
+  is_official: boolean;
+  source: 'USER' | 'INSTAGRAM';
+  author: { nickname: string } | null;
+  is_mine: boolean;
+  created_at: string;
 }
 
 // 알레르기 정보 (API에서 사용하는 ID와 이름 매핑)
