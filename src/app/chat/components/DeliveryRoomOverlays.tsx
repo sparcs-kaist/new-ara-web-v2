@@ -1,6 +1,7 @@
 'use client';
 
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
+import { ReportSheet } from '@/app/web_view/_components/ReportSheet';
 import { Body, DeliveryActionDialog } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { MembersSheet } from '@/app/web_view/Delivery/_components/MembersSheet';
 import { OrderSheet } from '@/app/web_view/Delivery/_components/OrderSheet';
@@ -8,7 +9,6 @@ import { RoomInfoSheet } from '@/app/web_view/Delivery/_components/RoomInfoSheet
 import type { DeliveryMember } from '@/lib/types/delivery';
 import type { useDeliveryRoom } from '../hooks/useDeliveryRoom';
 import PaymentCreateSheet from './PaymentCreateSheet';
-import ReportSheet from './ReportSheet';
 import VoteCreateSheet from './VoteCreateSheet';
 
 interface DeliveryRoomOverlaysProps {
@@ -26,7 +26,7 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
         report, openReport, closeReport,
     } = delivery;
     const reportMember = (m: DeliveryMember) =>
-        openReport({ target: { kind: 'member', roomId, anonNumber: m.anon_number }, label: m.display_name });
+        openReport({ target: { kind: 'chat_member', roomId, anonNumber: m.anon_number }, label: m.display_name });
     return (
         <>
             {party && (

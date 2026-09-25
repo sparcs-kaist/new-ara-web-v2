@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BottomSheet, CheckIcon, ConfirmDialog } from '@/app/web_view/_components';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { Body } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { apiDetail } from '@/lib/api/delivery';
-import { isAlreadyReported, reportChat } from '@/lib/api/report';
-import type { ChatReportTarget, ReportType } from '@/lib/types/report';
+import { isAlreadyReported, submitReport } from '@/lib/api/report';
+import type { ReportTarget, ReportType } from '@/lib/types/report';
+import { BottomSheet } from './BottomSheet';
+import { ConfirmDialog } from './ConfirmDialog';
+import { CheckIcon } from './icons';
 
 export interface ReportSubject {
-    target: ChatReportTarget;
-    /** 익명2의 메시지, 익명2 */
+    target: ReportTarget;
+    /** 게시글, 댓글, 익명2의 메시지, 익명2 */
     label: string;
-    /** A message's text, or 사진/파일. */
+    /** An article title, a comment's first line, a message's text, or 사진/파일. */
     preview?: string;
 }
 
@@ -25,7 +26,7 @@ const REASONS: { type: ReportType; label: string }[] = [
 ];
 const MAX_CONTENT = 500;
 
-export default function ReportSheet({ subject, onClose }: { subject: ReportSubject | null; onClose: () => void }) {
+export function ReportSheet({ subject, onClose }: { subject: ReportSubject | null; onClose: () => void }) {
     // The last subject stays so the sheet keeps its content while it slides out.
     const [shown, setShown] = useState<ReportSubject | null>(null);
     const [type, setType] = useState<ReportType | null>(null);
@@ -57,10 +58,10 @@ export default function ReportSheet({ subject, onClose }: { subject: ReportSubje
         setSubmitting(true);
         setError(null);
         try {
-            await reportChat(shown.target, type, content.trim());
+            await submitReport(shown.target, type, content.trim());
             setDone('신고가 접수됐어요');
         } catch (e) {
-            if (isAlreadyReported(e)) setDone(apiDetail(e));
+            if (isAlreadyReported(e)) setDone('이미 신고했어요');
             else setError(apiDetail(e));
         } finally {
             setSubmitting(false);
@@ -137,7 +138,7 @@ export default function ReportSheet({ subject, onClose }: { subject: ReportSubje
                     primary={{ label: '접수하기', onClick: submit }}
                     onClose={() => setConfirming(false)}
                 >
-                    <Body>접수 후에는 취소할 수 없어요.</Body>
+                    <p className="mt-2 break-keep text-[14px] leading-5 text-[#646464]">접수 후에는 취소할 수 없어요.</p>
                 </ConfirmDialog>
             )}
         </>

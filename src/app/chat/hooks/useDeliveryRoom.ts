@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPaymentRequest } from '@/lib/api/chat';
 import { PostIcon, PostListIcon, SendIcon } from '@/app/web_view/_components/icons';
+import type { ReportSubject } from '@/app/web_view/_components/ReportSheet';
 import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query/delivery';
 import type { DeliveryAction } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { ordersAllowed } from '@/lib/delivery';
@@ -13,7 +14,6 @@ import type { DeliveryOrder, DeliveryParty } from '@/lib/types/delivery';
 import type { ChatInputExtraRow } from '../components/ChatInput';
 import type { Member, Message } from '../components/ChatRoomDetail';
 import type { PaymentMember } from '../components/PaymentCreateSheet';
-import type { ReportSubject } from '../components/ReportSheet';
 
 export type DeliverySheet = { kind: 'order'; order?: DeliveryOrder } | { kind: 'info' } | { kind: 'members' };
 

@@ -344,7 +344,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const editableOrder =
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
     const reportMessage = (msg: Message) => openReport({
-        target: { kind: 'message', messageId: msg.id },
+        target: { kind: 'chat_message', messageId: msg.id },
         label: `${msg.sender?.display_name ?? msg.created_by?.profile?.nickname ?? ''}의 메시지`,
         preview: msg.message_type === 'IMAGE' ? '사진' : msg.message_type === 'FILE' ? '파일' : msg.message_content,
     });
