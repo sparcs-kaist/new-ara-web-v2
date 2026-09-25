@@ -66,6 +66,7 @@ const BANK_FORMATS: [bank: string, prefixes: string[], lengths: number[]][] = [
 
 export function suggestBanks(accountNumber: string): string[] {
     const digits = accountNumber.replace(/\D/g, '');
+    if (digits.length < 3) return [];
     const banks = BANK_FORMATS.filter(([, prefixes, lengths]) =>
         prefixes.length
             ? digits.length <= Math.max(...lengths) && prefixes.some((p) => p.startsWith(digits.slice(0, p.length)))
@@ -73,3 +74,5 @@ export function suggestBanks(accountNumber: string): string[] {
     ).map(([bank]) => bank);
     return banks.length <= 3 ? banks : [];
 }
+
+export const hasBankPrefix = (bank: string) => BANK_FORMATS.some(([name, prefixes]) => name === bank && prefixes.length > 0);

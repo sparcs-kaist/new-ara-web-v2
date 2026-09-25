@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BottomSheet, CheckIcon, RightChevronIcon } from '@/app/web_view/_components';
-import { suggestBanks } from '@/lib/delivery';
+import { hasBankPrefix, suggestBanks } from '@/lib/delivery';
 import { INPUT_CLASS } from './fields';
 
 const BANKS = ['토스뱅크', '카카오뱅크', '국민은행', '신한은행', '우리은행', '하나은행', '농협은행', '기업은행', '새마을금고', '케이뱅크'];
@@ -63,7 +63,8 @@ export function AccountFields({
         const banks = suggestBanks(account);
         let bankChoice = draft.bankChoice;
         if (bankChoice === autoBank && !banks.includes(bankChoice)) {
-            bankChoice = banks.length === 1 ? banks[0] : '';
+            // A length-only match (국민은행 at 12 digits) is passed on the way to 14, so only a prefix picks by itself.
+            bankChoice = banks.length === 1 && hasBankPrefix(banks[0]) ? banks[0] : '';
             setAutoBank(bankChoice);
         }
         onChange({ ...draft, account, bankChoice });
