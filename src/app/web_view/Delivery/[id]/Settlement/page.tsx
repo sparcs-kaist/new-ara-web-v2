@@ -100,7 +100,7 @@ export default function SettlementPage() {
                     <Body>
                         {party.payment_request !== null
                             ? '잘못 보냈다면 정산을 취소하고 다시 보내주세요.'
-                            : '필요한 사람에게 일반 정산을 보내주세요.'}
+                            : '필요한 사람에게 정산을 보내주세요.'}
                     </Body>
                 </ConfirmDialog>
             )}
