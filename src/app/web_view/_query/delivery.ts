@@ -1,6 +1,6 @@
 'use client';
 
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
     fetchDeliveryParties,
     fetchDeliveryParty,
@@ -19,7 +19,9 @@ export function useDeliveryParties(params: Omit<DeliveryListParams, 'page'>) {
         queryFn: ({ pageParam }) => fetchDeliveryParties({ ...params, page: pageParam }),
         initialPageParam: 1,
         getNextPageParam: (last, all) => (last.next ? all.length + 1 : undefined),
-        placeholderData: keepPreviousData,
+        // Keeps the rows while a search narrows them, not across 모집 중 / 내 배달, which list other rooms.
+        placeholderData: (prev, prevQuery) =>
+            (prevQuery?.queryKey[3] as typeof params | undefined)?.joined === params.joined ? prev : undefined,
         staleTime: 15_000,
         refetchOnMount: true,
     });

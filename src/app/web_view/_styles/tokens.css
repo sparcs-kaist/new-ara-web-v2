@@ -133,3 +133,27 @@
 :where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
     border-radius: 10px;
 }
+
+@property --ara-glow-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes ara-glow-spin {
+    to { --ara-glow-angle: 360deg; }
+}
+/* Delivery rooms in their last 3 minutes (DeliveryRoomCard): a bright red sweep circles a 1.5px red ring. */
+[data-ara-shell] [data-urgent] {
+    padding: 1.5px;
+    border-radius: 16px;
+    background: conic-gradient(from var(--ara-glow-angle), transparent 0deg, transparent 240deg, #ed3a3a 320deg, transparent 360deg), rgba(237, 58, 58, 0.45);
+    box-shadow: 0 0 14px rgba(237, 58, 58, 0.35);
+    animation: ara-glow-spin 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-ara-shell] [data-urgent] {
+        background: #ed3a3a;
+        animation: none;
+    }
+}
+
+/* DeliveryStatusBar's 최소 금액 충족 pill, once, when the minimum is reached. */
+@keyframes ara-pop {
+    from { transform: scale(0.85); }
+}

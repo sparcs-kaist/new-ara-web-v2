@@ -49,11 +49,11 @@ export default function DeliveryRestrictedPage() {
             <AppHeader title="방 개설 제한" />
 
             <div className="px-5 pb-[96px] pt-6">
-                <div className="rounded-[15px] bg-ara_red_most_bright px-4 py-5">
+                <div className="rounded-[14px] bg-ara_red_most_bright px-4 pb-[15px] pt-6">
                     <p className="min-h-[29px] text-[20px] font-bold leading-[29px] text-ara_red">
                         {left > 0 && `${formatLeft(left)} 남았습니다`}
                     </p>
-                    <p className="mt-[5px] text-[13px] leading-[19px] text-[#646464]">제한이 풀리면 다시 방을 만들 수 있습니다.</p>
+                    <p className="mt-[5px] text-[13px] leading-[19px] text-[#555555]">제한이 풀리면 다시 방을 만들 수 있습니다.</p>
                 </div>
                 {data?.duration_hours === 24 && <p className="mt-3 text-[13px] font-medium text-ara_red">이번 제한은 하루예요.</p>}
 
@@ -61,17 +61,17 @@ export default function DeliveryRestrictedPage() {
 
                 {reason && (
                     <section className="mb-12">
-                        <h2 className="text-[13px] font-bold text-black">제한 사유</h2>
-                        <p className="mt-2 break-keep text-[14px] leading-5 text-black">{REASONS[reason]}</p>
+                        <h2 className="text-[13px] font-bold text-[#222222]">제한 사유</h2>
+                        <p className="mt-2 break-keep text-[14px] leading-5 text-[#333333]">{REASONS[reason]}</p>
                     </section>
                 )}
 
                 <section>
-                    <h2 className="text-[13px] font-bold text-black">패널티 기준</h2>
+                    <h2 className="text-[13px] font-bold text-[#222222]">패널티 기준</h2>
                     <dl className="mt-[13px] space-y-7">
                         {RULES.map(([situation, penalized]) => (
                             <div key={situation} className="flex items-center justify-between gap-4 text-[14px] leading-5">
-                                <dt className="text-black">{situation}</dt>
+                                <dt className="text-[#333333]">{situation}</dt>
                                 <dd className={`shrink-0 font-bold ${penalized ? 'text-ara_red' : 'text-[#888888]'}`}>
                                     {penalized ? '있음' : '없음'}
                                 </dd>

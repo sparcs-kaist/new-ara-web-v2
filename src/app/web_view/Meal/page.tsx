@@ -30,15 +30,15 @@ export default function MealHomePage() {
                 <button
                     type="button"
                     onClick={() => router.push(`/web_view/Meal/Menu?time=${encodeURIComponent((slot ?? currentMealSlot()).time)}`)}
-                    className="relative flex h-[112px] w-full flex-col justify-center overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FFF7F5] to-[#FFEDE8] px-5 text-left"
+                    className="relative block h-[112px] w-full overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FFF7F5] to-[#FFEDE8] px-5 pt-6 text-left"
                 >
                     <span
                         aria-hidden
                         className="absolute right-[7px] top-[15px] h-[104px] w-[140px] origin-[70px_49px] rotate-[8deg] bg-[url('/webview/illust/meal_tray.svg')] bg-[length:100%_100%]"
                     />
-                    <span className="relative text-[12px] font-medium leading-[17px] text-ara_red">KAIST 학생식당</span>
-                    <span className="relative mt-[3px] text-[18px] font-bold leading-[25px] text-black">오늘의 학식</span>
-                    <span className="relative mt-1 min-h-[18px] text-[13px] leading-[18px] text-[#646464]">
+                    <span className="relative block text-[11px] font-bold leading-[1.4] text-[#D9776E]">KAIST 학생식당</span>
+                    <span className="relative mt-[3px] block text-[20px] font-bold leading-[1.4] text-[#333333]">오늘의 학식</span>
+                    <span className="relative mt-[3px] block min-h-[17px] text-[12px] font-medium leading-[1.4] text-[#A8837F]">
                         {slot && `카이마루 · ${slot.time} ${slot.hours}`}
                     </span>
                 </button>

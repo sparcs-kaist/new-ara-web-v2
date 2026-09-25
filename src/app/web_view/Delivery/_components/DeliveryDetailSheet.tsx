@@ -7,7 +7,7 @@ import { BottomSheet, Skeleton } from '@/app/web_view/_components';
 import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import { apiDetail, joinDeliveryParty } from '@/lib/api/delivery';
-import { formatWon, isRecruitingOpen } from '@/lib/delivery';
+import { formatWon, isRecruitingOpen, isUrgent } from '@/lib/delivery';
 import type { DeliveryParty } from '@/lib/types/delivery';
 import { CtaButton } from './BottomCta';
 import { DeliveryRoomCardBody } from './DeliveryRoomCard';
@@ -80,23 +80,26 @@ export function DeliveryDetailBody({
 }) {
     const now = useNow();
     const open = isRecruitingOpen(party, now);
+    const urgent = isUrgent(party, now);
     const full = party.max_participants != null && party.participant_count >= party.max_participants;
 
     return (
-        <div className="px-5">
-            <div className="rounded-[15px] border-2 border-ara_red bg-white p-4">
-                <DeliveryRoomCardBody party={party} />
+        <div className="flex flex-col gap-[18px] px-5">
+            <div data-urgent={urgent || undefined}>
+                <div className={`rounded-[15px] bg-white p-4 ${urgent ? '' : 'border-[1.5px] border-ara_red'}`}>
+                    <DeliveryRoomCardBody party={party} showStatus={party.is_member} />
+                </div>
             </div>
 
-            <div className="my-5 h-px bg-[#F0F0F0]" />
+            <div className="h-px bg-[#F0F0F0]" />
 
-            <h3 className="text-[15px] font-semibold text-black">방장 메모</h3>
+            <h3 className="text-[15px] font-bold text-[#333333]">방장 메모</h3>
             <p
-                className={`mt-2 whitespace-pre-wrap break-words rounded-[10px] bg-[#F6F6F6] p-3 text-[14px] ${party.memo ? 'text-[#646464]' : 'text-[#BBBBBB]'}`}
+                className={`whitespace-pre-wrap break-words rounded-[12px] bg-[#F8F8F8] p-[14px] text-[14px] leading-[1.55] ${party.memo ? 'text-[#636363]' : 'text-[#BBBBBB]'}`}
             >
                 {party.memo || '메모가 없어요'}
             </p>
-            <dl className="mt-4 space-y-2">
+            <dl className="space-y-[11px]">
                 <InfoRow label="최소 주문 금액">{formatWon(party.min_order_amount)}</InfoRow>
                 <InfoRow label="현재 모인 금액">{formatWon(party.total_amount)}</InfoRow>
                 <InfoRow label="최대 인원">
@@ -113,15 +116,16 @@ export function DeliveryDetailBody({
                 )}
             </dl>
 
-            <div className="my-5 h-px bg-[#F0F0F0]" />
+            <div className="h-px bg-[#F0F0F0]" />
 
-            <h3 className="text-[15px] font-semibold text-black">참여자 {party.participant_count}명</h3>
-            <p className="mt-2 break-keep text-[13px] leading-5 text-[#646464]">
+            <h3 className="text-[15px] font-bold text-[#333333]">참여자 {party.participant_count}명</h3>
+            <p className="break-keep text-[12px] font-medium leading-[1.5] text-[#636363]">
                 참여하면 바로 채팅방으로 들어가고, 주문할 메뉴와 금액은 채팅방에서 입력해요.
             </p>
 
-            {error && <p className="mt-4 text-[13px] text-ara_red">{error}</p>}
-            <div className="mt-5">
+            {error && <p className="text-[13px] text-ara_red">{error}</p>}
+            {/* The render's bottom action bar: a full-width rule over the button. */}
+            <div className="-mx-5 mt-1 border-t border-[#F0F0F0] px-5 pt-[18px]">
                 {party.is_member ? (
                     <CtaButton onClick={onOpenChat}>채팅방으로 이동</CtaButton>
                 ) : open && !full ? (
@@ -136,9 +140,9 @@ export function DeliveryDetailBody({
 
 export function InfoRow({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="flex items-start justify-between gap-4">
-            <dt className="shrink-0 text-[14px] text-[#BBBBBB]">{label}</dt>
-            <dd className="min-w-0 text-right text-[15px] font-semibold text-black">{children}</dd>
+        <div className="flex items-baseline justify-between gap-4">
+            <dt className="shrink-0 text-[13px] font-medium text-[#BBBBBB]">{label}</dt>
+            <dd className="min-w-0 text-right text-[14px] font-medium text-[#333333]">{children}</dd>
         </div>
     );
 }

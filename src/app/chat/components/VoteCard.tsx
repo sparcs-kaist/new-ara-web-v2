@@ -28,7 +28,6 @@ function participantsText(vote: ChatVote): string {
 export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChanged: (next: ChatVote) => void }) {
     const [pending, setPending] = useState<ChatVote | null>(null);
     const shown = pending ?? vote;
-    const maxCount = Math.max(1, ...shown.options.map((o) => o.vote_count));
 
     const toggle = async (id: number) => {
         if (pending) return;
@@ -49,12 +48,12 @@ export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChange
     };
 
     return (
-        <div className="w-[260px] rounded-[15px] border border-[#F0F0F0] bg-white p-4 text-left text-black">
-            <p className="text-[12px] font-semibold text-ara_red">
+        <div className="w-[268px] rounded-[16px] border border-[#E4E4E4] bg-white p-4 text-left leading-[1.48] text-[#333333]">
+            <p className="text-[11px] font-bold text-ara_red">
                 {vote.max_choices === null ? '복수 선택' : vote.max_choices === 1 ? '1개 선택' : `최대 ${vote.max_choices}개 선택`}
             </p>
-            <p className="mt-2 break-words text-[16px] font-bold">{vote.title}</p>
-            <div className="mt-3 space-y-2">
+            <p className="mt-[10px] break-words text-[15px] font-bold">{vote.title}</p>
+            <div className="mt-[10px] space-y-[10px]">
                 {shown.options.map((o) => {
                     const selected = shown.my_option_ids.includes(o.id);
                     return (
@@ -63,22 +62,23 @@ export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChange
                             type="button"
                             aria-pressed={selected}
                             onClick={() => toggle(o.id)}
-                            className={`relative flex min-h-[38px] w-full items-center justify-between gap-2 overflow-hidden rounded-[10px] border bg-[#F6F6F6] px-3 py-2 text-left text-[14px] ${selected ? 'border-ara_red font-semibold' : 'border-transparent'}`}
+                            className={`relative flex min-h-[38px] w-full items-center justify-between gap-2 overflow-hidden rounded-[10px] px-3 py-2 text-left text-[14px] ${selected ? 'bg-ara_red_most_bright font-bold text-ara_red' : 'bg-[#F4F4F4]'}`}
                         >
                             <span className="min-w-0 break-words">{o.text}</span>
-                            <span className={`shrink-0 text-[13px] ${selected ? 'font-semibold text-ara_red' : 'text-[#646464]'}`}>
+                            <span className={`shrink-0 text-[12px] font-bold ${selected ? 'text-ara_red' : 'text-[#888888]'}`}>
                                 {o.vote_count}표
                             </span>
                             <span
                                 aria-hidden
                                 className={`absolute bottom-0 left-0 h-[3px] ${selected ? 'bg-ara_red' : 'bg-[#D9D9D9]'}`}
-                                style={{ width: `${(o.vote_count / maxCount) * 100}%` }}
+                                // Share of the voters, as the render draws it: 2 of 3 voters fill two thirds.
+                                style={{ width: `${shown.voter_count ? (o.vote_count / shown.voter_count) * 100 : 0}%` }}
                             />
                         </button>
                     );
                 })}
             </div>
-            <p className="mt-3 text-[12px] text-[#BBBBBB]">{participantsText(shown)}</p>
+            <p className="mt-[10px] text-[12px] text-[#AAAAAA]">{participantsText(shown)}</p>
         </div>
     );
 }
