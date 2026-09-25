@@ -28,7 +28,7 @@ import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { DELIVERY_KEY } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { DeliveryComposerNote, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
+import { DeliveryComposerNote, DeliveryLinkBar, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
 import { ordersAllowed } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatVote } from '@/lib/types/chat';
@@ -410,7 +410,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             </div>
 
             {party && (
-                <DeliveryStatusBar party={party} myOrders={myOrders} payments={payments} />
+                <>
+                    <DeliveryStatusBar party={party} myOrders={myOrders} payments={payments} />
+                    <DeliveryLinkBar party={party} />
+                </>
             )}
 
             {/* 채팅 메시지 영역 */}
