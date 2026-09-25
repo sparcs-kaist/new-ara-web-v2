@@ -213,6 +213,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
     useBottomAnchoredScroll(messageContainerRef, { pin: 'always' });
 
+    // 앵커 훅은 컨테이너 크기 변화만 따르므로, 바닥 근처에서 입력 중 줄이 붙으면 직접 내려준다
+    const typing = typingUsers.size > 0;
+    useEffect(() => {
+        const el = messageContainerRef.current;
+        if (typing && el && el.scrollHeight - el.clientHeight - el.scrollTop < 80) el.scrollTop = el.scrollHeight;
+    }, [typing]);
+
     const handleDeleteMessage = async () => {
         if (!contextMenu.messageId) return;
         const deletedType = messages.find(m => m.id === contextMenu.messageId)?.message_type;
@@ -398,7 +405,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 </>
             )}
 
-            <div ref={messageContainerRef} className={`flex-1 overflow-y-auto mb-2 no-scrollbar${compact ? ' px-4' : ''}`}>
+            <div ref={messageContainerRef} className={`flex-1 overflow-y-auto pb-3 no-scrollbar${compact ? ' px-4' : ''}`}>
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (
@@ -543,11 +550,9 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 )}
 
                 <div ref={chatEndRef} />
-            </div>
 
-            <div className="h-6 px-1 text-sm text-gray-500 flex items-center transition-opacity duration-300">
-                {typingUsers.size > 0 && (
-                    <div className="flex items-center gap-1.5">
+                {typing && (
+                    <div className="mt-2 h-6 px-1 text-sm text-gray-500 flex items-center gap-1.5">
                         <span>{typingText}</span>
                         <div className="flex items-center gap-1 ml-1">
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"></span>
