@@ -106,6 +106,7 @@ export const requestDeliveryPayment = async (id: number, body: DeliveryPaymentRe
 /** User-facing text for a failed delivery call: `detail`, else the first field error. */
 export function apiDetail(e: unknown): string {
     const data = (e as { response?: { data?: unknown } } | null)?.response?.data;
+    if (Array.isArray(data) && typeof data[0] === 'string') return data[0];
     if (data && typeof data === 'object' && !Array.isArray(data)) {
         const { detail } = data as { detail?: unknown };
         if (typeof detail === 'string') return detail;
