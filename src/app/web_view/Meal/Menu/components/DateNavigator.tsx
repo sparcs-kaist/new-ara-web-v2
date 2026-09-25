@@ -1,7 +1,7 @@
 // 학식 기능 날짜 설정을 위한 컴포넌트
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format, addDays, parse } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -20,17 +20,7 @@ export default function DateNavigator({ selectedDate, onDateChange }: DateNaviga
       : today;
     
     // 표시할 날짜 범위 계산 (오늘부터 7일)
-    const [visibleDates, setVisibleDates] = useState<Date[]>([]);
-
-    // 날짜 표시를 위한 함수
-    const generateDates = () => {
-        const dates = [];
-        // 오늘 포함해서 7일 표시
-        for (let i = 0; i < 7; i++) {
-            dates.push(addDays(today, i));
-        }
-        return dates;
-    };
+    const [visibleDates] = useState(() => Array.from({ length: 7 }, (_, i) => addDays(today, i)));
 
     // 날짜 선택 핸들러
     const handleDateSelect = (date: Date) => {
@@ -69,11 +59,6 @@ export default function DateNavigator({ selectedDate, onDateChange }: DateNaviga
         );
     }
 
-    // 초기 날짜 설정 및 날짜 변경 시 업데이트
-    useEffect(() => {
-        setVisibleDates(generateDates());
-    }, []);
-
     // 날짜 라벨 계산 함수
     const getDayLabel = (date: Date) => {
         if (isToday(date)) return '오늘';
@@ -87,8 +72,10 @@ export default function DateNavigator({ selectedDate, onDateChange }: DateNaviga
                 {visibleDates.map((date, index) => (
                     <button
                         key={index}
+                        type="button"
+                        data-chip
                         onClick={() => handleDateSelect(date)}
-                        className={`flex flex-col w-[50px] items-center py-[7px] px-[10px] rounded-md ${
+                        className={`flex flex-col w-[50px] items-center py-[7px] px-[10px] rounded-[10px] ${
                             isSelected(date)
                                 ? 'bg-[#ed3a3a] text-white'
                                 : 'bg-transparent text-[#afafaf]'
