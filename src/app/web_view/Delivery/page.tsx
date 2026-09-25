@@ -27,7 +27,8 @@ function DeliveryListInner() {
         return () => window.clearTimeout(t);
     }, [draft]);
 
-    const { data, isPending, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage } = useDeliveryParties({ search });
+    const { data, isPending, isError, error, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } =
+        useDeliveryParties({ search });
     const parties = data?.pages.flatMap((p) => p.results) ?? [];
     const penalty = useDeliveryPenalty();
 
@@ -38,13 +39,15 @@ function DeliveryListInner() {
         if (!el) return;
         const io = new IntersectionObserver(
             (entries) => {
-                if (entries.some((e) => e.isIntersecting) && hasNextPage && !isFetchingNextPage) fetchNextPage();
+                if (entries.some((e) => e.isIntersecting) && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+                    fetchNextPage();
+                }
             },
             { rootMargin: '200px' },
         );
         io.observe(el);
         return () => io.disconnect();
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+    }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
     const closeSheet = () => {
         setOpenId(null);

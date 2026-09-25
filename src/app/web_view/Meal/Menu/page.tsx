@@ -6,7 +6,7 @@ import DateNavigator from "./components/DateNavigator";
 import MealHeader from "./components/MealHeader";
 import RestaurantNavigator from "./components/RestaurantNavigator";
 import MenuList from "./components/MenuList";
-import { Spinner } from '@/app/web_view/_components';
+import { Screen, Spinner } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 
 import { fetchMeal } from '@/lib/api/meal';
@@ -155,7 +155,7 @@ export default function MealPage() {
   const currentMenuData = getCurrentMenuData();
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white">
+    <Screen withTabBar={false} className="items-center">
       <MealHeader
         onBackClick={onBack}
         backLabel="식사"
@@ -192,6 +192,6 @@ export default function MealPage() {
           />
         )}
       </div>
-    </div>
+    </Screen>
   );
 }
