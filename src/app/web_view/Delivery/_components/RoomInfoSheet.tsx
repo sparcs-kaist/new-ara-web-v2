@@ -79,7 +79,7 @@ export function RoomInfoSheet({
                 ) : (
                     <>
                         <div className="flex items-center justify-between">
-                            <h3 className="text-[15px] font-semibold text-black">방장 메모</h3>
+                            <h3 className="text-[15px] font-semibold text-black">메모</h3>
                             {party.is_host && ordersOpen && (
                                 <button type="button" onClick={() => setEditing(true)} className="text-[13px] text-[#646464]">
                                     수정
@@ -222,7 +222,7 @@ function InfoEditForm({ party, onDone }: { party: DeliveryParty; onDone: () => v
             <Field label="최대 인원">
                 <NumberInput value={form.max_participants} onChange={set('max_participants')} placeholder="제한 없음" unit="명" />
             </Field>
-            <Field label="방장 메모">
+            <Field label="메모">
                 <textarea
                     value={form.memo}
                     onChange={(e) => set('memo')(e.target.value)}

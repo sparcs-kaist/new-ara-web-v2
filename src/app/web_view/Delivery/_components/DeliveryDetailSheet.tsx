@@ -93,7 +93,7 @@ export function DeliveryDetailBody({
 
             <div className="h-px bg-[#F0F0F0]" />
 
-            <h3 className="text-[15px] font-bold text-[#333333]">방장 메모</h3>
+            <h3 className="text-[15px] font-bold text-[#333333]">메모</h3>
             <p
                 className={`whitespace-pre-wrap break-words rounded-[12px] bg-[#F8F8F8] p-[14px] text-[14px] leading-[1.55] ${party.memo ? 'text-[#636363]' : 'text-[#BBBBBB]'}`}
             >

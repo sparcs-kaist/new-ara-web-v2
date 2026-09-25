@@ -15,6 +15,8 @@ import {
 } from '@/lib/delivery';
 import type { ChatPaymentRequest } from '@/lib/types/chat';
 import type { DeliveryOrder, DeliveryParty } from '@/lib/types/delivery';
+import { getBridge, useIsNative } from '@/app/web_view/_bridge';
+import { RightChevronIcon } from '@/app/web_view/_components/icons';
 
 interface Lines {
     label: string;
@@ -192,5 +194,27 @@ export function DeliveryComposerNote({ party, payments }: { party: DeliveryParty
             <InformationIcon size={14} />
             {note}
         </p>
+    );
+}
+
+// Pinned under the status bar so the 배민 함께주문 link is one tap away for everyone in the room.
+export function DeliveryLinkBar({ party }: { party: DeliveryParty }) {
+    const isNative = useIsNative();
+    if (!party.order_link) return null;
+    const host = party.order_link.replace(/^https?:\/\//, '').split('/')[0];
+    const open = () => {
+        if (isNative) getBridge().send('openExternal', { url: party.order_link });
+        else window.open(party.order_link, '_blank', 'noopener');
+    };
+    return (
+        <button
+            type="button"
+            onClick={open}
+            className="flex h-10 w-full shrink-0 items-center gap-2 border-b border-[#F0F0F0] bg-ara_red_most_bright px-5 text-left"
+        >
+            <span className="shrink-0 text-[13px] font-semibold text-ara_red">함께주문 링크</span>
+            <span className="min-w-0 flex-1 truncate text-[13px] text-[#646464]">{host}에서 함께 주문하기</span>
+            <RightChevronIcon size={16} className="shrink-0 text-ara_red" />
+        </button>
     );
 }

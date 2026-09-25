@@ -73,7 +73,7 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
                     title={party.payment_request !== null ? '이미 정산을 요청했어요' : '배달 정산을 다시 보낼 수 없어요'}
                     secondary={{ label: '닫기', onClick: () => setRerequestBlocked(false) }}
                     primary={{
-                        label: '일반 정산 보내기',
+                        label: '정산 보내기',
                         onClick: () => {
                             setRerequestBlocked(false);
                             openPaymentSheet();
@@ -84,7 +84,7 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
                     <Body>
                         {party.payment_request !== null
                             ? '잘못 보냈다면 정산을 취소하고 다시 보내주세요.'
-                            : '송금한 사람이 있어요. 필요한 사람에게 일반 정산을 보내주세요.'}
+                            : '송금한 사람이 있어요. 필요한 사람에게 정산을 보내주세요.'}
                     </Body>
                 </ConfirmDialog>
             )}

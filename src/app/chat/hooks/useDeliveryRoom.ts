@@ -58,7 +58,7 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
             : []),
         voteRow,
         ...(party.is_host ? [{ ...paymentRow, label: '배달 정산', onSelect: openSettlement, disabled: !settling }] : []),
-        { ...paymentRow, label: '일반 정산' },
+        { ...paymentRow, label: '정산' },
     ];
     // 배달방은 파티 참여자에게 익명 번호로, 다른 방은 방 멤버에게 청구한다
     const paymentMembers: PaymentMember[] = party
