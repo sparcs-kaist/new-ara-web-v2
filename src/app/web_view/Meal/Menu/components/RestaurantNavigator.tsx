@@ -75,7 +75,8 @@ export default function RestaurantNavigator({
       '교수회관',
     ];
     
-    return restaurantNames.findIndex(name => name === selectedRestaurant) || 2;
+    const index = restaurantNames.findIndex(name => name === selectedRestaurant);
+    return index >= 0 ? index : 0;
   };
 
   return (

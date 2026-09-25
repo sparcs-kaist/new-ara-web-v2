@@ -17,6 +17,7 @@ import { createPaymentRequest } from '@/lib/api/chat';
 import { apiDetail } from '@/lib/api/delivery';
 import { formatWon } from '@/lib/delivery';
 import type { ChatPaymentTargetRef } from '@/lib/types/chat';
+import { ChoiceChip } from '@/app/web_view/_components/ChoiceChip';
 
 export interface PaymentMember {
     name: string;
@@ -93,14 +94,9 @@ export default function PaymentCreateSheet({
     };
 
     const segment = (value: boolean, label: string) => (
-        <button
-            type="button"
-            aria-pressed={split === value}
-            onClick={() => setSplit(value)}
-            className={`h-8 rounded-full border px-3 text-[14px] font-medium ${split === value ? 'border-ara_red bg-ara_red text-white' : 'border-[#F0F0F0] bg-white text-black'}`}
-        >
+        <ChoiceChip size="sm" selected={split === value} onClick={() => setSplit(value)}>
             {label}
-        </button>
+        </ChoiceChip>
     );
 
     return (
