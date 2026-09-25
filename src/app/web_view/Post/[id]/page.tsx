@@ -5,14 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
     archivePost,
-    reportPost,
     unarchivePost,
     votePost,
 } from '@/lib/api/post';
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
-import type { Comment, PostData } from '@/lib/types/post';
-import { AppHeader, CenteredSpinner, ComposerSpacer, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import type { Comment, CommentNested, PostData } from '@/lib/types/post';
+import {
+    AppHeader,
+    CenteredSpinner,
+    ComposerSpacer,
+    ContentArea,
+    LeftChevronIcon,
+    ReportSheet,
+    Screen,
+    type ReportSubject,
+} from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { usePost } from '@/app/web_view/_query';
@@ -36,6 +44,9 @@ export default function WebViewPostDetailPage() {
 
     const qc = useQueryClient();
     const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
+    const [report, setReport] = useState<ReportSubject | null>(null);
+    // Stable, so page re-renders do not restart the report sheet's auto-close timer.
+    const closeReport = useCallback(() => setReport(null), []);
 
     /**
      * Fetch via the WebView-scoped query cache. `placeholderData` looks up
@@ -149,18 +160,13 @@ export default function WebViewPostDetailPage() {
         }
     };
 
-    const handleReport = async () => {
+    const handleReport = () => {
         if (!post) return;
-        if (typeof window === 'undefined') return;
-        const reason = window.prompt('신고 사유를 입력하세요');
-        if (!reason) return;
-        try {
-            await reportPost(post.id, 'others', reason);
-            window.alert('신고가 접수되었습니다.');
-        } catch (e) {
-            console.warn('reportPost failed', e);
-        }
+        setReport({ target: { kind: 'article', articleId: post.id }, label: '게시글', preview: post.title });
     };
+
+    const reportComment = (c: CommentNested) =>
+        setReport({ target: { kind: 'comment', commentId: c.id }, label: '댓글', preview: c.content.split('\n')[0] });
 
     const handleEdit = () => {
         if (!post) return;
@@ -298,6 +304,7 @@ export default function WebViewPostDetailPage() {
                                 })
                             }
                             onChanged={reload}
+                            onReport={reportComment}
                         />
                     ))
                 ) : (
@@ -323,6 +330,8 @@ export default function WebViewPostDetailPage() {
                     reload();
                 }}
             />
+
+            <ReportSheet subject={report} onClose={closeReport} />
         </Screen>
     );
 }

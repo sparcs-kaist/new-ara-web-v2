@@ -1,10 +1,12 @@
 'use client';
 
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
+import { ReportSheet } from '@/app/web_view/_components/ReportSheet';
 import { Body, DeliveryActionDialog } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { MembersSheet } from '@/app/web_view/Delivery/_components/MembersSheet';
 import { OrderSheet } from '@/app/web_view/Delivery/_components/OrderSheet';
 import { RoomInfoSheet } from '@/app/web_view/Delivery/_components/RoomInfoSheet';
+import type { DeliveryMember } from '@/lib/types/delivery';
 import type { useDeliveryRoom } from '../hooks/useDeliveryRoom';
 import PaymentCreateSheet from './PaymentCreateSheet';
 import VoteCreateSheet from './VoteCreateSheet';
@@ -21,7 +23,10 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
     const {
         party, sheet, setSheet, action, setAction, startAction, openSettlement, openPaymentSheet,
         voteOpen, setVoteOpen, paymentOpen, setPaymentOpen, paymentMembers, rerequestBlocked, setRerequestBlocked,
+        report, openReport, closeReport,
     } = delivery;
+    const reportMember = (m: DeliveryMember) =>
+        openReport({ target: { kind: 'chat_member', roomId, anonNumber: m.anon_number }, label: m.display_name });
     return (
         <>
             {party && (
@@ -37,12 +42,14 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
                         party={party}
                         onAction={startAction}
                         onSettle={openSettlement}
+                        onReport={reportMember}
                         onClose={() => setSheet(null)}
                     />
                     <MembersSheet
                         open={sheet?.kind === 'members'}
                         party={party}
                         onKick={(member) => startAction({ kind: 'kick', member })}
+                        onReport={reportMember}
                         onClose={() => setSheet(null)}
                     />
                     {action && (
@@ -60,6 +67,7 @@ export default function DeliveryRoomOverlays({ delivery, roomId, deleteError, se
 
             <VoteCreateSheet open={voteOpen} roomId={roomId} onClose={() => setVoteOpen(false)} />
             <PaymentCreateSheet open={paymentOpen} roomId={roomId} members={paymentMembers} onClose={() => setPaymentOpen(false)} />
+            <ReportSheet subject={report} onClose={closeReport} />
 
             {deleteError && (
                 <ConfirmDialog

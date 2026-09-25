@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPaymentRequest } from '@/lib/api/chat';
 import { PostIcon, PostListIcon, SendIcon } from '@/app/web_view/_components/icons';
+import type { ReportSubject } from '@/app/web_view/_components/ReportSheet';
 import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query/delivery';
 import type { DeliveryAction } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { ordersAllowed } from '@/lib/delivery';
@@ -26,6 +27,7 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
     const [voteOpen, setVoteOpen] = useState(false);
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [rerequestBlocked, setRerequestBlocked] = useState(false);
+    const [report, setReport] = useState<ReportSubject | null>(null);
     // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
     if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
         setPromptedFor(party.decision_deadline_at);
@@ -35,6 +37,12 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
         setSheet(null);
         setAction(next);
     };
+    const openReport = (subject: ReportSubject) => {
+        setSheet(null);
+        setReport(subject);
+    };
+    // Stable, so room re-renders do not restart the report sheet's auto-close timer.
+    const closeReport = useCallback(() => setReport(null), []);
 
     const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
     const openPaymentSheet = () => {
@@ -72,7 +80,7 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
     return {
         party, myOrders, sheet, setSheet, action, setAction, voteOpen, setVoteOpen, paymentOpen, setPaymentOpen,
         rerequestBlocked, setRerequestBlocked, startAction, showOrderCta, openPaymentSheet, openSettlement,
-        voteRow, paymentRow, deliveryRows, paymentMembers,
+        voteRow, paymentRow, deliveryRows, paymentMembers, report, openReport, closeReport,
     };
 }
 

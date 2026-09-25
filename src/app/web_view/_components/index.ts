@@ -11,4 +11,5 @@ export { StickyComposer, ComposerSpacer } from './StickyComposer';
 export { PostPreview } from './PostPreview';
 export { LittleText } from './LittleText';
 export { Toggle } from './Toggle';
+export { ReportSheet, type ReportSubject } from './ReportSheet';
 export * from './icons';

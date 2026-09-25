@@ -123,7 +123,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [detailRoom, setDetailRoom] = useState<ChatRoom | null>(null);
     const partyId = detailRoom?.id === roomId ? detailRoom.delivery_party ?? null : null;
     const delivery = useDeliveryRoom({ partyId, members, myId });
-    const { party, myOrders, setSheet, setAction, showOrderCta, voteRow, paymentRow, deliveryRows } = delivery;
+    const { party, myOrders, setSheet, setAction, showOrderCta, voteRow, paymentRow, deliveryRows, openReport } = delivery;
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const isMine = (msg: Message) => msg.sender?.is_mine ?? msg.created_by?.id === myId;
@@ -343,6 +343,11 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const menuOrder = menuMessage?.message_type === 'DELIVERY_ORDER' ? (menuMessage.attachment as DeliveryOrder | null) : null;
     const editableOrder =
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
+    const reportMessage = (msg: Message) => openReport({
+        target: { kind: 'chat_message', messageId: msg.id },
+        label: `${msg.sender?.display_name ?? msg.created_by?.profile?.nickname ?? ''}의 메시지`,
+        preview: msg.message_type === 'IMAGE' ? '사진' : msg.message_type === 'FILE' ? '파일' : msg.message_content,
+    });
 
     const myRole = members.find(m => m.is_mine || (m.user && m.user.id === myId))?.role;
     const isRoomAdmin = myRole === 'OWNER' || myRole === 'ADMIN';
@@ -448,7 +453,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         // 메시지 타입에 따라 내용 구성
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM' | 'DELIVERY_ARRIVAL' | 'DELIVERY_ORDER' | 'VOTE' | 'PAYMENT_REQUEST' | undefined;
                         const hasText = mtype !== 'IMAGE' && mtype !== 'FILE' && !!msg.message_content;
-                        const hasMenu = !!msg.id && (hasText || isMe);
+                        // 웹뷰에서는 남의 사진·파일도 신고할 수 있게 메뉴를 연다
+                        const hasMenu = !!msg.id && (hasText || isMe || compact);
                         const senderName = msg.sender?.display_name ?? msg.created_by?.profile?.nickname;
                         const dateLine = isDateChanged && (
                             <NoticeLine>{currentDate.map(v => v.toString().padStart(2, "0")).join("-")}</NoticeLine>
@@ -617,6 +623,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                     actions={editableOrder ? [
                         { label: '수정하기', onSelect: () => setSheet({ kind: 'order', order: editableOrder }) },
                         { label: '주문 취소하기', onSelect: () => setAction({ kind: 'cancelOrder', order: editableOrder }), danger: true },
+                    ] : compact && !isMine(menuMessage) ? [
+                        { label: '신고하기', onSelect: () => reportMessage(menuMessage), danger: true },
                     ] : undefined}
                     onDelete={handleDeleteMessage}
                     onClose={closeContextMenu}

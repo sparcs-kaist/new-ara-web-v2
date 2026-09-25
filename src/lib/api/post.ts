@@ -152,20 +152,6 @@ export const unarchivePost = async (scrapId: number) => {
   return data;
 };
 
-// 게시글 신고
-export const reportPost = async (
-  postId: number,
-  typeReport: string,
-  reasonReport: string,
-) => {
-  const { data } = await http.post("reports/", {
-    parent_article: postId,
-    type: typeReport,
-    content: reasonReport,
-  });
-  return data;
-};
-
 // 게시글 삭제
 export const deletePost = async (postId: number, scope?: ArticleScope) => {
   const { data } = await http.delete(articlePath(postId, scope));
@@ -265,20 +251,6 @@ export const voteComment = async (commentId: number, action: VoteAction) => {
   // useMe 호출을 다시 호출해야 추천 개수 갱신 가능
   queryClient.invalidateQueries({ queryKey: ["me"] });
 
-  return data;
-};
-
-// 댓글 신고
-export const reportComment = async (
-  commentId: number,
-  typeReport: string = "others",
-  reasonReport: string,
-) => {
-  const { data } = await http.post("reports/", {
-    parent_comment: commentId,
-    type: typeReport,
-    content: reasonReport,
-  });
   return data;
 };
 

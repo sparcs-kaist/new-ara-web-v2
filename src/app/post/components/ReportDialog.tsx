@@ -3,7 +3,7 @@
 'use client';
 
 import { useState } from 'react';
-import { reportComment, reportPost } from '@/lib/api/post'; // reportPost import
+import { submitReport } from '@/lib/api/report';
 
 const reportReasons = {
     '혐오 발언': 'hate_speech',
@@ -39,12 +39,11 @@ export default function ReportDialog({ targetId, targetType, onClose }: ReportDi
         try {
             const reasonString = selectedReasons.join(',');
 
-            // targetType에 따라 다른 API 호출
-            if (targetType === 'post') {
-                await reportPost(targetId, 'others', reasonString);
-            } else {
-                await reportComment(targetId, 'others', reasonString);
-            }
+            await submitReport(
+                targetType === 'post' ? { kind: 'article', articleId: targetId } : { kind: 'comment', commentId: targetId },
+                'others',
+                reasonString,
+            );
 
             alert('신고가 접수되었습니다.');
             onClose();
