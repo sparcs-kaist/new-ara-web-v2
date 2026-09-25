@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { apiDetail } from '@/lib/api/delivery';
-import { isAlreadyReported, submitReport } from '@/lib/api/report';
+import { isAlreadyReported, reportError, submitReport } from '@/lib/api/report';
 import type { ReportTarget, ReportType } from '@/lib/types/report';
 import { BottomSheet } from './BottomSheet';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -62,7 +61,7 @@ export function ReportSheet({ subject, onClose }: { subject: ReportSubject | nul
             setDone('신고가 접수됐어요');
         } catch (e) {
             if (isAlreadyReported(e)) setDone('이미 신고했어요');
-            else setError(apiDetail(e));
+            else setError(reportError(e));
         } finally {
             setSubmitting(false);
         }

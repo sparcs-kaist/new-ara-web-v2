@@ -24,7 +24,13 @@ export const submitReport = async (target: ReportTarget, type: ReportType, conte
     return data;
 };
 
-// Chat repeats (same person, same room, 24h) come back as a detail; article/comment repeats hit the unique constraint, localized by Accept-Language.
+// Chat repeats come back as a detail; article/comment repeats hit the unique constraint, localized by Accept-Language.
 const ALREADY_REPORTED = ['이미 신고했어요.', '이미 신고한 글입니다.', 'You already reported this article.'];
 
 export const isAlreadyReported = (e: unknown) => ALREADY_REPORTED.includes(apiDetail(e));
+
+// Hidden or deleted posts answer 403 {message}, which apiDetail (built for {detail}) does not read.
+export const reportError = (e: unknown) => {
+    const message = (e as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
+    return typeof message === 'string' && message ? message : apiDetail(e);
+};
