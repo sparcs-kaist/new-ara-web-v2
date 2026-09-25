@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { ImageBadgeIcon } from '@/app/web_view/_components';
-import type { MealPhoto } from '@/lib/types/meal';
+import { MEAL_SLOTS, type MealPhoto, type MealSlot } from '@/lib/types/meal';
 
 /** Dark pill on a photo's top-left corner: the restaurant on the home strip, 자동 수집 in the grid. */
 export function PhotoLabel({ children }: { children: ReactNode }) {
@@ -33,4 +33,40 @@ export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string 
         );
     }
     return <Image src={photo.image} alt={photo.comment || `${photo.restaurant.name} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
+}
+
+/** The 오늘의 학식 page's 아침/점심/저녁 TimeButton look (not exported there). */
+export function ChoicePill({
+    selected,
+    onClick,
+    className = 'px-3',
+    children,
+}: {
+    selected: boolean;
+    onClick: () => void;
+    className?: string;
+    children: ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            aria-pressed={selected}
+            onClick={onClick}
+            className={`h-7 shrink-0 rounded-full text-[13px] font-semibold ${className} ${selected ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
+        >
+            {children}
+        </button>
+    );
+}
+
+export function MealSegment({ value, onChange }: { value: string; onChange: (time: MealSlot['time']) => void }) {
+    return (
+        <div className="flex gap-1.5">
+            {MEAL_SLOTS.map(({ time }) => (
+                <ChoicePill key={time} selected={time === value} onClick={() => onChange(time)} className="w-[52px]">
+                    {time}
+                </ChoicePill>
+            ))}
+        </div>
+    );
 }

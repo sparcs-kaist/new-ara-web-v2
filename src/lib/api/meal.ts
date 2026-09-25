@@ -39,3 +39,24 @@ export const fetchMealPhotos = async (params: {
   const { data } = await http.get<Paginated<MealPhoto>>(`meal/photos/?${queryBuilder(params)}`);
   return data;
 };
+
+export const uploadMealPhoto = async (body: {
+  restaurant_id: number;
+  date: MealDate;
+  meal_time: MealType;
+  image: File;
+  comment?: string;
+}) => {
+  const form = new FormData();
+  form.append('restaurant_id', String(body.restaurant_id));
+  form.append('date', body.date);
+  form.append('meal_time', body.meal_time);
+  form.append('image', body.image);
+  if (body.comment) form.append('comment', body.comment);
+  const { data } = await http.post<MealPhoto>('meal/photos/', form);
+  return data;
+};
+
+export const deleteMealPhoto = async (id: number): Promise<void> => {
+  await http.delete(`meal/photos/${id}/`);
+};
