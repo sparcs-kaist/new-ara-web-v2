@@ -31,18 +31,19 @@ function formatLeft(ms: number): string {
 export default function DeliveryRestrictedPage() {
     const back = useSafeBack();
     const now = useNow();
-    const { data } = useDeliveryPenalty();
+    const { data, isFetching } = useDeliveryPenalty();
     const left = data?.until ? new Date(data.until).getTime() - now : 0;
     const reason = data?.reason;
 
     // A ref, not state: Strict Mode replays the effect, and a second back() would leave the list too.
     const leftPage = useRef(false);
     useEffect(() => {
-        if (data && left <= 0 && !leftPage.current) {
+        // A refetch in flight may be replacing a cached "no penalty" (403 from create); wait for it before leaving.
+        if (data && !isFetching && left <= 0 && !leftPage.current) {
             leftPage.current = true;
             back();
         }
-    }, [data, left, back]);
+    }, [data, isFetching, left, back]);
 
     return (
         <Screen withTabBar={false}>

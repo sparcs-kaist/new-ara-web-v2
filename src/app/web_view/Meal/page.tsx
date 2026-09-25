@@ -30,7 +30,7 @@ export default function MealHomePage() {
                 <button
                     type="button"
                     onClick={() => router.push(`/web_view/Meal/Menu?time=${encodeURIComponent((slot ?? currentMealSlot()).time)}`)}
-                    className="relative block h-[112px] w-full overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FFF7F5] to-[#FFEDE8] px-5 pt-6 text-left"
+                    className="relative flex h-[112px] w-full flex-col overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FFF7F5] to-[#FFEDE8] px-5 pt-6 text-left"
                 >
                     <span
                         aria-hidden
