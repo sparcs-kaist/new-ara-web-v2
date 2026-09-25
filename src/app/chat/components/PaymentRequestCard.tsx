@@ -7,9 +7,8 @@ import { getBridge, useIsNative } from '@/app/web_view/_bridge';
 import { Body, Rows } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { cancelPaymentRequest, deleteMessage, setPaymentPaid } from '@/lib/api/chat';
 import { apiDetail } from '@/lib/api/delivery';
-import { formatWon, orderTotal, withSubject } from '@/lib/delivery';
+import { formatWon, withSubject } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatPaymentTarget } from '@/lib/types/chat';
-import type { DeliveryParty } from '@/lib/types/delivery';
 import { copyText } from './MessageContextMenu';
 
 // Best effort: the shell rejects schemes it cannot open, and a failed open stays silent.
@@ -26,7 +25,6 @@ type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
 
 interface PaymentRequestCardProps {
     payment: ChatPaymentRequest;
-    party?: DeliveryParty;
     isHost: boolean;
     /** The author or a room admin, who gets 삭제 in the long-press sheet. */
     canDelete?: boolean;
@@ -34,7 +32,7 @@ interface PaymentRequestCardProps {
     onChanged: (next: ChatPaymentRequest | null) => void;
 }
 
-export default function PaymentRequestCard({ payment, party, isHost, canDelete = false, onChanged }: PaymentRequestCardProps) {
+export default function PaymentRequestCard({ payment, isHost, canDelete = false, onChanged }: PaymentRequestCardProps) {
     const isNative = useIsNative();
     const [dialog, setDialog] = useState<Dialog | null>(null);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -52,16 +50,13 @@ export default function PaymentRequestCard({ payment, party, isHost, canDelete =
     const canCancel = isHost && !canceled && !payment.is_settled;
     const mine = payment.targets.find((t) => t.user.is_mine);
     const amount = mine ? mine.amount : payment.total_amount;
-    // Only the party's live request is known to be the delivery split; any other card may be a general one.
-    const myOrders = party && payment.id === party.payment_request ? party.orders?.filter((o) => o.orderer.is_mine) : undefined;
-    const subtotal = myOrders && orderTotal(myOrders);
     const paidCount = payment.targets.filter((t) => t.paid_at).length;
     const account = `${payment.bank_name} ${payment.account_number}`;
     const bankAppUrl = isNative ? BANK_APP_URLS[payment.bank_name] : undefined;
     const subtitle = !mine
         ? `${payment.targets.length}명에게 청구`
-        : subtotal !== undefined
-          ? `주문 ${formatWon(subtotal)} + 배송비 ${formatWon(mine.amount - subtotal)}`
+        : mine.order_amount != null
+          ? `주문 ${formatWon(mine.order_amount)} + 배송비 ${formatWon(mine.delivery_fee_share ?? mine.amount - mine.order_amount)}`
           : `${withSubject(payment.requester.display_name)} 요청`;
 
     const closeDialog = () => {

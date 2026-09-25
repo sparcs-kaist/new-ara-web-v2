@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
+import { Body } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { PostIcon, PostListIcon, SendIcon } from '@/app/web_view/_components/icons';
 import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
@@ -163,6 +164,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const [voteOpen, setVoteOpen] = useState(false);
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [rerequestBlocked, setRerequestBlocked] = useState(false);
     // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
     if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
         setPromptedFor(party.decision_deadline_at);
@@ -702,10 +704,17 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
 
     const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
-    const openSettlement = () => party && router.push(`/web_view/Delivery/${party.id}/Settlement`);
     const openPaymentSheet = () => {
         setSheet(null);
         setPaymentOpen(true);
+    };
+    const openSettlement = () => {
+        if (!party) return;
+        if (party.can_request_payment) router.push(`/web_view/Delivery/${party.id}/Settlement`);
+        else {
+            setSheet(null);
+            setRerequestBlocked(true);
+        }
     };
     const voteRow: ChatInputExtraRow = { label: '투표', icon: PostListIcon, color: 'bg-ara_blue', onSelect: () => setVoteOpen(true) };
     const paymentRow: ChatInputExtraRow = { label: '송금 요청', icon: SendIcon, color: 'bg-[#636363]', onSelect: openPaymentSheet };
@@ -715,11 +724,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             ? [{ label: '주문 등록', icon: PostIcon, color: 'bg-ara_red', onSelect: () => setSheet({ kind: 'order' }) }]
             : []),
         voteRow,
-        party.is_host
-            ? party.can_request_payment
-                ? { ...paymentRow, onSelect: openSettlement }
-                : { ...paymentRow, label: settling ? '일반 정산 보내기' : '송금 요청', disabled: !settling }
-            : paymentRow,
+        ...(party.is_host ? [{ ...paymentRow, label: '배달 정산', onSelect: openSettlement, disabled: !settling }] : []),
+        { ...paymentRow, label: '일반 정산' },
     ];
     // 배달방은 파티 참여자에게 익명 번호로, 다른 방은 방 멤버에게 청구한다
     const paymentMembers: PaymentMember[] = party
@@ -929,7 +935,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                                 ) : (
                                                     <PaymentRequestCard
                                                         payment={msg.attachment as ChatPaymentRequest}
-                                                        party={party}
                                                         isHost={(msg.attachment as ChatPaymentRequest).requester.is_mine}
                                                         canDelete={isMe || isRoomAdmin}
                                                         onChanged={(next) => handlePaymentChanged(msg.id, next)}
@@ -1031,7 +1036,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         party={party}
                         onAction={startAction}
                         onSettle={openSettlement}
-                        onGeneralSettle={openPaymentSheet}
                         onClose={() => setSheet(null)}
                     />
                     <MembersSheet
@@ -1062,6 +1066,26 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                     primary={{ label: '확인', onClick: () => setDeleteError(null) }}
                     onClose={() => setDeleteError(null)}
                 />
+            )}
+            {rerequestBlocked && party && (
+                <ConfirmDialog
+                    title={party.payment_request !== null ? '이미 정산을 요청했어요' : '배달 정산을 다시 보낼 수 없어요'}
+                    secondary={{ label: '닫기', onClick: () => setRerequestBlocked(false) }}
+                    primary={{
+                        label: '일반 정산 보내기',
+                        onClick: () => {
+                            setRerequestBlocked(false);
+                            openPaymentSheet();
+                        },
+                    }}
+                    onClose={() => setRerequestBlocked(false)}
+                >
+                    <Body>
+                        {party.payment_request !== null
+                            ? '잘못 보냈다면 정산을 취소하고 다시 보내주세요.'
+                            : '송금한 사람이 있어요. 필요한 사람에게 일반 정산을 보내주세요.'}
+                    </Body>
+                </ConfirmDialog>
             )}
 
             {forbidden && (

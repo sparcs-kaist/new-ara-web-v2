@@ -9,6 +9,8 @@ export interface ChatPaymentTarget {
     user: Sender;
     amount: number;
     paid_at: string | null;
+    order_amount: number | null;
+    delivery_fee_share: number | null;
 }
 
 export interface ChatPaymentRequest {
