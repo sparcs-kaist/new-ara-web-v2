@@ -6,31 +6,31 @@ import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
 import FileMessage from './FileMessage';
-import { fetchChatMessages, /* sendMessage, */ fetchChatRoomDetail, fetchPaymentRequest } from '@/lib/api/chat';
+import { fetchChatMessages, /* sendMessage, */ fetchChatRoomDetail } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 // import { uploadAttachments } from '@/lib/api/post';
 // import { sendAttachmentMessage } from '@/lib/api/chat';
 import { deleteMessage, leaveChatRoom, blockChatRoom, deleteChatRoom, blockDM, createInvitation } from '@/lib/api/chat';
-import ChatInput, { type ChatInputExtraRow } from './ChatInput';
+import ChatInput from './ChatInput';
 import MembersPanel from './MembersPanel';
 import MessageContextMenu from './MessageContextMenu';
 import NoticeLine from './NoticeLine';
-import PaymentCreateSheet, { type PaymentMember } from './PaymentCreateSheet';
+import PaymentCreateSheet from './PaymentCreateSheet';
 import PaymentRequestCard from './PaymentRequestCard';
 import UserSearchDialog from './UserSearchDialog'; // 추가
 import VoteCard from './VoteCard';
 import VoteCreateSheet from './VoteCreateSheet';
 import { useChatRoomSocket } from '../hooks/useChatRoomSocket';
+import { useDeliveryPayments, useDeliveryRoom } from '../hooks/useDeliveryRoom';
 import { useRouter } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { Body } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
-import { PostIcon, PostListIcon, SendIcon } from '@/app/web_view/_components/icons';
-import { DELIVERY_KEY, useDeliveryParty } from '@/app/web_view/_query/delivery';
+import { DELIVERY_KEY } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { DeliveryActionDialog, type DeliveryAction } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
+import { DeliveryActionDialog } from '@/app/web_view/Delivery/_components/DeliveryActionDialog';
 import { DeliveryComposerNote, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
 import { MembersSheet } from '@/app/web_view/Delivery/_components/MembersSheet';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
@@ -104,8 +104,6 @@ export type Member = {
 
 type NamedMember = Member & { user: NonNullable<Member['user']> };
 
-type DeliverySheet = { kind: 'order'; order?: DeliveryOrder } | { kind: 'info' } | { kind: 'members' };
-
 // 서버가 삭제를 거부하는 메시지 타입
 const UNDELETABLE_TYPES = ['DELIVERY_ORDER', 'DELIVERY_ARRIVAL', 'SYSTEM'];
 
@@ -130,24 +128,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const qc = useQueryClient();
     const [detailRoom, setDetailRoom] = useState<ChatRoom | null>(null);
     const partyId = detailRoom?.id === roomId ? detailRoom.delivery_party ?? null : null;
-    const { data: party } = useDeliveryParty(partyId, { poll: true });
-    const myOrders = party?.orders?.filter(o => o.orderer.is_mine) ?? [];
-    const [sheet, setSheet] = useState<DeliverySheet | null>(null);
-    const [action, setAction] = useState<DeliveryAction | null>(null);
-    const [promptedFor, setPromptedFor] = useState<string | null>(null);
-    const [voteOpen, setVoteOpen] = useState(false);
-    const [paymentOpen, setPaymentOpen] = useState(false);
+    const {
+        party, myOrders, sheet, setSheet, action, setAction, voteOpen, setVoteOpen, paymentOpen, setPaymentOpen,
+        rerequestBlocked, setRerequestBlocked, startAction, showOrderCta, openPaymentSheet, openSettlement,
+        voteRow, paymentRow, deliveryRows, paymentMembers,
+    } = useDeliveryRoom({ partyId, members, myId });
     const [deleteError, setDeleteError] = useState<string | null>(null);
-    const [rerequestBlocked, setRerequestBlocked] = useState(false);
-    // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
-    if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
-        setPromptedFor(party.decision_deadline_at);
-        setAction({ kind: party.total_amount < party.min_order_amount ? 'unmet' : 'confirm' });
-    }
-    const startAction = (next: DeliveryAction) => {
-        setSheet(null);
-        setAction(next);
-    };
 
     const isMine = (msg: Message) => msg.sender?.is_mine ?? msg.created_by?.id === myId;
 
@@ -367,53 +353,9 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const editableOrder =
         menuOrder && party && ordersAllowed(party) && menuOrder.orderer.is_mine && !menuOrder.is_canceled ? menuOrder : null;
 
-    const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
-    const openPaymentSheet = () => {
-        setSheet(null);
-        setPaymentOpen(true);
-    };
-    const openSettlement = () => {
-        if (!party) return;
-        if (party.can_request_payment) router.push(`/web_view/Delivery/${party.id}/Settlement`);
-        else {
-            setSheet(null);
-            setRerequestBlocked(true);
-        }
-    };
-    const voteRow: ChatInputExtraRow = { label: '투표', icon: PostListIcon, color: 'bg-ara_blue', onSelect: () => setVoteOpen(true) };
-    const paymentRow: ChatInputExtraRow = { label: '송금 요청', icon: SendIcon, color: 'bg-[#636363]', onSelect: openPaymentSheet };
-    const settling = party?.status === 'ORDERED' || party?.status === 'ARRIVED';
-    const deliveryRows: ChatInputExtraRow[] | undefined = party && [
-        ...(ordersAllowed(party)
-            ? [{ label: '주문 등록', icon: PostIcon, color: 'bg-ara_red', onSelect: () => setSheet({ kind: 'order' }) }]
-            : []),
-        voteRow,
-        ...(party.is_host ? [{ ...paymentRow, label: '배달 정산', onSelect: openSettlement, disabled: !settling }] : []),
-        { ...paymentRow, label: '일반 정산' },
-    ];
-    // 배달방은 파티 참여자에게 익명 번호로, 다른 방은 방 멤버에게 청구한다
-    const paymentMembers: PaymentMember[] = party
-        ? party.members.filter(m => !m.is_mine).map(m => ({ name: m.display_name, target: { anon_number: m.anon_number } }))
-        : members.flatMap((m): PaymentMember[] => {
-            if (m.is_mine || (m.user && m.user.id === myId) || m.role === 'BLOCKED' || m.role === 'BLOCKER') return [];
-            if (m.user) return [{ name: m.user.profile?.nickname ?? m.display_name ?? '', target: { user: m.user.id } }];
-            return m.anon_number != null ? [{ name: m.display_name ?? '', target: { anon_number: m.anon_number } }] : [];
-        });
     const myRole = members.find(m => m.is_mine || (m.user && m.user.id === myId))?.role;
     const isRoomAdmin = myRole === 'OWNER' || myRole === 'ADMIN';
-    const paymentMessage = party?.payment_request != null
-        ? messages.find(m => m.message_type === 'PAYMENT_REQUEST' && (m.attachment as ChatPaymentRequest | null)?.id === party.payment_request)
-        : undefined;
-    // 정산 요청 메시지가 불러온 최근 메시지 밖이면 상태 바가 '정산 대기'로 돌아가지 않게 따로 불러온다
-    const unloadedPaymentId = compact && party?.payment_request != null && !paymentMessage ? party.payment_request : null;
-    const { data: unloadedPayment } = useQuery({
-        queryKey: [...DELIVERY_KEY, 'payment', unloadedPaymentId],
-        queryFn: () => fetchPaymentRequest(unloadedPaymentId as number),
-        enabled: unloadedPaymentId !== null,
-        staleTime: 5_000,
-    });
-    const payments = messages.flatMap(m => (m.message_type === 'PAYMENT_REQUEST' && m.attachment ? [m.attachment as ChatPaymentRequest] : []));
-    if (unloadedPayment) payments.push(unloadedPayment);
+    const payments = useDeliveryPayments({ party, messages, compact });
 
     return (
         // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
