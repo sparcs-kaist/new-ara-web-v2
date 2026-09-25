@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { ChoiceChip } from '@/app/web_view/_components';
 import RestaurantSelection from './RestaurantSelection';
 
 // 식사 시간 배열 - 단순 문자열로 관리
@@ -11,29 +12,6 @@ const ArrowIcon = () => (
   <svg width="22" height="23" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M11 5.50725L13.255 7.76225C13.6125 8.11975 14.19 8.11975 14.5475 7.76225C14.905 7.40475 14.905 6.82725 14.5475 6.46975L11.6417 3.55475C11.2842 3.19725 10.7067 3.19725 10.3492 3.55475L7.44336 6.46975C7.08586 6.82725 7.08586 7.40475 7.44336 7.76225C7.80086 8.11975 8.37836 8.11975 8.73586 7.76225L11 5.50725ZM11 16.8189L8.74502 14.5639C8.38752 14.2064 7.81002 14.2064 7.45252 14.5639C7.09502 14.9214 7.09502 15.4989 7.45252 15.8564L10.3584 18.7714C10.7159 19.1289 11.2934 19.1289 11.6509 18.7714L14.5567 15.8656C14.9142 15.5081 14.9142 14.9306 14.5567 14.5731C14.1992 14.2156 13.6217 14.2156 13.2642 14.5731L11 16.8189Z" fill="black"/>
   </svg>
-);
-
-// 시간 선택 버튼 컴포넌트
-interface TimeButtonProps {
-  label: string;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-const TimeButton = ({ label, isSelected, onClick }: TimeButtonProps) => (
-  <div 
-    role="button"
-    className={`w-[52px] h-7 px-3 rounded-full flex justify-center items-center cursor-pointer
-      ${isSelected 
-        ? 'bg-red-500 text-white' 
-        : 'bg-white text-black outline outline-1 outline-zinc-100'
-      }`}
-    onClick={onClick}
-  >
-    <div className="text-center text-[13px] font-semibold">
-      {label}
-    </div>
-  </div>
 );
 
 interface RestaurantNavigatorProps {
@@ -127,12 +105,15 @@ export default function RestaurantNavigator({
 
       <div className="flex items-center gap-1.5">
         {mealTimes.map((time, index) => (
-          <TimeButton 
+          <ChoiceChip
             key={index}
-            label={time}
-            isSelected={selectedMealTime === time}
+            size="sm"
+            selected={selectedMealTime === time}
             onClick={() => handleTimeSelect(time)}
-          />
+            className="w-[52px]"
+          >
+            {time}
+          </ChoiceChip>
         ))}
       </div>
     </div>

@@ -129,6 +129,10 @@
     /* r/x/y stay listed: dropping them would cancel a quick tap's still-running growth. */
     transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 200ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Chips flip their selected fill at once; only the ripple animates. */
+[data-ara-shell] [data-chip]:is([data-pressed], [data-press-release]) {
+    transition-property: --ara-press-r, --ara-press-x, --ara-press-y, --ara-press-a;
+}
 /* Zero specificity so an element's own rounded-* wins; the ripple follows the radius. */
 :where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
     border-radius: 10px;

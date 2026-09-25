@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ChangeEvent, type ComponentType } fro
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { BottomSheet, CameraIcon, Close2Icon, ImageBadgeIcon, type IconProps } from '@/app/web_view/_components';
+import { BottomSheet, CameraIcon, ChoiceChip, Close2Icon, ImageBadgeIcon, type IconProps } from '@/app/web_view/_components';
 import { MEAL_PHOTOS_KEY, useMe } from '@/app/web_view/_query';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { apiDetail } from '@/lib/api/delivery';
 import { uploadMealPhoto } from '@/lib/api/meal';
 import { RESTAURANT_IDS, RESTAURANT_NAMES, timeStringToMealType, type MealSlot, type RestaurantId } from '@/lib/types/meal';
-import { ChoicePill, MealSegment } from './photoParts';
+import { MealSegment } from './photoParts';
 
 const MAX_EDGE = 1600;
 
@@ -129,9 +129,9 @@ function UploadForm({
                 <h3 className="mb-2 text-[15px] font-semibold text-black">식당</h3>
                 <div className="flex flex-wrap gap-2">
                     {RESTAURANT_IDS.map((id) => (
-                        <ChoicePill key={id} selected={id === restaurant} onClick={() => setRestaurant(id)}>
+                        <ChoiceChip key={id} size="sm" selected={id === restaurant} onClick={() => setRestaurant(id)}>
                             {RESTAURANT_NAMES[id]}
-                        </ChoicePill>
+                        </ChoiceChip>
                     ))}
                 </div>
             </section>

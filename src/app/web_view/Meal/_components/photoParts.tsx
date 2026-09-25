@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { ImageBadgeIcon } from '@/app/web_view/_components';
+import { ChoiceChip, ImageBadgeIcon } from '@/app/web_view/_components';
 import { MEAL_SLOTS, type MealPhoto, type MealSlot } from '@/lib/types/meal';
 
 export function PhotoLabel({ children }: { children: ReactNode }) {
@@ -33,36 +33,13 @@ export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string 
     return <Image src={photo.image} alt={photo.comment || `${photo.restaurant.name} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
 }
 
-export function ChoicePill({
-    selected,
-    onClick,
-    className = 'px-3',
-    children,
-}: {
-    selected: boolean;
-    onClick: () => void;
-    className?: string;
-    children: ReactNode;
-}) {
-    return (
-        <button
-            type="button"
-            aria-pressed={selected}
-            onClick={onClick}
-            className={`h-7 shrink-0 rounded-full text-[13px] font-semibold ${className} ${selected ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
-        >
-            {children}
-        </button>
-    );
-}
-
 export function MealSegment({ value, onChange }: { value: string; onChange: (time: MealSlot['time']) => void }) {
     return (
         <div className="flex gap-1.5">
             {MEAL_SLOTS.map(({ time }) => (
-                <ChoicePill key={time} selected={time === value} onClick={() => onChange(time)} className="w-[52px]">
+                <ChoiceChip key={time} size="sm" selected={time === value} onClick={() => onChange(time)} className="w-[52px]">
                     {time}
-                </ChoicePill>
+                </ChoiceChip>
             ))}
         </div>
     );

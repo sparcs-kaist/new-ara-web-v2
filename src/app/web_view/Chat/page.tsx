@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Screen } from '@/app/web_view/_components';
 import ChatRoomList from './components/ChatRoomList';
@@ -13,7 +14,9 @@ export default function WebViewChatListPage() {
 
     return (
         <Screen withTabBar="auto">
-            <ChatRoomList onRoomClick={handleRoomClick} />
+            <Suspense fallback={null}>
+                <ChatRoomList onRoomClick={handleRoomClick} />
+            </Suspense>
         </Screen>
     );
 }
