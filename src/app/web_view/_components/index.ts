@@ -1,4 +1,5 @@
 export { AppHeader } from './AppHeader';
+export { BottomSheet } from './BottomSheet';
 export { BottomTabBar, isTabRoot } from './BottomTabBar';
 export { PageTransition } from './PageTransition';
 export { Skeleton, SkeletonRow, SkeletonLine } from './Skeleton';
