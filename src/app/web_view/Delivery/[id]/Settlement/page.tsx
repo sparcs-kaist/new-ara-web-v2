@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,6 +36,7 @@ export default function SettlementPage() {
     const [picking, setPicking] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const errorRef = useRef<HTMLParagraphElement>(null);
 
     useEffect(() => {
         try {
@@ -47,6 +48,11 @@ export default function SettlementPage() {
             setAccount(saved.account_number ?? '');
         } catch { /* blocked storage */ }
     }, []);
+
+    // 'center', not 'nearest': 'nearest' parks the line under the fixed bottom bar.
+    useEffect(() => {
+        if (error) errorRef.current?.scrollIntoView({ block: 'center' });
+    }, [error]);
 
     const bankName = (bankChoice === CUSTOM_BANK ? customBank : bankChoice).trim();
     const valid = !!party && bankName !== '' && account.trim() !== '';
@@ -110,7 +116,7 @@ export default function SettlementPage() {
                     </section>
 
                     <SettlementTable orders={party.orders ?? []} fee={Number(fee) || 0} />
-                    {error && <p className="text-[13px] text-ara_red">{error}</p>}
+                    {error && <p ref={errorRef} className="text-[13px] text-ara_red">{error}</p>}
                 </div>
             ) : loadError ? (
                 <p className="px-5 py-10 text-center text-[14px] text-[#BBBBBB]">{apiDetail(loadError)}</p>
