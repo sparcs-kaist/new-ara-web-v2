@@ -11,22 +11,10 @@ import { formatWon, withSubject } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatPaymentTarget } from '@/lib/types/chat';
 import { copyText } from './MessageContextMenu';
 
-// Best effort: the shell rejects schemes it cannot open, and a failed open stays silent.
-const BANK_APP_SCHEMES: Record<string, string> = {
-    카카오뱅크: 'kakaobank://',
-    국민은행: 'kbbank://',
-    신한은행: 'shinhan-sr-ssb://',
-    우리은행: 'newsmartpib://',
-    농협은행: 'nhallonebank://',
-};
-
-// Toss can prefill the transfer; the other apps only open.
-const bankAppLink = (bank: string, account: string, amount: number) => {
-    if (bank === '토스뱅크') {
-        const q = new URLSearchParams({ bank, accountNo: account.replace(/\D/g, ''), amount: String(amount), origin: 'qr' });
-        return `supertoss://send?${q}`;
-    }
-    return BANK_APP_SCHEMES[bank];
+// The payer sends from their own app; Toss transfers to any bank, so the requester's bank is only data here.
+const tossSendLink = (bank: string, account: string, amount: number) => {
+    const q = new URLSearchParams({ bank, accountNo: account.replace(/\D/g, ''), amount: String(amount), origin: 'qr' });
+    return `supertoss://send?${q}`;
 };
 
 type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
@@ -58,12 +46,11 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
     const amount = mine ? mine.amount : payment.total_amount;
     const paidCount = payment.targets.filter((t) => t.paid_at).length;
     const account = `${payment.bank_name} ${payment.account_number}`;
-    const bankAppUrl = isNative && mine ? bankAppLink(payment.bank_name, payment.account_number, mine.amount) : undefined;
-    const [appFailed, setAppFailed] = useState(false);
-    const openBankApp = () =>
+    const [tossFailed, setTossFailed] = useState(false);
+    const openToss = (sendAmount: number) =>
         getBridge()
-            .request('openExternal', { url: bankAppUrl as string })
-            .catch(() => copyText(account).then(() => setAppFailed(true)));
+            .request('openExternal', { url: tossSendLink(payment.bank_name, payment.account_number, sendAmount) })
+            .catch(() => copyText(account).then(() => setTossFailed(true)));
     const subtitle = !mine
         ? `${payment.targets.length}명에게 청구`
         : mine.order_amount != null
@@ -151,9 +138,9 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
                 <p className="mt-3 text-[12px] text-[#646464]">취소된 정산이라 송금할 수 없습니다</p>
             ) : mine ? (
                 <div className="mt-4 flex items-center justify-end gap-3">
-                    {bankAppUrl && (
-                        <button type="button" onClick={openBankApp} className="mr-auto text-[12px] text-[#646464]">
-                            {appFailed ? '앱을 찾을 수 없어 계좌를 복사했어요' : '은행 앱 열기'}
+                    {isNative && (
+                        <button type="button" onClick={() => openToss(mine.amount)} className="mr-auto break-keep text-left text-[12px] text-[#646464]">
+                            {tossFailed ? '토스가 없어 계좌를 복사했어요' : '토스로 보내기'}
                         </button>
                     )}
                     {mine.paid_at ? (
@@ -161,7 +148,7 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
                             type="button"
                             disabled={payment.is_settled}
                             onClick={() => setDialog('unpaid')}
-                            className="h-9 rounded-full bg-[#F6F6F6] px-4 text-[14px] font-medium text-[#646464]"
+                            className="h-9 shrink-0 rounded-full bg-[#F6F6F6] px-4 text-[14px] font-medium text-[#646464]"
                         >
                             송금 완료됨
                         </button>
@@ -170,7 +157,7 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
                             type="button"
                             data-press="strong"
                             onClick={() => setDialog('paid')}
-                            className="h-9 rounded-full bg-ara_red px-4 text-[14px] font-semibold text-white"
+                            className="h-9 shrink-0 rounded-full bg-ara_red px-4 text-[14px] font-semibold text-white"
                         >
                             송금 완료
                         </button>
