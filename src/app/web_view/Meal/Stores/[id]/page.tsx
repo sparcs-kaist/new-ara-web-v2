@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { AppHeader, BottomSheet, LeftChevronIcon, NotifyIcon, RightChevronIcon, Screen, Skeleton } from '@/app/web_view/_components';
+import { useParams } from 'next/navigation';
+import { AppHeader, BottomSheet, LeftChevronIcon, NotifyIcon, Screen, Skeleton } from '@/app/web_view/_components';
 import { useStore } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail, errorStatus } from '@/lib/api/store';
 import { formatWon } from '@/lib/delivery';
+import { storeLine } from '@/lib/store';
 import type { StoreMenu, StoreNotice } from '@/lib/types/store';
 import { EmptyState } from '../_components/EmptyState';
 import { SignatureBadge } from '../_components/SignatureBadge';
@@ -62,7 +63,6 @@ function NoticeSheet({ notices, open, onClose }: { notices: StoreNotice[]; open:
 
 export default function StorePage() {
     const id = Number(useParams<{ id: string }>().id);
-    const router = useRouter();
     const back = useSafeBack();
     const { data: store, isError, error } = useStore(id);
     const [noticeOpen, setNoticeOpen] = useState(false);
@@ -85,6 +85,7 @@ export default function StorePage() {
     }
 
     const groups = store ? groupMenus(store.menus) : [];
+    const line = store ? storeLine(store) : '';
 
     return (
         <Screen withTabBar={false}>
@@ -110,12 +111,12 @@ export default function StorePage() {
                 <>
                     <div className="px-5 py-5">
                         <h1 className="break-keep text-[22px] font-bold text-[#222222]">{store.name}</h1>
-                        <p className="mt-1 text-[14px] text-[#646464]">{store.location}</p>
+                        {line && <p className="mt-1 text-[14px] text-[#646464]">{line}</p>}
                         <p className="mt-[2px] text-[14px] text-[#646464]">
                             {store.today_hours ?? '오늘 휴무'}
                             {store.hours_note && ` · ${store.hours_note}`}
                         </p>
-                        <StoreStatusLine store={store} className="mt-1 text-[13px]" />
+                        <StoreStatusLine store={store} variant="full" className="mt-1" />
                         {store.intro && <p className="mt-2 break-keep text-[14px] text-[#222222]">{store.intro}</p>}
                         {store.notices.length > 0 && (
                             <button
@@ -127,18 +128,6 @@ export default function StorePage() {
                                 <span className="ml-2 shrink-0 text-[14px] font-bold text-ara_red">공지</span>
                                 <span className="ml-4 min-w-0 flex-1 truncate text-[14px] text-[#333333]">{store.notices[0].title}</span>
                             </button>
-                        )}
-                        {store.is_staff && (
-                            <div className="mt-3 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={() => router.push(`/web_view/Meal/Stores/${id}/Manage`)}
-                                    className="flex h-9 items-center pl-2 text-[14px] font-medium text-[#646464]"
-                                >
-                                    내 식당 관리
-                                    <RightChevronIcon size={16} />
-                                </button>
-                            </div>
                         )}
                     </div>
 

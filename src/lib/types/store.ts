@@ -15,15 +15,26 @@ export interface StoreHoursRange {
 
 export type StoreHours = Partial<Record<Weekday, StoreHoursRange[]>>;
 
+export type StoreOpenKind = 'OPEN' | 'TEMP_OPEN' | 'BEFORE_OPEN' | 'CLOSED' | 'CLOSED_TODAY' | 'TEMP_CLOSED';
+
+export interface StoreOpenState {
+    kind: StoreOpenKind;
+    time: string | null;
+    reason: string | null;
+    until: string | null;
+}
+
 export interface StoreSummary {
     id: number;
     name: string;
+    category: string;
     zone: Zone;
     location: string;
     hours: StoreHours;
     hours_note: string;
     is_open: boolean;
     open_note: string | null;
+    open_state: StoreOpenState;
     today_hours: string | null;
     signature_menus: string[];
     cover: string | null;

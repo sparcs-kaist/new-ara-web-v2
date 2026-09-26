@@ -26,8 +26,8 @@ const coverForm = (file: File) => {
     return fd;
 };
 
-export const fetchStores = async (zone?: Zone) => {
-    const qs = queryBuilder({ zone });
+export const fetchStores = async ({ zone, q }: { zone?: Zone; q?: string } = {}) => {
+    const qs = queryBuilder({ zone, q: q || undefined });
     const { data } = await http.get<StoreSummary[]>(`stores/${qs ? `?${qs}` : ''}`);
     return data;
 };

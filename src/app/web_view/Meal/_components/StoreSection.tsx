@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { RightChevronIcon, Skeleton } from '@/app/web_view/_components';
 import { useMyStores, useStore, useStores } from '@/app/web_view/_query';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
+import { storeLine } from '@/lib/store';
 import { StoreCover } from '../Stores/_components/StoreCover';
 import { StoreStatusLine } from '../Stores/_components/StoreStatusLine';
 import { useEntrance } from '../Stores/_components/entrance';
@@ -20,6 +21,7 @@ export function StoreSection() {
 
     if (!isPending && !store) return null;
     const anim = store ? enter(store.id, 0) : null;
+    const line = store ? storeLine(store) : '';
 
     return (
         <section>
@@ -50,8 +52,8 @@ export function StoreSection() {
                         >
                             <StoreCover src={store.cover} alt={store.name} sizes="100vw" iconSize={28} className="h-[110px] w-full rounded-[12px]" />
                             <span className="mt-3 block text-[17px] font-semibold text-[#222222]">{store.name}</span>
-                            <span className="mt-[2px] block text-[14px] text-[#646464]">{store.location}</span>
-                            <StoreStatusLine store={store} className="mt-1 text-[12px]" />
+                            {line && <span className="mt-[2px] block text-[14px] text-[#646464]">{line}</span>}
+                            <StoreStatusLine store={store} variant="full" className="mt-1" />
                             {detail.data?.intro && <span className="mt-1 block truncate text-[14px] text-[#222222]">{detail.data.intro}</span>}
                         </button>
                         <button

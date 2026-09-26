@@ -1,7 +1,9 @@
 import { pad } from '@/lib/delivery';
-import { WEEKDAYS, WEEKDAY_LABELS, type StoreEvent, type StoreHours, type StoreHoursRange, type StoreMenu, type Weekday } from '@/lib/types/store';
+import { WEEKDAYS, WEEKDAY_LABELS, type StoreEvent, type StoreHours, type StoreHoursRange, type StoreMenu, type StoreSummary, type Weekday } from '@/lib/types/store';
 
 export type WeekHours = Record<Weekday, StoreHoursRange[]>;
+
+export const storeLine = ({ category, location }: Pick<StoreSummary, 'category' | 'location'>) => [category, location].filter(Boolean).join(' · ');
 
 export const normalizeHours = (hours: StoreHours | null | undefined): WeekHours =>
     Object.fromEntries(WEEKDAYS.map((d) => [d, (hours?.[d] ?? []).map((r) => ({ open: r.open, close: r.close }))])) as WeekHours;

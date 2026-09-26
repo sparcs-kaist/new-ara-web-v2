@@ -10,10 +10,10 @@ export const storeKey = (id: number) => [...STORES_KEY, 'store', id] as const;
 export const storeEventsKey = (id: number) => [...STORES_KEY, 'events', id] as const;
 export const MY_STORES_KEY = [...STORES_KEY, 'mine'] as const;
 
-export function useStores() {
+export function useStores(q = '') {
     return useQuery({
-        queryKey: [...STORES_KEY, 'list'],
-        queryFn: () => fetchStores(),
+        queryKey: [...STORES_KEY, 'list', q],
+        queryFn: () => fetchStores({ q }),
         staleTime: 5 * 60_000,
     });
 }

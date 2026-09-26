@@ -56,7 +56,7 @@ const HELPER: Record<Kind, string> = {
 export function EventKindPill({ kind }: { kind: Kind }) {
     return (
         <span
-            className={`inline-flex shrink-0 items-center rounded-[5px] px-[6px] py-[2px] text-[11px] font-bold leading-[13px] ${kind === 'OPEN' ? 'bg-[#EAF7EE] text-[#2E9E55]' : 'bg-[#FFF0F0] text-ara_red'}`}
+            className={`inline-flex shrink-0 items-center rounded-[5px] px-[6px] py-[2px] text-[11px] font-bold leading-[13px] ${kind === 'OPEN' ? 'bg-[#F0F0F0] text-[#646464]' : 'bg-[#FFF0F0] text-ara_red'}`}
         >
             {EVENT_KIND_LABELS[kind]}
         </span>
