@@ -1,22 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { ConfirmDialog } from '@/app/web_view/_components';
+import { ChoiceChip, ConfirmDialog } from '@/app/web_view/_components';
 import { useInvalidateStores } from '@/app/web_view/_query';
 import { CtaButton, FixedBottomBar } from '@/app/web_view/Delivery/_components/BottomCta';
 import { INPUT_CLASS, NumberInput } from '@/app/web_view/Delivery/_components/fields';
 import { apiDetail, createMenu, deleteMenu, menuFormData, updateMenu } from '@/lib/api/store';
-import type { StoreMenu } from '@/lib/types/store';
+import type { StoreMenu, StoreMenuCategory } from '@/lib/types/store';
+import { CategorySheet } from './CategorySheet';
 import { StoreCover } from './StoreCover';
 import { CounterTextarea, Field, FieldLabel, ToggleRow, usePickedFile } from './formParts';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
-export function MenuForm({ storeId, menu, onDone }: { storeId: number; menu: StoreMenu | null; onDone: () => void }) {
+export function MenuForm({
+    storeId,
+    categories,
+    menu,
+    onDone,
+}: {
+    storeId: number;
+    categories: StoreMenuCategory[];
+    menu: StoreMenu | null;
+    onDone: () => void;
+}) {
     const invalidate = useInvalidateStores();
     const [name, setName] = useState(menu?.name ?? '');
     const [price, setPrice] = useState(menu ? String(menu.price) : '');
     const [description, setDescription] = useState(menu?.description ?? '');
+    const [category, setCategory] = useState(menu?.category ?? null);
+    const [addingCategory, setAddingCategory] = useState(false);
     const [isSignature, setIsSignature] = useState(menu?.is_signature ?? false);
     const [isSoldOut, setIsSoldOut] = useState(menu?.is_sold_out ?? false);
     const photo = usePickedFile(MAX_PHOTO_BYTES);
@@ -32,7 +45,7 @@ export function MenuForm({ storeId, menu, onDone }: { storeId: number; menu: Sto
         setError(null);
         try {
             const body = menuFormData(
-                { name: name.trim(), price: Number(price), description: description.trim(), is_signature: isSignature, is_sold_out: isSoldOut },
+                { name: name.trim(), price: Number(price), description: description.trim(), category, is_signature: isSignature, is_sold_out: isSoldOut },
                 photo.picked?.file,
             );
             if (menu) await updateMenu(storeId, menu.id, body);
@@ -92,6 +105,25 @@ export function MenuForm({ storeId, menu, onDone }: { storeId: number; menu: Sto
                 <Field label="설명">
                     <CounterTextarea name="description" value={description} maxLength={40} rows={2} placeholder="예) 점심 한정 20그릇" onChange={(e) => setDescription(e.target.value)} />
                 </Field>
+                <Field label="카테고리" as="div">
+                    <div className="flex flex-wrap gap-2">
+                        <ChoiceChip selected={category === null} onClick={() => setCategory(null)}>
+                            없음
+                        </ChoiceChip>
+                        {categories.map((c) => (
+                            <ChoiceChip key={c.id} selected={category === c.id} onClick={() => setCategory(c.id)}>
+                                {c.name}
+                            </ChoiceChip>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => setAddingCategory(true)}
+                            className="h-9 shrink-0 rounded-full border border-dashed border-[#BBBBBB] px-3 text-[13px] font-medium text-[#8A8A8A]"
+                        >
+                            + 새 카테고리
+                        </button>
+                    </div>
+                </Field>
                 <div>
                     <div className="h-px bg-[#F0F0F0]" />
                     <ToggleRow size={15} label="대표 메뉴로 표시" helper="메뉴판과 목록 카드에 '대표' 배지가 붙어요." checked={isSignature} onChange={setIsSignature} disabled={busy} />
@@ -121,6 +153,7 @@ export function MenuForm({ storeId, menu, onDone }: { storeId: number; menu: Sto
                     <p className="mt-2 text-[14px] text-[#646464]">메뉴판에서 바로 사라져요.</p>
                 </ConfirmDialog>
             )}
+            <CategorySheet storeId={storeId} open={addingCategory} category={null} onClose={() => setAddingCategory(false)} onSaved={(c) => setCategory(c.id)} />
         </>
     );
 }

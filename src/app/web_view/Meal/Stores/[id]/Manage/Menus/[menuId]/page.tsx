@@ -15,7 +15,7 @@ export default function MenuEditPage() {
             {(store) => {
                 const menu = isNew ? null : store.menus.find((m) => m.id === Number(menuId));
                 if (!isNew && !menu) return <ErrorState message="메뉴를 찾을 수 없어요" />;
-                return <MenuForm key={menu?.id ?? 'new'} storeId={store.id} menu={menu ?? null} onDone={back} />;
+                return <MenuForm key={menu?.id ?? 'new'} storeId={store.id} categories={store.categories} menu={menu ?? null} onDone={back} />;
             }}
         </ManageScreen>
     );
