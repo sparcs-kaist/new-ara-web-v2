@@ -4,12 +4,14 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppHeader, ChoiceChip, Screen } from '@/app/web_view/_components';
+import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { DELIVERY_KEY, useDeliveryPenalty } from '@/app/web_view/_query';
 import { tick } from '@/app/web_view/hooks/haptic';
 import { useNow } from '@/app/web_view/hooks/useNow';
 import { apiDetail, createDeliveryParty } from '@/lib/api/delivery';
 import { isPenaltyActive, pad } from '@/lib/delivery';
 import { CtaButton, FixedBottomBar } from '../_components/BottomCta';
+import { Body } from '../_components/DeliveryActionDialog';
 import { INPUT_CLASS, NumberInput } from '../_components/fields';
 
 const MIN_MINUTES = 5;
@@ -45,6 +47,7 @@ export default function DeliveryNewPage() {
         if (formError) errorRef.current?.scrollIntoView({ block: 'center' });
     }, [formError]);
     const [submitting, setSubmitting] = useState(false);
+    const [noticeOpen, setNoticeOpen] = useState(false);
 
     const until = useDeliveryPenalty().data?.until;
     useEffect(() => {
@@ -72,6 +75,7 @@ export default function DeliveryNewPage() {
 
     const submit = async () => {
         if (!valid || submitting) return;
+        setNoticeOpen(false);
         setSubmitting(true);
         setErrors({});
         setFormError(null);
@@ -230,10 +234,25 @@ export default function DeliveryNewPage() {
             </div>
 
             <FixedBottomBar>
-                <CtaButton disabled={!valid || submitting} onClick={submit}>
+                <CtaButton disabled={!valid || submitting} onClick={() => setNoticeOpen(true)}>
                     방 만들기
                 </CtaButton>
             </FixedBottomBar>
+
+            {noticeOpen && (
+                <ConfirmDialog
+                    title="방장 안내"
+                    onClose={() => setNoticeOpen(false)}
+                    secondary={{ label: '취소', onClick: () => setNoticeOpen(false) }}
+                    primary={{ label: '확인하고 만들기', onClick: submit }}
+                >
+                    <Body>모집이 마감되면 {minutes}분 안에 주문을 확정하거나 모집을 연장·취소해 주세요.</Body>
+                    <Body>
+                        다른 사람이 주문한 뒤 방을 취소하거나, 최소 주문 금액을 채웠는데 {minutes}분 안에 확정하지 않으면 한동안 함께
+                        배달 방을 만들 수 없어요. 처음에는 3시간, 30일 안에 다시 그러면 하루예요.
+                    </Body>
+                </ConfirmDialog>
+            )}
         </Screen>
     );
 }
