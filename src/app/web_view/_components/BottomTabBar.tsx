@@ -3,6 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
+import { useMe } from '@/app/web_view/_query';
+import { canUseMeal } from './features';
 
 interface Tab {
     path: string;
@@ -42,15 +44,17 @@ const TABS: Tab[] = [
 export function BottomTabBar() {
     const pathname = usePathname();
     const router = useRouter();
+    const { data: me } = useMe();
+    const tabs = TABS.filter((t) => t.path !== '/web_view/Meal' || canUseMeal(me));
 
     return (
         <nav
             role="tablist"
             aria-label="primary"
-            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 items-stretch border-t border-[#F0F0F0] bg-white"
+            className={`fixed inset-x-0 bottom-0 z-50 grid ${tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-4'} items-stretch border-t border-[#F0F0F0] bg-white`}
             style={{ height: 'calc(50px + var(--ara-safe-bottom))', paddingBottom: 'var(--ara-safe-bottom)' }}
         >
-            {TABS.map((t) => {
+            {tabs.map((t) => {
                 const active = t.matcher.test(pathname ?? '');
                 return (
                     <button
