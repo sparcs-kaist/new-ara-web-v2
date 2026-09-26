@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import http from '@/lib/api/http';
+import { apiDetail } from '@/lib/api/delivery';
 import { Close1Icon, SendIcon, StickyComposer } from '@/app/web_view/_components';
 
 interface CommentComposerProps {
@@ -96,7 +97,7 @@ export function CommentComposer({
             taRef.current?.blur();
             onPosted?.();
         } catch (e) {
-            console.warn('createComment failed', e);
+            alert(apiDetail(e));
         } finally {
             setSubmitting(false);
         }

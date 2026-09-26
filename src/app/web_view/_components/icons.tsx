@@ -83,6 +83,9 @@ export function PostListIcon(p: IconProps) {
 export function MealIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/meal.svg`} fallback={32} {...p} />;
 }
+export function CampusIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/campus.svg`} fallback={32} {...p} />;
+}
 export function ChatIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/chat.svg`} fallback={32} {...p} />;
 }
@@ -123,6 +126,9 @@ export function RightChevronIcon(p: IconProps) {
 }
 export function RightArrow2Icon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/right_arrow_2.svg`} fallback={16} {...p} />;
+}
+export function ChevronDownIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/chevron_down.svg`} fallback={20} {...p} />;
 }
 
 /* =========================================================================

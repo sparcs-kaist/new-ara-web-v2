@@ -36,12 +36,9 @@ function MaskIcon({ src, size, fallback, style, ...rest }: MaskIconProps) {
     return <span aria-hidden {...rest} style={merged} />;
 }
 
-export { CheckIcon } from '@/app/web_view/_components/icons';
+export { CheckIcon, ChevronDownIcon } from '@/app/web_view/_components/icons';
 export function ChevronUpIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/chevron_up.svg`} fallback={20} {...p} />;
-}
-export function ChevronDownIcon(p: IconProps) {
-    return <MaskIcon src={`${ICON_BASE}/chevron_down.svg`} fallback={20} {...p} />;
 }
 export function KeyboardDownIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/keyboard_down.svg`} fallback={36} {...p} />;

@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchArticles } from '@/lib/api/board';
 import type { ResponsePost } from '@/lib/types/post';
 import { AppHeader, PostPreview, Screen, SearchIcon } from '@/app/web_view/_components';
+import { fetchScopedArticles, readScope, scopeQuery, useScopeName } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 
 function SearchInner() {
@@ -13,6 +14,8 @@ function SearchInner() {
     const initialQ = params?.get('q') ?? '';
     const boardParam = params?.get('board');
     const boardId = boardParam ? Number.parseInt(boardParam, 10) : undefined;
+    const scope = useMemo(() => readScope(params), [params]);
+    const scopeName = useScopeName(scope);
 
     const [draft, setDraft] = useState(initialQ);
     const [submittedQ, setSubmittedQ] = useState(initialQ);
@@ -31,11 +34,13 @@ function SearchInner() {
             setLoading(true);
             setError(null);
             try {
-                const data = await fetchArticles({
-                    query: trimmed,
-                    boardId: Number.isFinite(boardId) ? boardId : undefined,
-                    page: 1,
-                });
+                const data = scope
+                    ? await fetchScopedArticles(scope, { query: trimmed, page: 1 })
+                    : await fetchArticles({
+                          query: trimmed,
+                          boardId: Number.isFinite(boardId) ? boardId : undefined,
+                          page: 1,
+                      });
                 setResults((data?.results ?? []) as ResponsePost[]);
             } catch (e) {
                 console.warn('search failed', e);
@@ -45,7 +50,7 @@ function SearchInner() {
                 setLoading(false);
             }
         },
-        [boardId],
+        [boardId, scope],
     );
 
     useEffect(() => {
@@ -64,7 +69,10 @@ function SearchInner() {
         setSubmittedQ(q);
         const next = new URLSearchParams();
         if (q) next.set('q', q);
-        if (boardParam) next.set('board', boardParam);
+        for (const key of ['board', 'course_id', 'std_dept_id']) {
+            const value = params?.get(key);
+            if (value) next.set(key, value);
+        }
         const search = next.toString();
         router.replace(`/web_view/Search${search ? `?${search}` : ''}`);
         runSearch(q);
@@ -72,7 +80,7 @@ function SearchInner() {
 
     return (
         <Screen withTabBar={false}>
-            <AppHeader title="검색" />
+            <AppHeader title={scopeName ?? '검색'} />
 
             <div className="sticky top-14 z-30 flex items-center gap-2 bg-white px-5 py-2">
                 <div className="flex h-10 w-full items-center rounded-[10px] bg-[#F6F6F6] pl-[6px]">
@@ -89,7 +97,7 @@ function SearchInner() {
                                 submit();
                             }
                         }}
-                        placeholder="게시판, 게시글 및 댓글 검색"
+                        placeholder={scope ? '글 제목 · 내용 검색' : '게시판, 게시글 및 댓글 검색'}
                         inputMode="search"
                         enterKeyHint="search"
                         autoCapitalize="none"
@@ -120,7 +128,7 @@ function SearchInner() {
                         <li key={post.id}>
                             <button
                                 type="button"
-                                onClick={() => router.push(`/web_view/Post/${post.id}`)}
+                                onClick={() => router.push(`/web_view/Post/${post.id}${scope ? `?${scopeQuery(scope)}` : ''}`)}
                                 className="block w-full rounded-none bg-transparent px-5 py-[11px] text-left"
                             >
                                 <PostPreview post={post} />
