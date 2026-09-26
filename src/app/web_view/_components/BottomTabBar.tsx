@@ -2,9 +2,9 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
+import { CampusIcon, ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
 import { useMe } from '@/app/web_view/_query';
-import { canUseMeal } from './features';
+import { canUseCampus, canUseMeal } from './features';
 
 interface Tab {
     path: string;
@@ -17,6 +17,11 @@ const TABS: Tab[] = [
         path: '/web_view/Main',
         matcher: /^\/web_view\/Main\/?$/,
         icon: (active) => <HomeIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
+        path: '/web_view/Campus',
+        matcher: /^\/web_view\/Campus(\/|$)/,
+        icon: (active) => <CampusIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
         path: '/web_view/Board',
@@ -45,7 +50,13 @@ export function BottomTabBar() {
     const pathname = usePathname();
     const router = useRouter();
     const { data: me } = useMe();
-    const tabs = TABS.filter((t) => t.path !== '/web_view/Meal' || canUseMeal(me));
+    // 내정보 moves to the person icon on the 내 게시판 home for campus users.
+    const tabs = TABS.filter((t) => {
+        if (t.path === '/web_view/Campus') return canUseCampus(me);
+        if (t.path === '/web_view/MyInfo') return !canUseCampus(me);
+        if (t.path === '/web_view/Meal') return canUseMeal(me);
+        return true;
+    });
 
     return (
         <nav
