@@ -146,7 +146,6 @@
     padding: 1.5px;
     border-radius: 16px;
     background: conic-gradient(from var(--ara-glow-angle), transparent 0deg, transparent 240deg, #ed3a3a 320deg, transparent 360deg), rgba(237, 58, 58, 0.45);
-    box-shadow: 0 0 14px rgba(237, 58, 58, 0.35);
     animation: ara-glow-spin 2.4s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
