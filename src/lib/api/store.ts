@@ -50,7 +50,9 @@ export const updateStoreCover = async (id: number, file: File) => {
 
 export const menuFormData = (fields: Partial<MenuFields>, photo?: File | null) => {
     const fd = new FormData();
-    Object.entries(fields).forEach(([k, v]) => fd.append(k, String(v)));
+    Object.entries(fields).forEach(([k, v]) => {
+        if (v !== undefined) fd.append(k, String(v));
+    });
     if (photo) fd.append('photo', photo);
     return fd;
 };

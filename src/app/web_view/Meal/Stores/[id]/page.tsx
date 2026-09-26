@@ -14,7 +14,7 @@ import { SignatureBadge } from '../_components/SignatureBadge';
 import { StoreCover } from '../_components/StoreCover';
 import { StoreStatusLine } from '../_components/StoreStatusLine';
 
-// Menus without a section come first; sections follow in first-appearance order.
+// Seeded with '' so section-less menus lead.
 function groupMenus(menus: StoreMenu[]): { title: string; menus: StoreMenu[] }[] {
     if (!menus.some((m) => m.section)) return [{ title: '', menus }];
     const groups = new Map<string, StoreMenu[]>([['', []]]);

@@ -40,7 +40,7 @@ function StoreListInner() {
                     </button>
                 }
                 // Balances the wide leading so the title sits at the screen centre.
-                trailing={<span aria-hidden className="w-[26px]" />}
+                trailing={<span aria-hidden className="w-[66px]" />}
             />
 
             <ChoiceChipRow role="tablist">
