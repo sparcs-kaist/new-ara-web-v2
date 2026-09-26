@@ -5,9 +5,9 @@ import { WEEKDAYS, type StoreDetail, type StoreHours, type StoreMenu, type Store
 const everyDay = (...ranges: [string, string][]): StoreHours =>
     Object.fromEntries(WEEKDAYS.map((day) => [day, ranges.map(([open, close]) => ({ open, close }))]));
 
-const menu = (id: number, name: string, price: number, order: number, isSignature = false): StoreMenu => ({
+const menu = (id: number, name: string, price: number, order: number, category: number | null, isSignature = false): StoreMenu => ({
     id,
-    section: '',
+    category,
     name,
     price,
     description: '',
@@ -23,14 +23,19 @@ const BASE = [
         name: '오니기리와 이규동',
         category: '일식',
         hours: everyDay(['10:30', '20:00']),
-        menus: [menu(1, '트리플 치즈 규동', 6800, 0, true), menu(2, '후리가케 오니기리', 1000, 1)],
+        categories: [
+            { id: 1, name: '덮밥', order: 0 },
+            { id: 2, name: '오니기리', order: 1 },
+        ],
+        menus: [menu(1, '트리플 치즈 규동', 6800, 0, 1, true), menu(2, '후리가케 오니기리', 1000, 1, 2)],
     },
     {
         id: 900002,
         name: '별리달리',
         category: '한식/분식',
         hours: everyDay(['11:00', '14:00'], ['17:00', '20:00']),
-        menus: [menu(3, '추억의 도시락', 5000, 0)],
+        categories: [{ id: 3, name: '도시락', order: 0 }],
+        menus: [menu(3, '추억의 도시락', 5000, 0, 3)],
     },
 ];
 
@@ -47,7 +52,7 @@ function openFields(hours: StoreHours, now = new Date()): Pick<StoreSummary, 'is
     return { is_open: false, open_note: '영업 종료', open_state: { kind: 'CLOSED', time: null, reason: null, until: null }, today_hours: todayHours };
 }
 
-function detail({ id, name, category, hours, menus }: (typeof BASE)[number]): StoreDetail {
+function detail({ id, name, category, hours, categories, menus }: (typeof BASE)[number]): StoreDetail {
     return {
         id,
         name,
@@ -64,6 +69,7 @@ function detail({ id, name, category, hours, menus }: (typeof BASE)[number]): St
         intro: '',
         phone: '',
         link: '',
+        categories,
         menus,
         notices: [],
         events: [],

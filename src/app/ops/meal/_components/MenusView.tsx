@@ -9,9 +9,9 @@ import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { Breadcrumb, Button, Card, Field, inputCls, SectionTitle, StatusLine, tdCls, thCls, type Status } from './ui';
 import { opsStoreKey } from './keys';
 
-type Draft = { section: string; name: string; price: string; description: string };
+type Draft = { name: string; price: string; description: string };
 
-const toDraft = (m: StoreMenu | null): Draft => ({ section: m?.section ?? '', name: m?.name ?? '', price: m ? String(m.price) : '', description: m?.description ?? '' });
+const toDraft = (m: StoreMenu | null): Draft => ({ name: m?.name ?? '', price: m ? String(m.price) : '', description: m?.description ?? '' });
 
 function MenuForm({ storeId, menu, onDone, onCancel }: { storeId: number; menu: StoreMenu | null; onDone: () => void; onCancel: () => void }) {
     const [draft, setDraft] = useState(() => toDraft(menu));
@@ -37,7 +37,7 @@ function MenuForm({ storeId, menu, onDone, onCancel }: { storeId: number; menu: 
         setBusy(true);
         setStatus(null);
         try {
-            const fields = { section: draft.section.trim(), name: draft.name.trim(), price: Number(draft.price), description: draft.description.trim() };
+            const fields = { name: draft.name.trim(), price: Number(draft.price), description: draft.description.trim() };
             if (!menu || photo) {
                 const fd = new FormData();
                 Object.entries(fields).forEach(([k, v]) => fd.append(k, String(v)));
@@ -59,7 +59,6 @@ function MenuForm({ storeId, menu, onDone, onCancel }: { storeId: number; menu: 
     return (
         <Card className="mb-5 space-y-3">
             <h3 className="text-[15px] font-semibold">{menu ? '메뉴 수정' : '메뉴 추가'}</h3>
-            <Field label="섹션"><input name="section" className={`${inputCls} w-[300px]`} placeholder="예: 덮밥" value={draft.section} onChange={(e) => set('section', e.target.value)} /></Field>
             <Field label="이름"><input name="name" className={`${inputCls} w-[300px]`} value={draft.name} onChange={(e) => set('name', e.target.value)} /></Field>
             <Field label="가격"><input name="price" type="number" min={0} className={`${inputCls} w-[160px]`} value={draft.price} onChange={(e) => set('price', e.target.value)} /></Field>
             <Field label="설명"><input name="description" className={`${inputCls} w-[480px]`} value={draft.description} onChange={(e) => set('description', e.target.value)} /></Field>
@@ -163,7 +162,6 @@ export default function MenusView({ store, onBack }: { store: OpsStore; onBack: 
                             </td>
                             <td className={`${tdCls} font-medium`}>
                                 {m.name}
-                                {m.section && <span className="ml-2 text-[12px] text-[#8A8A8A]">{m.section}</span>}
                             </td>
                             <td className={tdCls}>{m.price.toLocaleString()}원</td>
                             <td className={`${tdCls} text-[#666666]`}>{m.description}</td>

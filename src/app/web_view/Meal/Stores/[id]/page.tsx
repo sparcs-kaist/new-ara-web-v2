@@ -1,26 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { AppHeader, BottomSheet, LeftChevronIcon, NotifyIcon, Screen, Skeleton } from '@/app/web_view/_components';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { AppHeader, BottomSheet, ChoiceChip, ChoiceChipRow, LeftChevronIcon, NotifyIcon, Screen, Skeleton } from '@/app/web_view/_components';
 import { useStore } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail, errorStatus } from '@/lib/api/store';
 import { formatWon } from '@/lib/delivery';
 import { storeLine } from '@/lib/store';
-import type { StoreMenu, StoreNotice } from '@/lib/types/store';
+import type { StoreMenu, StoreMenuCategory, StoreNotice } from '@/lib/types/store';
 import { EmptyState } from '../_components/EmptyState';
+import { storeUrl } from '../_components/ManageScreen';
 import { SignatureBadge } from '../_components/SignatureBadge';
 import { StoreCover } from '../_components/StoreCover';
 import { StoreStatusLine } from '../_components/StoreStatusLine';
 
-// Seeded with '' so section-less menus lead.
-function groupMenus(menus: StoreMenu[]): { title: string; menus: StoreMenu[] }[] {
-    if (!menus.some((m) => m.section)) return [{ title: '', menus }];
-    const groups = new Map<string, StoreMenu[]>([['', []]]);
-    menus.forEach((m) => groups.set(m.section, [...(groups.get(m.section) ?? []), m]));
-    return [...groups].filter(([, list]) => list.length > 0).map(([title, list]) => ({ title, menus: list }));
+interface MenuGroup {
+    key: string;
+    title: string;
+    menus: StoreMenu[];
+}
+
+// A menu whose category is not in the list leads with the uncategorised ones.
+function groupMenus(menus: StoreMenu[], categories: StoreMenuCategory[]): MenuGroup[] {
+    const known = new Set(categories.map((c) => c.id));
+    return [
+        { key: 'none', title: '', menus: menus.filter((m) => m.category === null || !known.has(m.category)) },
+        ...categories.map((c) => ({ key: String(c.id), title: c.name, menus: menus.filter((m) => m.category === c.id) })),
+    ].filter((g) => g.menus.length > 0);
 }
 
 const Divider = () => <div className="mx-5 h-px bg-[#F0F0F0]" />;
@@ -65,9 +73,19 @@ export default function StorePage() {
     const id = Number(useParams<{ id: string }>().id);
     const back = useSafeBack();
     const { data: store, isError, error } = useStore(id);
+    const categoryParam = useSearchParams().get('category');
     const [noticeOpen, setNoticeOpen] = useState(false);
+    const pillAnchor = useRef<HTMLDivElement>(null);
+    const restartList = useRef(false);
 
     usePullToRefresh();
+
+    // With the pills stuck a new list would open mid-way; restarting after the swap also beats Chrome's scroll anchoring.
+    useLayoutEffect(() => {
+        if (!restartList.current) return;
+        restartList.current = false;
+        pillAnchor.current?.scrollIntoView();
+    }, [categoryParam]);
 
     if (isError || !(id > 0)) {
         const notFound = !(id > 0) || errorStatus(error) === 404;
@@ -84,8 +102,21 @@ export default function StorePage() {
         );
     }
 
-    const groups = store ? groupMenus(store.menus) : [];
+    const categories = store ? store.categories.filter((c) => store.menus.some((m) => m.category === c.id)) : [];
+    const selected = categories.find((c) => String(c.id) === categoryParam) ?? null;
+    const groups: MenuGroup[] = !store
+        ? []
+        : selected
+          ? [{ key: String(selected.id), title: '', menus: store.menus.filter((m) => m.category === selected.id) }]
+          : groupMenus(store.menus, categories);
     const line = store ? storeLine(store) : '';
+
+    const pick = (category: StoreMenuCategory | null) => {
+        if (category === selected) return;
+        restartList.current = !!pillAnchor.current && pillAnchor.current.getBoundingClientRect().top < 0;
+        // Native replaceState skips router.replace's server round trip, as on the chat tabs.
+        window.history.replaceState(null, '', category ? `${storeUrl(id)}?category=${category.id}` : storeUrl(id));
+    };
 
     return (
         <Screen withTabBar={false}>
@@ -134,11 +165,26 @@ export default function StorePage() {
                     <div className="h-2 bg-[#F6F6F6]" />
 
                     <h2 className="px-5 pb-1 pt-5 text-[18px] font-bold text-[#222222]">메뉴</h2>
+                    {categories.length > 0 && (
+                        <>
+                            <div ref={pillAnchor} className="scroll-mt-[var(--ara-safe-top)]" />
+                            <ChoiceChipRow role="tablist" className="sticky top-[var(--ara-safe-top)] z-30 bg-white">
+                                <ChoiceChip role="tab" selected={!selected} onClick={() => pick(null)}>
+                                    전체
+                                </ChoiceChip>
+                                {categories.map((c) => (
+                                    <ChoiceChip key={c.id} role="tab" selected={c === selected} onClick={() => pick(c)}>
+                                        {c.name}
+                                    </ChoiceChip>
+                                ))}
+                            </ChoiceChipRow>
+                        </>
+                    )}
                     {store.menus.length === 0 ? (
                         <EmptyState title="등록된 메뉴가 없어요" description="업체가 메뉴를 등록하면 보여드릴게요" className="py-16" />
                     ) : (
                         groups.map((g, gi) => (
-                            <section key={g.title}>
+                            <section key={g.key}>
                                 {gi > 0 && <Divider />}
                                 {g.title && <h3 className="px-5 pb-1 pt-4 text-[14px] text-[#646464]">{g.title}</h3>}
                                 {g.menus.map((m, i) => (

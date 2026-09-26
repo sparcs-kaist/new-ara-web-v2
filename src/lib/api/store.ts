@@ -1,6 +1,7 @@
 import http from '@/lib/api/http';
 import { queryBuilder } from '@/lib/utils/queryBuilder';
 import type {
+    MenuCategoryFields,
     MenuFields,
     NoticeFields,
     OpsRestaurant,
@@ -13,6 +14,7 @@ import type {
     StoreEventFields,
     StoreFields,
     StoreMenu,
+    StoreMenuCategory,
     StoreNotice,
     StoreSummary,
     Zone,
@@ -51,7 +53,7 @@ export const updateStoreCover = async (id: number, file: File) => {
 export const menuFormData = (fields: Partial<MenuFields>, photo?: File | null) => {
     const fd = new FormData();
     Object.entries(fields).forEach(([k, v]) => {
-        if (v !== undefined) fd.append(k, String(v));
+        if (v !== undefined) fd.append(k, v === null ? '' : String(v));
     });
     if (photo) fd.append('photo', photo);
     return fd;
@@ -69,6 +71,20 @@ export const updateMenu = async (id: number, menuId: number, body: FormData | Pa
 
 export const deleteMenu = async (id: number, menuId: number): Promise<void> => {
     await http.delete(`stores/${id}/menus/${menuId}/`);
+};
+
+export const createCategory = async (id: number, body: Pick<MenuCategoryFields, 'name'>) => {
+    const { data } = await http.post<StoreMenuCategory>(`stores/${id}/categories/`, body);
+    return data;
+};
+
+export const updateCategory = async (id: number, categoryId: number, body: Partial<MenuCategoryFields>) => {
+    const { data } = await http.patch<StoreMenuCategory>(`stores/${id}/categories/${categoryId}/`, body);
+    return data;
+};
+
+export const deleteCategory = async (id: number, categoryId: number): Promise<void> => {
+    await http.delete(`stores/${id}/categories/${categoryId}/`);
 };
 
 export const createNotice = async (id: number, body: NoticeFields) => {
