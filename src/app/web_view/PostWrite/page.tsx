@@ -46,10 +46,10 @@ interface RawAttachment {
 /**
  * TextEditor는 데스크탑과 공유하는 컴포넌트라 직접 고치지 않고, 이 페이지
  * 안에서만 먹는 규칙으로 툴바를 셸 헤더(56px) 아래에 붙이고 회색 테두리를
- * 걷어낸다.
+ * 걷어낸다. .ProseMirror가 남은 화면을 채워야 본문 어디를 탭해도 바로 입력된다.
  */
 const EDITOR_CSS = `
-.pw-editor .editor { margin-bottom: 0; border: 0; border-radius: 0; box-shadow: none; transition: none; }
+.pw-editor .editor { flex: 1; display: flex; flex-direction: column; margin-bottom: 0; border: 0; border-radius: 0; box-shadow: none; transition: none; }
 .pw-editor .editor .sticky {
     top: calc(var(--ara-safe-top) + 56px);
     background-color: #ffffff;
@@ -60,7 +60,8 @@ const EDITOR_CSS = `
 }
 .pw-editor .editor .sticky .bg-gray-300 { background-color: #FDF0F0; }
 .pw-editor .editor .sticky .text-gray-600 { color: #636363; }
-.pw-editor .editor .editor-content { padding: 15px 0 60px; min-height: 200px; font-size: 15px; }
+.pw-editor .editor .editor-content { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 200px; font-size: 15px; }
+.pw-editor .editor .ProseMirror { flex: 1; padding: 15px 0 60px; }
 `;
 
 function PostWriteInner() {
@@ -573,7 +574,16 @@ function PostWriteInner() {
                 </div>
             )}
 
-            <div className="pw-editor mt-[10px] flex-1 px-[20px]">
+            <div
+                className="pw-editor mt-[10px] flex flex-1 flex-col px-[20px]"
+                onClick={(e) => {
+                    // 옆 여백 같은 빈 래퍼만: 툴바·링크 대화상자 클릭도 여기로 버블링된다
+                    const t = e.target as HTMLElement;
+                    if (t === e.currentTarget || t.matches('.editor, .editor-content')) {
+                        editorRef.current?.commands.focus('end');
+                    }
+                }}
+            >
                 <TextEditor
                     editable={true}
                     onOpenImageUpload={scope ? undefined : handleOpenImageUpload}
