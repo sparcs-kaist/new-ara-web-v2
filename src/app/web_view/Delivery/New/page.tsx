@@ -246,13 +246,13 @@ export default function DeliveryNewPage() {
                     secondary={{ label: '취소', onClick: () => setNoticeOpen(false) }}
                     primary={{ label: '확인하고 만들기', onClick: submit }}
                 >
-                    <Body>모집이 마감되면 {minutes}분 안에 주문을 확정해 주세요.</Body>
+                    <p className="mt-2 break-keep text-[15px] leading-5 text-black">모집이 마감되면 {minutes}분 안에 주문을 확정해 주세요.</p>
                     <Body>다음과 같은 경우 패널티가 부여됩니다.</Body>
                     <ol className="mt-1 list-decimal break-keep pl-5 text-[14px] leading-5 text-[#646464]">
                         <li>다른 사람이 주문한 뒤 방을 취소한 경우</li>
                         <li>최소 주문 금액을 채웠는데 {minutes}분 안에 확정하지 않은 경우</li>
                     </ol>
-                    <Body>패널티: 1회 3시간, 2회(30일 이내) 1일 방 개설 제한</Body>
+                    <Body>패널티: 1회 3시간, 2회 1일 방 개설 제한</Body>
                 </ConfirmDialog>
             )}
         </Screen>
