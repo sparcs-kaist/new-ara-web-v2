@@ -12,13 +12,21 @@ import type { ChatPaymentRequest, ChatPaymentTarget } from '@/lib/types/chat';
 import { copyText } from './MessageContextMenu';
 
 // Best effort: the shell rejects schemes it cannot open, and a failed open stays silent.
-const BANK_APP_URLS: Record<string, string> = {
-    토스뱅크: 'supertoss://',
+const BANK_APP_SCHEMES: Record<string, string> = {
     카카오뱅크: 'kakaobank://',
     국민은행: 'kbbank://',
     신한은행: 'shinhan-sr-ssb://',
     우리은행: 'newsmartpib://',
-    농협은행: 'nhsmartbanking://',
+    농협은행: 'nhallonebank://',
+};
+
+// Toss can prefill the transfer; the other apps only open.
+const bankAppLink = (bank: string, account: string, amount: number) => {
+    if (bank === '토스뱅크') {
+        const q = new URLSearchParams({ bank, accountNo: account.replace(/\D/g, ''), amount: String(amount), origin: 'qr' });
+        return `supertoss://send?${q}`;
+    }
+    return BANK_APP_SCHEMES[bank];
 };
 
 type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
@@ -50,7 +58,12 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
     const amount = mine ? mine.amount : payment.total_amount;
     const paidCount = payment.targets.filter((t) => t.paid_at).length;
     const account = `${payment.bank_name} ${payment.account_number}`;
-    const bankAppUrl = isNative ? BANK_APP_URLS[payment.bank_name] : undefined;
+    const bankAppUrl = isNative && mine ? bankAppLink(payment.bank_name, payment.account_number, mine.amount) : undefined;
+    const [appFailed, setAppFailed] = useState(false);
+    const openBankApp = () =>
+        getBridge()
+            .request('openExternal', { url: bankAppUrl as string })
+            .catch(() => copyText(account).then(() => setAppFailed(true)));
     const subtitle = !mine
         ? `${payment.targets.length}명에게 청구`
         : mine.order_amount != null
@@ -139,12 +152,8 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
             ) : mine ? (
                 <div className="mt-4 flex items-center justify-end gap-3">
                     {bankAppUrl && (
-                        <button
-                            type="button"
-                            onClick={() => getBridge().send('openExternal', { url: bankAppUrl })}
-                            className="mr-auto text-[12px] text-[#646464]"
-                        >
-                            은행 앱 열기
+                        <button type="button" onClick={openBankApp} className="mr-auto text-[12px] text-[#646464]">
+                            {appFailed ? '앱을 찾을 수 없어 계좌를 복사했어요' : '은행 앱 열기'}
                         </button>
                     )}
                     {mine.paid_at ? (
