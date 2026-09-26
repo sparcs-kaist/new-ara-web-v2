@@ -42,7 +42,6 @@ export interface StoreDetail extends StoreSummary {
     is_staff: boolean;
 }
 
-// The ops list/create/update shape: every editable field, no menus/notices.
 export interface OpsStore extends StoreSummary {
     intro: string;
     phone: string;
@@ -57,7 +56,7 @@ export type NoticeFields = Pick<StoreNotice, 'title' | 'body' | 'starts_at' | 'e
 
 export interface OpsUser {
     id: number;
-    nickname: string;
+    nickname: string | null;
     email: string;
     group: string | number;
 }
@@ -67,7 +66,7 @@ export type OpsStaff = OpsUser;
 export interface OpsRestaurant {
     id: number;
     code: string | null;
-    name: string;
+    restaurant_name: string;
     display_name: string;
     is_active: boolean;
 }

@@ -117,7 +117,7 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
                     <Field label="학식 식당 연결">
                         <select name="restaurant" className={`${inputCls} w-[380px]`} value={form.restaurant ?? ''} onChange={(e) => set('restaurant', e.target.value ? Number(e.target.value) : null)}>
                             <option value="">연결 안 함</option>
-                            {restaurants.map((r) => <option key={r.id} value={r.id}>{r.display_name || r.name}</option>)}
+                            {restaurants.map((r) => <option key={r.id} value={r.id}>{r.display_name || r.restaurant_name}</option>)}
                         </select>
                     </Field>
                     <Field label="대표 사진">

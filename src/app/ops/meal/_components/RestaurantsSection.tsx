@@ -33,7 +33,7 @@ function Row({ restaurant }: { restaurant: OpsRestaurant }) {
         setBusy(true);
         setStatus(null);
         try {
-            await opsUpdateRestaurant(restaurant.id, { display_name: draft.display_name.trim(), code: draft.code.trim(), is_active: draft.is_active });
+            await opsUpdateRestaurant(restaurant.id, { display_name: draft.display_name.trim(), code: draft.code.trim() || null, is_active: draft.is_active });
             setStatus({ ok: true, text: '저장했어요.' });
             qc.invalidateQueries({ queryKey: OPS_RESTAURANTS_KEY });
         } catch (e) {
@@ -45,14 +45,14 @@ function Row({ restaurant }: { restaurant: OpsRestaurant }) {
 
     return (
         <tr className={draft.is_active ? '' : 'text-[#8A8A8A]'}>
-            <td className={`${tdCls} font-medium`}>{restaurant.name}</td>
+            <td className={`${tdCls} font-medium`}>{restaurant.restaurant_name}</td>
             <td className={tdCls}>
                 <input name={`display_name-${restaurant.id}`} className={`${inputCls} w-full`} value={draft.display_name} onChange={(e) => setDraft((d) => ({ ...d, display_name: e.target.value }))} />
             </td>
             <td className={tdCls}>
                 <input name={`code-${restaurant.id}`} className={`${inputCls} w-full`} placeholder="fclt" value={draft.code} onChange={(e) => setDraft((d) => ({ ...d, code: e.target.value }))} />
             </td>
-            <td className={tdCls}><Toggle on={draft.is_active} onChange={(on) => setDraft((d) => ({ ...d, is_active: on }))} label={`${restaurant.name} 운영`} /></td>
+            <td className={tdCls}><Toggle on={draft.is_active} onChange={(on) => setDraft((d) => ({ ...d, is_active: on }))} label={`${restaurant.restaurant_name} 운영`} /></td>
             <td className={tdCls}>
                 <div className="flex items-center gap-3">
                     <Button variant="text" onClick={save} disabled={busy}>저장</Button>

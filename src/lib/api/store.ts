@@ -18,7 +18,6 @@ import type {
 
 export { apiDetail } from '@/lib/api/delivery';
 
-// public
 export const fetchStores = async (zone?: Zone) => {
     const qs = queryBuilder({ zone });
     const { data } = await http.get<StoreSummary[]>(`stores/${qs ? `?${qs}` : ''}`);
@@ -30,7 +29,6 @@ export const fetchStore = async (id: number) => {
     return data;
 };
 
-// staff (StoreStaff of that store, or ops)
 export const updateStore = async (id: number, body: FormData | Partial<StaffStoreFields>) => {
     const { data } = await http.patch<StoreDetail>(`stores/${id}/`, body);
     return data;
@@ -69,7 +67,6 @@ export const fetchMyStores = async () => {
     return data;
 };
 
-// ops (is_staff only; 403 otherwise)
 export const opsFetchStores = async () => {
     const { data } = await http.get<OpsStore[]>('ops/stores/');
     return data;
@@ -116,7 +113,7 @@ export const opsFetchRestaurants = async () => {
     return data;
 };
 
-export const opsUpdateRestaurant = async (id: number, body: { display_name?: string; code?: string; is_active?: boolean }) => {
+export const opsUpdateRestaurant = async (id: number, body: { display_name?: string; code?: string | null; is_active?: boolean }) => {
     const { data } = await http.patch<OpsRestaurant>(`ops/restaurants/${id}/`, body);
     return data;
 };

@@ -12,6 +12,8 @@ function Avatar() {
     return <span className="h-8 w-8 shrink-0 rounded-full bg-[#EFEFEF]" />;
 }
 
+const label = (u: OpsUser) => u.nickname ?? u.email;
+
 export default function StaffView({ store, onBack }: { store: OpsStore; onBack: () => void }) {
     const qc = useQueryClient();
     const staff = useQuery({ queryKey: opsStaffKey(store.id), queryFn: () => opsFetchStaff(store.id) });
@@ -54,7 +56,7 @@ export default function StaffView({ store, onBack }: { store: OpsStore; onBack: 
                 delete next[user.id];
                 return next;
             });
-            setSearchStatus({ ok: true, text: `${user.nickname}님을 직원으로 지정했어요.` });
+            setSearchStatus({ ok: true, text: `${label(user)}님을 직원으로 지정했어요.` });
             qc.invalidateQueries({ queryKey: opsStaffKey(store.id) });
         } catch (e) {
             if (isGroupRequired(e)) setNeedsGroup((m) => ({ ...m, [user.id]: apiDetail(e) }));
@@ -69,7 +71,7 @@ export default function StaffView({ store, onBack }: { store: OpsStore; onBack: 
         setBusy(removeTarget.id);
         try {
             await opsRemoveStaff(store.id, removeTarget.id);
-            setRemoveStatus({ ok: true, text: `${removeTarget.nickname}님을 해제했어요.` });
+            setRemoveStatus({ ok: true, text: `${label(removeTarget)}님을 해제했어요.` });
             qc.invalidateQueries({ queryKey: opsStaffKey(store.id) });
         } catch (e) {
             setRemoveStatus({ ok: false, text: apiDetail(e) });
@@ -99,7 +101,7 @@ export default function StaffView({ store, onBack }: { store: OpsStore; onBack: 
                                     <div className="flex items-center gap-3">
                                         <Avatar />
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-[14px] font-medium">{u.nickname}</p>
+                                            <p className="truncate text-[14px] font-medium">{label(u)}</p>
                                             <p className="truncate text-[13px] text-[#8A8A8A]">{u.email}</p>
                                         </div>
                                         {assigned ? (
@@ -129,7 +131,7 @@ export default function StaffView({ store, onBack }: { store: OpsStore; onBack: 
                             <li key={s.id} className="flex items-center gap-3 border-b border-[#F0F0F0] py-3 last:border-0">
                                 <Avatar />
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[14px] font-medium">{s.nickname}</p>
+                                    <p className="truncate text-[14px] font-medium">{label(s)}</p>
                                     <p className="truncate text-[13px] text-[#8A8A8A]">{s.email}</p>
                                 </div>
                                 <Button onClick={() => setRemoveTarget(s)} disabled={busy !== null}>해제</Button>
@@ -142,7 +144,7 @@ export default function StaffView({ store, onBack }: { store: OpsStore; onBack: 
             <p className="mt-6 text-[13px] text-[#666666]">직원으로 지정되면 앱에서 해당 업체의 메뉴를 직접 편집할 수 있어요.</p>
             {removeTarget && (
                 <ConfirmDialog
-                    title={`${removeTarget.nickname}님을 직원에서 해제할까요?`}
+                    title={`${label(removeTarget)}님을 직원에서 해제할까요?`}
                     secondary={{ label: '취소', onClick: () => setRemoveTarget(null) }}
                     primary={{ label: '해제', onClick: remove, disabled: busy !== null }}
                     onClose={() => setRemoveTarget(null)}

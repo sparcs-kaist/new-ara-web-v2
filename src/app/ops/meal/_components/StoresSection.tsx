@@ -62,7 +62,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                                 <div className="flex gap-4">
                                     <Button variant="text" onClick={() => setView({ kind: 'edit', store: s })}>편집</Button>
                                     <Button variant="text" onClick={() => setView({ kind: 'staff', store: s })}>직원</Button>
-                                    <Button variant="text" onClick={() => setView({ kind: 'menus', store: s })}>메뉴</Button>
+                                    <Button variant="text" onClick={() => setView({ kind: 'menus', store: s })} disabled={!s.is_active} title={s.is_active ? undefined : '운영 중인 업체만 메뉴를 편집할 수 있어요'}>메뉴</Button>
                                 </div>
                             </td>
                         </tr>
