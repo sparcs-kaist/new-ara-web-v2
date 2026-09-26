@@ -8,7 +8,6 @@ import React, {
     useEffect,
 } from 'react';
 import { uploadAttachments } from '@/lib/api/post';
-import { AddIcon, ClipBadgeIcon } from '@/app/web_view/_components';
 import { ChevronDownIcon, ChevronUpIcon, CloseCircleIcon } from './icons';
 
 const ALLOWED_EXTENSIONS = [
@@ -41,6 +40,7 @@ export interface AttachmentsHandles {
     handleUpload: (files: FileList | File[]) => Promise<UploadObject[]>;
     files: UploadObject[];
     openImageUpload: () => void;
+    openFilePicker: () => void;
 }
 
 export interface AttachmentsProps {
@@ -49,6 +49,7 @@ export interface AttachmentsProps {
     onDelete?: (file: UploadObject) => void;
     accepted?: string; // ex) ".png,.jpg"
     initialFiles?: UploadObject[]; // Edit mode: preload existing attachments
+    inlineImageKeys?: string[]; // 본문에 이미 이미지로 보이는 첨부는 목록에서 뺀다
 }
 
 // 44px 행 3개 + 5px 간격 2개 + 위쪽 10px (Flutter와 동일한 최대 높이)
@@ -64,12 +65,12 @@ const formatBytes = (bytes: number) => {
 
 /**
  * Flutter `_buildAttachmentShow` (post_write_page.dart 963-1332).
- * 첨부가 없으면 clip + "첨부파일 추가", 있으면 add 아이콘과 "첨부파일 N"
- * 토글이 나오고 그 아래에 파일 목록이 펼쳐진다.
+ * 첨부가 있을 때만 "첨부파일 N" 토글과 그 아래 파일 목록이 나온다.
+ * 추가는 글쓰기 하단 바의 clip 버튼이 `openFilePicker`로 연다.
  */
 const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
     (props, ref) => {
-        const { multiple = false, onAdd, onDelete, accepted, initialFiles } = props;
+        const { multiple = false, onAdd, onDelete, accepted, initialFiles, inlineImageKeys } = props;
 
         const [files, setFiles] = useState<UploadObject[]>([]);
         const [listOpen, setListOpen] = useState(true);
@@ -228,6 +229,8 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
             if (onDelete) onDelete(file);
         };
 
+        const pickFile = () => fileInputRef.current?.click();
+
         // 외부에서 접근 가능한 메서드
         useImperativeHandle(
             ref,
@@ -237,46 +240,34 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                 openImageUpload: () => {
                     imageInputRef.current?.click();
                 },
+                openFilePicker: pickFile,
             }),
             [files, handleUpload],
         );
 
-        const pickFile = () => fileInputRef.current?.click();
+        const listedFiles = inlineImageKeys?.length
+            ? files.filter((f) => !inlineImageKeys.includes(f.key))
+            : files;
 
         return (
             <div className="w-full">
-                {files.length === 0 ? (
-                    <button
-                        type="button"
-                        onClick={pickFile}
-                        className="flex h-[34px] items-center px-[20px] text-[#636363]"
-                    >
-                        <ClipBadgeIcon size={34} />
-                        <span className="ml-[4px] text-[16px] font-medium text-[#636363]">
-                            {dropzoneFailedReason === 'dropzone-unallowed-extensions'
-                                ? '허용되지 않은 확장자입니다.'
-                                : '첨부파일 추가'}
-                        </span>
-                    </button>
-                ) : (
+                {dropzoneFailedReason === 'dropzone-unallowed-extensions' && (
+                    <p className="px-[20px] pt-[6px] text-[14px] font-medium text-ara_red">
+                        허용되지 않은 확장자입니다.
+                    </p>
+                )}
+
+                {listedFiles.length > 0 && (
                     <>
                         <div className="flex h-[34px] items-center px-[20px]">
                             <button
                                 type="button"
-                                onClick={pickFile}
-                                aria-label="첨부파일 추가"
-                                className="rounded-full text-ara_red"
-                            >
-                                <AddIcon size={34} />
-                            </button>
-                            <button
-                                type="button"
                                 onClick={() => setListOpen((o) => !o)}
-                                className="ml-auto flex h-[34px] items-center"
+                                className="flex h-[34px] items-center"
                             >
                                 <span className="text-[16px] font-medium text-black">첨부파일</span>
                                 <span className="ml-[8px] text-[16px] font-medium text-ara_red">
-                                    {files.length}
+                                    {listedFiles.length}
                                 </span>
                                 <span className="ml-[5px] text-ara_red">
                                     {listOpen ? (
@@ -288,18 +279,12 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                             </button>
                         </div>
 
-                        {dropzoneFailedReason === 'dropzone-unallowed-extensions' && (
-                            <p className="px-[20px] pt-[6px] text-[14px] font-medium text-ara_red">
-                                허용되지 않은 확장자입니다.
-                            </p>
-                        )}
-
                         {listOpen && (
                             <div
                                 className="overflow-y-auto px-[15px] pt-[10px]"
                                 style={{ maxHeight: LIST_MAX_HEIGHT }}
                             >
-                                {files.map((file, index) => (
+                                {listedFiles.map((file, index) => (
                                     <div
                                         key={file.key}
                                         className={`flex h-[44px] items-center rounded-[15px] border border-[#F0F0F0] pl-[12px] pr-[6px] ${index === 0 ? '' : 'mt-[5px]'}`}
