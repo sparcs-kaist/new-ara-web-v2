@@ -129,7 +129,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user?.id !== myId) : null;
     const partnerMember = myId !== null && detailRoom?.id === roomId ? dmPartner ?? members.find(m => m.user?.id === myId) : undefined;
-    const headerPartner = !partnerMember ? undefined
+    const headerPartner = !partnerMember ? room?.partner
         // members에는 탈퇴 여부가 없어 서버가 준 partner(null = 탈퇴)를 따른다
         : !partnerMember.user || (dmPartner && detailRoom?.partner === null) ? null
         : { id: partnerMember.user.id, nickname: partnerMember.user.profile?.nickname ?? '', picture: partnerMember.user.profile?.picture };

@@ -49,8 +49,8 @@ export type RestaurantId = 1 | 2 | 3 | 4 | 5;
 export const RESTAURANT_NAMES: Record<RestaurantId, string> = {
   1: '카이마루',
   2: '서맛골',
-  3: '동맛골 1층',
-  4: '동맛골 2층 (교직원 식당)',
+  3: '동맛골 1층 (학생식당)',
+  4: '동맛골 2층 (교직원식당)',
   5: '교수회관'
 };
 

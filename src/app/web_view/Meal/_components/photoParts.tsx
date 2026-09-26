@@ -7,7 +7,7 @@ import { MEAL_SLOTS, restaurantName, type MealPhoto, type MealSlot } from '@/lib
 
 export function PhotoLabel({ children }: { children: ReactNode }) {
     return (
-        <span className="absolute left-2 top-2 rounded-[6px] bg-black/55 px-[6px] py-[2px] text-[11px] font-semibold leading-[15px] text-white">
+        <span className="absolute left-2 top-2 max-w-[calc(100%-16px)] break-keep rounded-[6px] bg-black/55 px-[6px] py-[2px] text-[11px] font-semibold leading-[15px] text-white">
             {children}
         </span>
     );

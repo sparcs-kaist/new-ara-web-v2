@@ -67,10 +67,10 @@ export default function RestaurantNavigator({
   };
 
   return (
-    <div className="flex justify-between items-center w-full py-2 relative px-[15px]">
-      <div ref={restaurantSelectorRef} className="relative">
-        <button type="button" className="flex items-center" onClick={handleRestaurantClick}>
-          <div className="text-zinc-800 text-base font-bold">
+    <div className="flex justify-between items-center gap-2 w-full py-2 relative px-[15px]">
+      <div ref={restaurantSelectorRef} className="relative min-w-0">
+        <button type="button" className="flex items-center max-w-full" onClick={handleRestaurantClick}>
+          <div className="text-zinc-800 text-base font-bold truncate">
             {RESTAURANT_NAMES[selectedRestaurant]}
           </div>
           <div className="ml-1">
