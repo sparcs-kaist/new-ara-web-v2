@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { Skeleton } from '@/app/web_view/_components';
 
-const CARD = 'h-[99px] rounded-[14px] border-[0.2px] border-[#E6E7EA] bg-white px-[11px] py-[6px] drop-shadow-[0_4px_2px_rgba(0,0,0,0.1)]';
+const CARD = 'h-[99px] rounded-[14px] bg-white px-[11px] py-[6px] shadow-[0_0_0_0.2px_#E6E7EA] drop-shadow-[0_4px_2px_rgba(0,0,0,0.1)]';
 
 export function BoardCard({
     caption,
@@ -19,7 +19,7 @@ export function BoardCard({
     onPress: () => void;
 }) {
     return (
-        <button type="button" onClick={onPress} className={`${CARD} block w-full text-left`}>
+        <button type="button" onClick={onPress} className={`${CARD} flex w-full flex-col text-left`}>
             <span className="block truncate text-[13px] font-medium leading-[16px] tracking-[-0.78px] text-[#808080]">{caption || '\u00A0'}</span>
             <span className="mt-[6px] block truncate text-[19px] font-bold leading-[23px] text-black">{title}</span>
             <span className="mt-[3px] block h-px bg-[#E6E7EA]" />

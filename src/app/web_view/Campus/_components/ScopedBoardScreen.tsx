@@ -40,6 +40,7 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
     }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
     const forbidden = isError && errorStatus(error) === 403;
+    const showWrite = canWrite && !isPending && !forbidden;
 
     return (
         <Screen>
@@ -68,7 +69,7 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
                 }
             />
 
-            <div className="px-5 pb-3 pt-4">
+            <div className={`px-5 pt-4 ${lines.length > 0 ? 'pb-1' : 'pb-3'}`}>
                 {pending ? (
                     <>
                         <Skeleton className="h-[26px] w-[60%] rounded" />
@@ -116,7 +117,7 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
 
                     {!isPending && posts.length === 0 && <div className="px-6 py-16 text-center text-[14px] text-[#B1B1B1]">게시물이 없습니다.</div>}
 
-                    <div ref={sentinelRef} aria-hidden className="h-8" />
+                    <div ref={sentinelRef} aria-hidden className={showWrite ? 'h-24' : 'h-8'} />
                     {isPending ? (
                         <CenteredSpinner padY={48} />
                     ) : isFetching ? (
@@ -127,7 +128,7 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
                 </>
             )}
 
-            {canWrite && !forbidden && (
+            {showWrite && (
                 <button
                     type="button"
                     aria-label="글쓰기"
