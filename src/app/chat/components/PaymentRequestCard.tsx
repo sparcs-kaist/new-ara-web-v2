@@ -11,11 +11,23 @@ import { formatWon, withSubject } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatPaymentTarget } from '@/lib/types/chat';
 import { copyText } from './MessageContextMenu';
 
-// The payer sends from their own app; Toss transfers to any bank, so the requester's bank is only data here.
-const tossSendLink = (bank: string, account: string, amount: number) => {
-    const q = new URLSearchParams({ bank, accountNo: account.replace(/\D/g, ''), amount: String(amount), origin: 'qr' });
-    return `supertoss://send?${q}`;
-};
+// The payer picks their own app every time, like a share sheet. Only Toss can prefill the transfer;
+// the other apps just open, so the account is copied first for pasting.
+const TRANSFER_APPS: { name: string; url: (bank: string, account: string, amount: number) => string; note: string }[] = [
+    {
+        name: '토스',
+        note: '은행·계좌·금액이 채워져요',
+        url: (bank, account, amount) => {
+            const q = new URLSearchParams({ bank, accountNo: account.replace(/\D/g, ''), amount: String(amount), origin: 'qr' });
+            return `supertoss://send?${q}`;
+        },
+    },
+    { name: '카카오뱅크', note: '앱을 열고 계좌번호를 복사해 둘게요', url: () => 'kakaobank://' },
+    { name: 'KB국민은행', note: '앱을 열고 계좌번호를 복사해 둘게요', url: () => 'kbbank://' },
+    { name: '신한 SOL뱅크', note: '앱을 열고 계좌번호를 복사해 둘게요', url: () => 'shinhan-sr-ssb://' },
+    { name: '우리WON뱅킹', note: '앱을 열고 계좌번호를 복사해 둘게요', url: () => 'newsmartpib://' },
+    { name: 'NH올원뱅크', note: '앱을 열고 계좌번호를 복사해 둘게요', url: () => 'nhallonebank://' },
+];
 
 type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
 
@@ -46,11 +58,19 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
     const amount = mine ? mine.amount : payment.total_amount;
     const paidCount = payment.targets.filter((t) => t.paid_at).length;
     const account = `${payment.bank_name} ${payment.account_number}`;
-    const [tossFailed, setTossFailed] = useState(false);
-    const openToss = (sendAmount: number) =>
-        getBridge()
-            .request('openExternal', { url: tossSendLink(payment.bank_name, payment.account_number, sendAmount) })
-            .catch(() => copyText(account).then(() => setTossFailed(true)));
+    const [appSheet, setAppSheet] = useState(false);
+    const [appNote, setAppNote] = useState<string | null>(null);
+    const openApp = async (app: (typeof TRANSFER_APPS)[number] | null, sendAmount: number) => {
+        setAppSheet(false);
+        await copyText(account);
+        if (!app) return setAppNote('계좌를 복사했어요');
+        try {
+            await getBridge().request('openExternal', { url: app.url(payment.bank_name, payment.account_number, sendAmount) });
+            setAppNote(app.name === '토스' ? null : '계좌를 복사했어요');
+        } catch {
+            setAppNote(`${app.name} 앱이 없어 계좌만 복사했어요`);
+        }
+    };
     const subtitle = !mine
         ? `${payment.targets.length}명에게 청구`
         : mine.order_amount != null
@@ -141,10 +161,10 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
                     {isNative && (
                         <button
                             type="button"
-                            onClick={() => openToss(mine.amount)}
+                            onClick={() => setAppSheet(true)}
                             className="mr-auto break-keep text-left text-[12px] text-[#646464]"
                         >
-                            {tossFailed ? '토스가 없어 계좌를 복사했어요' : '토스로 보내기'}
+                            {appNote ?? '송금 앱 열기'}
                         </button>
                     )}
                     {mine.paid_at ? (
@@ -183,6 +203,17 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
                         </span>
                     </div>
                 )
+            )}
+
+            {mine && (
+                <BottomSheet open={appSheet} onClose={() => setAppSheet(false)} title="어떤 앱으로 보낼까요?">
+                    <div className="divide-y divide-[#F0F0F0] px-5 pb-2">
+                        {TRANSFER_APPS.map((app) => (
+                            <MenuRow key={app.name} title={app.name} description={app.note} onClick={() => openApp(app, mine.amount)} />
+                        ))}
+                        <MenuRow title="계좌만 복사" description="다른 앱에 직접 붙여넣어요" onClick={() => openApp(null, mine.amount)} />
+                    </div>
+                </BottomSheet>
             )}
 
             <BottomSheet open={menuOpen} onClose={() => setMenuOpen(false)}>
