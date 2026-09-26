@@ -3,6 +3,8 @@
 import { useCallback } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchMyStores, fetchStore, fetchStoreEvents, fetchStores } from '@/lib/api/store';
+import { isRolloutUser } from '@/app/web_view/_components/features';
+import { isTestStoreId, testStoreDetail, testStores } from '@/app/web_view/Meal/Stores/_testStores';
 import { useMe } from './hooks';
 
 export const STORES_KEY = ['webview', 'stores'] as const;
@@ -11,9 +13,15 @@ export const storeEventsKey = (id: number) => [...STORES_KEY, 'events', id] as c
 export const MY_STORES_KEY = [...STORES_KEY, 'mine'] as const;
 
 export function useStores(q = '') {
+    // TEMPORARY: rollout users see test stores while the stores table is empty (or the API is not deployed).
+    const withTestStores = isRolloutUser(useMe().data);
     return useQuery({
-        queryKey: [...STORES_KEY, 'list', q],
-        queryFn: () => fetchStores({ q }),
+        queryKey: [...STORES_KEY, 'list', q, withTestStores],
+        queryFn: async () => {
+            if (!withTestStores) return fetchStores({ q });
+            const real = await fetchStores({ q }).catch(() => []);
+            return real.length ? real : testStores(q);
+        },
         staleTime: 5 * 60_000,
         placeholderData: keepPreviousData,
     });
@@ -22,7 +30,8 @@ export function useStores(q = '') {
 export function useStore(id: number) {
     return useQuery({
         queryKey: storeKey(id),
-        queryFn: () => fetchStore(id),
+        // TEMPORARY: test store ids never reach the API.
+        queryFn: () => (isTestStoreId(id) ? testStoreDetail(id) : fetchStore(id)),
         enabled: Number.isFinite(id) && id > 0,
         retry: false,
     });
