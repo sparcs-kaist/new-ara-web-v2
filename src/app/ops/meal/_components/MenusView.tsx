@@ -131,7 +131,7 @@ function MenuForm({
         setStatus(null);
         try {
             const fields = {
-                category: draft.category ? Number(draft.category) : null,
+                category: categories.some((c) => String(c.id) === draft.category) ? Number(draft.category) : null,
                 name: draft.name.trim(),
                 price: Number(draft.price),
                 description: draft.description.trim(),

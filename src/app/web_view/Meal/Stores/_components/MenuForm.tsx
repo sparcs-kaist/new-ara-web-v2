@@ -45,7 +45,14 @@ export function MenuForm({
         setError(null);
         try {
             const body = menuFormData(
-                { name: name.trim(), price: Number(price), description: description.trim(), category, is_signature: isSignature, is_sold_out: isSoldOut },
+                {
+                    name: name.trim(),
+                    price: Number(price),
+                    description: description.trim(),
+                    category: categories.some((c) => c.id === category) ? category : null,
+                    is_signature: isSignature,
+                    is_sold_out: isSoldOut,
+                },
                 photo.picked?.file,
             );
             if (menu) await updateMenu(storeId, menu.id, body);
