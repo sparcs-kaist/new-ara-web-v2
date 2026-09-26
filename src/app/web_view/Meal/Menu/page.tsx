@@ -62,9 +62,8 @@ function MealPageInner() {
 
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const restaurants = useRestaurants();
-  // 불러오는 중의 목록과 API 목록은 id가 다를 수 있어 코드로 고른다
-  const [restaurantCode, setRestaurantCode] = useState<string | null>(null);
-  const restaurant = restaurants.find((r) => r.code === restaurantCode) ?? defaultRestaurant(restaurants);
+  const [restaurantId, setRestaurantId] = useState<number | null>(null);
+  const restaurant = restaurants.find((r) => r.id === restaurantId) ?? defaultRestaurant(restaurants);
   const selectedRestaurant = restaurant.id;
   const [selectedTime, setSelectedTime] = useState<string>(
     () => MEAL_SLOTS.find((slot) => slot.time === timeParam)?.time ?? currentMealSlot().time
@@ -106,8 +105,8 @@ function MealPageInner() {
     setSelectedDate(date);
   };
 
-  const handleRestaurantChange = (code: string) => {
-    setRestaurantCode(code);
+  const handleRestaurantChange = (id: number) => {
+    setRestaurantId(id);
   };
 
   const handleMealTimeChange = (mealTime: string) => {

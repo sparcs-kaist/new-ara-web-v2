@@ -44,7 +44,7 @@ export type MealTimeKey = `${MealTime}_menu`;
 
 export interface Restaurant {
   id: number;
-  code: string;
+  code: string | null;
   name: string;
   display_name: string;
   is_active: boolean;
@@ -66,7 +66,7 @@ const RESTAURANT_NAME_OVERRIDES: Record<string, string> = {
 };
 
 export function displayRestaurantName(restaurant: Restaurant): string {
-  return RESTAURANT_NAME_OVERRIDES[restaurant.code] ?? (restaurant.display_name || restaurant.name);
+  return (restaurant.code && RESTAURANT_NAME_OVERRIDES[restaurant.code]) || restaurant.display_name || restaurant.name;
 }
 
 export function defaultRestaurant(restaurants: Restaurant[]): Restaurant {

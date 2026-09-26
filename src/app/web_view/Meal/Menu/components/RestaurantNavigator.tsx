@@ -19,7 +19,7 @@ interface RestaurantNavigatorProps {
   restaurants: Restaurant[];
   selectedRestaurant: Restaurant;
   selectedMealTime: string;
-  onRestaurantChange?: (code: string) => void;
+  onRestaurantChange?: (id: number) => void;
   onMealTimeChange?: (time: string) => void;
 }
 
@@ -55,10 +55,10 @@ export default function RestaurantNavigator({
     setShowRestaurantModal(true);
   };
 
-  const handleRestaurantSelect = (code: string) => {
+  const handleRestaurantSelect = (id: number) => {
     setShowRestaurantModal(false);
     if (onRestaurantChange) {
-      onRestaurantChange(code);
+      onRestaurantChange(id);
     }
   };
 
@@ -85,7 +85,7 @@ export default function RestaurantNavigator({
             <RestaurantSelection 
               restaurants={restaurants}
               onSelect={handleRestaurantSelect} 
-              selected={selectedRestaurant.code}
+              selected={selectedRestaurant.id}
             />
           </div>
         )}

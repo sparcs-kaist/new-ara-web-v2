@@ -24,8 +24,8 @@ export default function RestaurantSelection({
   selected
 }: { 
   restaurants: Restaurant[];
-  onSelect?: (code: string) => void; 
-  selected: string 
+  onSelect?: (id: number) => void; 
+  selected: number 
 }) {
   return (
     <div
@@ -45,9 +45,9 @@ export default function RestaurantSelection({
           <button
             type="button"
             className="w-full px-[5px] py-3 flex items-center gap-[5px] text-left hover:bg-gray-50"
-            onClick={() => onSelect?.(restaurant.code)}
+            onClick={() => onSelect?.(restaurant.id)}
           >
-            {selected === restaurant.code ? <CheckIcon /> : <EmptyCheckIcon />}
+            {selected === restaurant.id ? <CheckIcon /> : <EmptyCheckIcon />}
             <div className="text-[16px] font-normal">
               {displayRestaurantName(restaurant)}
             </div>
