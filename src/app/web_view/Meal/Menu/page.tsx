@@ -15,12 +15,11 @@ import {
   MealResponse,
   Course,
   CafeteriaMenu,
-  getRestaurantIdFromDisplayName,
-  getMenuTypeFromRestaurantName,
   timeStringToMealType,
   currentMealSlot,
   ALLERGEN_MAP,
   MEAL_SLOTS,
+  type RestaurantId,
 } from '@/lib/types/meal';
 
 // 알러지 이름을 ID로 변환하는 함수
@@ -61,20 +60,17 @@ function MealPageInner() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
-  const [selectedRestaurant, setSelectedRestaurant] = useState<string>('카이마루');
+  const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantId>(1);
   const [selectedTime, setSelectedTime] = useState<string>(
     () => MEAL_SLOTS.find((slot) => slot.time === timeParam)?.time ?? currentMealSlot().time
   );
   const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
 
-  const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
-
   useEffect(() => {
     const fetchCurrentData = async () => {
-      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
       const mealType = timeStringToMealType(selectedTime);
       const formattedDate = convertDateFormat(selectedDate);
-      const key = `${formattedDate}-${restaurantId}-${mealType}`;
+      const key = `${formattedDate}-${selectedRestaurant}-${mealType}`;
 
       if (mealData[key]) return;
 
@@ -84,7 +80,7 @@ function MealPageInner() {
           ? getAllergyIdsFromNames(selectedAllergies)
           : undefined;
 
-        const data = await fetchMeal(formattedDate, restaurantId, mealType, allergyCodes);
+        const data = await fetchMeal(formattedDate, selectedRestaurant, mealType, allergyCodes);
 
         setMealData(prev => ({
           ...prev,
@@ -105,7 +101,7 @@ function MealPageInner() {
     setSelectedDate(date);
   };
 
-  const handleRestaurantChange = (restaurant: string) => {
+  const handleRestaurantChange = (restaurant: RestaurantId) => {
     setSelectedRestaurant(restaurant);
   };
 
@@ -117,30 +113,9 @@ function MealPageInner() {
     setSelectedAllergies(allergies);
   };
 
-  const getCurrentMenuData = (): Course[] | CafeteriaMenu[] => {
-    try {
-      const restaurantId = getRestaurantIdFromDisplayName(selectedRestaurant);
-      const mealType = timeStringToMealType(selectedTime);
-      const formattedDate = convertDateFormat(selectedDate);
-      const key = `${formattedDate}-${restaurantId}-${mealType}`;
-
-      const data = mealData[key];
-      if (!data) return [];
-
-      const menuType = getMenuTypeFromRestaurantName(selectedRestaurant);
-
-      if (menuType === 'course') {
-        return data.courses || [];
-      } else {
-        return data.cafeteria_menus || [];
-      }
-    } catch (error) {
-      console.error("error:", error);
-      return [];
-    }
-  };
-
-  const currentMenuData = getCurrentMenuData();
+  const currentData = mealData[`${convertDateFormat(selectedDate)}-${selectedRestaurant}-${timeStringToMealType(selectedTime)}`];
+  const menuType = !currentData?.courses?.length && currentData?.cafeteria_menus?.length ? 'cafeteria' : 'course';
+  const currentMenuData: Course[] | CafeteriaMenu[] = (menuType === 'course' ? currentData?.courses : currentData?.cafeteria_menus) ?? [];
 
   return (
     <Screen withTabBar={false} className="items-center">

@@ -1,16 +1,6 @@
 'use client'
 
-import { useState } from 'react';
-
-// 식당 이름만 배열로 관리 (id 제거)
-const restaurantNames = [
-  '카이마루',
-  '동맛골 1층 (일품)',
-  '동맛골 1층 (카페테리아)',
-  '동맛골 2층 (동측 교직원식당)',
-  '서맛골',
-  '교수회관',
-];
+import { RESTAURANT_IDS, RESTAURANT_NAMES, type RestaurantId } from '@/lib/types/meal';
 
 // 체크 아이콘 컴포넌트
 const CheckIcon = () => (
@@ -30,20 +20,11 @@ const EmptyCheckIcon = () => (
 
 export default function RestaurantSelection({ 
   onSelect, 
-  defaultSelected = 2  // 인덱스로 기본값 설정 (카페테리아 = 2)
+  selected
 }: { 
-  onSelect?: (name: string) => void; 
-  defaultSelected?: number 
+  onSelect?: (id: RestaurantId) => void; 
+  selected: RestaurantId 
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(defaultSelected);
-
-  const handleSelect = (index: number) => {
-    setSelectedIndex(index);
-    if (onSelect) {
-      onSelect(restaurantNames[index]);
-    }
-  };
-
   return (
     <div
       className="w-60 left-0 top-0 absolute rounded-xl shadow-[0px_0px_19.9px_0px_rgba(0,0,0,0.15)] flex flex-col"
@@ -57,21 +38,21 @@ export default function RestaurantSelection({
       <div className="h-px bg-gray-200 w-full"></div>
       
       {/* 식당 목록 */}
-      {restaurantNames.map((name, index) => (
-        <div key={name}>
+      {RESTAURANT_IDS.map((id, index) => (
+        <div key={id}>
           <button
             type="button"
             className="w-full px-[5px] py-3 flex items-center gap-[5px] text-left hover:bg-gray-50"
-            onClick={() => handleSelect(index)}
+            onClick={() => onSelect?.(id)}
           >
-            {selectedIndex === index ? <CheckIcon /> : <EmptyCheckIcon />}
+            {selected === id ? <CheckIcon /> : <EmptyCheckIcon />}
             <div className="text-[16px] font-normal">
-              {name}
+              {RESTAURANT_NAMES[id]}
             </div>
           </button>
           
           {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
-          {index < restaurantNames.length - 1 && (
+          {index < RESTAURANT_IDS.length - 1 && (
             <div className="h-px bg-gray-200 w-full"></div>
           )}
         </div>

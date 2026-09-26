@@ -9,7 +9,7 @@ import { MEAL_PHOTOS_KEY } from '@/app/web_view/_query';
 import { apiDetail } from '@/lib/api/delivery';
 import { deleteMealPhoto } from '@/lib/api/meal';
 import { pad } from '@/lib/delivery';
-import type { MealPhoto } from '@/lib/types/meal';
+import { restaurantName, type MealPhoto } from '@/lib/types/meal';
 
 export interface ViewerState {
     photos: MealPhoto[];
@@ -68,7 +68,7 @@ export function PhotoViewer({ state, onChange }: { state: ViewerState; onChange:
                     <Close2Icon size={22} />
                 </button>
                 <span className="flex-1 text-center text-[15px] font-semibold">
-                    {photo.restaurant.name} <span className="font-normal text-white/60">{index + 1}/{photos.length}</span>
+                    {restaurantName(photo.restaurant)} <span className="font-normal text-white/60">{index + 1}/{photos.length}</span>
                 </span>
                 {photo.is_mine ? (
                     <button type="button" onClick={() => setConfirming(true)} className="h-11 min-w-[44px] px-2 text-[15px] font-medium">
@@ -80,7 +80,7 @@ export function PhotoViewer({ state, onChange }: { state: ViewerState; onChange:
             </div>
 
             <div className="relative min-h-0 flex-1">
-                <Image src={photo.image} alt={photo.comment || `${photo.restaurant.name} 메뉴 사진`} fill sizes="100vw" className="object-contain" />
+                <Image src={photo.image} alt={photo.comment || `${restaurantName(photo.restaurant)} 메뉴 사진`} fill sizes="100vw" className="object-contain" />
                 {index > 0 && (
                     <button
                         type="button"

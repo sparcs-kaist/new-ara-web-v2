@@ -8,7 +8,7 @@ import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
-import { currentMealSlot, type MealSlot } from '@/lib/types/meal';
+import { currentMealSlot, RESTAURANT_NAMES, type MealSlot } from '@/lib/types/meal';
 import { FacilityNotices } from './_components/FacilityNotices';
 import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
 
@@ -41,7 +41,7 @@ export default function MealHomePage() {
                     <span className="relative block text-[11px] font-bold leading-[1.4] text-[#D9776E]">KAIST 학생식당</span>
                     <span className="relative mt-[3px] block text-[20px] font-bold leading-[1.4] text-[#333333]">오늘의 학식</span>
                     <span className="relative mt-[3px] block min-h-[17px] text-[12px] font-medium leading-[1.4] text-[#A8837F]">
-                        {slot && `카이마루 · ${slot.time} ${slot.hours}`}
+                        {slot && `${RESTAURANT_NAMES[1]} · ${slot.time} ${slot.hours}`}
                     </span>
                 </button>
             </div>

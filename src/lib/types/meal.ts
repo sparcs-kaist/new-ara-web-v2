@@ -45,53 +45,19 @@ export type MealTimeKey = `${MealTime}_menu`;
 // 식당 ID 타입 (API에서 사용하는 숫자 ID)
 export type RestaurantId = 1 | 2 | 3 | 4 | 5;
 
-// 식당 ID와 이름 매핑
+// DB와 크롤러는 학교 이름을 쓰고, API가 display_name을 내려주기 전까지 표시 이름은 여기서 정한다
 export const RESTAURANT_NAMES: Record<RestaurantId, string> = {
   1: '카이마루',
   2: '서맛골',
   3: '동맛골 1층',
-  4: '동맛골 2층',
+  4: '동맛골 2층 (교직원 식당)',
   5: '교수회관'
 };
 
 export const RESTAURANT_IDS = Object.keys(RESTAURANT_NAMES).map(Number) as RestaurantId[];
 
-// UI에서 사용하는 식당 표시 이름 배열
-export const RESTAURANT_DISPLAY_NAMES_ARRAY = [
-  '카이마루',
-  '동맛골 1층 (일품)',
-  '동맛골 1층 (카페테리아)',
-  '동맛골 2층 (동측 교직원식당)',
-  '서맛골',
-  '교수회관'
-];
-
-// 식당 표시 이름을 ID로 변환하는 함수
-export function getRestaurantIdFromDisplayName(displayName: string): RestaurantId {
-  switch (displayName) {
-    case '카이마루':
-      return 1;
-    case '서맛골':
-      return 2;
-    case '동맛골 1층 (일품)':
-    case '동맛골 1층 (카페테리아)':
-      return 3; // 둘 다 같은 API ID 사용
-    case '동맛골 2층 (동측 교직원식당)':
-      return 4;
-    case '교수회관':
-      return 5;
-    default:
-      return 1;
-  }
-}
-
-// 식당 이름으로 메뉴 타입 결정 (course or cafeteria)
-export function getMenuTypeFromRestaurantName(displayName: string): 'course' | 'cafeteria' {
-  // 카페테리아가 이름에 포함되어 있으면 cafeteria
-  if (displayName.includes('카페테리아')) {
-    return 'cafeteria';
-  }
-  return 'course';
+export function restaurantName(restaurant: { id: number; name: string }): string {
+  return RESTAURANT_NAMES[restaurant.id as RestaurantId] ?? restaurant.name;
 }
 
 // MealTime enum을 API의 MealType으로 변환

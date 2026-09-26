@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ChoiceChip } from '@/app/web_view/_components';
+import { RESTAURANT_NAMES, type RestaurantId } from '@/lib/types/meal';
 import RestaurantSelection from './RestaurantSelection';
 
 // 식사 시간 배열 - 단순 문자열로 관리
@@ -15,14 +16,14 @@ const ArrowIcon = () => (
 );
 
 interface RestaurantNavigatorProps {
-  selectedRestaurant: string;
+  selectedRestaurant: RestaurantId;
   selectedMealTime: string;
-  onRestaurantChange?: (restaurant: string) => void;
+  onRestaurantChange?: (restaurant: RestaurantId) => void;
   onMealTimeChange?: (time: string) => void;
 }
 
 export default function RestaurantNavigator({
-  selectedRestaurant = '동맛골 1층 (카페테리아)',
+  selectedRestaurant,
   selectedMealTime = '점심',
   onRestaurantChange,
   onMealTimeChange
@@ -52,10 +53,10 @@ export default function RestaurantNavigator({
     setShowRestaurantModal(true);
   };
 
-  const handleRestaurantSelect = (name: string) => {
+  const handleRestaurantSelect = (restaurant: RestaurantId) => {
     setShowRestaurantModal(false);
     if (onRestaurantChange) {
-      onRestaurantChange(name);
+      onRestaurantChange(restaurant);
     }
   };
 
@@ -65,26 +66,12 @@ export default function RestaurantNavigator({
     }
   };
 
-  const getSelectedRestaurantIndex = () => {
-    const restaurantNames = [
-      '카이마루',
-      '동맛골 1층 (일품)',
-      '동맛골 1층 (카페테리아)',
-      '동맛골 2층 (동측 교직원식당)',
-      '서맛골',
-      '교수회관',
-    ];
-    
-    const index = restaurantNames.findIndex(name => name === selectedRestaurant);
-    return index >= 0 ? index : 0;
-  };
-
   return (
     <div className="flex justify-between items-center w-full py-2 relative px-[15px]">
       <div ref={restaurantSelectorRef} className="relative">
         <button type="button" className="flex items-center" onClick={handleRestaurantClick}>
           <div className="text-zinc-800 text-base font-bold">
-            {selectedRestaurant}
+            {RESTAURANT_NAMES[selectedRestaurant]}
           </div>
           <div className="ml-1">
             <ArrowIcon />
@@ -95,7 +82,7 @@ export default function RestaurantNavigator({
           <div className="absolute top-full left-0 mt-1 z-10">
             <RestaurantSelection 
               onSelect={handleRestaurantSelect} 
-              defaultSelected={getSelectedRestaurantIndex()}
+              selected={selectedRestaurant}
             />
           </div>
         )}

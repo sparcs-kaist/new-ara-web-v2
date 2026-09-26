@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { ChoiceChip, ImageBadgeIcon } from '@/app/web_view/_components';
-import { MEAL_SLOTS, type MealPhoto, type MealSlot } from '@/lib/types/meal';
+import { MEAL_SLOTS, restaurantName, type MealPhoto, type MealSlot } from '@/lib/types/meal';
 
 export function PhotoLabel({ children }: { children: ReactNode }) {
     return (
@@ -30,7 +30,7 @@ export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string 
             </span>
         );
     }
-    return <Image src={photo.image} alt={photo.comment || `${photo.restaurant.name} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
+    return <Image src={photo.image} alt={photo.comment || `${restaurantName(photo.restaurant)} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
 }
 
 export function MealSegment({ value, onChange }: { value: string; onChange: (time: MealSlot['time']) => void }) {
