@@ -139,7 +139,11 @@ export default function PaymentRequestCard({ payment, isHost, canDelete = false,
             ) : mine ? (
                 <div className="mt-4 flex items-center justify-end gap-3">
                     {isNative && (
-                        <button type="button" onClick={() => openToss(mine.amount)} className="mr-auto break-keep text-left text-[12px] text-[#646464]">
+                        <button
+                            type="button"
+                            onClick={() => openToss(mine.amount)}
+                            className="mr-auto break-keep text-left text-[12px] text-[#646464]"
+                        >
                             {tossFailed ? '토스가 없어 계좌를 복사했어요' : '토스로 보내기'}
                         </button>
                     )}

@@ -24,6 +24,11 @@ export function PushBanner({
     const [shown, setShown] = useState(false);
     const [dragY, setDragY] = useState(0);
     const drag = useRef({ startY: 0, moved: false });
+    const hideTimer = useRef(0);
+    const armHide = () => {
+        window.clearTimeout(hideTimer.current);
+        hideTimer.current = window.setTimeout(() => setShown(false), SHOW_MS);
+    };
 
     // A newer push swaps the text in place and restarts the timer.
     useEffect(() => {
@@ -31,15 +36,16 @@ export function PushBanner({
         const outer = requestAnimationFrame(() => {
             inner = requestAnimationFrame(() => setShown(true));
         });
-        const hide = window.setTimeout(() => setShown(false), SHOW_MS);
+        armHide();
         return () => {
             cancelAnimationFrame(outer);
             cancelAnimationFrame(inner);
-            window.clearTimeout(hide);
+            window.clearTimeout(hideTimer.current);
         };
     }, [banner.id]);
 
     const onTouchStart = (e: TouchEvent) => {
+        window.clearTimeout(hideTimer.current);
         drag.current = { startY: e.touches[0].clientY, moved: false };
     };
     const onTouchMove = (e: TouchEvent) => {
@@ -49,6 +55,7 @@ export function PushBanner({
     };
     const onTouchEnd = () => {
         if (dragY < -24) setShown(false);
+        else armHide();
         setDragY(0);
     };
     const onClick = () => {

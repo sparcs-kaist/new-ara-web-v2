@@ -177,7 +177,7 @@ function composerNote(party: DeliveryParty, payments: ChatPaymentRequest[]): str
         case 'RECRUITING':
             return '방장이 주문을 확정하기 전까지 수정·취소 가능';
         case 'WAITING_DECISION':
-            return party.is_host ? '확정하거나 연장해 주세요' : '마감됐어요. 방장의 결정을 기다려요';
+            return '마감됐어요. 방장의 결정을 기다려요';
         case 'ORDERED':
             return settlingNote(party, payments) ?? '주문 확정 이후 수정·취소 불가';
         case 'ARRIVED':
@@ -199,10 +199,12 @@ export function DeliveryComposerNote({ party, payments }: { party: DeliveryParty
 }
 
 // Stays up after the deadline dialog is dismissed, and lets the host confirm as soon as the minimum is met.
+export const showsHostBar = (party: DeliveryParty) =>
+    party.is_host && (party.status === 'WAITING_DECISION' || (party.status === 'RECRUITING' && remainingAmount(party) === 0));
+
 export function DeliveryHostBar({ party, onAction }: { party: DeliveryParty; onAction: (action: DeliveryAction) => void }) {
     const deciding = party.status === 'WAITING_DECISION';
     const met = remainingAmount(party) === 0;
-    if (!party.is_host || !(deciding || (party.status === 'RECRUITING' && met))) return null;
     return (
         <div className="flex shrink-0 gap-2 border-t border-[#F0F0F0] px-4 py-2">
             {deciding && <SubCta onClick={() => onAction({ kind: 'extend' })}>모집 연장</SubCta>}
