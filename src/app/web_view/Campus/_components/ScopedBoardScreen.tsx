@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppHeader, CenteredSpinner, LeftChevronIcon, PostIcon, PostPreview, Screen, SearchIcon, Skeleton, Spinner } from '@/app/web_view/_components';
+import { AppHeader, CenteredSpinner, ModifyIcon, NotificationIcon, PostPreview, Screen, SearchIcon, Skeleton, Spinner } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { scopeQuery, useScopedArticles, type BoardScope } from '@/app/web_view/_query';
 import { apiDetail } from '@/lib/api/delivery';
@@ -39,64 +39,60 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
         return () => io.disconnect();
     }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
-    const leading = (
-        <button type="button" onClick={onBack} className="flex items-center text-ara_red" aria-label="뒤로">
-            <LeftChevronIcon size={32} />
-            <span className="ml-1 text-[17px] font-medium text-ara_red">{label}</span>
-        </button>
-    );
+    const forbidden = isError && errorStatus(error) === 403;
 
     return (
         <Screen>
             <AppHeader
-                title={null}
-                leading={leading}
+                title={<span className="text-[18px] font-bold tracking-[0.9px] text-ara_red">{label}</span>}
+                onBack={onBack}
                 trailing={
                     <>
-                        {canWrite && (
-                            <button
-                                type="button"
-                                aria-label="글쓰기"
-                                onClick={() => router.push(`/web_view/PostWrite?${query}`)}
-                                className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
-                            >
-                                <PostIcon size={28} />
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            aria-label="알림"
+                            onClick={() => router.push('/web_view/Notifications')}
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
+                        >
+                            <NotificationIcon size={35} />
+                        </button>
                         <button
                             type="button"
                             aria-label="검색"
                             onClick={() => router.push(`/web_view/Search?${query}`)}
                             className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
-                            <SearchIcon size={28} />
+                            <SearchIcon size={35} />
                         </button>
                     </>
                 }
             />
 
-            <div className="px-5 pb-4 pt-4">
+            <div className="px-5 pb-3 pt-4">
                 {pending ? (
                     <>
                         <Skeleton className="h-[26px] w-[60%] rounded" />
-                        <Skeleton className="mt-2 h-[14px] w-[40%] rounded" />
+                        <Skeleton className="mt-[18px] h-[17px] w-[40%] rounded" />
                     </>
                 ) : (
                     <>
-                        <h2 className="text-[22px] font-bold leading-[28px] text-[#222222]">{title}</h2>
-                        {lines.map((line, i) => (
-                            <p key={i} className="mt-1 text-[13px] text-[#646464]">
-                                {line}
-                            </p>
-                        ))}
+                        <h2 className="text-[22px] font-extrabold leading-[26px] tracking-[-0.22px] text-black">{title}</h2>
+                        {lines.length > 0 && (
+                            <div className="mt-[18px]">
+                                {lines.map((line, i) => (
+                                    <p key={i} className="whitespace-pre-wrap text-[14px] font-medium leading-[17px] tracking-[-0.14px] text-[#808080]">
+                                        {line}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
                     </>
                 )}
             </div>
-            <div className="mx-5 h-px bg-[#F0F0F0]" />
 
             {isError && posts.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center pb-20 text-center">
-                    <p className="text-[16px] font-bold text-[#222222]">{errorStatus(error) === 403 ? forbiddenMessage : apiDetail(error)}</p>
+                    <p className="text-[16px] font-bold text-[#222222]">{forbidden ? forbiddenMessage : apiDetail(error)}</p>
                     <button type="button" onClick={onBack} className="mt-5 h-[44px] rounded-[10px] bg-[#F6F6F6] px-6 text-[15px] font-medium text-[#646464]">
                         돌아가기
                     </button>
@@ -129,6 +125,19 @@ export function ScopedBoardScreen({ label, title, lines, pending, scope, canWrit
                         </div>
                     ) : null}
                 </>
+            )}
+
+            {canWrite && !forbidden && (
+                <button
+                    type="button"
+                    aria-label="글쓰기"
+                    data-press="strong"
+                    onClick={() => router.push(`/web_view/PostWrite?${query}`)}
+                    className="fixed z-40 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-ara_red text-white shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
+                    style={{ right: 'calc(20px + var(--ara-safe-right))', bottom: 'calc(70px + var(--ara-safe-bottom))' }}
+                >
+                    <ModifyIcon size={42} />
+                </button>
             )}
         </Screen>
     );

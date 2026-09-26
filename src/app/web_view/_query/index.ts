@@ -17,7 +17,6 @@ export {
     MY_MAJORS_KEY,
     MAJORS_KEY,
     seasonLabel,
-    termLabel,
     sameTerm,
     readStoredTerm,
     useCourseTerms,

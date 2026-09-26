@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDownIcon, MemberIcon, Screen } from '@/app/web_view/_components';
+import { PersonIcon, Screen } from '@/app/web_view/_components';
 import { seasonLabel, useCampusTerm, useCourses, useMyMajors } from '@/app/web_view/_query';
 import { tick } from '@/app/web_view/hooks/haptic';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
@@ -13,31 +13,36 @@ import { BoardCard, BoardCardSkeleton } from './_components/BoardCard';
 import { MajorSelectModal } from './_components/MajorSelectModal';
 import { TermSelectModal } from './_components/TermSelectModal';
 
-type Modal = 'term' | 'major' | null;
+type Modal = 'year' | 'season' | 'major' | null;
 
-function Pill({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+function Pill({ onClick, dropdown = false, children }: { onClick: () => void; dropdown?: boolean; children: ReactNode }) {
     return (
         <button
             type="button"
             onClick={onClick}
-            className="flex h-[30px] shrink-0 items-center gap-1 rounded-full border border-[#DDDDDD] bg-white px-3 text-[13px] font-medium text-[#222222]"
+            className={`flex h-6 shrink-0 items-center rounded-[30px] border border-black/15 bg-white px-[10px] text-[11px] tracking-[-0.77px] text-[#333333] ${dropdown ? 'w-[87px] justify-between' : 'w-[53px] justify-center'}`}
         >
             {children}
+            {dropdown && (
+                <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden>
+                    <path d="M0 0h9L4.5 6z" fill="currentColor" />
+                </svg>
+            )}
         </button>
     );
 }
 
 function SectionHeader({ title, children }: { title: string; children?: ReactNode }) {
     return (
-        <div className="flex h-[52px] items-center gap-2 px-5">
-            <h2 className="min-w-0 flex-1 truncate text-[20px] font-semibold text-black">{title}</h2>
+        <div className="mb-[26px] flex h-6 items-center gap-3 px-5">
+            <h2 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-[-0.6px] text-black">{title}</h2>
             {children}
         </div>
     );
 }
 
 function CardGrid({ children }: { children: ReactNode }) {
-    return <ul className="grid grid-cols-2 gap-[10px] px-5">{children}</ul>;
+    return <ul className="grid grid-cols-2 gap-x-[10px] gap-y-3 px-5">{children}</ul>;
 }
 
 function Skeletons({ count }: { count: number }) {
@@ -76,23 +81,21 @@ export default function CampusPage() {
                     type="button"
                     aria-label="내정보"
                     onClick={() => router.push('/web_view/MyInfo')}
-                    className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
+                    className="-mr-1 flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
-                    <MemberIcon size={28} />
+                    <PersonIcon size={35} />
                 </button>
             </header>
 
-            <section>
-                <SectionHeader title="수업 게시판">
+            <section className="pt-4">
+                <SectionHeader title="📚 수업 게시판">
                     {term && (
                         <>
-                            <Pill onClick={() => open('term')}>
+                            <Pill dropdown onClick={() => open('year')}>
                                 {term.year}년도
-                                <ChevronDownIcon size={14} />
                             </Pill>
-                            <Pill onClick={() => open('term')}>
+                            <Pill dropdown onClick={() => open('season')}>
                                 {seasonLabel(term.semester)}
-                                <ChevronDownIcon size={14} />
                             </Pill>
                         </>
                     )}
@@ -112,8 +115,12 @@ export default function CampusPage() {
                                 <BoardCard
                                     caption={c.course_code}
                                     title={c.title}
-                                    footerLeft="교수자"
-                                    footerRight={c.professors.map((p) => p.name).join(', ')}
+                                    footerLeft={
+                                        <>
+                                            교수자<span className="ml-[5px] text-black">{c.professors.map((p) => p.name).join(', ')}</span>
+                                        </>
+                                    }
+                                    footerRight={`${c.enrollment_count} 명`}
                                     onPress={() => router.push(`/web_view/Campus/Course/${c.id}`)}
                                 />
                             </li>
@@ -122,8 +129,8 @@ export default function CampusPage() {
                 )}
             </section>
 
-            <section className="mt-[30px]">
-                <SectionHeader title="학과 게시판">
+            <section className="mt-[23px]">
+                <SectionHeader title="📚 학과 게시판">
                     <Pill onClick={() => open('major')}>설정</Pill>
                 </SectionHeader>
                 {majors.isPending ? (
@@ -149,7 +156,7 @@ export default function CampusPage() {
                                     caption={m.major_name_eng}
                                     title={m.major_name}
                                     footerLeft={m.major_code}
-                                    footerRight={`${m.readers_count}명`}
+                                    footerRight={`${m.readers_count} 명`}
                                     onPress={() => router.push(`/web_view/Campus/Major/${m.std_dept_id}`)}
                                 />
                             </li>
@@ -158,7 +165,9 @@ export default function CampusPage() {
                 )}
             </section>
 
-            {modal === 'term' && terms && <TermSelectModal terms={terms} term={term} onSave={selectTerm} onClose={() => setModal(null)} />}
+            {(modal === 'year' || modal === 'season') && terms && term && (
+                <TermSelectModal mode={modal} terms={terms} term={term} onSave={selectTerm} onClose={() => setModal(null)} />
+            )}
             {modal === 'major' && <MajorSelectModal onClose={() => setModal(null)} />}
         </Screen>
     );

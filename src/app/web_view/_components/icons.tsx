@@ -95,6 +95,9 @@ export function NotificationIcon(p: IconProps) {
 export function MemberIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/member.svg`} fallback={32} {...p} />;
 }
+export function PersonIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/person.svg`} fallback={32} {...p} />;
+}
 
 /* =========================================================================
  * Vote / engagement icons.
