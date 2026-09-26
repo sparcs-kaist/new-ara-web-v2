@@ -30,6 +30,7 @@ import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { DeliveryComposerNote, DeliveryLinkBar, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
+import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
 import { ordersAllowed } from '@/lib/delivery';
 import type { ChatPaymentRequest, ChatVote } from '@/lib/types/chat';
 import type { DeliveryOrder } from '@/lib/types/delivery';
@@ -44,10 +45,8 @@ type ChatRoom = {
     recent_message_at: string;
     recent_message: number;
     delivery_party?: number | null;
+    partner?: ChatPartner | null;
 };
-
-// 기본 프로필 이미지
-const DEFAULT_ROOM_IMAGE = '/Chatroom_default1.png';
 
 interface ChatRoomDetailProps {
     roomId: number;
@@ -129,6 +128,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const isMine = (msg: Message) => msg.sender?.is_mine ?? msg.created_by?.id === myId;
 
     const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user?.id !== myId) : null;
+    const partnerMember = myId !== null && detailRoom?.id === roomId ? dmPartner ?? members.find(m => m.user?.id === myId) : undefined;
+    const headerPartner = !partnerMember ? undefined
+        // members에는 탈퇴 여부가 없어 서버가 준 partner(null = 탈퇴)를 따른다
+        : !partnerMember.user || (dmPartner && detailRoom?.partner === null) ? null
+        : { id: partnerMember.user.id, nickname: partnerMember.user.profile?.nickname ?? '', picture: partnerMember.user.profile?.picture };
+    const title = (room && displayRoomTitle(room, headerPartner, myId)) ?? party?.store_name ?? `채팅방 #${roomId}`;
 
     useEffect(() => {
         fetchMe()
@@ -364,8 +369,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         <AnonAvatar size={40} />
                     ) : (
                         <Image
-                            src={room?.picture || DEFAULT_ROOM_IMAGE}
-                            alt={room?.room_title || '채팅방'}
+                            src={displayRoomPicture(room, headerPartner)}
+                            alt={title}
                             fill
                             className="rounded-full object-cover"
                             sizes="40px"
@@ -378,7 +383,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                     onClick={party ? () => setSheet({ kind: 'info' }) : undefined}
                 >
                     <div className="text-lg font-bold truncate flex items-center gap-2">
-                        <span className="truncate">{room?.room_title ?? party?.store_name ?? `채팅방 #${roomId}`}</span>
+                        <span className="truncate">{title}</span>
                         <span className="text-[20px] text-[#ed3a3a] flex-shrink-0">({party ? party.participant_count : members.length})</span>
                     </div>
                     <div className="text-xs text-gray-400">
