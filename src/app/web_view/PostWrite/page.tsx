@@ -91,7 +91,6 @@ function PostWriteInner() {
     const [expireAt, setExpireAt] = useState<Date | null>(null);
     const [expirePopoverOpen, setExpirePopoverOpen] = useState(false);
     const [hasEditorText, setHasEditorText] = useState(false);
-    const [inlineImageKeys, setInlineImageKeys] = useState<string[]>([]);
 
     const currentBoard = boards.find((b) => b.id === boardId) ?? null;
     const isPosterBoard = currentBoard?.ko_name === '포스터';
@@ -187,28 +186,16 @@ function PostWriteInner() {
             });
     }, [editPostId, scope]);
 
-    // 올리기 버튼 활성화 조건(제목 + 본문)과 본문에 이미 보이는 첨부 이미지를 알기 위해 에디터 상태를 구독한다.
+    // 올리기 버튼 활성화 조건(제목 + 본문)을 알기 위해 에디터 상태를 구독한다.
     useEffect(() => {
         let bound: Editor | null = null;
-        const sync = () => {
-            setHasEditorText(!!bound && !bound.isEmpty);
-            const keys: string[] = [];
-            bound?.state.doc.descendants((node: ProseMirrorNode) => {
-                if (node.type.name === 'attachmentImage') keys.push(String(node.attrs['data-attachment']));
-            });
-            setInlineImageKeys((prev) => (prev.join() === keys.join() ? prev : keys));
-        };
+        const sync = () => setHasEditorText(!!bound && !bound.isEmpty);
         const timer = window.setInterval(() => {
             const editor = editorRef.current;
             if (!editor || bound) return;
             bound = editor;
             editor.on('transaction', sync);
             sync();
-            // ProseMirror는 캐럿을 화면 끝까지만 스크롤하므로, 그 자리를 덮는 고정 하단 바만큼 띄운다
-            editor.view.setProps({
-                scrollThreshold: { top: 0, right: 0, bottom: 56, left: 0 },
-                scrollMargin: { top: 5, right: 5, bottom: 66, left: 5 },
-            });
             window.clearInterval(timer);
         }, 100);
         return () => {
@@ -539,6 +526,7 @@ function PostWriteInner() {
                 ref={editorRef}
                 placeholder={writingIn ? `${writingIn}에 글 쓰는 중...` : '게시판을 선택해 주세요'}
                 content={initialContent}
+                bottomInset={56}
             />
 
             <ComposerSpacer height={56} />
@@ -551,7 +539,6 @@ function PostWriteInner() {
                             ref={attachmentsRef}
                             onDelete={handleAttachmentDelete}
                             initialFiles={initialAttachments}
-                            inlineImageKeys={inlineImageKeys}
                         />
                     </div>
                 )}

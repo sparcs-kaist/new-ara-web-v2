@@ -49,7 +49,6 @@ export interface AttachmentsProps {
     onDelete?: (file: UploadObject) => void;
     accepted?: string; // ex) ".png,.jpg"
     initialFiles?: UploadObject[]; // Edit mode: preload existing attachments
-    inlineImageKeys?: string[]; // 본문에 이미 이미지로 보이는 첨부는 목록에서 뺀다
 }
 
 // 44px 행 3개 + 5px 간격 2개 + 위쪽 10px (Flutter와 동일한 최대 높이)
@@ -70,7 +69,7 @@ const formatBytes = (bytes: number) => {
  */
 const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
     (props, ref) => {
-        const { multiple = false, onAdd, onDelete, accepted, initialFiles, inlineImageKeys } = props;
+        const { multiple = false, onAdd, onDelete, accepted, initialFiles } = props;
 
         const [files, setFiles] = useState<UploadObject[]>([]);
         const [listOpen, setListOpen] = useState(true);
@@ -245,10 +244,6 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
             [files, handleUpload],
         );
 
-        const listedFiles = inlineImageKeys?.length
-            ? files.filter((f) => !inlineImageKeys.includes(f.key))
-            : files;
-
         return (
             <div className="w-full">
                 {dropzoneFailedReason === 'dropzone-unallowed-extensions' && (
@@ -257,7 +252,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                     </p>
                 )}
 
-                {listedFiles.length > 0 && (
+                {files.length > 0 && (
                     <>
                         <div className="flex h-[34px] items-center px-[20px]">
                             <button
@@ -267,7 +262,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                             >
                                 <span className="text-[16px] font-medium text-black">첨부파일</span>
                                 <span className="ml-[8px] text-[16px] font-medium text-ara_red">
-                                    {listedFiles.length}
+                                    {files.length}
                                 </span>
                                 <span className="ml-[5px] text-ara_red">
                                     {listOpen ? (
@@ -284,7 +279,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                                 className="overflow-y-auto px-[15px] pt-[10px]"
                                 style={{ maxHeight: LIST_MAX_HEIGHT }}
                             >
-                                {listedFiles.map((file, index) => (
+                                {files.map((file, index) => (
                                     <div
                                         key={file.key}
                                         className={`flex h-[44px] items-center rounded-[15px] border border-[#F0F0F0] pl-[12px] pr-[6px] ${index === 0 ? '' : 'mt-[5px]'}`}

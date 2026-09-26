@@ -21,12 +21,10 @@ interface AraEditorOptions {
   editable: boolean;
   content?: string | object;
   placeholder?: string;
-  /** Appended to the prose classes of the contenteditable element. */
   className?: string;
   onImageError?: () => void;
 }
 
-/** The TipTap editor every Ara surface shares: one schema, one content parser. */
 export default function useAraEditor({
   editable,
   content = '',
