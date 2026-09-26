@@ -3,20 +3,21 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiDetail, opsCreateStore, opsDeleteStore, opsFetchRestaurants, opsUpdateStore } from '@/lib/api/store';
+import { apiDetail, opsCreateStore, opsDeleteStore, opsFetchRestaurants, opsUpdateStore, opsUpdateStoreCover } from '@/lib/api/store';
 import { ZONE_LABELS, type OpsStore, type StoreFields, type Zone } from '@/lib/types/store';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { Breadcrumb, Button, Card, Field, inputCls, StatusLine, type Status } from './ui';
 import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY } from './keys';
 
-const FIELDS = ['name', 'intro', 'zone', 'location', 'hours', 'phone', 'link', 'restaurant', 'is_active', 'order'] as const;
+const FIELDS = ['name', 'intro', 'zone', 'location', 'phone', 'link', 'restaurant', 'is_active', 'order'] as const;
 
-const toFields = (s: OpsStore | null): StoreFields => ({
+type TextFields = Omit<StoreFields, 'hours' | 'hours_note'>;
+
+const toFields = (s: OpsStore | null): TextFields => ({
     name: s?.name ?? '',
     intro: s?.intro ?? '',
     zone: s?.zone ?? 'EAST',
     location: s?.location ?? '',
-    hours: s?.hours ?? '',
     phone: s?.phone ?? '',
     link: s?.link ?? '',
     restaurant: s?.restaurant ?? null,
@@ -45,7 +46,7 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
         if (cover) URL.revokeObjectURL(cover.url);
     }, [cover]);
 
-    const set = <K extends keyof StoreFields>(key: K, value: StoreFields[K]) => setForm((f) => ({ ...f, [key]: value }));
+    const set = <K extends keyof TextFields>(key: K, value: TextFields[K]) => setForm((f) => ({ ...f, [key]: value }));
 
     const onPick = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -60,13 +61,14 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
         try {
             const changed = FIELDS.filter((k) => !store || form[k] !== initial[k]);
             let saved: OpsStore;
-            if (!store || cover) {
+            if (!store) {
                 const fd = new FormData();
                 changed.forEach((k) => fd.append(k, form[k] === null ? '' : String(form[k])));
                 if (cover) fd.append('cover', cover.file);
-                saved = store ? await opsUpdateStore(store.id, fd) : await opsCreateStore(fd);
+                saved = await opsCreateStore(fd);
             } else {
-                saved = await opsUpdateStore(store.id, Object.fromEntries(changed.map((k) => [k, form[k]])));
+                saved = changed.length ? await opsUpdateStore(store.id, Object.fromEntries(changed.map((k) => [k, form[k]]))) : store;
+                if (cover) saved = await opsUpdateStoreCover(store.id, cover.file);
             }
             setInitial(toFields(saved));
             setForm(toFields(saved));
@@ -111,7 +113,6 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
                         </select>
                     </Field>
                     <Field label="위치"><input name="location" className={`${inputCls} w-[380px]`} value={form.location} onChange={(e) => set('location', e.target.value)} /></Field>
-                    <Field label="영업시간"><input name="hours" className={`${inputCls} w-[380px]`} placeholder="11:00 – 20:00" value={form.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
                     <Field label="전화"><input name="phone" className={`${inputCls} w-[380px]`} value={form.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
                     <Field label="링크"><input name="link" className={`${inputCls} w-[380px]`} value={form.link} onChange={(e) => set('link', e.target.value)} /></Field>
                     <Field label="학식 식당 연결">

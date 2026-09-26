@@ -11,6 +11,7 @@ import { apiDetail } from '@/lib/api/delivery';
 import { currentMealSlot, defaultRestaurant, displayRestaurantName, type MealSlot } from '@/lib/types/meal';
 import { FacilityNotices } from './_components/FacilityNotices';
 import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
+import { StoreSection } from './_components/StoreSection';
 
 export default function MealHomePage() {
     const router = useRouter();
@@ -84,6 +85,8 @@ export default function MealHomePage() {
             </section>
 
             <FacilityNotices />
+
+            <StoreSection />
 
             <div className="h-5" />
         </Screen>

@@ -45,7 +45,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                         <th className={thCls}>이름</th>
                         <th className={`${thCls} w-[84px]`}>구역</th>
                         <th className={thCls}>위치</th>
-                        <th className={`${thCls} w-[130px]`}>영업시간</th>
+                        <th className={`${thCls} w-[150px]`}>오늘 영업시간</th>
                         <th className={`${thCls} w-[90px]`}>운영</th>
                         <th className={`${thCls} w-[190px]`}>관리</th>
                     </tr>
@@ -56,7 +56,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                             <td className={`${tdCls} font-medium`}>{s.name}</td>
                             <td className={tdCls}>{ZONE_LABELS[s.zone] ?? s.zone}</td>
                             <td className={tdCls}>{s.location}</td>
-                            <td className={tdCls}>{s.hours}</td>
+                            <td className={tdCls}>{s.today_hours ?? '오늘 휴무'}</td>
                             <td className={tdCls}><ActivePill active={s.is_active} /></td>
                             <td className={tdCls}>
                                 <div className="flex gap-4">

@@ -9,6 +9,8 @@ import type {
     OpsUser,
     StaffStoreFields,
     StoreDetail,
+    StoreEvent,
+    StoreEventFields,
     StoreFields,
     StoreMenu,
     StoreNotice,
@@ -17,6 +19,12 @@ import type {
 } from '@/lib/types/store';
 
 export { apiDetail } from '@/lib/api/delivery';
+
+const coverForm = (file: File) => {
+    const fd = new FormData();
+    fd.append('cover', file);
+    return fd;
+};
 
 export const fetchStores = async (zone?: Zone) => {
     const qs = queryBuilder({ zone });
@@ -29,9 +37,22 @@ export const fetchStore = async (id: number) => {
     return data;
 };
 
-export const updateStore = async (id: number, body: FormData | Partial<StaffStoreFields>) => {
+export const updateStore = async (id: number, body: Partial<StaffStoreFields>) => {
     const { data } = await http.patch<StoreDetail>(`stores/${id}/`, body);
     return data;
+};
+
+// Multipart cannot carry the hours object, so the cover travels alone.
+export const updateStoreCover = async (id: number, file: File) => {
+    const { data } = await http.patch<StoreDetail>(`stores/${id}/`, coverForm(file));
+    return data;
+};
+
+export const menuFormData = (fields: Partial<MenuFields>, photo?: File | null) => {
+    const fd = new FormData();
+    Object.entries(fields).forEach(([k, v]) => fd.append(k, String(v)));
+    if (photo) fd.append('photo', photo);
+    return fd;
 };
 
 export const createMenu = async (id: number, body: FormData) => {
@@ -62,6 +83,25 @@ export const deleteNotice = async (id: number, noticeId: number): Promise<void> 
     await http.delete(`stores/${id}/notices/${noticeId}/`);
 };
 
+export const fetchStoreEvents = async (id: number) => {
+    const { data } = await http.get<StoreEvent[]>(`stores/${id}/events/`);
+    return data;
+};
+
+export const createStoreEvent = async (id: number, body: StoreEventFields) => {
+    const { data } = await http.post<StoreEvent>(`stores/${id}/events/`, body);
+    return data;
+};
+
+export const updateStoreEvent = async (id: number, eventId: number, body: Partial<StoreEventFields>) => {
+    const { data } = await http.patch<StoreEvent>(`stores/${id}/events/${eventId}/`, body);
+    return data;
+};
+
+export const deleteStoreEvent = async (id: number, eventId: number): Promise<void> => {
+    await http.delete(`stores/${id}/events/${eventId}/`);
+};
+
 export const fetchMyStores = async () => {
     const { data } = await http.get<{ store_ids: number[] }>('stores/mine/');
     return data;
@@ -77,8 +117,13 @@ export const opsCreateStore = async (body: FormData) => {
     return data;
 };
 
-export const opsUpdateStore = async (id: number, body: FormData | Partial<StoreFields>) => {
+export const opsUpdateStore = async (id: number, body: Partial<StoreFields>) => {
     const { data } = await http.patch<OpsStore>(`ops/stores/${id}/`, body);
+    return data;
+};
+
+export const opsUpdateStoreCover = async (id: number, file: File) => {
+    const { data } = await http.patch<OpsStore>(`ops/stores/${id}/`, coverForm(file));
     return data;
 };
 

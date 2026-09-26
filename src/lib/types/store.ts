@@ -2,12 +2,30 @@ export type Zone = 'EAST' | 'WEST' | 'NORTH';
 
 export const ZONE_LABELS: Record<Zone, string> = { EAST: '동측', WEST: '서측', NORTH: '북측' };
 
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+export const WEEKDAYS: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+export const WEEKDAY_LABELS: Record<Weekday, string> = { mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일' };
+
+export interface StoreHoursRange {
+    open: string;
+    close: string;
+}
+
+export type StoreHours = Partial<Record<Weekday, StoreHoursRange[]>>;
+
 export interface StoreSummary {
     id: number;
     name: string;
     zone: Zone;
     location: string;
-    hours: string;
+    hours: StoreHours;
+    hours_note: string;
+    is_open: boolean;
+    open_note: string | null;
+    today_hours: string | null;
+    signature_menus: string[];
     cover: string | null;
     restaurant: number | null;
     is_active: boolean;
@@ -20,6 +38,7 @@ export interface StoreMenu {
     price: number;
     description: string;
     photo: string | null;
+    is_signature: boolean;
     is_sold_out: boolean;
     order: number;
 }
@@ -33,12 +52,23 @@ export interface StoreNotice {
     created_at: string;
 }
 
+export interface StoreEvent {
+    id: number;
+    kind: 'CLOSED' | 'OPEN';
+    starts_at: string;
+    ends_at: string | null;
+    reason: string;
+    open: string | null;
+    close: string | null;
+}
+
 export interface StoreDetail extends StoreSummary {
     intro: string;
     phone: string;
     link: string;
     menus: StoreMenu[];
     notices: StoreNotice[];
+    events: StoreEvent[];
     is_staff: boolean;
 }
 
@@ -49,10 +79,11 @@ export interface OpsStore extends StoreSummary {
     order: number;
 }
 
-export type StoreFields = Pick<OpsStore, 'name' | 'intro' | 'zone' | 'location' | 'hours' | 'phone' | 'link' | 'restaurant' | 'is_active' | 'order'>;
-export type StaffStoreFields = Pick<StoreFields, 'intro' | 'location' | 'hours' | 'phone' | 'link'>;
-export type MenuFields = Pick<StoreMenu, 'section' | 'name' | 'price' | 'description' | 'is_sold_out' | 'order'>;
+export type StoreFields = Pick<OpsStore, 'name' | 'intro' | 'zone' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link' | 'restaurant' | 'is_active' | 'order'>;
+export type StaffStoreFields = Pick<StoreFields, 'name' | 'zone' | 'intro' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link'>;
+export type MenuFields = Pick<StoreMenu, 'section' | 'name' | 'price' | 'description' | 'is_signature' | 'is_sold_out' | 'order'>;
 export type NoticeFields = Pick<StoreNotice, 'title' | 'body' | 'starts_at' | 'ends_at'>;
+export type StoreEventFields = Pick<StoreEvent, 'kind' | 'starts_at' | 'ends_at' | 'reason'> & Partial<Pick<StoreEvent, 'open' | 'close'>>;
 
 export interface OpsUser {
     id: number;
