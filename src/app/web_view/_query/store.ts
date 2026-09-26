@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchMyStores, fetchStore, fetchStoreEvents, fetchStores } from '@/lib/api/store';
 import { useMe } from './hooks';
 
@@ -15,6 +15,7 @@ export function useStores(q = '') {
         queryKey: [...STORES_KEY, 'list', q],
         queryFn: () => fetchStores({ q }),
         staleTime: 5 * 60_000,
+        placeholderData: keepPreviousData,
     });
 }
 

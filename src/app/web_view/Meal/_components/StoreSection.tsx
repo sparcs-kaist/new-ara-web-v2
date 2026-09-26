@@ -9,10 +9,11 @@ import { StoreCover } from '../Stores/_components/StoreCover';
 import { StoreStatusLine } from '../Stores/_components/StoreStatusLine';
 import { useEntrance } from '../Stores/_components/entrance';
 
-// The detail query is shared with the manage screen, so the card also warms it.
-function ManageCard({ id }: { id: number }) {
+function ManageCard({ id, name }: { id: number; name?: string }) {
     const router = useRouter();
-    const { data } = useStore(id);
+    // Inactive stores are missing from the public list, so fall back to the detail.
+    const detail = useStore(name ? 0 : id);
+    const label = name ?? detail.data?.name ?? '';
     return (
         <button
             type="button"
@@ -21,7 +22,7 @@ function ManageCard({ id }: { id: number }) {
         >
             <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-bold text-[#222222]">내 업체 관리</span>
-                <span className="mt-[2px] block truncate text-[12px] text-[#646464]">{data?.name ?? ''}</span>
+                <span className="mt-[2px] block truncate text-[12px] text-[#646464]">{label}</span>
             </span>
             <RightChevronIcon size={18} className="shrink-0 text-[#BBBBBB]" />
         </button>
@@ -48,7 +49,7 @@ export function StoreSection() {
             {mine.data && mine.data.length > 0 && (
                 <div className="mt-3 space-y-2 px-5">
                     {mine.data.map((id) => (
-                        <ManageCard key={id} id={id} />
+                        <ManageCard key={id} id={id} name={data?.find((s) => s.id === id)?.name} />
                     ))}
                 </div>
             )}

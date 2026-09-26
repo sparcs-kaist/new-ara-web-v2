@@ -52,11 +52,7 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
     const maxSelect = Math.min(maxChoices, limit);
 
     const setOption = (i: number, value: string) => setOptions((prev) => prev.map((o, j) => (j === i ? value : o)));
-    const removeOption = (i: number) => {
-        const next = options.filter((_, j) => j !== i);
-        setOptions(next);
-        setMaxChoices((v) => Math.min(v, Math.max(MIN_OPTIONS, next.filter((o) => o.trim()).length)));
-    };
+    const removeOption = (i: number) => setOptions((prev) => prev.filter((_, j) => j !== i));
     const step = (delta: number) => {
         setMaxChoices(Math.min(limit, Math.max(1, maxSelect + delta)));
         tick();
