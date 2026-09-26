@@ -13,11 +13,11 @@ import { ManageScreen, manageUrl, storeUrl } from '../../_components/ManageScree
 import { StoreCover } from '../../_components/StoreCover';
 import { ChevronRow, CounterTextarea, Field, FieldLabel, ToggleRow, ZoneSelect, usePickedFile } from '../../_components/formParts';
 
-const TEXT_KEYS = ['name', 'intro', 'zone', 'location', 'phone', 'link'] as const;
+const TEXT_KEYS = ['name', 'category', 'intro', 'zone', 'location', 'phone', 'link'] as const;
 type TextKey = (typeof TEXT_KEYS)[number];
 type Draft = Pick<StaffStoreFields, TextKey>;
 
-const toDraft = (s: StoreDetail): Draft => ({ name: s.name, intro: s.intro, zone: s.zone, location: s.location, phone: s.phone, link: s.link });
+const toDraft = (s: StoreDetail): Draft => ({ name: s.name, category: s.category, intro: s.intro, zone: s.zone, location: s.location, phone: s.phone, link: s.link });
 
 function ManageForm({ store }: { store: StoreDetail }) {
     const router = useRouter();
@@ -101,6 +101,9 @@ function ManageForm({ store }: { store: StoreDetail }) {
                 </Field>
                 <Field label="위치">
                     <input name="location" value={form.location} maxLength={100} placeholder="예) 태울관 (E11) 1층" onChange={(e) => set('location', e.target.value)} className={INPUT_CLASS} />
+                </Field>
+                <Field label="분류">
+                    <input name="category" value={form.category} maxLength={20} placeholder="예: 일식, 카페, 분식" onChange={(e) => set('category', e.target.value)} className={INPUT_CLASS} />
                 </Field>
                 <Field label="구역">
                     <ZoneSelect value={form.zone} onChange={(z) => set('zone', z)} />

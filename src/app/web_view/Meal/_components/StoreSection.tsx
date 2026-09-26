@@ -9,6 +9,25 @@ import { StoreCover } from '../Stores/_components/StoreCover';
 import { StoreStatusLine } from '../Stores/_components/StoreStatusLine';
 import { useEntrance } from '../Stores/_components/entrance';
 
+// The detail query is shared with the manage screen, so the card also warms it.
+function ManageCard({ id }: { id: number }) {
+    const router = useRouter();
+    const { data } = useStore(id);
+    return (
+        <button
+            type="button"
+            onClick={() => router.push(`/web_view/Meal/Stores/${id}/Manage`)}
+            className="flex w-full items-center rounded-[12px] bg-[#F6F6F6] p-[14px] text-left"
+        >
+            <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-bold text-[#222222]">내 업체 관리</span>
+                <span className="mt-[2px] block truncate text-[12px] text-[#646464]">{data?.name ?? ''}</span>
+            </span>
+            <RightChevronIcon size={18} className="shrink-0 text-[#BBBBBB]" />
+        </button>
+    );
+}
+
 export function StoreSection() {
     const router = useRouter();
     const { data, isPending } = useStores();
@@ -17,7 +36,6 @@ export function StoreSection() {
     const detail = useStore(store?.id ?? 0);
     const mine = useMyStores();
     const enter = useEntrance(!!data);
-    const manageId = mine.data?.[0];
 
     if (!isPending && !store) return null;
     const anim = store ? enter(store.id, 0) : null;
@@ -26,19 +44,14 @@ export function StoreSection() {
     return (
         <section>
             <div className="mx-5 my-5 h-px bg-[#F0F0F0]" />
-            <div className="flex items-center">
-                <MainPageTextButton label="입주 업체" onPress={() => router.push('/web_view/Meal/Stores')} />
-                {manageId !== undefined && (
-                    <button
-                        type="button"
-                        onClick={() => router.push(`/web_view/Meal/Stores/${manageId}/Manage`)}
-                        className="mr-3 flex h-9 shrink-0 items-center whitespace-nowrap pl-2 text-[13px] font-medium text-[#646464]"
-                    >
-                        내 식당 관리
-                        <RightChevronIcon size={16} />
-                    </button>
-                )}
-            </div>
+            <MainPageTextButton label="입주 업체" onPress={() => router.push('/web_view/Meal/Stores')} />
+            {mine.data && mine.data.length > 0 && (
+                <div className="mt-3 space-y-2 px-5">
+                    {mine.data.map((id) => (
+                        <ManageCard key={id} id={id} />
+                    ))}
+                </div>
+            )}
             <div className="mt-3 px-5">
                 {!store ? (
                     <Skeleton className="h-[110px] w-full rounded-[12px]" />

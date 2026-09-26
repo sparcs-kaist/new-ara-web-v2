@@ -12,12 +12,13 @@ import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY, opsStoreEventsKey } from './keys';
 import HoursPanel from './HoursPanel';
 import EventsPanel from './EventsPanel';
 
-const FIELDS = ['name', 'intro', 'zone', 'location', 'phone', 'link', 'restaurant', 'is_active', 'order'] as const;
+const FIELDS = ['name', 'category', 'intro', 'zone', 'location', 'phone', 'link', 'restaurant', 'is_active', 'order'] as const;
 
 type TextFields = Omit<StoreFields, 'hours' | 'hours_note'>;
 
 const toFields = (s: OpsStore | null): TextFields => ({
     name: s?.name ?? '',
+    category: s?.category ?? '',
     intro: s?.intro ?? '',
     zone: s?.zone ?? 'EAST',
     location: s?.location ?? '',
@@ -114,6 +115,7 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
                 <Card className="w-[800px] space-y-4">
                     <Field label="이름"><input name="name" className={`${inputCls} w-[380px]`} value={form.name} onChange={(e) => set('name', e.target.value)} /></Field>
                     <Field label="소개"><textarea name="intro" className={`${inputCls} h-[76px] w-[380px] py-2`} value={form.intro} onChange={(e) => set('intro', e.target.value)} /></Field>
+                    <Field label="분류"><input name="category" className={`${inputCls} w-[380px]`} maxLength={20} placeholder="예: 일식, 카페, 분식" value={form.category} onChange={(e) => set('category', e.target.value)} /></Field>
                     <Field label="구역">
                         <select name="zone" className={`${inputCls} w-[180px]`} value={form.zone} onChange={(e) => set('zone', e.target.value as Zone)}>
                             {(Object.keys(ZONE_LABELS) as Zone[]).map((z) => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}

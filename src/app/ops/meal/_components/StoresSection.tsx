@@ -43,6 +43,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                 <thead>
                     <tr>
                         <th className={thCls}>이름</th>
+                        <th className={`${thCls} w-[120px]`}>분류</th>
                         <th className={`${thCls} w-[84px]`}>구역</th>
                         <th className={thCls}>위치</th>
                         <th className={`${thCls} w-[150px]`}>오늘 영업시간</th>
@@ -54,6 +55,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                     {rows.map((s) => (
                         <tr key={s.id}>
                             <td className={`${tdCls} font-medium`}>{s.name}</td>
+                            <td className={tdCls}>{s.category}</td>
                             <td className={tdCls}>{ZONE_LABELS[s.zone] ?? s.zone}</td>
                             <td className={tdCls}>{s.location}</td>
                             <td className={tdCls}>{s.today_hours ?? '오늘 휴무'}</td>
@@ -68,7 +70,7 @@ export default function StoresSection({ stores }: { stores: OpsStore[] }) {
                         </tr>
                     ))}
                     {rows.length === 0 && (
-                        <tr><td className={`${tdCls} text-center text-[#8A8A8A]`} colSpan={6}>업체가 없어요.</td></tr>
+                        <tr><td className={`${tdCls} text-center text-[#8A8A8A]`} colSpan={7}>업체가 없어요.</td></tr>
                     )}
                 </tbody>
             </table>

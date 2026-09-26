@@ -90,8 +90,8 @@ export interface OpsStore extends StoreSummary {
     order: number;
 }
 
-export type StoreFields = Pick<OpsStore, 'name' | 'intro' | 'zone' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link' | 'restaurant' | 'is_active' | 'order'>;
-export type StaffStoreFields = Pick<StoreFields, 'name' | 'zone' | 'intro' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link'>;
+export type StoreFields = Pick<OpsStore, 'name' | 'category' | 'intro' | 'zone' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link' | 'restaurant' | 'is_active' | 'order'>;
+export type StaffStoreFields = Pick<StoreFields, 'name' | 'category' | 'zone' | 'intro' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link'>;
 export type MenuFields = Pick<StoreMenu, 'section' | 'name' | 'price' | 'description' | 'is_signature' | 'is_sold_out' | 'order'>;
 export type NoticeFields = Pick<StoreNotice, 'title' | 'body' | 'starts_at' | 'ends_at'>;
 export type StoreEventFields = Pick<StoreEvent, 'kind' | 'starts_at' | 'ends_at' | 'reason'> & Partial<Pick<StoreEvent, 'open' | 'close'>>;
