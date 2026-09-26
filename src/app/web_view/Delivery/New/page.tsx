@@ -241,16 +241,18 @@ export default function DeliveryNewPage() {
 
             {noticeOpen && (
                 <ConfirmDialog
-                    title="방장 안내"
+                    title="안내"
                     onClose={() => setNoticeOpen(false)}
                     secondary={{ label: '취소', onClick: () => setNoticeOpen(false) }}
                     primary={{ label: '확인하고 만들기', onClick: submit }}
                 >
-                    <Body>모집이 마감되면 {minutes}분 안에 주문을 확정하거나 모집을 연장·취소해 주세요.</Body>
-                    <Body>
-                        다른 사람이 주문한 뒤 방을 취소하거나, 최소 주문 금액을 채웠는데 {minutes}분 안에 확정하지 않으면 한동안 함께
-                        배달 방을 만들 수 없어요. 처음에는 3시간, 30일 안에 다시 그러면 하루예요.
-                    </Body>
+                    <Body>모집이 마감되면 {minutes}분 안에 주문을 확정해 주세요.</Body>
+                    <Body>다음과 같은 경우 패널티가 부여됩니다.</Body>
+                    <ol className="mt-1 list-decimal break-keep pl-5 text-[14px] leading-5 text-[#646464]">
+                        <li>다른 사람이 주문한 뒤 방을 취소한 경우</li>
+                        <li>최소 주문 금액을 채웠는데 {minutes}분 안에 확정하지 않은 경우</li>
+                    </ol>
+                    <Body>패널티: 1회 3시간, 2회(30일 이내) 1일 방 개설 제한</Body>
                 </ConfirmDialog>
             )}
         </Screen>
