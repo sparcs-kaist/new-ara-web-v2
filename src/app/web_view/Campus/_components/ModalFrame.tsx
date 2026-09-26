@@ -6,16 +6,13 @@ import { CheckIcon } from '@/app/web_view/_components';
 
 interface ModalFrameProps {
     title: string;
-    /** Backdrop tap and Escape (hardware back via the layout) also cancel. */
     onCancel: () => void;
     onSave: () => void;
     saveDisabled?: boolean;
-    /** Error line kept visible under the scrolling list. */
     message?: ReactNode;
     children: ReactNode;
 }
 
-// The 학식 allergy-filter centre modal: blurred backdrop, w-80 card, 취소 | 저장 split bar.
 export function ModalFrame({ title, onCancel, onSave, saveDisabled, message, children }: ModalFrameProps) {
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
