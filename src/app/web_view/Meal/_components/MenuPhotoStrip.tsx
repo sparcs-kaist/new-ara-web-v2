@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/app/web_view/_components';
-import { useMealPhotos, useRestaurants } from '@/app/web_view/_query';
+import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { displayRestaurantName, formatMealDate, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { OfficialBadge, PhotoCover, PhotoLabel } from './photoParts';
@@ -19,7 +19,8 @@ export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
                 <p className="px-5 pt-3 text-[14px] text-[#BBBBBB]">메뉴 사진을 불러오지 못했어요</p>
             ) : (
                 <div className="mt-3 flex snap-x scroll-px-5 gap-[10px] overflow-x-auto px-5">
-                    {restaurants.map((restaurant, i) => {
+                    {photosFirstOrder(queries).map((i) => {
+                        const restaurant = restaurants[i];
                         const { id } = restaurant;
                         if (queries[i].isPending) return <Skeleton key={id} className="h-[108px] w-[108px] shrink-0 rounded-[12px]" />;
                         const photo = queries[i].data?.results[0];

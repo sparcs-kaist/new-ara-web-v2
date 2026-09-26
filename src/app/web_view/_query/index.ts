@@ -40,5 +40,5 @@ export {
     type MajorChange,
     type BoardScope,
 } from './campus';
-export { MEAL_PHOTOS_KEY, useMealPhotos, useRestaurantName, useRestaurants } from './meal';
+export { MEAL_PHOTOS_KEY, photosFirstOrder, useMealPhotos, useRestaurantName, useRestaurants } from './meal';
 export { STORES_KEY, MY_STORES_KEY, storeKey, storeEventsKey, useStores, useStore, useStoreEvents, useMyStores, useInvalidateStores } from './store';
