@@ -52,6 +52,7 @@ export function useChatRoomSocket({ roomId, myId, members, setMembers, messages,
     const [typingUsers, setTypingUsers] = useState<Map<number, string>>(new Map());
     const [forbidden, setForbidden] = useState(false);
     const messagesRef = useRef<Message[]>([]);
+    const pendingRead = useRef(false);
 
     const qc = useQueryClient();
 
@@ -129,6 +130,24 @@ export function useChatRoomSocket({ roomId, myId, members, setMembers, messages,
             } catch { }
         };
 
+        const markRead = async () => {
+            try {
+                await readChatRoom(roomId);
+                setMembers(prev =>
+                    prev.map(m =>
+                        m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m
+                    )
+                );
+            } catch { }
+        };
+
+        // 백그라운드에서 읽음 처리하면 서버가 그 방의 푸시를 보내지 않는다
+        const handleVisible = () => {
+            if (document.visibilityState !== 'visible' || !pendingRead.current) return;
+            pendingRead.current = false;
+            markRead();
+        };
+
         const handleRoomUpdate = async (payload: RoomUpdatePayload) => {
             const serverPayload = payload?.payload || payload;
 
@@ -150,14 +169,8 @@ export function useChatRoomSocket({ roomId, myId, members, setMembers, messages,
                 await applyRecent();
             }
 
-            try {
-                await readChatRoom(roomId);
-                setMembers(prev =>
-                    prev.map(m =>
-                        m.user?.id === myId ? { ...m, last_seen_at: new Date().toISOString() } : m
-                    )
-                );
-            } catch { }
+            if (document.visibilityState === 'hidden') pendingRead.current = true;
+            else await markRead();
 
             if (Array.isArray(payload?.members)) {
                 setMembers(payload.members);
@@ -244,7 +257,9 @@ export function useChatRoomSocket({ roomId, myId, members, setMembers, messages,
         chatSocket.on('user_typing_stop', handleTypingStop);
         chatSocket.on('error', handleError);
         chatSocket.on('removed', handleRemoved);
+        document.addEventListener('visibilitychange', handleVisible);
         return () => {
+            document.removeEventListener('visibilitychange', handleVisible);
             chatSocket.off('room_update', handleRoomUpdate);
             chatSocket.off('user_join', handleUserJoin);
             chatSocket.off('user_leave', handleUserLeave);
@@ -255,6 +270,9 @@ export function useChatRoomSocket({ roomId, myId, members, setMembers, messages,
             chatSocket.off('removed', handleRemoved);
         };
     }, [roomId, myId, members, qc, router, exitTo, setMessages, setMembers]);
+
+    // 위 effect는 members가 바뀔 때마다 다시 돌므로 방이 바뀔 때만 버린다
+    useEffect(() => () => { pendingRead.current = false; }, [roomId]);
 
     useEffect(() => {
         if (!roomId || !myId) return;

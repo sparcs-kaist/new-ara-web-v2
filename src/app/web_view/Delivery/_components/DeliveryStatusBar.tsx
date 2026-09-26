@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { CheckIcon, InformationIcon } from '@/app/web_view/_components';
 import { tick } from '@/app/web_view/hooks/haptic';
 import { useNow } from '@/app/web_view/hooks/useNow';
@@ -17,6 +17,8 @@ import type { ChatPaymentRequest } from '@/lib/types/chat';
 import type { DeliveryOrder, DeliveryParty } from '@/lib/types/delivery';
 import { getBridge, useIsNative } from '@/app/web_view/_bridge';
 import { RightChevronIcon } from '@/app/web_view/_components/icons';
+import { CtaButton } from './BottomCta';
+import type { DeliveryAction } from './DeliveryActionDialog';
 
 interface Lines {
     label: string;
@@ -175,7 +177,7 @@ function composerNote(party: DeliveryParty, payments: ChatPaymentRequest[]): str
         case 'RECRUITING':
             return '방장이 주문을 확정하기 전까지 수정·취소 가능';
         case 'WAITING_DECISION':
-            return party.is_host ? '연장하거나 확정해주세요' : '마감됐어요. 방장의 결정을 기다려요';
+            return '마감됐어요. 방장의 결정을 기다려요';
         case 'ORDERED':
             return settlingNote(party, payments) ?? '주문 확정 이후 수정·취소 불가';
         case 'ARRIVED':
@@ -193,6 +195,36 @@ export function DeliveryComposerNote({ party, payments }: { party: DeliveryParty
             <InformationIcon size={14} />
             {note}
         </p>
+    );
+}
+
+// Stays up after the deadline dialog is dismissed, and lets the host confirm as soon as the minimum is met.
+export const showsHostBar = (party: DeliveryParty) =>
+    party.is_host && (party.status === 'WAITING_DECISION' || (party.status === 'RECRUITING' && remainingAmount(party) === 0));
+
+export function DeliveryHostBar({ party, onAction }: { party: DeliveryParty; onAction: (action: DeliveryAction) => void }) {
+    const deciding = party.status === 'WAITING_DECISION';
+    const met = remainingAmount(party) === 0;
+    return (
+        <div className="flex shrink-0 gap-2 border-t border-[#F0F0F0] px-4 py-2">
+            {deciding && <SubCta onClick={() => onAction({ kind: 'extend' })}>모집 연장</SubCta>}
+            {deciding && !met && <SubCta onClick={() => onAction({ kind: 'cancel' })}>모집 취소</SubCta>}
+            <div className="min-w-0 flex-1">
+                <CtaButton disabled={!met} onClick={() => onAction({ kind: 'confirm' })}>
+                    {met ? '주문 확정하기' : '최소 금액 미달'}
+                </CtaButton>
+            </div>
+        </div>
+    );
+}
+
+function SubCta(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+    return (
+        <button
+            type="button"
+            {...props}
+            className="h-[52px] shrink-0 rounded-[14px] bg-[#F6F6F6] px-4 text-[15px] font-medium text-[#646464]"
+        />
     );
 }
 

@@ -36,7 +36,7 @@ export default function DeliveryNewPage() {
     const router = useRouter();
     const qc = useQueryClient();
     const [form, setForm] = useState(INITIAL_FORM);
-    const [minutesText, setMinutesText] = useState('30');
+    const [minutesText, setMinutesText] = useState('15');
     const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
     const [formError, setFormError] = useState<string | null>(null);
     const errorRef = useRef<HTMLParagraphElement>(null);

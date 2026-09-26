@@ -11,6 +11,7 @@ import { createKeyboardPredictor } from './keyboardPredict';
 import { createKeyboardReplay } from './keyboardReplay';
 import { WebViewQueryProvider } from '../_query';
 import { PageTransition } from './PageTransition';
+import { PushBanner, type PushBannerContent } from './PushBanner';
 import { PushTokenRegistrar } from './PushTokenRegistrar';
 import { UpdatePrompt } from './UpdatePrompt';
 import { installPressFeedback } from './pressFeedback';
@@ -27,11 +28,15 @@ function pushRoute(data?: Record<string, unknown>): string | undefined {
     return undefined;
 }
 
+const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined);
+const samePath = (a: string, b: string | null) => a.replace(/\/$/, '') === b?.replace(/\/$/, '');
+
 export function WebViewClientLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const showTabBar = isTabRoot(pathname);
     const [exitToastAt, setExitToastAt] = useState<number | null>(null);
+    const [banner, setBanner] = useState<PushBannerContent | null>(null);
     const lastBackAtRef = useRef<number | null>(null);
     const keyboardEventRef = useRef<((p: EventPayload<'keyboard:changed'>) => void) | null>(null);
 
@@ -274,6 +279,21 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
         const to = typeof p.data?.route === 'string' ? p.data.route : (pushRoute(p.data) ?? p.deepLink);
         if (to && to.startsWith('/web_view/')) router.push(to);
     });
+    // The shell shows no banner for a foreground push. In the room it points at, the socket already shows the message.
+    useBridgeEvent('push:received', (p) => {
+        const data = p.data ?? {};
+        const title = text(p.title) ?? text(data.title);
+        const body = text(p.body) ?? text(data.body);
+        const heading = title ?? body;
+        const to = text(data.route) ?? pushRoute(data);
+        if (!heading || (to && samePath(to, pathname))) return;
+        setBanner((b) => ({
+            id: (b?.id ?? 0) + 1,
+            title: heading,
+            body: title && body,
+            to: to?.startsWith('/web_view/') ? to : undefined,
+        }));
+    });
 
     return (
         <WebViewQueryProvider>
@@ -292,6 +312,7 @@ export function WebViewClientLayout({ children }: { children: ReactNode }) {
             />
             <PageTransition pathname={pathname}>{children}</PageTransition>
             {showTabBar && <BottomTabBar />}
+            {banner && <PushBanner banner={banner} onOpen={(to) => router.push(to)} onDone={() => setBanner(null)} />}
             {exitToastAt != null && (
                 <div
                     role="status"

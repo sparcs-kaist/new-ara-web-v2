@@ -2,19 +2,35 @@
 
 import { useState } from 'react';
 import { BottomSheet, Close2Icon, Toggle } from '@/app/web_view/_components';
+import { tick } from '@/app/web_view/hooks/haptic';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { INPUT_CLASS } from '@/app/web_view/Delivery/_components/fields';
 import { createVote } from '@/lib/api/chat';
 import { apiDetail } from '@/lib/api/delivery';
 
 const MAX_OPTIONS = 20;
+const MIN_OPTIONS = 2;
+
+function StepButton({ label, ariaLabel, disabled, onClick }: { label: string; ariaLabel: string; disabled: boolean; onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            aria-label={ariaLabel}
+            disabled={disabled}
+            onClick={onClick}
+            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#F2F3F4] text-[20px] font-medium leading-none text-[#222222] disabled:text-[#BBBBBB]"
+        >
+            {label}
+        </button>
+    );
+}
 
 export default function VoteCreateSheet({ open, roomId, onClose }: { open: boolean; roomId: number; onClose: () => void }) {
     const [prevOpen, setPrevOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [options, setOptions] = useState(['', '']);
     const [multi, setMulti] = useState(false);
-    const [maxChoices, setMaxChoices] = useState<number | null>(null);
+    const [maxChoices, setMaxChoices] = useState(MIN_OPTIONS);
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     if (open !== prevOpen) {
@@ -23,7 +39,7 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
             setTitle('');
             setOptions(['', '']);
             setMulti(false);
-            setMaxChoices(null);
+            setMaxChoices(MIN_OPTIONS);
             setError(null);
         }
     }
@@ -31,12 +47,15 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
     const texts = options.map((o) => o.trim());
     const duplicate = new Set(texts.filter(Boolean)).size !== texts.filter(Boolean).length;
     const valid = title.trim() !== '' && texts.every(Boolean) && !duplicate;
+    // The stepper never exceeds the options actually typed, so removing or clearing one clamps it.
+    const limit = Math.max(MIN_OPTIONS, texts.filter(Boolean).length);
+    const maxSelect = Math.min(maxChoices, limit);
 
     const setOption = (i: number, value: string) => setOptions((prev) => prev.map((o, j) => (j === i ? value : o)));
-    const removeOption = (i: number) => {
-        const next = options.filter((_, j) => j !== i);
-        setOptions(next);
-        if (maxChoices !== null && maxChoices > next.length) setMaxChoices(next.length);
+    const removeOption = (i: number) => setOptions((prev) => prev.filter((_, j) => j !== i));
+    const step = (delta: number) => {
+        setMaxChoices(Math.min(limit, Math.max(1, maxSelect + delta)));
+        tick();
     };
 
     const submit = async () => {
@@ -45,7 +64,7 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
         setError(null);
         try {
             // The server broadcasts the new VOTE message, so nothing is added locally.
-            await createVote({ chat_room: roomId, title: title.trim(), options: texts, max_choices: multi ? maxChoices : 1 });
+            await createVote({ chat_room: roomId, title: title.trim(), options: texts, max_choices: multi ? maxSelect : 1 });
             onClose();
         } catch (e) {
             setError(apiDetail(e));
@@ -53,18 +72,6 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
             setSubmitting(false);
         }
     };
-
-    const chip = (value: number | null, label: string) => (
-        <button
-            key={label}
-            type="button"
-            aria-pressed={maxChoices === value}
-            onClick={() => setMaxChoices(value)}
-            className={`h-8 min-w-8 rounded-[8px] px-[10px] text-[14px] font-medium ${maxChoices === value ? 'bg-ara_red text-white' : 'bg-[#F6F6F6] text-[#646464]'}`}
-        >
-            {label}
-        </button>
-    );
 
     return (
         <BottomSheet open={open} onClose={onClose} title="투표 만들기">
@@ -92,7 +99,7 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
                                     maxLength={100}
                                     className="min-w-0 flex-1 bg-transparent text-[15px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
                                 />
-                                {options.length > 2 && (
+                                {options.length > MIN_OPTIONS && (
                                     <button
                                         type="button"
                                         aria-label="선택지 삭제"
@@ -125,9 +132,10 @@ export default function VoteCreateSheet({ open, roomId, onClose }: { open: boole
                     {multi && (
                         <div className="flex items-center justify-between gap-3">
                             <span className="shrink-0 text-[15px] font-semibold text-black">최대 선택 개수</span>
-                            <div className="flex flex-wrap justify-end gap-[6px]">
-                                {Array.from({ length: Math.min(3, options.length) }, (_, i) => chip(i + 1, String(i + 1)))}
-                                {chip(null, '제한 없음')}
+                            <div className="flex items-center gap-2">
+                                <StepButton label="−" ariaLabel="최대 선택 개수 줄이기" disabled={maxSelect <= 1} onClick={() => step(-1)} />
+                                <span className="w-6 text-center text-[16px] font-bold tabular-nums text-[#222222]">{maxSelect}</span>
+                                <StepButton label="+" ariaLabel="최대 선택 개수 늘리기" disabled={maxSelect >= limit} onClick={() => step(1)} />
                             </div>
                         </div>
                     )}

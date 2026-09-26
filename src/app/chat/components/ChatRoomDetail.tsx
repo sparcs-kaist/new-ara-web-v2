@@ -28,7 +28,7 @@ import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { DELIVERY_KEY } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { DeliveryComposerNote, DeliveryLinkBar, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
+import { DeliveryComposerNote, DeliveryHostBar, DeliveryLinkBar, DeliveryStatusBar, showsHostBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
 import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
 import { ordersAllowed } from '@/lib/delivery';
@@ -573,6 +573,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 <div className="shrink-0 border-t border-[#F0F0F0] px-4 py-2">
                     <CtaButton onClick={() => setSheet({ kind: 'order' })}>주문 등록하기</CtaButton>
                 </div>
+            ) : showsHostBar(party) ? (
+                <DeliveryHostBar party={party} onAction={setAction} />
             ) : (
                 <DeliveryComposerNote party={party} payments={payments} />
             ))}
