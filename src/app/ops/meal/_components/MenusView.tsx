@@ -142,6 +142,7 @@ export default function MenusView({ store, onBack }: { store: OpsStore; onBack: 
                         <th className={thCls}>이름</th>
                         <th className={`${thCls} w-[110px]`}>가격</th>
                         <th className={thCls}>설명</th>
+                        <th className={`${thCls} w-[60px]`}>대표</th>
                         <th className={`${thCls} w-[60px]`}>품절</th>
                         <th className={`${thCls} w-[120px]`}>관리</th>
                     </tr>
@@ -169,6 +170,16 @@ export default function MenusView({ store, onBack }: { store: OpsStore; onBack: 
                             <td className={tdCls}>
                                 <input
                                     type="checkbox"
+                                    aria-label={`${m.name} 대표`}
+                                    className="h-4 w-4 accent-[#ED3A3A]"
+                                    checked={m.is_signature}
+                                    disabled={busy}
+                                    onChange={(e) => run(() => updateMenu(store.id, m.id, { is_signature: e.target.checked }))}
+                                />
+                            </td>
+                            <td className={tdCls}>
+                                <input
+                                    type="checkbox"
                                     aria-label={`${m.name} 품절`}
                                     className="h-4 w-4 accent-[#ED3A3A]"
                                     checked={m.is_sold_out}
@@ -185,7 +196,7 @@ export default function MenusView({ store, onBack }: { store: OpsStore; onBack: 
                         </tr>
                     ))}
                     {detail.isSuccess && menus.length === 0 && (
-                        <tr><td className={`${tdCls} text-center text-[#8A8A8A]`} colSpan={7}>등록된 메뉴가 없어요.</td></tr>
+                        <tr><td className={`${tdCls} text-center text-[#8A8A8A]`} colSpan={8}>등록된 메뉴가 없어요.</td></tr>
                     )}
                 </tbody>
             </table>

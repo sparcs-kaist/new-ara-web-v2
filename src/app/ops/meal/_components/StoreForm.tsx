@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiDetail, opsCreateStore, opsDeleteStore, opsFetchRestaurants, opsUpdateStore, opsUpdateStoreCover } from '@/lib/api/store';
+import { apiDetail, fetchStoreEvents, opsCreateStore, opsDeleteStore, opsFetchRestaurants, opsUpdateStore, opsUpdateStoreCover } from '@/lib/api/store';
+import { eventsSummary, hoursSummary } from '@/lib/store';
 import { ZONE_LABELS, type OpsStore, type StoreFields, type Zone } from '@/lib/types/store';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { Breadcrumb, Button, Card, Field, inputCls, StatusLine, type Status } from './ui';
-import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY } from './keys';
+import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY, opsStoreEventsKey } from './keys';
+import HoursPanel from './HoursPanel';
+import EventsPanel from './EventsPanel';
 
 const FIELDS = ['name', 'intro', 'zone', 'location', 'phone', 'link', 'restaurant', 'is_active', 'order'] as const;
 
@@ -40,7 +43,11 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
     const [busy, setBusy] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+    const [hoursOpen, setHoursOpen] = useState(false);
+    const [eventsOpen, setEventsOpen] = useState(false);
     const { data: restaurants = [] } = useQuery({ queryKey: OPS_RESTAURANTS_KEY, queryFn: opsFetchRestaurants });
+    const storeId = store?.id ?? 0;
+    const { data: events = [] } = useQuery({ queryKey: opsStoreEventsKey(storeId), queryFn: () => fetchStoreEvents(storeId), enabled: storeId > 0 });
 
     useEffect(() => () => {
         if (cover) URL.revokeObjectURL(cover.url);
@@ -113,6 +120,24 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
                         </select>
                     </Field>
                     <Field label="위치"><input name="location" className={`${inputCls} w-[380px]`} value={form.location} onChange={(e) => set('location', e.target.value)} /></Field>
+                    {store && (
+                        <>
+                            <Field label="영업시간">
+                                <div className="flex h-9 items-center gap-6 text-[14px]">
+                                    <span>{hoursSummary(store.hours)}</span>
+                                    <Button variant="text" onClick={() => setHoursOpen((v) => !v)}>{hoursOpen ? '닫기' : '편집'}</Button>
+                                </div>
+                            </Field>
+                            {hoursOpen && <HoursPanel store={store} onCancel={() => setHoursOpen(false)} onSaved={(saved) => { setHoursOpen(false); onSaved(saved); }} />}
+                            <Field label="휴무 · 임시 영업">
+                                <div className="flex h-9 items-center gap-6 text-[14px]">
+                                    <span>{eventsSummary(events, Date.now())}</span>
+                                    <Button variant="text" onClick={() => setEventsOpen((v) => !v)}>{eventsOpen ? '닫기' : '편집'}</Button>
+                                </div>
+                            </Field>
+                            {eventsOpen && <EventsPanel storeId={store.id} events={events} />}
+                        </>
+                    )}
                     <Field label="전화"><input name="phone" className={`${inputCls} w-[380px]`} value={form.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
                     <Field label="링크"><input name="link" className={`${inputCls} w-[380px]`} value={form.link} onChange={(e) => set('link', e.target.value)} /></Field>
                     <Field label="학식 식당 연결">
@@ -133,8 +158,9 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
                     <Field label="운영 여부">
                         <label className="flex h-9 items-center gap-2 text-[14px]">
                             <input name="is_active" type="checkbox" className="h-4 w-4 accent-[#ED3A3A]" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} />
-                            운영 중 (앱 목록에 표시)
+                            운영 중
                         </label>
+                        <p className="text-[13px] text-[#8A8A8A]">폐업 · 철수한 업체만 해제합니다. 영업 여부(영업시간 · 임시 휴무)와는 별개예요.</p>
                     </Field>
                     <Field label="순서"><input name="order" type="number" className={`${inputCls} w-[120px]`} value={form.order} onChange={(e) => set('order', Number(e.target.value))} /></Field>
                     <div className="flex items-center justify-between pt-2">
