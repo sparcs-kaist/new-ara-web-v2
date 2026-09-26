@@ -11,7 +11,7 @@ export default function MenuEditPage() {
     const isNew = menuId === 'new';
     const back = useSafeBack();
     return (
-        <ManageScreen id={Number(id)} backLabel="메뉴 관리" title={isNew ? '메뉴 추가' : '메뉴 수정'}>
+        <ManageScreen id={Number(id)} title={isNew ? '메뉴 추가' : '메뉴 수정'}>
             {(store) => {
                 const menu = isNew ? null : store.menus.find((m) => m.id === Number(menuId));
                 if (!isNew && !menu) return <ErrorState message="메뉴를 찾을 수 없어요" />;

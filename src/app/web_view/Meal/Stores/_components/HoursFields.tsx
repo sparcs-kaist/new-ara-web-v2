@@ -38,7 +38,7 @@ function RoundButton({ label, ariaLabel, disabled, onClick }: { label: string; a
             aria-label={ariaLabel}
             disabled={disabled}
             onClick={onClick}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F0F0F0] text-[18px] font-bold leading-none text-[#555555] disabled:text-[#CCCCCC]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F0F0F0] text-[18px] font-bold leading-none text-[#646464] disabled:text-[#BBBBBB]"
         >
             {label}
         </button>

@@ -21,6 +21,7 @@ function EventSheetForm({ storeId, event, onClose }: { storeId: number; event: S
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [attempted, setAttempted] = useState(false);
     const clientError = eventDraftError(draft);
 
     const run = async (work: () => Promise<unknown>) => {
@@ -38,15 +39,17 @@ function EventSheetForm({ storeId, event, onClose }: { storeId: number; event: S
         }
     };
     const submit = () => {
+        setAttempted(true);
         if (clientError) return;
         const body = eventBody(draft);
         run(() => (event ? updateStoreEvent(storeId, event.id, body) : createStoreEvent(storeId, body)));
     };
+    const shown = error ?? (attempted ? clientError : null);
 
     return (
         <div className="px-5">
-            <EventFields draft={draft} onChange={setDraft} disabled={busy} />
-            {(error ?? clientError) && <p className="mt-3 text-[13px] text-ara_red">{error ?? clientError}</p>}
+            <EventFields draft={draft} onChange={setDraft} disabled={busy} creating={!event} />
+            {shown && <p className="mt-3 text-[13px] text-ara_red">{shown}</p>}
             <div className="mt-5">
                 <CtaButton disabled={busy || !!clientError} onClick={submit}>
                     {event ? '저장하기' : '추가하기'}
@@ -168,7 +171,7 @@ function EventsList({ store }: { store: StoreDetail }) {
 export default function EventsPage() {
     const id = Number(useParams<{ id: string }>().id);
     return (
-        <ManageScreen id={id} backLabel="내 식당" title="휴무 · 임시 영업">
+        <ManageScreen id={id} title="휴무 · 임시 영업">
             {(store) => <EventsList key={store.id} store={store} />}
         </ManageScreen>
     );

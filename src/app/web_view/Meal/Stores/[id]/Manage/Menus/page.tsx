@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { MenuIcon, RightChevronIcon } from '@/app/web_view/_components';
@@ -22,6 +22,8 @@ interface Drag {
     height: number;
 }
 
+const HOLD_MS = 200;
+
 const targetIndex = (d: Drag, count: number) => Math.max(0, Math.min(count - 1, d.from + Math.round(d.dy / d.height)));
 
 function MenuList({ store }: { store: StoreDetail }) {
@@ -33,9 +35,12 @@ function MenuList({ store }: { store: StoreDetail }) {
     const menus = store.menus;
     const menusRef = useRef(menus);
     menusRef.current = menus;
+    const dragAbort = useRef<AbortController | null>(null);
     const base = `${manageUrl(store.id)}/Menus`;
 
     usePullToRefresh();
+
+    useEffect(() => () => dragAbort.current?.abort(), []);
 
     const setMenus = (next: StoreMenu[]) => qc.setQueryData<StoreDetail>(storeKey(store.id), (old) => (old ? { ...old, menus: next } : old));
 
@@ -67,24 +72,33 @@ function MenuList({ store }: { store: StoreDetail }) {
     const onHandleDown = (m: StoreMenu, index: number) => (e: ReactPointerEvent<HTMLButtonElement>) => {
         if (drag || e.button !== 0) return;
         e.preventDefault();
+        dragAbort.current?.abort();
+        const ac = new AbortController();
+        dragAbort.current = ac;
+        const { signal } = ac;
         const startY = e.clientY;
         let state: Drag = { id: m.id, from: index, dy: 0, height: e.currentTarget.closest('li')?.getBoundingClientRect().height ?? 1 };
-        setDrag(state);
+        let lifted = false;
+        const hold = window.setTimeout(() => {
+            lifted = true;
+            setDrag(state);
+        }, HOLD_MS);
+        signal.addEventListener('abort', () => window.clearTimeout(hold));
         const onMove = (ev: PointerEvent) => {
+            if (!lifted) return;
             state = { ...state, dy: ev.clientY - startY };
             setDrag(state);
         };
         const onUp = () => {
-            window.removeEventListener('pointermove', onMove);
-            window.removeEventListener('pointerup', onUp);
-            window.removeEventListener('pointercancel', onUp);
+            ac.abort();
+            if (!lifted) return;
             setDrag(null);
             const to = targetIndex(state, menusRef.current.length);
             if (to !== state.from) commit(state.from, to);
         };
-        window.addEventListener('pointermove', onMove);
-        window.addEventListener('pointerup', onUp);
-        window.addEventListener('pointercancel', onUp);
+        window.addEventListener('pointermove', onMove, { signal });
+        window.addEventListener('pointerup', onUp, { signal });
+        window.addEventListener('pointercancel', onUp, { signal });
     };
 
     const to = drag ? targetIndex(drag, menus.length) : -1;
@@ -155,7 +169,7 @@ function MenuList({ store }: { store: StoreDetail }) {
 export default function MenusPage() {
     const id = Number(useParams<{ id: string }>().id);
     return (
-        <ManageScreen id={id} backLabel="내 식당" title="메뉴 관리">
+        <ManageScreen id={id} title="메뉴 관리">
             {(store) => <MenuList key={store.id} store={store} />}
         </ManageScreen>
     );

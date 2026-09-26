@@ -93,7 +93,7 @@ export function DashedButton({ children, onClick }: { children: ReactNode; onCli
         <button
             type="button"
             onClick={onClick}
-            className="flex h-[52px] w-full items-center justify-center rounded-[12px] border border-dashed border-[#DDDDDD] text-[15px] text-[#8A8A8A]"
+            className="flex h-[52px] w-full items-center justify-center rounded-[12px] border border-dashed border-[#F0F0F0] text-[15px] text-[#8A8A8A]"
         >
             {children}
         </button>

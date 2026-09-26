@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@/app/web_view/_components';
 import { useInvalidateStores } from '@/app/web_view/_query';
-import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { CtaButton, FixedBottomBar } from '@/app/web_view/Delivery/_components/BottomCta';
 import { INPUT_CLASS } from '@/app/web_view/Delivery/_components/fields';
 import { apiDetail, createStoreEvent, deleteStoreEvent, updateStore, updateStoreCover } from '@/lib/api/store';
 import { eventsSummary, hoursSummary, menusSummary, openEndedClosure } from '@/lib/store';
 import type { StaffStoreFields, StoreDetail } from '@/lib/types/store';
-import { ManageScreen, manageUrl } from '../../_components/ManageScreen';
+import { ManageScreen, manageUrl, storeUrl } from '../../_components/ManageScreen';
 import { StoreCover } from '../../_components/StoreCover';
 import { ChevronRow, CounterTextarea, Field, FieldLabel, ToggleRow, ZoneSelect, usePickedFile } from '../../_components/formParts';
 
@@ -22,7 +21,6 @@ const toDraft = (s: StoreDetail): Draft => ({ name: s.name, intro: s.intro, zone
 
 function ManageForm({ store }: { store: StoreDetail }) {
     const router = useRouter();
-    const back = useSafeBack();
     const invalidate = useInvalidateStores();
     const [initial] = useState(() => toDraft(store));
     const [form, setForm] = useState(initial);
@@ -46,7 +44,7 @@ function ManageForm({ store }: { store: StoreDetail }) {
             if (changed.length) await updateStore(store.id, Object.fromEntries(changed.map((k) => [k, form[k].trim()])) as Partial<Draft>);
             if (cover.picked) await updateStoreCover(store.id, cover.picked.file);
             await invalidate();
-            back();
+            router.replace(storeUrl(store.id));
         } catch (e) {
             setError(apiDetail(e));
             setBusy(false);
@@ -164,7 +162,7 @@ function ManageForm({ store }: { store: StoreDetail }) {
 export default function ManagePage() {
     const id = Number(useParams<{ id: string }>().id);
     return (
-        <ManageScreen id={id} backLabel="식사" title="내 식당 관리">
+        <ManageScreen id={id} title="내 식당 관리">
             {(store) => <ManageForm key={store.id} store={store} />}
         </ManageScreen>
     );

@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppHeader, LeftChevronIcon, Screen, Skeleton } from '@/app/web_view/_components';
+import { AppHeader, Screen, Skeleton } from '@/app/web_view/_components';
 import { useStore } from '@/app/web_view/_query';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail, errorStatus } from '@/lib/api/store';
@@ -10,32 +10,6 @@ import type { StoreDetail } from '@/lib/types/store';
 
 export const storeUrl = (id: number) => `/web_view/Meal/Stores/${id}`;
 export const manageUrl = (id: number) => `${storeUrl(id)}/Manage`;
-
-export function BackHeader({ label, title }: { label: string; title: string }) {
-    const back = useSafeBack();
-    const leading = (
-        <>
-            <LeftChevronIcon size={32} />
-            <span className="ml-1 text-[17px] font-medium">{label}</span>
-        </>
-    );
-    return (
-        <AppHeader
-            title={title}
-            leading={
-                <button type="button" onClick={back} aria-label="뒤로" className="flex items-center text-ara_red">
-                    {leading}
-                </button>
-            }
-            // An invisible copy of the leading keeps the title at the screen centre for any label length.
-            trailing={
-                <span aria-hidden className="invisible flex items-center">
-                    {leading}
-                </span>
-            }
-        />
-    );
-}
 
 // Non-staff are sent to the public store page; the store is only handed out to staff.
 export function useStaffStore(id: number) {
@@ -60,22 +34,13 @@ export function ErrorState({ message }: { message: string }) {
     );
 }
 
-export function ManageScreen({
-    id,
-    backLabel,
-    title,
-    children,
-}: {
-    id: number;
-    backLabel: string;
-    title: string;
-    children: (store: StoreDetail) => ReactNode;
-}) {
+export function ManageScreen({ id, title, children }: { id: number; title: string; children: (store: StoreDetail) => ReactNode }) {
+    const back = useSafeBack();
     const { store, isError, error } = useStaffStore(id);
     const notFound = !(id > 0) || errorStatus(error) === 404;
     return (
         <Screen withTabBar={false}>
-            <BackHeader label={backLabel} title={title} />
+            <AppHeader title={title} onBack={back} />
             {store ? (
                 children(store)
             ) : isError || notFound ? (

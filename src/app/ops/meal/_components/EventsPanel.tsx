@@ -8,7 +8,7 @@ import { apiDetail, createStoreEvent, deleteStoreEvent, updateStoreEvent } from 
 import { EVENT_KIND_LABELS, isEventActive, isEventFuture } from '@/lib/store';
 import type { StoreEvent } from '@/lib/types/store';
 import { Button, StatusLine, type Status } from './ui';
-import { opsStoreEventsKey } from './keys';
+import { OPS_STORES_KEY, opsStoreEventsKey } from './keys';
 
 export default function EventsPanel({ storeId, events }: { storeId: number; events: StoreEvent[] }) {
     const qc = useQueryClient();
@@ -29,7 +29,8 @@ export default function EventsPanel({ storeId, events }: { storeId: number; even
         setStatus(null);
         try {
             await work();
-            await qc.invalidateQueries({ queryKey: opsStoreEventsKey(storeId) });
+            // The stores list carries is_open / open_note / today_hours, which an event changes.
+            await Promise.all([qc.invalidateQueries({ queryKey: opsStoreEventsKey(storeId) }), qc.invalidateQueries({ queryKey: OPS_STORES_KEY })]);
             setStatus({ ok: true, text: okText });
             setEditing(undefined);
         } catch (e) {
@@ -93,7 +94,7 @@ export default function EventsPanel({ storeId, events }: { storeId: number; even
             ) : (
                 <div className="w-[420px] border-t border-[#F0F0F0] pt-4">
                     <h4 className="mb-3 text-[14px] font-semibold">{editing ? '휴무 · 임시 영업 수정' : '휴무 · 임시 영업 추가'}</h4>
-                    <EventFields draft={draft} onChange={setDraft} disabled={busy} />
+                    <EventFields draft={draft} onChange={setDraft} disabled={busy} creating={editing === null} />
                     {clientError && <p className="mt-2 text-[12px] text-[#ED3A3A]">{clientError}</p>}
                     <div className="mt-4 flex items-center justify-end gap-3">
                         <StatusLine status={status} />

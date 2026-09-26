@@ -97,7 +97,17 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-export function EventFields({ draft, onChange, disabled = false }: { draft: EventDraft; onChange: (draft: EventDraft) => void; disabled?: boolean }) {
+export function EventFields({
+    draft,
+    onChange,
+    disabled = false,
+    creating = false,
+}: {
+    draft: EventDraft;
+    onChange: (draft: EventDraft) => void;
+    disabled?: boolean;
+    creating?: boolean;
+}) {
     const set = (patch: Partial<EventDraft>) => onChange({ ...draft, ...patch });
     return (
         <div className="space-y-5">
@@ -115,6 +125,7 @@ export function EventFields({ draft, onChange, disabled = false }: { draft: Even
                     <input
                         type="date"
                         value={draft.start}
+                        min={creating ? todayKst() : undefined}
                         disabled={disabled}
                         aria-label="시작일"
                         onChange={(e) => set({ start: e.target.value })}

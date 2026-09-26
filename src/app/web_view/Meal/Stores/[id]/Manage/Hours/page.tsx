@@ -52,7 +52,7 @@ function HoursEditor({ store }: { store: StoreDetail }) {
 export default function HoursPage() {
     const id = Number(useParams<{ id: string }>().id);
     return (
-        <ManageScreen id={id} backLabel="내 식당" title="영업시간">
+        <ManageScreen id={id} title="영업시간">
             {(store) => <HoursEditor key={store.id} store={store} />}
         </ManageScreen>
     );
