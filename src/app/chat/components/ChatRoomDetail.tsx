@@ -28,7 +28,7 @@ import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { DELIVERY_KEY } from '@/app/web_view/_query/delivery';
 import { AnonAvatar } from '@/app/web_view/Delivery/_components/AnonAvatar';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
-import { DeliveryComposerNote, DeliveryLinkBar, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
+import { DeliveryComposerNote, DeliveryHostBar, DeliveryLinkBar, DeliveryStatusBar } from '@/app/web_view/Delivery/_components/DeliveryStatusBar';
 import { OrderCard } from '@/app/web_view/Delivery/_components/OrderCard';
 import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
 import { ordersAllowed } from '@/lib/delivery';
@@ -576,6 +576,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             ) : (
                 <DeliveryComposerNote party={party} payments={payments} />
             ))}
+            {party && <DeliveryHostBar party={party} onAction={setAction} />}
 
             <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows ?? [voteRow, paymentRow]} />
 
