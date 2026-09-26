@@ -1,29 +1,14 @@
-/* eslint-disable */
-
 'use client';
 
 import React, {
-  useEffect,
   useState,
   useRef,
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { useEditor, EditorContent, Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
-import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-
-import AttachmentImage from './components/AttachmentImage';
-import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
+import { EditorContent, Editor } from '@tiptap/react';
 import TextEditorLinkDialog from '@/components/TextEditor/components/TextEditorLinkDialog';
-import { cleanJsonString } from '@/components/TextEditor/utils/cleanJsonString';
+import useAraEditor from '@/components/TextEditor/useAraEditor';
 
 interface TextEditorProps {
   content?: string | object; // string 또는 object 타입을 모두 받을 수 있도록 수정
@@ -36,93 +21,11 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
     const [imgError, setImgError] = useState(false);
     const dialogRef = useRef<{ open: (defaultTitle?: string) => void }>(null);
 
-    const editor = useEditor({
+    const editor = useAraEditor({
       editable,
-      editorProps: {
-        attributes: {
-          class:
-            'prose prose-sm sm:prose focus:outline-none max-w-full',
-        },
-      },
-      extensions: [
-        LinkBookmark,
-        AttachmentImage.configure({
-          errorCallback: () => setImgError(true),
-        }),
-
-        StarterKit.configure({
-          bold: false,
-          italic: false,
-          codeBlock: false,
-          heading: {
-            levels: [1, 2, 3],
-          },
-        }),
-        Underline,
-        CustomCodeBlock,
-        Link.configure({
-          openOnClick: false,
-          autolink: false,
-          linkOnPaste: false,
-        }),
-        Placeholder.configure({
-          placeholder: 'Write something …',
-          showOnlyWhenEditable: true,
-        }),
-        Italic,
-        TextStyle,
-        Color.configure({
-          types: ['textStyle'],
-        }),
-        Bold,
-      ],
-      // 'content' prop은 초기 렌더링에만 사용되므로,
-      // 비동기 로딩을 위해 빈 상태로 시작하고 useEffect에서 설정합니다.
-      content: '',
+      content,
+      onImageError: () => setImgError(true),
     });
-
-    // content prop이 변경될 때마다 에디터의 내용을 갱신합니다.
-    useEffect(() => {
-      if (!editor || !content) {
-        return;
-      }
-
-      let parsedContent: object | null = null;
-
-      try {
-        if (typeof content === 'string') {
-          try {
-            // 1. 먼저 직접 파싱을 시도합니다.
-            parsedContent = JSON.parse(content);
-          } catch (directParseException) {
-            // 2. 직접 파싱이 실패하면, 문자열을 정리하고 다시 파싱합니다.
-            console.log("Direct JSON parsing failed, attempting to clean and re-parse...");
-            const cleanedString = cleanJsonString(content);
-            parsedContent = JSON.parse(cleanedString);
-          }
-        }
-        // 3. content가 이미 객체인 경우, 그대로 사용합니다.
-        else if (typeof content === 'object' && content !== null) {
-          parsedContent = content;
-        }
-
-        if (parsedContent) {
-          const currentContentStr = JSON.stringify(editor.getJSON());
-          const newContentStr = JSON.stringify(parsedContent);
-
-          // 에디터가 비어있거나 내용이 다를 때만 업데이트하여 커서 점프를 방지합니다.
-          if (editor.isEmpty || currentContentStr !== newContentStr) {
-            editor.commands.setContent(parsedContent, false);
-          }
-        }
-      } catch (e) {
-        // 4. 모든 파싱 시도가 실패하면, 원본 content를 일반 텍스트로 처리합니다.
-        if (typeof content === 'string' && editor.getText() !== content) {
-          editor.commands.setContent(content, false);
-        }
-        console.error("Failed to parse content even after cleaning, treating as plain text:", e);
-      }
-    }, [content, editor]);
 
     // Expose editor to parent
     useImperativeHandle(ref, () => editor as Editor, [editor]);
