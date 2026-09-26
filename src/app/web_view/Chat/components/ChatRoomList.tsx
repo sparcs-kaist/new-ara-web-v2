@@ -10,6 +10,7 @@ import UserSearchDialog from '@/app/chat/components/UserSearchDialog';
 import RoomCreateDialog from '@/app/chat/components/RoomCreateDialog';
 import { PlusIcon, InformationIcon, ChoiceChip, ChoiceChipRow } from '@/app/web_view/_components';
 import { fetchChatRoomList, createGroupDM, createDM, getDmByUserId } from '@/lib/api/chat';
+import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
 import InvitationListDialog from '@/app/chat/components/InvitationListDialog';
 
 // ROOM 타입 정의
@@ -41,6 +42,7 @@ type ChatRoom = {
     recent_message_at?: string;
     recent_message?: RecentMessage;
     created_at?: string;
+    partner?: ChatPartner | null;
 };
 
 const TABS = [
@@ -227,6 +229,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                         // 시간 표시 (HH:MM)
                         const timeSrc = room.recent_message_at || room.created_at || '';
                         const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
+                        const title = displayRoomTitle(room, room.partner);
 
                         return (
                             <button
@@ -237,8 +240,8 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                             >
                                 <div className="relative h-[42px] w-[42px] shrink-0">
                                     <Image
-                                        src={room.picture || '/Chatroom_default1.png'}
-                                        alt={room.room_title}
+                                        src={displayRoomPicture(room, room.partner)}
+                                        alt={title}
                                         fill
                                         className="rounded-full object-cover"
                                         sizes="42px"
@@ -247,7 +250,7 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                                 <div className="ml-3 min-w-0 flex-1">
                                     <div className="flex h-6 items-center">
                                         <div className="min-w-0 flex-1 truncate text-[16px] font-semibold">
-                                            {room.room_title}
+                                            {title}
                                         </div>
                                         <div className="ml-2 shrink-0 text-[12px] text-[#B1B1B1]">
                                             {timeStr}

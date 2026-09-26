@@ -42,56 +42,35 @@ export enum MealTime {
 // 특정 시간대의 메뉴 접근을 위한 헬퍼 타입
 export type MealTimeKey = `${MealTime}_menu`;
 
-// 식당 ID 타입 (API에서 사용하는 숫자 ID)
-export type RestaurantId = 1 | 2 | 3 | 4 | 5;
-
-// 식당 ID와 이름 매핑
-export const RESTAURANT_NAMES: Record<RestaurantId, string> = {
-  1: '카이마루',
-  2: '서맛골',
-  3: '동맛골 1층',
-  4: '동맛골 2층',
-  5: '교수회관'
-};
-
-export const RESTAURANT_IDS = Object.keys(RESTAURANT_NAMES).map(Number) as RestaurantId[];
-
-// UI에서 사용하는 식당 표시 이름 배열
-export const RESTAURANT_DISPLAY_NAMES_ARRAY = [
-  '카이마루',
-  '동맛골 1층 (일품)',
-  '동맛골 1층 (카페테리아)',
-  '동맛골 2층 (동측 교직원식당)',
-  '서맛골',
-  '교수회관'
-];
-
-// 식당 표시 이름을 ID로 변환하는 함수
-export function getRestaurantIdFromDisplayName(displayName: string): RestaurantId {
-  switch (displayName) {
-    case '카이마루':
-      return 1;
-    case '서맛골':
-      return 2;
-    case '동맛골 1층 (일품)':
-    case '동맛골 1층 (카페테리아)':
-      return 3; // 둘 다 같은 API ID 사용
-    case '동맛골 2층 (동측 교직원식당)':
-      return 4;
-    case '교수회관':
-      return 5;
-    default:
-      return 1;
-  }
+export interface Restaurant {
+  id: number;
+  code: string | null;
+  name: string;
+  display_name: string;
+  is_active: boolean;
 }
 
-// 식당 이름으로 메뉴 타입 결정 (course or cafeteria)
-export function getMenuTypeFromRestaurantName(displayName: string): 'course' | 'cafeteria' {
-  // 카페테리아가 이름에 포함되어 있으면 cafeteria
-  if (displayName.includes('카페테리아')) {
-    return 'cafeteria';
-  }
-  return 'course';
+// 목록을 불러오는 중이거나 실패했을 때만 쓴다
+export const FALLBACK_RESTAURANTS: Restaurant[] = [
+  { id: 1, code: 'fclt', name: '카이마루', display_name: '카이마루', is_active: true },
+  { id: 2, code: 'west', name: '서맛골', display_name: '서맛골', is_active: true },
+  { id: 3, code: 'east1', name: '동맛골(동측학생식당)', display_name: '동맛골 1층 (학생식당)', is_active: true },
+  { id: 4, code: 'east2', name: '동맛골(동측 교직원식당)', display_name: '동맛골 2층 (교직원식당)', is_active: true },
+  { id: 5, code: 'emp', name: '교수회관', display_name: '교수회관', is_active: true },
+];
+
+// 서버 display_name보다 앞선다: 크롤러가 display_name을 채우기 전에도 확정된 이름이 보이게
+const RESTAURANT_NAME_OVERRIDES: Record<string, string> = {
+  east1: '동맛골 1층 (학생식당)',
+  east2: '동맛골 2층 (교직원식당)',
+};
+
+export function displayRestaurantName(restaurant: Restaurant): string {
+  return (restaurant.code && RESTAURANT_NAME_OVERRIDES[restaurant.code]) || restaurant.display_name || restaurant.name;
+}
+
+export function defaultRestaurant(restaurants: Restaurant[]): Restaurant {
+  return restaurants.find((r) => r.code === 'fclt') ?? restaurants[0];
 }
 
 // MealTime enum을 API의 MealType으로 변환

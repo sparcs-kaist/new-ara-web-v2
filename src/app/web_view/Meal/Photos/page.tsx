@@ -3,24 +3,25 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppHeader, CameraIcon, Screen, Skeleton } from '@/app/web_view/_components';
-import { useMealPhotos } from '@/app/web_view/_query';
+import { useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { CtaButton, FixedBottomBar } from '@/app/web_view/Delivery/_components/BottomCta';
-import { currentMealSlot, formatMealDate, RESTAURANT_IDS, RESTAURANT_NAMES, timeStringToMealType, type RestaurantId } from '@/lib/types/meal';
+import { currentMealSlot, defaultRestaurant, displayRestaurantName, formatMealDate, timeStringToMealType } from '@/lib/types/meal';
 import { MealSegment, OfficialBadge, PhotoCover, PhotoLabel } from '../_components/photoParts';
 import { PhotoViewer, type ViewerState } from '../_components/PhotoViewer';
 import { UploadPhotoSheet } from '../_components/UploadPhotoSheet';
 
 function MealPhotosInner() {
+    const restaurants = useRestaurants();
     const linked = Number(useSearchParams().get('restaurant'));
-    const linkedId = RESTAURANT_IDS.find((id) => id === linked);
+    const linkedId = restaurants.find(({ id }) => id === linked)?.id;
     // Client-only under the useSearchParams boundary, so this is the device clock.
     const [today] = useState(() => new Date());
     const date = formatMealDate(today);
     const [meal, setMeal] = useState(() => currentMealSlot(today).time);
-    const queries = useMealPhotos(date, timeStringToMealType(meal));
+    const queries = useMealPhotos(restaurants, date, timeStringToMealType(meal));
     const [viewer, setViewer] = useState<ViewerState | null>(null);
-    const [uploadFor, setUploadFor] = useState<RestaurantId | null>(null);
+    const [uploadFor, setUploadFor] = useState<number | null>(null);
 
     usePullToRefresh();
 
@@ -44,13 +45,14 @@ function MealPhotosInner() {
                 <MealSegment value={meal} onChange={setMeal} />
             </div>
 
-            {RESTAURANT_IDS.map((id, i) => {
+            {restaurants.map((restaurant, i) => {
+                const { id } = restaurant;
                 const q = queries[i];
                 const photos = q.data?.results ?? [];
                 return (
                     <section key={id} id={`restaurant-${id}`} className="scroll-mt-[calc(56px+var(--ara-safe-top))] px-5 pt-6">
                         <h2 className="flex items-baseline gap-[6px] text-[16px] font-semibold text-black">
-                            {RESTAURANT_NAMES[id]}
+                            {displayRestaurantName(restaurant)}
                             {q.data && <span className="text-[14px] font-medium text-[#999999]">{q.data.num_items}장</span>}
                         </h2>
                         <div className="mt-3">
@@ -95,7 +97,7 @@ function MealPhotosInner() {
             <div aria-hidden className="h-[96px] shrink-0" />
 
             <FixedBottomBar fade>
-                <CtaButton onClick={() => setUploadFor(linkedId ?? RESTAURANT_IDS[0])}>사진 올리기</CtaButton>
+                <CtaButton onClick={() => setUploadFor(linkedId ?? defaultRestaurant(restaurants).id)}>사진 올리기</CtaButton>
             </FixedBottomBar>
 
             {viewer && <PhotoViewer state={viewer} onChange={setViewer} />}

@@ -3,11 +3,12 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { ChoiceChip, ImageBadgeIcon } from '@/app/web_view/_components';
+import { useRestaurantName } from '@/app/web_view/_query';
 import { MEAL_SLOTS, type MealPhoto, type MealSlot } from '@/lib/types/meal';
 
 export function PhotoLabel({ children }: { children: ReactNode }) {
     return (
-        <span className="absolute left-2 top-2 rounded-[6px] bg-black/55 px-[6px] py-[2px] text-[11px] font-semibold leading-[15px] text-white">
+        <span className="absolute left-2 top-2 max-w-[calc(100%-16px)] break-keep rounded-[6px] bg-black/55 px-[6px] py-[2px] text-[11px] font-semibold leading-[15px] text-white">
             {children}
         </span>
     );
@@ -22,6 +23,7 @@ export function OfficialBadge({ className }: { className: string }) {
 }
 
 export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string }) {
+    const restaurantName = useRestaurantName();
     if (!photo) {
         return (
             <span className="flex h-full w-full flex-col items-center justify-center gap-1 bg-[#F6F6F6] text-[#BBBBBB]">
@@ -30,7 +32,7 @@ export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string 
             </span>
         );
     }
-    return <Image src={photo.image} alt={photo.comment || `${photo.restaurant.name} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
+    return <Image src={photo.image} alt={photo.comment || `${restaurantName(photo.restaurant)} 메뉴 사진`} fill sizes={sizes} className="object-cover" />;
 }
 
 export function MealSegment({ value, onChange }: { value: string; onChange: (time: MealSlot['time']) => void }) {

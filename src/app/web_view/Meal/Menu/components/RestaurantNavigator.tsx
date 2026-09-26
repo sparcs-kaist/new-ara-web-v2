@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ChoiceChip } from '@/app/web_view/_components';
+import { displayRestaurantName, type Restaurant } from '@/lib/types/meal';
 import RestaurantSelection from './RestaurantSelection';
 
 // 식사 시간 배열 - 단순 문자열로 관리
@@ -15,14 +16,16 @@ const ArrowIcon = () => (
 );
 
 interface RestaurantNavigatorProps {
-  selectedRestaurant: string;
+  restaurants: Restaurant[];
+  selectedRestaurant: Restaurant;
   selectedMealTime: string;
-  onRestaurantChange?: (restaurant: string) => void;
+  onRestaurantChange?: (id: number) => void;
   onMealTimeChange?: (time: string) => void;
 }
 
 export default function RestaurantNavigator({
-  selectedRestaurant = '동맛골 1층 (카페테리아)',
+  restaurants,
+  selectedRestaurant,
   selectedMealTime = '점심',
   onRestaurantChange,
   onMealTimeChange
@@ -52,10 +55,10 @@ export default function RestaurantNavigator({
     setShowRestaurantModal(true);
   };
 
-  const handleRestaurantSelect = (name: string) => {
+  const handleRestaurantSelect = (id: number) => {
     setShowRestaurantModal(false);
     if (onRestaurantChange) {
-      onRestaurantChange(name);
+      onRestaurantChange(id);
     }
   };
 
@@ -65,26 +68,12 @@ export default function RestaurantNavigator({
     }
   };
 
-  const getSelectedRestaurantIndex = () => {
-    const restaurantNames = [
-      '카이마루',
-      '동맛골 1층 (일품)',
-      '동맛골 1층 (카페테리아)',
-      '동맛골 2층 (동측 교직원식당)',
-      '서맛골',
-      '교수회관',
-    ];
-    
-    const index = restaurantNames.findIndex(name => name === selectedRestaurant);
-    return index >= 0 ? index : 0;
-  };
-
   return (
-    <div className="flex justify-between items-center w-full py-2 relative px-[15px]">
-      <div ref={restaurantSelectorRef} className="relative">
-        <button type="button" className="flex items-center" onClick={handleRestaurantClick}>
-          <div className="text-zinc-800 text-base font-bold">
-            {selectedRestaurant}
+    <div className="flex justify-between items-center gap-2 w-full py-2 relative px-[15px]">
+      <div ref={restaurantSelectorRef} className="relative min-w-0">
+        <button type="button" className="flex items-center max-w-full" onClick={handleRestaurantClick}>
+          <div className="text-zinc-800 text-base font-bold truncate">
+            {displayRestaurantName(selectedRestaurant)}
           </div>
           <div className="ml-1">
             <ArrowIcon />
@@ -94,8 +83,9 @@ export default function RestaurantNavigator({
         {showRestaurantModal && (
           <div className="absolute top-full left-0 mt-1 z-10">
             <RestaurantSelection 
+              restaurants={restaurants}
               onSelect={handleRestaurantSelect} 
-              defaultSelected={getSelectedRestaurantIndex()}
+              selected={selectedRestaurant.id}
             />
           </div>
         )}

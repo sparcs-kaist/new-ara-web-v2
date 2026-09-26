@@ -8,6 +8,7 @@ import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
 import { createGroupDM, createDM, fetchChatRoomList } from '@/lib/api/chat';
+import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
 import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -40,6 +41,7 @@ type ChatRoom = {
     recent_message_at?: string;
     recent_message?: RecentMessage;   // <- 객체로 변경
     created_at?: string;
+    partner?: ChatPartner | null;
 };
 
 interface ChatRoomListProps {
@@ -242,6 +244,7 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                         // 시간 표시 (HH:MM)
                         const timeSrc = room.recent_message_at || room.created_at || '';
                         const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
+                        const title = displayRoomTitle(room, room.partner);
 
                         return (
                             <button
@@ -258,15 +261,15 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                                 )}
                                 <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
                                     <Image
-                                        src={room.picture || '/default-room.png'}
-                                        alt={room.room_title}
+                                        src={displayRoomPicture(room, room.partner)}
+                                        alt={title}
                                         fill
                                         className="rounded-full object-cover"
                                         sizes="36px"
                                     />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-base truncate mt-[4px] font-medium">{room.room_title}</div>
+                                    <div className="text-base truncate mt-[4px] font-medium">{title}</div>
                                     <div className="text-xs text-gray-500 truncate">
                                         {previewClamped || '새로운 채팅방'}
                                     </div>
