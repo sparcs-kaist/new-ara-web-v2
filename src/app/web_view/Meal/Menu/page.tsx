@@ -8,6 +8,7 @@ import MealHeader from "./components/MealHeader";
 import RestaurantNavigator from "./components/RestaurantNavigator";
 import MenuList from "./components/MenuList";
 import { Screen, Spinner } from '@/app/web_view/_components';
+import { useRestaurants } from '@/app/web_view/_query';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 
 import { fetchMeal } from '@/lib/api/meal';
@@ -19,7 +20,7 @@ import {
   currentMealSlot,
   ALLERGEN_MAP,
   MEAL_SLOTS,
-  type RestaurantId,
+  defaultRestaurant,
 } from '@/lib/types/meal';
 
 // 알러지 이름을 ID로 변환하는 함수
@@ -60,7 +61,11 @@ function MealPageInner() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
-  const [selectedRestaurant, setSelectedRestaurant] = useState<RestaurantId>(1);
+  const restaurants = useRestaurants();
+  // 불러오는 중의 목록과 API 목록은 id가 다를 수 있어 코드로 고른다
+  const [restaurantCode, setRestaurantCode] = useState<string | null>(null);
+  const restaurant = restaurants.find((r) => r.code === restaurantCode) ?? defaultRestaurant(restaurants);
+  const selectedRestaurant = restaurant.id;
   const [selectedTime, setSelectedTime] = useState<string>(
     () => MEAL_SLOTS.find((slot) => slot.time === timeParam)?.time ?? currentMealSlot().time
   );
@@ -101,8 +106,8 @@ function MealPageInner() {
     setSelectedDate(date);
   };
 
-  const handleRestaurantChange = (restaurant: RestaurantId) => {
-    setSelectedRestaurant(restaurant);
+  const handleRestaurantChange = (code: string) => {
+    setRestaurantCode(code);
   };
 
   const handleMealTimeChange = (mealTime: string) => {
@@ -131,7 +136,8 @@ function MealPageInner() {
       />
 
       <RestaurantNavigator
-        selectedRestaurant={selectedRestaurant}
+        restaurants={restaurants}
+        selectedRestaurant={restaurant}
         selectedMealTime={selectedTime}
         onRestaurantChange={handleRestaurantChange}
         onMealTimeChange={handleMealTimeChange}

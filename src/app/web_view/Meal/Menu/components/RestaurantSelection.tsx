@@ -1,6 +1,6 @@
 'use client'
 
-import { RESTAURANT_IDS, RESTAURANT_NAMES, type RestaurantId } from '@/lib/types/meal';
+import { displayRestaurantName, type Restaurant } from '@/lib/types/meal';
 
 // 체크 아이콘 컴포넌트
 const CheckIcon = () => (
@@ -19,11 +19,13 @@ const EmptyCheckIcon = () => (
 );
 
 export default function RestaurantSelection({ 
+  restaurants,
   onSelect, 
   selected
 }: { 
-  onSelect?: (id: RestaurantId) => void; 
-  selected: RestaurantId 
+  restaurants: Restaurant[];
+  onSelect?: (code: string) => void; 
+  selected: string 
 }) {
   return (
     <div
@@ -38,21 +40,21 @@ export default function RestaurantSelection({
       <div className="h-px bg-gray-200 w-full"></div>
       
       {/* 식당 목록 */}
-      {RESTAURANT_IDS.map((id, index) => (
-        <div key={id}>
+      {restaurants.map((restaurant, index) => (
+        <div key={restaurant.id}>
           <button
             type="button"
             className="w-full px-[5px] py-3 flex items-center gap-[5px] text-left hover:bg-gray-50"
-            onClick={() => onSelect?.(id)}
+            onClick={() => onSelect?.(restaurant.code)}
           >
-            {selected === id ? <CheckIcon /> : <EmptyCheckIcon />}
+            {selected === restaurant.code ? <CheckIcon /> : <EmptyCheckIcon />}
             <div className="text-[16px] font-normal">
-              {RESTAURANT_NAMES[id]}
+              {displayRestaurantName(restaurant)}
             </div>
           </button>
           
           {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
-          {index < RESTAURANT_IDS.length - 1 && (
+          {index < restaurants.length - 1 && (
             <div className="h-px bg-gray-200 w-full"></div>
           )}
         </div>

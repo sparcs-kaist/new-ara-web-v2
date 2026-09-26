@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ChoiceChip } from '@/app/web_view/_components';
-import { RESTAURANT_NAMES, type RestaurantId } from '@/lib/types/meal';
+import { displayRestaurantName, type Restaurant } from '@/lib/types/meal';
 import RestaurantSelection from './RestaurantSelection';
 
 // 식사 시간 배열 - 단순 문자열로 관리
@@ -16,13 +16,15 @@ const ArrowIcon = () => (
 );
 
 interface RestaurantNavigatorProps {
-  selectedRestaurant: RestaurantId;
+  restaurants: Restaurant[];
+  selectedRestaurant: Restaurant;
   selectedMealTime: string;
-  onRestaurantChange?: (restaurant: RestaurantId) => void;
+  onRestaurantChange?: (code: string) => void;
   onMealTimeChange?: (time: string) => void;
 }
 
 export default function RestaurantNavigator({
+  restaurants,
   selectedRestaurant,
   selectedMealTime = '점심',
   onRestaurantChange,
@@ -53,10 +55,10 @@ export default function RestaurantNavigator({
     setShowRestaurantModal(true);
   };
 
-  const handleRestaurantSelect = (restaurant: RestaurantId) => {
+  const handleRestaurantSelect = (code: string) => {
     setShowRestaurantModal(false);
     if (onRestaurantChange) {
-      onRestaurantChange(restaurant);
+      onRestaurantChange(code);
     }
   };
 
@@ -71,7 +73,7 @@ export default function RestaurantNavigator({
       <div ref={restaurantSelectorRef} className="relative min-w-0">
         <button type="button" className="flex items-center max-w-full" onClick={handleRestaurantClick}>
           <div className="text-zinc-800 text-base font-bold truncate">
-            {RESTAURANT_NAMES[selectedRestaurant]}
+            {displayRestaurantName(selectedRestaurant)}
           </div>
           <div className="ml-1">
             <ArrowIcon />
@@ -81,8 +83,9 @@ export default function RestaurantNavigator({
         {showRestaurantModal && (
           <div className="absolute top-full left-0 mt-1 z-10">
             <RestaurantSelection 
+              restaurants={restaurants}
               onSelect={handleRestaurantSelect} 
-              selected={selectedRestaurant}
+              selected={selectedRestaurant.code}
             />
           </div>
         )}

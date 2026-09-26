@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { ChoiceChip, ImageBadgeIcon } from '@/app/web_view/_components';
-import { MEAL_SLOTS, restaurantName, type MealPhoto, type MealSlot } from '@/lib/types/meal';
+import { useRestaurantName } from '@/app/web_view/_query';
+import { MEAL_SLOTS, type MealPhoto, type MealSlot } from '@/lib/types/meal';
 
 export function PhotoLabel({ children }: { children: ReactNode }) {
     return (
@@ -22,6 +23,7 @@ export function OfficialBadge({ className }: { className: string }) {
 }
 
 export function PhotoCover({ photo, sizes }: { photo?: MealPhoto; sizes: string }) {
+    const restaurantName = useRestaurantName();
     if (!photo) {
         return (
             <span className="flex h-full w-full flex-col items-center justify-center gap-1 bg-[#F6F6F6] text-[#BBBBBB]">

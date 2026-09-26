@@ -5,11 +5,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { BottomSheet, CameraIcon, ChoiceChip, Close2Icon, ImageBadgeIcon, type IconProps } from '@/app/web_view/_components';
-import { MEAL_PHOTOS_KEY, useMe } from '@/app/web_view/_query';
+import { MEAL_PHOTOS_KEY, useMe, useRestaurants } from '@/app/web_view/_query';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { apiDetail } from '@/lib/api/delivery';
 import { uploadMealPhoto } from '@/lib/api/meal';
-import { RESTAURANT_IDS, RESTAURANT_NAMES, timeStringToMealType, type MealSlot, type RestaurantId } from '@/lib/types/meal';
+import { defaultRestaurant, displayRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { MealSegment } from './photoParts';
 
 const MAX_EDGE = 1600;
@@ -31,7 +31,7 @@ async function shrink(file: File): Promise<File> {
 }
 
 interface UploadPhotoSheetProps {
-    restaurant: RestaurantId | null;
+    restaurant: number | null;
     meal: MealSlot['time'];
     date: string;
     onClose: () => void;
@@ -41,7 +41,7 @@ interface UploadPhotoSheetProps {
 export function UploadPhotoSheet({ restaurant, meal, date, onClose, onUploaded }: UploadPhotoSheetProps) {
     return (
         <BottomSheet open={restaurant !== null} onClose={onClose} title="사진 올리기">
-            <UploadForm initialRestaurant={restaurant ?? RESTAURANT_IDS[0]} initialMeal={meal} date={date} onUploaded={onUploaded} />
+            <UploadForm initialRestaurant={restaurant} initialMeal={meal} date={date} onUploaded={onUploaded} />
         </BottomSheet>
     );
 }
@@ -53,7 +53,7 @@ function UploadForm({
     date,
     onUploaded,
 }: {
-    initialRestaurant: RestaurantId;
+    initialRestaurant: number | null;
     initialMeal: MealSlot['time'];
     date: string;
     onUploaded: (meal: MealSlot['time']) => void;
@@ -61,7 +61,8 @@ function UploadForm({
     const router = useRouter();
     const qc = useQueryClient();
     const me = useMe();
-    const [restaurant, setRestaurant] = useState(initialRestaurant);
+    const restaurants = useRestaurants();
+    const [restaurant, setRestaurant] = useState(initialRestaurant ?? defaultRestaurant(restaurants).id);
     const [meal, setMeal] = useState(initialMeal);
     const [picked, setPicked] = useState<{ file: File; url: string } | null>(null);
     const [comment, setComment] = useState('');
@@ -128,9 +129,9 @@ function UploadForm({
             <section>
                 <h3 className="mb-2 text-[15px] font-semibold text-black">식당</h3>
                 <div className="flex flex-wrap gap-2">
-                    {RESTAURANT_IDS.map((id) => (
-                        <ChoiceChip key={id} size="sm" selected={id === restaurant} onClick={() => setRestaurant(id)}>
-                            {RESTAURANT_NAMES[id]}
+                    {restaurants.map((r) => (
+                        <ChoiceChip key={r.id} size="sm" selected={r.id === restaurant} onClick={() => setRestaurant(r.id)}>
+                            {displayRestaurantName(r)}
                         </ChoiceChip>
                     ))}
                 </div>

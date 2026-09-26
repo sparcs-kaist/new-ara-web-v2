@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Screen } from '@/app/web_view/_components';
-import { useDeliveryParties } from '@/app/web_view/_query';
+import { useDeliveryParties, useRestaurants } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
-import { currentMealSlot, RESTAURANT_NAMES, type MealSlot } from '@/lib/types/meal';
+import { currentMealSlot, defaultRestaurant, displayRestaurantName, type MealSlot } from '@/lib/types/meal';
 import { FacilityNotices } from './_components/FacilityNotices';
 import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
 
@@ -16,6 +16,7 @@ export default function MealHomePage() {
     const router = useRouter();
     const { data, isPending, isError, error } = useDeliveryParties({ page_size: 3 });
     const parties = data?.pages[0]?.results ?? [];
+    const restaurants = useRestaurants();
     // Set after mount: the page is prerendered, so a render-time clock is the build's.
     const [slot, setSlot] = useState<MealSlot | null>(null);
     useEffect(() => setSlot(currentMealSlot()), []);
@@ -41,7 +42,7 @@ export default function MealHomePage() {
                     <span className="relative block text-[11px] font-bold leading-[1.4] text-[#D9776E]">KAIST 학생식당</span>
                     <span className="relative mt-[3px] block text-[20px] font-bold leading-[1.4] text-[#333333]">오늘의 학식</span>
                     <span className="relative mt-[3px] block min-h-[17px] text-[12px] font-medium leading-[1.4] text-[#A8837F]">
-                        {slot && `${RESTAURANT_NAMES[1]} · ${slot.time} ${slot.hours}`}
+                        {slot && `${displayRestaurantName(defaultRestaurant(restaurants))} · ${slot.time} ${slot.hours}`}
                     </span>
                 </button>
             </div>

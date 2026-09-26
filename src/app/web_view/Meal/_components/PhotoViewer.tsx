@@ -5,11 +5,11 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useQueryClient } from '@tanstack/react-query';
 import { Close2Icon, ConfirmDialog, LeftChevronIcon, RightChevronIcon } from '@/app/web_view/_components';
-import { MEAL_PHOTOS_KEY } from '@/app/web_view/_query';
+import { MEAL_PHOTOS_KEY, useRestaurantName } from '@/app/web_view/_query';
 import { apiDetail } from '@/lib/api/delivery';
 import { deleteMealPhoto } from '@/lib/api/meal';
 import { pad } from '@/lib/delivery';
-import { restaurantName, type MealPhoto } from '@/lib/types/meal';
+import type { MealPhoto } from '@/lib/types/meal';
 
 export interface ViewerState {
     photos: MealPhoto[];
@@ -18,6 +18,7 @@ export interface ViewerState {
 
 export function PhotoViewer({ state, onChange }: { state: ViewerState; onChange: (next: ViewerState | null) => void }) {
     const qc = useQueryClient();
+    const restaurantName = useRestaurantName();
     const [confirming, setConfirming] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
