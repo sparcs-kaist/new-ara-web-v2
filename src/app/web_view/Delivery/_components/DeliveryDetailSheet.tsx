@@ -124,7 +124,6 @@ export function DeliveryDetailBody({
             </p>
 
             {error && <p className="text-[13px] text-ara_red">{error}</p>}
-            {/* The render's bottom action bar: a full-width rule over the button. */}
             <div className="-mx-5 mt-1 border-t border-[#F0F0F0] px-5 pt-[18px]">
                 {party.is_member ? (
                     <CtaButton onClick={onOpenChat}>채팅방으로 이동</CtaButton>

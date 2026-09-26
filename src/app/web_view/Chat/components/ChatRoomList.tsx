@@ -5,10 +5,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import UserSearchDialog from '@/app/chat/components/UserSearchDialog';
 import RoomCreateDialog from '@/app/chat/components/RoomCreateDialog';
-import { PlusIcon, InformationIcon } from '@/app/web_view/_components';
+import { PlusIcon, InformationIcon, ChoiceChip, ChoiceChipRow } from '@/app/web_view/_components';
 import { fetchChatRoomList, createGroupDM, createDM, getDmByUserId } from '@/lib/api/chat';
 import InvitationListDialog from '@/app/chat/components/InvitationListDialog';
 
@@ -43,6 +43,13 @@ type ChatRoom = {
     created_at?: string;
 };
 
+const TABS = [
+    { key: null, label: '전체', empty: '채팅방이 없습니다.' },
+    { key: 'dm', label: '쪽지', type: 'DM', empty: '쪽지가 없어요' },
+    { key: 'group', label: '그룹 채팅', type: 'GROUP_DM', empty: '그룹 채팅이 없어요' },
+    { key: 'delivery', label: '함께 배달', type: 'DELIVERY', empty: '함께 배달 채팅방이 없어요' },
+];
+
 interface ChatRoomListProps {
     onRoomClick: (roomId: number) => void;
 }
@@ -56,6 +63,9 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
     const [showInvitationDialog, setShowInvitationDialog] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const tabParam = useSearchParams().get('tab');
+    const tab = TABS.find((t) => t.key === tabParam) ?? TABS[0];
+    const visibleRooms = tab.type ? rooms.filter((room) => room.room_type === tab.type) : rooms;
 
     const refreshRoomList = () => {
         fetchChatRoomList()
@@ -176,15 +186,29 @@ export default function ChatRoomList({ onRoomClick }: ChatRoomListProps) {
                 </div>
             </header>
 
+            <ChoiceChipRow role="tablist" className="sticky top-[calc(var(--ara-safe-top)+56px)] z-30 bg-white">
+                {TABS.map((t) => (
+                    <ChoiceChip
+                        key={t.label}
+                        role="tab"
+                        selected={t === tab}
+                        // Native replaceState updates useSearchParams without router.replace's server round trip, so the chip flips on release.
+                        onClick={() => t !== tab && window.history.replaceState(null, '', t.key ? `/web_view/Chat?tab=${t.key}` : '/web_view/Chat')}
+                    >
+                        {t.label}
+                    </ChoiceChip>
+                ))}
+            </ChoiceChipRow>
+
             {/* 채팅방 목록 */}
             <div className="px-[15px] pb-24">
-                {loaded && rooms.length === 0 ? (
+                {loaded && visibleRooms.length === 0 ? (
                     <div className="flex h-[50vh] flex-col items-center justify-center text-[#B1B1B1]">
                         <InformationIcon size={50} />
-                        <span className="mt-2 text-[15px]">채팅방이 없습니다.</span>
+                        <span className="mt-2 text-[15px]">{tab.empty}</span>
                     </div>
                 ) : (
-                    rooms.map((room) => {
+                    visibleRooms.map((room) => {
                         // 미리보기 텍스트 조합
                         const lastMsg = room.recent_message;
                         const msgType = lastMsg?.message_type;

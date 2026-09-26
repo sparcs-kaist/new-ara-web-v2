@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AppHeader, Screen, SearchIcon, Spinner } from '@/app/web_view/_components';
+import { AppHeader, ChoiceChip, ChoiceChipRow, Screen, SearchIcon, Spinner } from '@/app/web_view/_components';
 import { useDeliveryParties, useDeliveryPenalty } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { apiDetail } from '@/lib/api/delivery';
@@ -21,7 +21,7 @@ const listUrl = (mine: boolean) => (mine ? '/web_view/Delivery?tab=mine' : '/web
 function DeliveryListInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    // ?tab=mine brings 내 배달 back after the chat; ?party=<id> (식사 home cards) opens that room's sheet.
+    // ?tab=mine survives a trip to the chat; ?party=<id> is the 식사 home deep link.
     const mine = searchParams.get('tab') === 'mine';
     const linkedId = Number(searchParams.get('party')) || null;
     const [openId, setOpenId] = useState<number | null>(linkedId);
@@ -69,7 +69,7 @@ function DeliveryListInner() {
         <Screen withTabBar={false}>
             <AppHeader title="함께 배달하기" />
 
-            <div className="px-5 pb-3 pt-1">
+            <div className="px-5 pt-1">
                 <label className="flex h-11 items-center rounded-[10px] bg-[#F6F6F6] pl-[6px]">
                     <span className="inline-flex h-7 w-9 items-center justify-center text-[#9E9E9E]">
                         <SearchIcon size={20} />
@@ -88,21 +88,19 @@ function DeliveryListInner() {
                 </label>
             </div>
 
-            {/* The 학식 page's 아침/점심/저녁 TimeButton look (not exported there), sized to the label. */}
-            <div role="tablist" className="flex items-center gap-1 px-5 pb-4 pt-1">
+            <ChoiceChipRow role="tablist">
                 {TABS.map((tab) => (
-                    <button
+                    <ChoiceChip
                         key={tab.label}
-                        type="button"
                         role="tab"
-                        aria-selected={tab.mine === mine}
-                        onClick={() => tab.mine !== mine && router.replace(listUrl(tab.mine), { scroll: false })}
-                        className={`flex h-8 items-center rounded-full px-[14px] text-[13px] font-semibold ${tab.mine === mine ? 'bg-ara_red text-white' : 'bg-white text-black outline outline-1 outline-zinc-100'}`}
+                        selected={tab.mine === mine}
+                        // Native replaceState updates useSearchParams without router.replace's server round trip, so the chip flips on release.
+                        onClick={() => tab.mine !== mine && window.history.replaceState(null, '', listUrl(tab.mine))}
                     >
                         {tab.label}
-                    </button>
+                    </ChoiceChip>
                 ))}
-            </div>
+            </ChoiceChipRow>
 
             <div className="flex flex-1 flex-col px-5">
                 {isPending ? (

@@ -189,7 +189,6 @@ export default function NotificationsPage() {
                 )}
             </div>
 
-            {/* Mark-all-read FAB */}
             <button
                 type="button"
                 onClick={onReadAll}

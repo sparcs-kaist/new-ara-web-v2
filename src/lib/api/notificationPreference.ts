@@ -12,7 +12,7 @@ export const fetchNotificationPreference = async () => {
     return data;
 };
 
-// delivery: false needs confirm_delivery_off: true in the same body, else the server answers 400 {detail, code: 'confirm_required'}.
+// delivery: false needs confirm_delivery_off: true or the server answers 400.
 export const updateNotificationPreference = async (
     patch: Partial<NotificationPreference> & { confirm_delivery_off?: boolean },
 ) => {

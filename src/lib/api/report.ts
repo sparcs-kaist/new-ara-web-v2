@@ -17,19 +17,18 @@ const targetFields = (target: ReportTarget): Omit<ReportBody, 'type' | 'content'
     }
 };
 
-// The reporter comes from the session only; nothing that names them is sent.
 export const submitReport = async (target: ReportTarget, type: ReportType, content: string) => {
     const body: ReportBody = { ...targetFields(target), type, content };
     const { data } = await http.post<{ id: number }>('reports/', body);
     return data;
 };
 
-// Chat repeats come back as a detail; article/comment repeats hit the unique constraint, localized by Accept-Language.
+// Repeat reports: chat's detail, then the localized unique-constraint error.
 const ALREADY_REPORTED = ['이미 신고했어요.', '이미 신고한 글입니다.', 'You already reported this article.'];
 
 export const isAlreadyReported = (e: unknown) => ALREADY_REPORTED.includes(apiDetail(e));
 
-// Hidden or deleted posts answer 403 {message}, which apiDetail (built for {detail}) does not read.
+// Hidden or deleted posts answer 403 {message}; apiDetail reads only {detail}.
 export const reportError = (e: unknown) => {
     const message = (e as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
     return typeof message === 'string' && message ? message : apiDetail(e);

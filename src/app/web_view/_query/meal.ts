@@ -4,10 +4,9 @@ import { useQueries } from '@tanstack/react-query';
 import { fetchMealPhotos } from '@/lib/api/meal';
 import { RESTAURANT_IDS, type MealType } from '@/lib/types/meal';
 
-/** Prefix of every menu photo query; invalidate it after an upload or a delete. */
 export const MEAL_PHOTOS_KEY = ['webview', 'meal', 'photos'] as const;
 
-// The API filters by one restaurant, so one query each, in RESTAURANT_IDS order.
+// The API takes one restaurant per call; results follow RESTAURANT_IDS order.
 export function useMealPhotos(date: string | null, mealTime: MealType) {
     return useQueries({
         queries: RESTAURANT_IDS.map((restaurantId) => ({

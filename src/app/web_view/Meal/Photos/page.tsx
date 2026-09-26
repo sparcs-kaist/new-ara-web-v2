@@ -14,7 +14,7 @@ import { UploadPhotoSheet } from '../_components/UploadPhotoSheet';
 function MealPhotosInner() {
     const linked = Number(useSearchParams().get('restaurant'));
     const linkedId = RESTAURANT_IDS.find((id) => id === linked);
-    // Today only (a product decision). Inside the useSearchParams boundary this renders on the client, so it is the device clock.
+    // Client-only under the useSearchParams boundary, so this is the device clock.
     const [today] = useState(() => new Date());
     const date = formatMealDate(today);
     const [meal, setMeal] = useState(() => currentMealSlot(today).time);
@@ -24,7 +24,7 @@ function MealPhotosInner() {
 
     usePullToRefresh();
 
-    // Waits for every section's final height, or the linked one would land off target.
+    // Wait for every section's height, or the linked one lands off target.
     const scrolled = useRef(false);
     const settled = queries.every((q) => !q.isPending);
     useEffect(() => {

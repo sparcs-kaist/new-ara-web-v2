@@ -54,7 +54,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
         return () => document.removeEventListener('keydown', onKey);
     }, [open, onClose]);
 
-    // 아래로 끌어 닫기 (채팅 첨부 시트와 같은 규칙): 시트 내용이 맨 위일 때만 시작하고, 높이의 1/3을 넘기거나 빠르게 놓으면 닫는다.
+    // 끌어 닫기 기준은 채팅 첨부 시트와 같다
     const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const y = e.touches[0].clientY;
         const active = (panelRef.current?.scrollTop ?? 0) <= 0;
@@ -102,7 +102,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
                 onTouchCancel={onTouchEnd}
                 style={{
                     ...(dragY > 0 ? { transform: `translateY(${dragY}px)` } : {}),
-                    // Rides the keyboard like the chat composer: the overlay inset on iOS, the predicted lift on Android.
+                    // iOS overlay inset or Android's predicted lift, as in the chat composer.
                     bottom: KB_LIFT,
                     maxHeight: `calc(85dvh - ${KB_LIFT})`,
                     paddingBottom: `calc(20px + max(0px, var(--ara-safe-bottom) - var(--ara-kb-shrink, 0px) - ${KB_LIFT}))`,

@@ -85,9 +85,9 @@ export default function AllergySelection({
           const isSelected = selectedAllergies.includes(allergy);
           return (
             <div key={index}>
-              <div 
-                role="button"
-                className={`self-stretch px-2.5 py-3 flex items-center gap-5 cursor-pointer ${
+              <button
+                type="button"
+                className={`w-full px-2.5 py-3 flex items-center gap-5 text-left ${
                   isSelected ? 'bg-rose-50' : ''
                 }`}
                 onClick={() => toggleAllergy(allergy)}
@@ -100,7 +100,7 @@ export default function AllergySelection({
                   <EmptyCheckIcon />
                 )}
                 <div className="text-black text-base">{allergy}</div>
-              </div>
+              </button>
               <div className="self-stretch h-0 border-t border-gray-200"></div>
             </div>
           );
@@ -110,13 +110,15 @@ export default function AllergySelection({
       {/* 하단 버튼 */}
       <div className="self-stretch flex">
         <button
-          className="flex-1 py-4 border-t border-r border-gray-200 text-red-500 text-[16px]"
+          type="button"
+          className="flex-1 py-4 rounded-none rounded-bl-xl border-t border-r border-gray-200 text-red-500 text-[16px]"
           onClick={handleCancel}
         >
           취소
         </button>
         <button
-          className="flex-1 py-4 border-t border-l border-gray-200 text-red-500 text-[16px] font-bold"
+          type="button"
+          className="flex-1 py-4 rounded-none rounded-br-xl border-t border-l border-gray-200 text-red-500 text-[16px] font-bold"
           onClick={handleSave}
         >
           저장({selectedAllergies.length})

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import MessageBox from './MessageBox';
 import ImageMessage from './ImageMessage';
 import FileMessage from './FileMessage';
-import { fetchChatMessages, /* sendMessage, */ fetchChatRoomDetail } from '@/lib/api/chat';
+import { fetchChatMessages, fetchChatRoomDetail } from '@/lib/api/chat';
 import { fetchMe } from '@/lib/api/user';
 // import { uploadAttachments } from '@/lib/api/post';
 // import { sendAttachmentMessage } from '@/lib/api/chat';
@@ -113,7 +113,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const [members, setMembers] = useState<Member[]>([]);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
-    const [isInviteDialogOpen, setInviteDialogOpen] = useState(false); // 추가
+    const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);
     const [contextMenu, setContextMenu] = useState<{
         visible: boolean;
         messageId: number | null;
@@ -130,7 +130,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const dmPartner = room?.room_type === 'DM' ? members.find(m => m.user?.id !== myId) : null;
 
-    // 내 ID 가져오기
     useEffect(() => {
         fetchMe()
             .then((data) => {
@@ -138,15 +137,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
             });
     }, []);
 
-    // 메시지 목록 불러오기
     useEffect(() => {
         if (!roomId) return;
         setLoadingMessages(true);
-        // 서버는 -created_at로 최신→오래된 순을 반환하므로, UI에서는 역순으로 표시
         fetchChatMessages(roomId, 1, 50, '-created_at')
             .then(data => {
                 const list = data?.results ?? [];
-                setMessages(list.slice().reverse()); // 오래된→최신으로 뒤집기
+                setMessages(list.slice().reverse());
             })
             .finally(() => setLoadingMessages(false));
     }, [roomId]);
@@ -165,10 +162,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
 
     const { typingUsers, typingText, forbidden, handleMessageSent, dropMessage } = useChatRoomSocket({ roomId, myId, members, setMembers, messages, setMessages, exitTo });
 
-    // "입력 중" 표시가 나타날 때 자동으로 스크롤하던 로직은 제거합니다.
-    // 새 UI는 스크롤 영역 밖에 위치하므로 더 이상 필요하지 않습니다.
-
-    // 메시지의 첨부 URL 추출 헬퍼 (message_content에서도 fallback)
     const getAttachmentUrl = (msg: any): string | undefined => {
         const byAttachment =
             msg?.attachment?.file || msg?.attachment_file || msg?.attachment_url || msg?.attachment?.url;
@@ -192,15 +185,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         }
     };
 
-    // 메시지 기준 미확인(안 읽은) 인원 수 계산
     const getUnreadCount = (msg: Message) => {
         if (!msg.created_at) return 0;
         const msgTime = new Date(msg.created_at).getTime();
         const senderId = msg.created_by?.id;
-        // 카운트 기준: (1) 보낸 사람 제외 (2) last_seen_at이 없거나, msgTime 이후인 경우만 읽지 않음으로 간주
         const unread = members.reduce((acc, m) => {
             const uid = m.user?.id;
-            if (!uid || uid === senderId) return acc; // 보낸 사람 제외
+            if (!uid || uid === senderId) return acc;
             const seenAt = m.last_seen_at ? new Date(m.last_seen_at).getTime() : null;
             const isUnread = !seenAt || seenAt < msgTime;
             return acc + (isUnread ? 1 : 0);
@@ -222,7 +213,13 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     // 사용자가 위로 스크롤해 둔 경우에는 읽던 위치를 그대로 보존한다.
     useBottomAnchoredScroll(messageContainerRef, { pin: 'always' });
 
-    // 메시지 삭제 핸들러
+    // 앵커 훅은 컨테이너 크기 변화만 따르므로, 바닥 근처에서 입력 중 줄이 붙으면 직접 내려준다
+    const typing = typingUsers.size > 0;
+    useEffect(() => {
+        const el = messageContainerRef.current;
+        if (typing && el && el.scrollHeight - el.clientHeight - el.scrollTop < 80) el.scrollTop = el.scrollHeight;
+    }, [typing]);
+
     const handleDeleteMessage = async () => {
         if (!contextMenu.messageId) return;
         const deletedType = messages.find(m => m.id === contextMenu.messageId)?.message_type;
@@ -251,7 +248,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         qc.invalidateQueries({ queryKey: DELIVERY_KEY });
     };
 
-    // 컨텍스트 메뉴 핸들러
     const handleContextMenu = (e: React.MouseEvent, messageId: number) => {
         // 포털(카드의 다이얼로그)에서 버블된 이벤트와 입력칸의 붙여넣기 메뉴는 그대로 둔다
         if (!e.currentTarget.contains(e.target as Node) || (e.target as HTMLElement).closest('input, textarea')) return;
@@ -266,20 +262,17 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         setContextMenu({ visible: false, messageId: null });
     };
 
-    // 초대장 생성 핸들러
     const handleCreateInvitation = async (user: { id: number; nickname: string }) => {
         if (!roomId) return;
         try {
             await createInvitation(roomId, user.id);
             alert(`${user.nickname}님에게 초대장을 보냈습니다.`);
-            // 성공 시 다이얼로그를 닫을 수 있습니다.
             setInviteDialogOpen(false);
         } catch (error: unknown) {
             if (error instanceof Error) throw new Error(error.message || '초대장 발송에 실패했습니다.');
         }
     };
 
-    // 채팅방 나가기 핸들러
     const handleLeaveRoom = async () => {
         if (!roomId) return;
         if (window.confirm('정말로 이 채팅방을 나가시겠습니까?')) {
@@ -294,7 +287,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         }
     };
 
-    // 사용자 차단 핸들러 (DM용)
     const handleBlockUser = async () => {
         if (!dmPartner?.user) return;
         if (window.confirm(`${dmPartner.user.profile?.nickname || '상대방'}님을 차단하시겠습니까?`)) {
@@ -309,7 +301,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         }
     };
 
-    // 차단하고 나가기 핸들러 (GROUP_DM용)
     const handleBlockAndLeave = async () => {
         if (!roomId) return;
         if (window.confirm('이 채팅방을 차단하고 나가시겠습니까?')) {
@@ -324,7 +315,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
         }
     };
 
-    // 채팅방 삭제 핸들러 (GROUP_DM 방장용)
     const handleDeleteRoom = async () => {
         if (!roomId) return;
         if (window.confirm('정말로 이 채팅방을 삭제하시겠습니까? 모든 대화 내용이 영구적으로 사라집니다.')) {
@@ -354,11 +344,8 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
     const payments = useDeliveryPayments({ party, messages, compact });
 
     return (
-        // w-3/4를 lg:w-3/4로 변경하고 w-full 추가
         <div className={`w-full ${compact ? '' : 'lg:w-3/4 p-4 lg:p-6 '}bg-white flex flex-col min-h-0 relative overflow-hidden h-full`}>
-            {/* 채팅방 정보 헤더 */}
             <div className={`flex items-center border-b border-gray-100 pb-4${party ? '' : ' mb-4'}${compact ? ' px-4 pt-4' : ''}`}>
-                {/* 모바일용 메뉴 버튼 (햄버거 아이콘) */}
                 <button
                     onClick={onMenuClick}
                     className={`${compact ? '' : 'lg:hidden '}mr-3 p-2 rounded-full hover:bg-gray-100`}
@@ -392,21 +379,18 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 >
                     <div className="text-lg font-bold truncate flex items-center gap-2">
                         <span className="truncate">{room?.room_title ?? party?.store_name ?? `채팅방 #${roomId}`}</span>
-                        {/* 참여자 수 표시 */}
                         <span className="text-[20px] text-[#ed3a3a] flex-shrink-0">({party ? party.participant_count : members.length})</span>
                     </div>
                     <div className="text-xs text-gray-400">
                         {party ? party.place_name : room?.room_type === 'GROUP_DM' ? '그룹 채팅' : '1:1 채팅'}
                     </div>
                 </div>
-                {/* 우측 상단 슬라이드 패널 토글 버튼 */}
                 <button
                     type="button"
                     onClick={() => (party ? setSheet({ kind: 'members' }) : setIsPanelOpen(true))}
                     className="ml-3 p-2 rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center"
                     aria-label="참여자 보기"
                 >
-                    {/* 사람 아이콘 (가운데 정렬 버전) */}
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-gray-600">
                         <path d="M20 21v-2a4 4 0 0 0-4-4h-8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -421,8 +405,7 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 </>
             )}
 
-            {/* 채팅 메시지 영역 */}
-            <div ref={messageContainerRef} className={`flex-1 overflow-y-auto mb-2 no-scrollbar${compact ? ' px-4' : ''}`}>
+            <div ref={messageContainerRef} className={`flex-1 overflow-y-auto pb-3 no-scrollbar${compact ? ' px-4' : ''}`}>
                 {loadingMessages ? (
                     <div className="text-center text-gray-400 py-8">메시지 불러오는 중...</div>
                 ) : (
@@ -446,14 +429,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         const isGroupedWithPrev = currentTime === prevTime && prevSender === senderKey(msg);
                         const isGroupedWithNext = currentTime === nextTime && nextSender === senderKey(msg);
                         const messageSpacing = isGroupedWithPrev ? 'mt-[4px]' : 'mt-[16px]';
-                        // const showProfile = !isGroupedWithPrev;
                         const showTime = !isGroupedWithNext;
                         const messageKey = msg.id ? `msg-${msg.id}` : `temp-msg-${idx}`;
 
-                        // 메시지 타입에 따라 내용 구성
                         const mtype = msg.message_type as 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM' | 'DELIVERY_ARRIVAL' | 'DELIVERY_ORDER' | 'VOTE' | 'PAYMENT_REQUEST' | undefined;
                         const hasText = mtype !== 'IMAGE' && mtype !== 'FILE' && !!msg.message_content;
-                        // 웹뷰에서는 남의 사진·파일도 신고할 수 있게 메뉴를 연다
+                        // 웹뷰에서는 남의 사진·파일도 신고할 수 있다
                         const hasMenu = !!msg.id && (hasText || isMe || compact);
                         const senderName = msg.sender?.display_name ?? msg.created_by?.profile?.nickname;
                         const dateLine = isDateChanged && (
@@ -479,7 +460,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                     className={`${messageSpacing} first:mt-0 ${isMe ? 'flex justify-end' : 'flex'}${hasMenu && compact ? ' select-none [-webkit-touch-callout:none]' : ''}`}
                                     onContextMenu={hasMenu ? (e) => handleContextMenu(e, msg.id) : undefined}
                                 >
-                                    {/* 프로필 이미지 (메시지 타입 상관없이 동일) */}
                                     {!isMe && (
                                         <div className={`flex-shrink-0 mr-2 w-9 ${isGroupedWithPrev ? 'h-0' : 'h-9'}`}>
                                             {!isGroupedWithPrev && (
@@ -501,14 +481,12 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                                     )}
 
                                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                        {/* 닉네임 (상대방 메시지일 때만) */}
                                         {!isMe && !isGroupedWithPrev && senderName && (
                                             <div className="text-xs text-gray-600 mb-1">
                                                 {senderName}
                                             </div>
                                         )}
 
-                                        {/* 메시지 타입별 다른 UI */}
                                         {mtype === 'IMAGE' ? (
                                             <ImageMessage
                                                 url={getAttachmentUrl(msg) || msg.message_content}
@@ -570,15 +548,11 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                         );
                     })
                 )}
-                {/* "입력 중..." 표시는 이 위치에서 제거합니다. */}
 
                 <div ref={chatEndRef} />
-            </div>
 
-            {/* 입력창 바로 위에 표시될 "입력 중..." 텍스트 영역 */}
-            <div className="h-6 px-1 text-sm text-gray-500 flex items-center transition-opacity duration-300">
-                {typingUsers.size > 0 && (
-                    <div className="flex items-center gap-1.5">
+                {typing && (
+                    <div className="mt-2 h-6 px-1 text-sm text-gray-500 flex items-center gap-1.5">
                         <span>{typingText}</span>
                         <div className="flex items-center gap-1 ml-1">
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse"></span>
@@ -597,7 +571,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 <DeliveryComposerNote party={party} payments={payments} />
             ))}
 
-            {/* 입력창 */}
             <ChatInput roomId={roomId} myId={myId} onMessageSent={handleMessageSent} compact={compact} extraRows={deliveryRows ?? [voteRow, paymentRow]} />
 
             <MembersPanel
@@ -611,11 +584,10 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 onBlockUser={handleBlockUser}
                 onBlockAndLeave={handleBlockAndLeave}
                 onDeleteRoom={handleDeleteRoom}
-                onInviteClick={() => setInviteDialogOpen(true)} // 추가
+                onInviteClick={() => setInviteDialogOpen(true)}
                 profileHref={profileHref}
             />
 
-            {/* 컨텍스트 메뉴 렌더링 */}
             {menuMessage && (
                 <MessageContextMenu
                     text={menuMessage.message_type !== 'IMAGE' && menuMessage.message_type !== 'FILE' ? menuMessage.message_content : undefined}
@@ -641,7 +613,6 @@ export default function ChatRoomDetail({ roomId, room, onMenuClick, exitTo = '/c
                 />
             )}
 
-            {/* 초대 다이얼로그 렌더링 */}
             <UserSearchDialog
                 open={isInviteDialogOpen}
                 onClose={() => setInviteDialogOpen(false)}

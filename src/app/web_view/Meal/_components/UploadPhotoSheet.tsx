@@ -4,17 +4,17 @@ import { useEffect, useRef, useState, type ChangeEvent, type ComponentType } fro
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { BottomSheet, CameraIcon, Close2Icon, ImageBadgeIcon, type IconProps } from '@/app/web_view/_components';
+import { BottomSheet, CameraIcon, ChoiceChip, Close2Icon, ImageBadgeIcon, type IconProps } from '@/app/web_view/_components';
 import { MEAL_PHOTOS_KEY, useMe } from '@/app/web_view/_query';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { apiDetail } from '@/lib/api/delivery';
 import { uploadMealPhoto } from '@/lib/api/meal';
 import { RESTAURANT_IDS, RESTAURANT_NAMES, timeStringToMealType, type MealSlot, type RestaurantId } from '@/lib/types/meal';
-import { ChoicePill, MealSegment } from './photoParts';
+import { MealSegment } from './photoParts';
 
 const MAX_EDGE = 1600;
 
-// Re-encoded before upload: there are no server thumbnails (every tile loads this file), and it drops the EXIF location.
+// Re-encoded: there are no server thumbnails, and it drops the EXIF location.
 async function shrink(file: File): Promise<File> {
     try {
         const bitmap = await createImageBitmap(file);
@@ -31,7 +31,6 @@ async function shrink(file: File): Promise<File> {
 }
 
 interface UploadPhotoSheetProps {
-    /** The restaurant preselected when the sheet opens; null keeps it closed. */
     restaurant: RestaurantId | null;
     meal: MealSlot['time'];
     date: string;
@@ -47,7 +46,7 @@ export function UploadPhotoSheet({ restaurant, meal, date, onClose, onUploaded }
     );
 }
 
-// BottomSheet drops its children once closed, so each opening mounts a blank form with the new initial values.
+// BottomSheet unmounts children when closed, so each opening starts a fresh form.
 function UploadForm({
     initialRestaurant,
     initialMeal,
@@ -123,7 +122,6 @@ function UploadForm({
                     </div>
                 )}
             </div>
-            {/* The chat attach sheet's pickers: the gallery, and the camera through capture. */}
             <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPick} />
 
@@ -131,9 +129,9 @@ function UploadForm({
                 <h3 className="mb-2 text-[15px] font-semibold text-black">식당</h3>
                 <div className="flex flex-wrap gap-2">
                     {RESTAURANT_IDS.map((id) => (
-                        <ChoicePill key={id} selected={id === restaurant} onClick={() => setRestaurant(id)}>
+                        <ChoiceChip key={id} size="sm" selected={id === restaurant} onClick={() => setRestaurant(id)}>
                             {RESTAURANT_NAMES[id]}
-                        </ChoicePill>
+                        </ChoiceChip>
                     ))}
                 </div>
             </section>

@@ -59,16 +59,16 @@ export default function RestaurantSelection({
       {/* 식당 목록 */}
       {restaurantNames.map((name, index) => (
         <div key={name}>
-          <div 
-            role="button"
-            className="self-stretch px-[5px] py-3 flex items-center gap-[5px] cursor-pointer hover:bg-gray-50"
+          <button
+            type="button"
+            className="w-full px-[5px] py-3 flex items-center gap-[5px] text-left hover:bg-gray-50"
             onClick={() => handleSelect(index)}
           >
             {selectedIndex === index ? <CheckIcon /> : <EmptyCheckIcon />}
             <div className="text-[16px] font-normal">
               {name}
             </div>
-          </div>
+          </button>
           
           {/* 마지막 아이템이 아닌 경우에만 구분선 표시 */}
           {index < restaurantNames.length - 1 && (

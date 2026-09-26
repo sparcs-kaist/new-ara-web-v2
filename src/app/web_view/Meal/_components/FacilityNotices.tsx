@@ -15,14 +15,12 @@ function postedAt(iso: string): string {
     return `${day} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// Article bodies are editor HTML; the sheet previews the text, the post page has the rest.
 function plainText(html: string): string {
     const doc = new DOMParser().parseFromString(html.replace(/<br\s*\/?>|<\/(p|div|h\d|li)>/gi, '$&\n'), 'text/html');
     const text = (doc.body.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim();
     return text.length > 600 ? `${text.slice(0, 600)}…` : text;
 }
 
-/** The 입주업체 공지 board on the 식사 home: the newest article as the 공지 banner. */
 export function FacilityNotices() {
     const router = useRouter();
     const boards = useBoardList();
@@ -67,7 +65,6 @@ export function FacilityNotices() {
                 </button>
             </div>
 
-
             <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="식당 공지">
                 <NoticeBody notice={notice} onMore={() => router.push(`/web_view/Post/${notice.id}`)} />
             </BottomSheet>
@@ -75,7 +72,7 @@ export function FacilityNotices() {
     );
 }
 
-// Mounted only while the sheet is, so the article (and its hit count) loads on open, not on every home visit.
+// Separate so the article (and its hit count) loads only when the sheet opens.
 function NoticeBody({ notice, onMore }: { notice: ResponsePost; onMore: () => void }) {
     const { data: post } = usePost({ postId: notice.id });
     const content: unknown = post?.content;

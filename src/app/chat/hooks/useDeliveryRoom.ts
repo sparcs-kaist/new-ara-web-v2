@@ -15,7 +15,7 @@ import type { ChatInputExtraRow } from '../components/ChatInput';
 import type { Member, Message } from '../components/ChatRoomDetail';
 import type { PaymentMember } from '../components/PaymentCreateSheet';
 
-export type DeliverySheet = { kind: 'order'; order?: DeliveryOrder } | { kind: 'info' } | { kind: 'members' };
+type DeliverySheet = { kind: 'order'; order?: DeliveryOrder } | { kind: 'info' } | { kind: 'members' };
 
 export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | null; members: Member[]; myId: number | null }) {
     const router = useRouter();
@@ -28,7 +28,6 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
     const [paymentOpen, setPaymentOpen] = useState(false);
     const [rerequestBlocked, setRerequestBlocked] = useState(false);
     const [report, setReport] = useState<ReportSubject | null>(null);
-    // 방장이 결정해야 하는 상태면 결정 기한마다 한 번 먼저 묻는다
     if (party?.is_host && party.status === 'WAITING_DECISION' && party.decision_deadline_at !== promptedFor) {
         setPromptedFor(party.decision_deadline_at);
         setAction({ kind: party.total_amount < party.min_order_amount ? 'unmet' : 'confirm' });
@@ -41,7 +40,7 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
         setSheet(null);
         setReport(subject);
     };
-    // Stable, so room re-renders do not restart the report sheet's auto-close timer.
+    // Stable: a new identity would restart the report sheet's auto-close timer.
     const closeReport = useCallback(() => setReport(null), []);
 
     const showOrderCta = !!party && ordersAllowed(party) && !party.is_host && myOrders.length === 0;
@@ -68,7 +67,6 @@ export function useDeliveryRoom({ partyId, members, myId }: { partyId: number | 
         ...(party.is_host ? [{ ...paymentRow, label: '배달 정산', onSelect: openSettlement, disabled: !settling }] : []),
         { ...paymentRow, label: '정산' },
     ];
-    // 배달방은 파티 참여자에게 익명 번호로, 다른 방은 방 멤버에게 청구한다
     const paymentMembers: PaymentMember[] = party
         ? party.members.filter(m => !m.is_mine).map(m => ({ name: m.display_name, target: { anon_number: m.anon_number } }))
         : members.flatMap((m): PaymentMember[] => {
@@ -88,7 +86,7 @@ export function useDeliveryPayments({ party, messages, compact }: { party: Deliv
     const paymentMessage = party?.payment_request != null
         ? messages.find(m => m.message_type === 'PAYMENT_REQUEST' && (m.attachment as ChatPaymentRequest | null)?.id === party.payment_request)
         : undefined;
-    // 정산 요청 메시지가 불러온 최근 메시지 밖이면 상태 바가 '정산 대기'로 돌아가지 않게 따로 불러온다
+    // 최근 메시지 밖의 정산 요청: 없으면 상태 바가 '정산 대기'로 돌아간다
     const unloadedPaymentId = compact && party?.payment_request != null && !paymentMessage ? party.payment_request : null;
     const { data: unloadedPayment } = useQuery({
         queryKey: [...DELIVERY_KEY, 'payment', unloadedPaymentId],

@@ -181,13 +181,12 @@ export default function MenuList({
         {/* 메뉴 아이템 목록 */}
         <div className="flex flex-col">
           {cafeteriaMenus.map((item, index) => (
-            <div
+            <button
               key={index}
-              role="button"
+              type="button"
               onClick={() => toggleItem(index)}
               className={`
-                flex items-center justify-between py-1 px-2
-                cursor-pointer
+                flex items-center justify-between py-1 px-2 text-left
                 ${selectedItems.has(index) ? 'bg-[#FDF0F0]' : ''}
               `}
             >
@@ -205,7 +204,7 @@ export default function MenuList({
               <span className="font-medium text-xs text-black">
                 {item.price.toLocaleString()}원
               </span>
-            </div>
+            </button>
           ))}
         </div>
 

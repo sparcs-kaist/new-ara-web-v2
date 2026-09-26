@@ -110,25 +110,25 @@ export default function MealHeader({
     <>
       <div className="flex justify-between items-center h-12 w-full">
         {/* 뒤로가기 버튼 */}
-        <div role="button" className="flex items-center cursor-pointer" onClick={onBackClick}>
+        <button type="button" className="flex items-center" onClick={onBackClick}>
           <BackIcon />
           <span className="text-red-500 text-base font-medium">{backLabel}</span>
-        </div>
+        </button>
         
         {/* 타이틀 */}
         <h1 className="text-red-500 text-lg font-bold">{title}</h1>
         
         {/* 알레르기 필터 버튼 */}
-        <div 
-          role="button"
-          className="p-2.5 flex items-center relative cursor-pointer" 
+        <button
+          type="button"
+          className="p-2.5 flex items-center relative rounded-full"
           onClick={handleAllergyFilterClick}
         >
           <AllergyFilterIcon hasSelections={selectedAllergies.length > 0} />
           <div className="absolute right-[12px] bottom-[10px]">
             <NotificationBadge count={selectedAllergies.length} />
           </div>
-        </div>
+        </button>
         
         {/* 추가 컨텐츠가 있으면 렌더링 */}
         {children}

@@ -16,7 +16,7 @@ export default function MealHomePage() {
     const router = useRouter();
     const { data, isPending, isError, error } = useDeliveryParties({ page_size: 3 });
     const parties = data?.pages[0]?.results ?? [];
-    // Set after mount: the page is prerendered at build time, so a render-time clock would be the build's.
+    // Set after mount: the page is prerendered, so a render-time clock is the build's.
     const [slot, setSlot] = useState<MealSlot | null>(null);
     useEffect(() => setSlot(currentMealSlot()), []);
 

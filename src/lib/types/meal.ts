@@ -117,7 +117,7 @@ export function timeStringToMealType(timeString: string): MealType {
   return 'LUNCH';
 }
 
-// The meal API has no serving hours: 점심 is the design's window, 아침/저녁 are placeholders until confirmed.
+// The meal API has no serving hours; 아침/저녁 are placeholders until confirmed.
 export const MEAL_SLOTS = [
   { time: '아침', hours: '08:00–09:30', endMinute: 9 * 60 + 30 },
   { time: '점심', hours: '11:30–14:00', endMinute: 14 * 60 },
@@ -126,7 +126,6 @@ export const MEAL_SLOTS = [
 
 export type MealSlot = (typeof MEAL_SLOTS)[number];
 
-// The meal being served or up next; after dinner it stays on 저녁, today's last menu.
 export function currentMealSlot(date: Date = new Date()): MealSlot {
   const minute = date.getHours() * 60 + date.getMinutes();
   return MEAL_SLOTS.find((slot) => minute < slot.endMinute) ?? MEAL_SLOTS[MEAL_SLOTS.length - 1];

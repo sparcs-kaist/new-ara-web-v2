@@ -16,7 +16,6 @@ export interface ViewerState {
     index: number;
 }
 
-/** Full-screen photo with prev/next within one restaurant's list; the owner can delete it. */
 export function PhotoViewer({ state, onChange }: { state: ViewerState; onChange: (next: ViewerState | null) => void }) {
     const qc = useQueryClient();
     const [confirming, setConfirming] = useState(false);

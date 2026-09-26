@@ -71,7 +71,6 @@ export default function VoteCard({ vote, onChanged }: { vote: ChatVote; onChange
                             <span
                                 aria-hidden
                                 className={`absolute bottom-0 left-0 h-[3px] ${selected ? 'bg-ara_red' : 'bg-[#D9D9D9]'}`}
-                                // Share of the voters, as the render draws it: 2 of 3 voters fill two thirds.
                                 style={{ width: `${shown.voter_count ? (o.vote_count / shown.voter_count) * 100 : 0}%` }}
                             />
                         </button>

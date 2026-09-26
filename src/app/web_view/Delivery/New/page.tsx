@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { AppHeader, Screen } from '@/app/web_view/_components';
+import { AppHeader, ChoiceChip, Screen } from '@/app/web_view/_components';
 import { DELIVERY_KEY, useDeliveryPenalty } from '@/app/web_view/_query';
 import { tick } from '@/app/web_view/hooks/haptic';
 import { useNow } from '@/app/web_view/hooks/useNow';
@@ -95,7 +95,7 @@ export default function DeliveryNewPage() {
             const firstKey =
                 res?.status === 400 && res.data && typeof res.data === 'object' ? Object.keys(res.data)[0] : undefined;
             if (res?.status === 403) {
-                // Create answers 403 only for an active penalty; that page says why and for how long.
+                // Create answers 403 only for an active penalty.
                 qc.invalidateQueries({ queryKey: DELIVERY_KEY });
                 router.replace('/web_view/Delivery/Restricted');
             } else if (firstKey && FIELDS.includes(firstKey)) setErrors({ [firstKey]: apiDetail(e) });
@@ -178,7 +178,7 @@ export default function DeliveryNewPage() {
                                     setMinutesText(String(minutes));
                                 }}
                                 aria-label="마감까지 남은 시간(분)"
-                                // Sized to the digits so "30분 후" stays one centred group, like the static text it replaces.
+                                // Sized to the digits so "30분 후" stays one centred group.
                                 style={{ width: `${Math.max(minutesText.length, 1)}ch` }}
                                 className="min-w-0 bg-transparent text-right tabular-nums focus:outline-none"
                             />
@@ -194,15 +194,9 @@ export default function DeliveryNewPage() {
                     {minutesOutOfRange && <p className="text-[13px] text-ara_red">5분에서 60분 사이로 정해 주세요</p>}
                     <div className="flex gap-2">
                         {QUICK_MINUTES.map((m) => (
-                            <button
-                                key={m}
-                                type="button"
-                                aria-pressed={m === typedMinutes}
-                                onClick={() => pickMinutes(m)}
-                                className={`h-10 flex-1 rounded-[10px] border text-[14px] font-medium ${m === typedMinutes ? 'border-ara_red bg-white text-ara_red' : 'border-transparent bg-[#F6F6F6] text-[#646464]'}`}
-                            >
+                            <ChoiceChip key={m} selected={m === typedMinutes} onClick={() => pickMinutes(m)} className="flex-1">
                                 {m}분
-                            </button>
+                            </ChoiceChip>
                         ))}
                     </div>
                 </Section>
@@ -246,7 +240,7 @@ export default function DeliveryNewPage() {
 
 function DeadlineTime({ minutes }: { minutes: number }) {
     const now = useNow();
-    // Clock text only after mount: the page is prerendered, and hydration would keep the server's time on screen.
+    // After mount only: the page is prerendered, and hydration keeps the build's time.
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
     if (!mounted) return null;

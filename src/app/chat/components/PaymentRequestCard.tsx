@@ -26,9 +26,7 @@ type Dialog = 'paid' | 'unpaid' | 'cancel' | 'delete';
 interface PaymentRequestCardProps {
     payment: ChatPaymentRequest;
     isHost: boolean;
-    /** The author or a room admin, who gets 삭제 in the long-press sheet. */
     canDelete?: boolean;
-    /** The request after a change, or null once it was deleted. */
     onChanged: (next: ChatPaymentRequest | null) => void;
 }
 

@@ -20,7 +20,6 @@ const RULES: [situation: string, penalized: boolean][] = [
     ['금액을 채웠는데 주문하지 않음', true],
 ];
 
-// Rounded up, so the last minute reads "1분" rather than "0분".
 function formatLeft(ms: number): string {
     const minutes = Math.ceil(ms / 60_000);
     const h = Math.floor(minutes / 60);
@@ -35,10 +34,10 @@ export default function DeliveryRestrictedPage() {
     const left = data?.until ? new Date(data.until).getTime() - now : 0;
     const reason = data?.reason;
 
-    // A ref, not state: Strict Mode replays the effect, and a second back() would leave the list too.
+    // A ref survives Strict Mode's effect replay; a second back() would leave the list.
     const leftPage = useRef(false);
     useEffect(() => {
-        // A refetch in flight may be replacing a cached "no penalty" (403 from create); wait for it before leaving.
+        // Wait out a refetch: after a 403 from create the cache may still say "no penalty".
         if (data && !isFetching && left <= 0 && !leftPage.current) {
             leftPage.current = true;
             back();

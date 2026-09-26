@@ -17,7 +17,6 @@ export interface AccountDraft {
 
 export const draftBankName = (d: AccountDraft) => (d.bankChoice === CUSTOM_BANK ? d.customBank : d.bankChoice).trim();
 
-/** Starts from the last account this device sent a settlement to. */
 export function useSavedAccount() {
     const [draft, setDraft] = useState<AccountDraft>({ bankChoice: '', customBank: '', account: '' });
 
@@ -50,7 +49,7 @@ export function AccountFields({
     onChange: (draft: AccountDraft) => void;
     onPickBank: () => void;
 }) {
-    // The bank the number picked by itself; it follows the number until the sheet or a chip is used.
+    // Bank the number picked; it tracks the number until the user picks one.
     const [autoBank, setAutoBank] = useState('');
     const suggested = suggestBanks(draft.account);
 
@@ -63,7 +62,7 @@ export function AccountFields({
         const banks = suggestBanks(account);
         let bankChoice = draft.bankChoice;
         if (bankChoice === autoBank && !banks.includes(bankChoice)) {
-            // A length-only match (국민은행 at 12 digits) is passed on the way to 14, so only a prefix picks by itself.
+            // Typing passes length-only matches; only a prefix auto-picks.
             bankChoice = banks.length === 1 && hasBankPrefix(banks[0]) ? banks[0] : '';
             setAutoBank(bankChoice);
         }
