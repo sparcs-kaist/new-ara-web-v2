@@ -12,6 +12,7 @@ interface WriteCheckRowProps {
     onChangeSocial: (value: boolean) => void;
     onChangeSexual: (value: boolean) => void;
     realnameNotice?: boolean;
+    showContentFlags?: boolean;
     disabled?: boolean;
 }
 
@@ -61,6 +62,7 @@ export function WriteCheckRow({
     onChangeSocial,
     onChangeSexual,
     realnameNotice = false,
+    showContentFlags = true,
     disabled = false,
 }: WriteCheckRowProps) {
     if (realnameNotice) {
@@ -81,18 +83,22 @@ export function WriteCheckRow({
                     disabled={disabled}
                 />
             )}
-            <CheckItem
-                checked={sexual}
-                label="성인"
-                onToggle={() => onChangeSexual(!sexual)}
-                disabled={disabled}
-            />
-            <CheckItem
-                checked={social}
-                label="정치"
-                onToggle={() => onChangeSocial(!social)}
-                disabled={disabled}
-            />
+            {showContentFlags && (
+                <>
+                    <CheckItem
+                        checked={sexual}
+                        label="성인"
+                        onToggle={() => onChangeSexual(!sexual)}
+                        disabled={disabled}
+                    />
+                    <CheckItem
+                        checked={social}
+                        label="정치"
+                        onToggle={() => onChangeSocial(!social)}
+                        disabled={disabled}
+                    />
+                </>
+            )}
         </div>
     );
 }

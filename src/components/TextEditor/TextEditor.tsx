@@ -278,12 +278,14 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
             >
               <i className="material-icons text-xl text-gray-600">terminal</i>
             </button>
-            <button
-              onClick={() => onOpenImageUpload?.()}
-              className="h-auto p-0 flex items-center justify-center"
-            >
-              <i className="material-icons text-xl text-gray-600">image</i>
-            </button>
+            {onOpenImageUpload && (
+              <button
+                onClick={onOpenImageUpload}
+                className="h-auto p-0 flex items-center justify-center"
+              >
+                <i className="material-icons text-xl text-gray-600">image</i>
+              </button>
+            )}
             <button
               className="h-auto p-0 flex items-center justify-center"
               onClick={() => editor?.chain().focus().undo().run()}

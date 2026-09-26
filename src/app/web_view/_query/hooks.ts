@@ -3,9 +3,10 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { fetchArticles, fetchBoardList, fetchTopArticles } from '@/lib/api/board';
-import { fetchPost } from '@/lib/api/post';
+import { fetchPost, type ArticleScope } from '@/lib/api/post';
 import { fetchMe } from '@/lib/api/user';
 import type { ResponsePost } from '@/lib/types/post';
+import { SCOPED_ARTICLES_KEY } from './campus';
 
 /**
  * WebView-scoped query hooks. They are intentionally separate from the
@@ -31,7 +32,8 @@ const KEY_BOARDS = ['webview', 'boards'] as const;
 const KEY_TOP = (pageSize: number) => ['webview', 'articles', 'top', pageSize] as const;
 const KEY_ARTICLES = (params: Record<string, unknown>) =>
     ['webview', 'articles', params] as const;
-const KEY_POST = (postId: number) => ['webview', 'post', postId] as const;
+export const postKey = (postId: number, scope?: ArticleScope): readonly unknown[] =>
+    scope ? ['webview', 'post', postId, scope] : ['webview', 'post', postId];
 
 /**
  * Auth probe. Returns the current user (or throws on 401, which Main
@@ -100,6 +102,7 @@ interface PostQueryArgs {
     fromView?: string;
     current?: number;
     overrideHidden?: boolean;
+    scope?: ArticleScope;
 }
 
 /**
@@ -115,14 +118,18 @@ function findCachedPost(qc: QueryClient, postId: number): ResponsePost | undefin
         const hit = data.find((p) => p?.id === postId);
         if (hit) return hit;
     }
+    for (const [, data] of qc.getQueriesData<{ pages?: { results?: ResponsePost[] }[] }>({ queryKey: SCOPED_ARTICLES_KEY })) {
+        const hit = data?.pages?.flatMap((p) => p.results ?? []).find((p) => p?.id === postId);
+        if (hit) return hit;
+    }
     return undefined;
 }
 
-export function usePost({ postId, fromView = 'all', current = 3, overrideHidden = true }: PostQueryArgs) {
+export function usePost({ postId, fromView = 'all', current = 3, overrideHidden = true, scope }: PostQueryArgs) {
     const qc = useQueryClient();
     return useQuery({
-        queryKey: KEY_POST(postId),
-        queryFn: () => fetchPost({ postId, fromView, current, overrideHidden }),
+        queryKey: postKey(postId, scope),
+        queryFn: () => fetchPost({ postId, fromView, current, overrideHidden, scope }),
         enabled: Number.isFinite(postId) && postId > 0,
         placeholderData: () => findCachedPost(qc, postId),
     });

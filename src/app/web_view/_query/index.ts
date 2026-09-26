@@ -6,6 +6,7 @@ export {
     useTopArticles,
     useBoardSection,
     usePost,
+    postKey,
     useInvalidateAll,
 } from './hooks';
 export { DELIVERY_KEY, useDeliveryParties, useDeliveryParty, useDeliveryPenalty } from './delivery';
@@ -25,8 +26,19 @@ export {
     useMyMajors,
     useMajors,
     useUserMajorMutation,
+    SCOPED_ARTICLES_KEY,
+    readScope,
+    scopeQuery,
+    fetchScopedArticles,
+    useScopedArticles,
+    useCourse,
+    useMajor,
+    findCachedCourse,
+    findCachedMajor,
+    useScopeName,
     type CourseTerm,
     type MajorChange,
+    type BoardScope,
 } from './campus';
 export { MEAL_PHOTOS_KEY, useMealPhotos, useRestaurantName, useRestaurants } from './meal';
 export { STORES_KEY, MY_STORES_KEY, storeKey, storeEventsKey, useStores, useStore, useStoreEvents, useMyStores, useInvalidateStores } from './store';

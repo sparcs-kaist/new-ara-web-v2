@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Editor } from '@tiptap/react';
@@ -8,8 +8,9 @@ import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { AppHeader, Screen } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import TextEditor from '@/components/TextEditor/TextEditor';
-import { createPost, updatePost, fetchPost } from '@/lib/api/post';
+import { createPost, updatePost, fetchPost, createCoursePost, createMajorPost } from '@/lib/api/post';
 import { fetchBoardList } from '@/lib/api/board';
+import { readScope, scopeQuery, SCOPED_ARTICLES_KEY, useScopeName } from '@/app/web_view/_query';
 import { makeMarketMetadata, makePosterMetadata } from '@/lib/utils/article_metadata';
 import PostOptionBar from './components/PostOptionBar';
 import Attachments, { UploadObject } from './components/Attachments';
@@ -69,6 +70,8 @@ function PostWriteInner() {
     const searchParams = useSearchParams();
     const editPostId = searchParams.get('edit');
     const boardParam = searchParams.get('board');
+    const scope = useMemo(() => readScope(searchParams), [searchParams]);
+    const scopeName = useScopeName(scope);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const editorRef = useRef<Editor | null>(null);
@@ -78,16 +81,17 @@ function PostWriteInner() {
     // 1) BoardList API로 user_writable 게시판만 로드
     const [boards, setBoards] = useState<ApiBoard[]>([]);
     useEffect(() => {
+        if (scope) return;
         fetchBoardList()
             .then((data) => setBoards(data.filter((b: ApiBoard) => b.user_writable)))
             .catch(console.error);
-    }, []);
+    }, [scope]);
 
     const [title, setTitle] = useState<string>('');
     const [saving, setSaving] = useState(false);
     const [isSocial, setIsSocial] = useState(false);
     const [isSexual, setIsSexual] = useState(false);
-    const [nameType, setNameType] = useState<NameType>('REGULAR');
+    const [nameType, setNameType] = useState<NameType>(scope ? 'ANONYMOUS' : 'REGULAR');
 
     const [boardId, setBoardId] = useState<number>(7); // default : 자유게시판
     const [topicId, setTopicId] = useState<string>('');
@@ -125,10 +129,15 @@ function PostWriteInner() {
     useEffect(() => {
         if (!editPostId) return;
         setIsEditMode(true);
-        fetchPost({ postId: Number(editPostId) })
+        fetchPost({ postId: Number(editPostId), scope })
             .then((data) => {
                 setTitle(data.title);
                 setInitialContent(data.content); // JSON 문자열 그대로 저장
+
+                if (scope) {
+                    setNameType(data.name_type === 2 ? 'ANONYMOUS' : 'REGULAR');
+                    return;
+                }
 
                 // 게시판, 말머리, 가격, 익명/실명, 소셜/성인글 상태 설정
                 setBoardId(data.parent_board.id);
@@ -188,7 +197,7 @@ function PostWriteInner() {
                 console.error('게시물 로드 실패:', err);
                 alert('수정할 게시물을 불러오는 데 실패했습니다.');
             });
-    }, [editPostId]);
+    }, [editPostId, scope]);
 
     // 올리기 버튼 활성화 조건(제목 + 본문)을 위해 에디터 상태를 구독한다.
     useEffect(() => {
@@ -294,6 +303,31 @@ function PostWriteInner() {
         }
         setSaving(true);
         const content = JSON.stringify(editorRef.current.getJSON());
+
+        if (scope) {
+            const newArticle = { title, content, content_text: editorRef.current.getText() };
+            try {
+                let id = Number(editPostId);
+                if (isEditMode && editPostId) {
+                    await updatePost({ postId: id, newArticle, scope });
+                    queryClient.removeQueries({ queryKey: ['webview', 'post', id] });
+                } else {
+                    const created =
+                        scope.courseId != null
+                            ? await createCoursePost({ courseId: scope.courseId, newArticle: { ...newArticle, name_type: nameType } })
+                            : await createMajorPost({ stdDeptId: scope.stdDeptId, newArticle: { ...newArticle, name_type: nameType } });
+                    id = created.id;
+                }
+                queryClient.removeQueries({ queryKey: SCOPED_ARTICLES_KEY });
+                router.replace(`/web_view/Post/${id}?${scopeQuery(scope)}`);
+            } catch (err) {
+                console.error(err);
+                alert(isEditMode ? '글 수정에 실패했습니다.' : '글 저장에 실패했습니다.');
+                setSaving(false);
+            }
+            return;
+        }
+
         const metadata = isMarket
             ? makeMarketMetadata({ price, currency: 'KRW', state: 'onsale' })
             : isPosterBoard && expireAt
@@ -369,7 +403,8 @@ function PostWriteInner() {
     }, [hasEditorText, safeBack, title]);
 
     const canUpload =
-        title.trim() !== '' && hasEditorText && (isEditMode || !!currentBoard);
+        title.trim() !== '' && hasEditorText && (isEditMode || !!currentBoard || !!scope);
+    const writingIn = scopeName ?? currentBoard?.ko_name ?? null;
 
     return (
         <Screen withTabBar={false}>
@@ -397,24 +432,28 @@ function PostWriteInner() {
                 }
             />
 
-            <PostOptionBar
-                boards={boards}
-                boardId={boardId}
-                topicId={topicId}
-                onChangeBoard={(id) => {
-                    setBoardId(id);
-                    setTopicId('');
-                    // 실명제 게시판(name_type===4)일 땐 REALNAME, 아니면 REGULAR
-                    const board = boards.find((b) => b.id === id);
-                    if (board?.name_type === 4) setNameType('REALNAME');
-                    else setNameType('REGULAR');
-                    // 장터 판별: 게시판 이름에 '장터/거래/마켓' 포함 시
-                    setIsMarket(!!board && /장터|거래|마켓/i.test(board.ko_name ?? ''));
-                }}
-                onChangeCategory={(id) => setTopicId(id)}
-                isEditMode={isEditMode}
-                disabled={saving}
-            />
+            {scope ? (
+                <div className="flex h-[34px] items-center px-[20px] text-[16px] font-medium text-black">{scopeName}</div>
+            ) : (
+                <PostOptionBar
+                    boards={boards}
+                    boardId={boardId}
+                    topicId={topicId}
+                    onChangeBoard={(id) => {
+                        setBoardId(id);
+                        setTopicId('');
+                        // 실명제 게시판(name_type===4)일 땐 REALNAME, 아니면 REGULAR
+                        const board = boards.find((b) => b.id === id);
+                        if (board?.name_type === 4) setNameType('REALNAME');
+                        else setNameType('REGULAR');
+                        // 장터 판별: 게시판 이름에 '장터/거래/마켓' 포함 시
+                        setIsMarket(!!board && /장터|거래|마켓/i.test(board.ko_name ?? ''));
+                    }}
+                    onChangeCategory={(id) => setTopicId(id)}
+                    isEditMode={isEditMode}
+                    disabled={saving}
+                />
+            )}
 
             <input
                 type="text"
@@ -430,7 +469,7 @@ function PostWriteInner() {
 
             <div className="flex h-[50px] items-center pl-[15px] pr-[7px]">
                 <span className="min-w-0 truncate text-[16px] font-medium text-[#BBBBBB]">
-                    {currentBoard ? `${currentBoard.ko_name}에 글 쓰는 중...` : '게시판 선택'}
+                    {writingIn ? `${writingIn}에 글 쓰는 중...` : '게시판 선택'}
                 </span>
                 <div className="ml-auto h-[30px] w-px bg-[#F0F0F0]" />
                 <button
@@ -443,15 +482,18 @@ function PostWriteInner() {
                 </button>
             </div>
 
-            <Attachments
-                ref={attachmentsRef}
-                onDelete={handleAttachmentDelete}
-                initialFiles={initialAttachments}
-            />
+            {!scope && (
+                <Attachments
+                    ref={attachmentsRef}
+                    onDelete={handleAttachmentDelete}
+                    initialFiles={initialAttachments}
+                />
+            )}
 
             <div className="mt-[15px]">
                 <WriteCheckRow
-                    showAnonymous={currentBoard?.name_type === 3}
+                    showAnonymous={!!scope || currentBoard?.name_type === 3}
+                    showContentFlags={!scope}
                     anonymous={nameType === 'ANONYMOUS'}
                     social={isSocial}
                     sexual={isSexual}
@@ -534,7 +576,7 @@ function PostWriteInner() {
             <div className="pw-editor mt-[10px] flex-1 px-[20px]">
                 <TextEditor
                     editable={true}
-                    onOpenImageUpload={handleOpenImageUpload}
+                    onOpenImageUpload={scope ? undefined : handleOpenImageUpload}
                     ref={editorRef}
                     content={initialContent}
                 />

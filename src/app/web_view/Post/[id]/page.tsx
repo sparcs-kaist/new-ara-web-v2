@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
     archivePost,
@@ -23,7 +23,7 @@ import {
 } from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
-import { usePost } from '@/app/web_view/_query';
+import { postKey, readScope, scopeQuery, SCOPED_ARTICLES_KEY, usePost, useScopeName } from '@/app/web_view/_query';
 import { useWindowBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
 import { KEYBOARD_GLIDE } from '@/app/web_view/_components/keyboardMotion';
 import { ArticleHeader } from './_components/ArticleHeader';
@@ -41,6 +41,9 @@ export default function WebViewPostDetailPage() {
     const onBack = useSafeBack();
     const idRaw = (params?.id ?? '') as string;
     const postId = Number.parseInt(idRaw, 10);
+    const searchParams = useSearchParams();
+    const scope = useMemo(() => readScope(searchParams), [searchParams]);
+    const scopeName = useScopeName(scope);
 
     const qc = useQueryClient();
     const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
@@ -55,7 +58,7 @@ export default function WebViewPostDetailPage() {
      * instantly on push, then the body fills in once the detail call
      * completes. Lifts the perceived latency on Board → Post by ~200ms.
      */
-    const postQuery = usePost({ postId });
+    const postQuery = usePost({ postId, scope });
     const isInvalidId = !Number.isFinite(postId) || postId <= 0;
 
     // The list cache holds raw `ResponsePost`s; the detail endpoint adds
@@ -81,11 +84,11 @@ export default function WebViewPostDetailPage() {
     /** Optimistic mutate of the cached post so VoteRow / scrap buttons stay snappy. */
     const patchPost = useCallback(
         (patch: (p: PostData) => PostData) => {
-            qc.setQueryData<PostData>(['webview', 'post', postId], (prev) =>
+            qc.setQueryData<PostData>(postKey(postId, scope), (prev) =>
                 prev ? patch(prev) : prev,
             );
         },
-        [qc, postId],
+        [qc, postId, scope],
     );
 
     const handleVote = async (action: VoteAction) => {
@@ -170,7 +173,7 @@ export default function WebViewPostDetailPage() {
 
     const handleEdit = () => {
         if (!post) return;
-        router.push(`/web_view/PostWrite?edit=${post.id}`);
+        router.push(`/web_view/PostWrite?edit=${post.id}${scope ? `&${scopeQuery(scope)}` : ''}`);
     };
 
     const handleDelete = async () => {
@@ -178,7 +181,8 @@ export default function WebViewPostDetailPage() {
         if (typeof window !== 'undefined' && !window.confirm('정말 삭제하시겠어요?')) return;
         try {
             const { deletePost } = await import('@/lib/api/post');
-            await deletePost(post.id);
+            await deletePost(post.id, scope);
+            if (scope) qc.removeQueries({ queryKey: SCOPED_ARTICLES_KEY });
             onBack();
         } catch (e) {
             console.warn('deletePost failed', e);
@@ -218,7 +222,7 @@ export default function WebViewPostDetailPage() {
 
     if (!post) return null;
 
-    const boardName = post.parent_board?.ko_name ?? '';
+    const boardName = scopeName ?? post.parent_board?.ko_name ?? '';
     const isAnonymousPost = post.name_type === 2;
     const isBlockedAuthor = !!post.created_by?.is_blocked;
     const totalCommentCount = countComments(post.comments ?? []);
@@ -251,7 +255,7 @@ export default function WebViewPostDetailPage() {
                 )}
             </ContentArea>
 
-            {!isPlaceholder && post.attachments && post.attachments.length > 0 && (
+            {!scope && !isPlaceholder && post.attachments && post.attachments.length > 0 && (
                 <div className="pt-3">
                     <Attachments attachments={post.attachments} />
                 </div>
