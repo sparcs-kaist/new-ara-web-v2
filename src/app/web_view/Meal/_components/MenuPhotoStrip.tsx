@@ -6,6 +6,7 @@ import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { formatMealDate, shortRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { OfficialBadge, PhotoCover, PhotoLabel } from './photoParts';
+import { SectionEmpty } from './SectionEmpty';
 
 export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
     const router = useRouter();
@@ -22,16 +23,10 @@ export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
             ) : !settled ? (
                 <Skeleton className="mx-5 mt-3 h-11 rounded-[12px]" />
             ) : withPhotos.length === 0 ? (
-                <div className="mt-3 flex flex-col items-center px-5 py-3">
-                    <p className="text-[14px] text-[#BBBBBB]">아직 올라온 메뉴 사진이 없어요</p>
-                    <button
-                        type="button"
-                        onClick={() => router.push('/web_view/Meal/Photos')}
-                        className="mt-[6px] px-2 text-[14px] font-semibold text-ara_red"
-                    >
-                        첫 사진 올리기
-                    </button>
-                </div>
+                <SectionEmpty
+                    text="아직 올라온 메뉴 사진이 없어요"
+                    action={{ label: '첫 사진 올리기', onPress: () => router.push('/web_view/Meal/Photos') }}
+                />
             ) : (
                 <div className="mt-3 flex snap-x scroll-px-5 gap-[10px] overflow-x-auto px-5">
                     {withPhotos.map((i) => {
