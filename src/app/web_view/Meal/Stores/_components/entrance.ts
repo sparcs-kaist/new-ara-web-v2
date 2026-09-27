@@ -8,7 +8,6 @@ const STAGGER_MS = 40;
 const STAGGERED_ROWS = 6;
 
 // Only the rows painted when data first arrives animate; cached data (back-nav) is loaded on the first render, so nothing does.
-// With replayKey, every mount animates and each new replayKey runs the entrance again.
 export function useEntrance(loaded: boolean, { replayKey }: { replayKey?: string } = {}) {
     const replays = replayKey !== undefined;
     const ref = useRef({ pending: replays || !loaded, played: replayKey, keys: new Set<number>() });

@@ -64,7 +64,8 @@ export default function CampusPage() {
     const majors = useMyMajors();
     const [modal, setModal] = useState<Modal>(null);
     const enterCourse = useEntrance(!!courses.data, { replayKey: `${term?.year}-${term?.semester}` });
-    const enterMajor = useEntrance(!!majors.data, { replayKey: majors.data?.map((m) => m.std_dept_id).join(',') ?? '' });
+    const majorKey = majors.data?.map((m) => m.std_dept_id).join(',') ?? '';
+    const enterMajor = useEntrance(!!majors.data, { replayKey: majorKey });
 
     usePullToRefresh();
 
@@ -151,7 +152,7 @@ export default function CampusPage() {
                 ) : (
                     <CardGrid>
                         {majors.data.map((m, i) => (
-                            <li key={m.std_dept_id} {...enterMajor(m.std_dept_id, i)}>
+                            <li key={`${majorKey}:${m.std_dept_id}`} {...enterMajor(m.std_dept_id, i)}>
                                 <BoardCard
                                     caption={m.major_name_eng}
                                     title={m.major_name}
