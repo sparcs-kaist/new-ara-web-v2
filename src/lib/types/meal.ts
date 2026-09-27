@@ -69,6 +69,19 @@ export function displayRestaurantName(restaurant: Restaurant): string {
   return (restaurant.code && RESTAURANT_NAME_OVERRIDES[restaurant.code]) || restaurant.display_name || restaurant.name;
 }
 
+const SHORT_RESTAURANT_NAMES: Record<string, string> = {
+  east1: '동맛골 1층',
+  east2: '동맛골 2층',
+};
+
+// Menu photo labels are too small for the parenthesised part of the display name.
+export function shortRestaurantName(restaurant: Restaurant): string {
+  return (
+    (restaurant.code && SHORT_RESTAURANT_NAMES[restaurant.code]) ||
+    displayRestaurantName(restaurant).replace(/\s*\([^()]*\)$/, '')
+  );
+}
+
 export function defaultRestaurant(restaurants: Restaurant[]): Restaurant {
   return restaurants.find((r) => r.code === 'fclt') ?? restaurants[0];
 }

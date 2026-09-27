@@ -9,7 +9,7 @@ import { MEAL_PHOTOS_KEY, useMe, useRestaurants } from '@/app/web_view/_query';
 import { CtaButton } from '@/app/web_view/Delivery/_components/BottomCta';
 import { apiDetail } from '@/lib/api/delivery';
 import { uploadMealPhoto } from '@/lib/api/meal';
-import { defaultRestaurant, displayRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
+import { defaultRestaurant, shortRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { MealSegment } from './photoParts';
 
 const MAX_EDGE = 1600;
@@ -131,7 +131,7 @@ function UploadForm({
                 <div className="flex flex-wrap gap-2">
                     {restaurants.map((r) => (
                         <ChoiceChip key={r.id} size="sm" selected={r.id === restaurant} onClick={() => setRestaurant(r.id)}>
-                            {displayRestaurantName(r)}
+                            {shortRestaurantName(r)}
                         </ChoiceChip>
                     ))}
                 </div>

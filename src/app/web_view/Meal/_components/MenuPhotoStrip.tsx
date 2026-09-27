@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/app/web_view/_components';
 import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
-import { displayRestaurantName, formatMealDate, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
+import { formatMealDate, shortRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { OfficialBadge, PhotoCover, PhotoLabel } from './photoParts';
 
 export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
@@ -32,7 +32,7 @@ export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
                                 className="relative h-[108px] w-[108px] shrink-0 snap-start overflow-hidden rounded-[12px]"
                             >
                                 <PhotoCover photo={photo} sizes="108px" />
-                                <PhotoLabel>{displayRestaurantName(restaurant)}</PhotoLabel>
+                                <PhotoLabel>{shortRestaurantName(restaurant)}</PhotoLabel>
                                 {photo?.is_official && <OfficialBadge className="bottom-2 right-2" />}
                             </button>
                         );
