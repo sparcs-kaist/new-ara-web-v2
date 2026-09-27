@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { RightChevronIcon, Skeleton } from '@/app/web_view/_components';
+import { Skeleton } from '@/app/web_view/_components';
 import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { formatMealDate, shortRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
@@ -22,15 +22,16 @@ export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
             ) : !settled ? (
                 <Skeleton className="mx-5 mt-3 h-11 rounded-[12px]" />
             ) : withPhotos.length === 0 ? (
-                <button
-                    type="button"
-                    onClick={() => router.push('/web_view/Meal/Photos')}
-                    className="mx-5 mt-3 flex h-11 w-[calc(100%-40px)] items-center rounded-[12px] bg-[#F6F6F6] pl-4 pr-3 text-left"
-                >
-                    <span className="flex-1 text-[14px] text-[#999999]">아직 올라온 사진이 없어요</span>
-                    <span className="text-[14px] font-semibold text-ara_red">올리기</span>
-                    <RightChevronIcon size={16} className="text-ara_red" />
-                </button>
+                <div className="mt-3 flex flex-col items-center px-5 py-3">
+                    <p className="text-[14px] text-[#BBBBBB]">아직 올라온 메뉴 사진이 없어요</p>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/web_view/Meal/Photos')}
+                        className="mt-[6px] px-2 text-[14px] font-semibold text-ara_red"
+                    >
+                        첫 사진 올리기
+                    </button>
+                </div>
             ) : (
                 <div className="mt-3 flex snap-x scroll-px-5 gap-[10px] overflow-x-auto px-5">
                     {withPhotos.map((i) => {
