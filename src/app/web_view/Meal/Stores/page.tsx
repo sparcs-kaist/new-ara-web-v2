@@ -9,6 +9,7 @@ import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { apiDetail } from '@/lib/api/store';
 import { storeLine } from '@/lib/store';
 import { ZONE_LABELS, type Zone } from '@/lib/types/store';
+import { FacilityNotices } from '../_components/FacilityNotices';
 import { EmptyState } from './_components/EmptyState';
 import { StoreCover } from './_components/StoreCover';
 import { StoreStatusLine } from './_components/StoreStatusLine';
@@ -39,6 +40,8 @@ function StoreListInner() {
     return (
         <Screen withTabBar={false}>
             <AppHeader title="입주 업체" onBack={back} />
+
+            <FacilityNotices />
 
             <div className="px-5 pt-1">
                 <label className="flex h-[42px] items-center rounded-[10px] bg-[#F0F0F0] pl-[6px] pr-1">

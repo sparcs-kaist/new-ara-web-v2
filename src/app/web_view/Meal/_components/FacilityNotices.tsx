@@ -28,32 +28,22 @@ export function FacilityNotices() {
     const articles = useBoardSection({ boardId, pageSize: 3 });
     const [sheetOpen, setSheetOpen] = useState(false);
 
-    const divider = <div className="mx-5 my-5 h-px bg-[#F0F0F0]" />;
     if (boards.isPending || (boardId !== undefined && articles.isPending)) {
         return (
-            <>
-                {divider}
-                <div className="px-5">
-                    <Skeleton className="h-11 w-full rounded-[10px]" />
-                </div>
-            </>
+            <div className="px-5 pb-2 pt-1">
+                <Skeleton className="h-11 w-full rounded-[10px]" />
+            </div>
         );
     }
     if (boards.isError || articles.isError) {
-        return (
-            <>
-                {divider}
-                <p className="px-5 text-[14px] text-[#BBBBBB]">입주업체 공지를 불러오지 못했어요</p>
-            </>
-        );
+        return <p className="px-5 pb-2 pt-1 text-[14px] text-[#BBBBBB]">입주업체 공지를 불러오지 못했어요</p>;
     }
     const notice = articles.data?.[0];
     if (!notice) return null;
 
     return (
         <>
-            {divider}
-            <div className="px-5">
+            <div className="px-5 pb-2 pt-1">
                 <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
