@@ -121,6 +121,28 @@ function PostWriteInner() {
                 setTitle(data.title);
                 setInitialContent(data.content); // JSON 문자열 그대로 저장
 
+                // 첨부파일 초기화 (편집 모드)
+                if (Array.isArray(data.attachments)) {
+                    const mapped: UploadObject[] = data.attachments.map(
+                        (att: RawAttachment) => ({
+                            key: String(att.id ?? att.pk ?? att.key ?? att.attachment ?? att.file),
+                            name:
+                                att.filename ??
+                                att.alias ??
+                                att.name ??
+                                att.file?.split('/').pop() ??
+                                'attachment',
+                            type: (att.mimetype ?? att.type ?? 'file').startsWith('image')
+                                ? 'image'
+                                : 'file',
+                            uploaded: true,
+                            url: att.file ?? att.url,
+                            blobUrl: att.file ?? att.url,
+                        }),
+                    );
+                    setInitialAttachments(mapped);
+                }
+
                 if (scope) {
                     setNameType(data.name_type === 2 ? 'ANONYMOUS' : 'REGULAR');
                     return;
@@ -157,28 +179,6 @@ function PostWriteInner() {
 
                 setIsSexual(data.is_content_sexual);
                 setIsSocial(data.is_content_social);
-
-                // 첨부파일 초기화 (편집 모드)
-                if (Array.isArray(data.attachments)) {
-                    const mapped: UploadObject[] = data.attachments.map(
-                        (att: RawAttachment) => ({
-                            key: String(att.id ?? att.pk ?? att.key ?? att.attachment ?? att.file),
-                            name:
-                                att.filename ??
-                                att.alias ??
-                                att.name ??
-                                att.file?.split('/').pop() ??
-                                'attachment',
-                            type: (att.mimetype ?? att.type ?? 'file').startsWith('image')
-                                ? 'image'
-                                : 'file',
-                            uploaded: true,
-                            url: att.file ?? att.url,
-                            blobUrl: att.file ?? att.url,
-                        }),
-                    );
-                    setInitialAttachments(mapped);
-                }
             })
             .catch((err) => {
                 console.error('게시물 로드 실패:', err);
@@ -291,7 +291,12 @@ function PostWriteInner() {
         const content = JSON.stringify(editorRef.current.getJSON());
 
         if (scope) {
-            const newArticle = { title, content, content_text: editorRef.current.getText() };
+            const newArticle = {
+                title,
+                content,
+                content_text: editorRef.current.getText(),
+                attachments: attachmentFiles.map((f) => f.key),
+            };
             try {
                 let id = Number(editPostId);
                 if (isEditMode && editPostId) {
@@ -533,38 +538,32 @@ function PostWriteInner() {
 
             {/* [data-ara-kb]: WebViewClientLayout이 키보드가 올라와 있는 동안 <html>에 붙인다 */}
             <StickyComposer>
-                {!scope && (
-                    <div className="[[data-ara-kb]_&]:hidden">
-                        <Attachments
-                            ref={attachmentsRef}
-                            onDelete={handleAttachmentDelete}
-                            initialFiles={initialAttachments}
-                        />
-                    </div>
-                )}
+                <div className="[[data-ara-kb]_&]:hidden">
+                    <Attachments
+                        ref={attachmentsRef}
+                        onDelete={handleAttachmentDelete}
+                        initialFiles={initialAttachments}
+                    />
+                </div>
                 <div className="flex h-[56px] items-center pl-[13px] pr-[20px] [[data-ara-kb]_&]:h-[44px]">
-                    {!scope && (
-                        <>
-                            <button
-                                type="button"
-                                aria-label="사진 첨부"
-                                onClick={handleOpenImageUpload}
-                                disabled={saving}
-                                className="flex rounded-full text-[#636363]"
-                            >
-                                <ImageBadgeIcon size={34} />
-                            </button>
-                            <button
-                                type="button"
-                                aria-label="파일 첨부"
-                                onClick={() => attachmentsRef.current?.openFilePicker()}
-                                disabled={saving}
-                                className="flex rounded-full text-[#636363]"
-                            >
-                                <ClipBadgeIcon size={34} />
-                            </button>
-                        </>
-                    )}
+                    <button
+                        type="button"
+                        aria-label="사진 첨부"
+                        onClick={handleOpenImageUpload}
+                        disabled={saving}
+                        className="flex rounded-full text-[#636363]"
+                    >
+                        <ImageBadgeIcon size={34} />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="파일 첨부"
+                        onClick={() => attachmentsRef.current?.openFilePicker()}
+                        disabled={saving}
+                        className="flex rounded-full text-[#636363]"
+                    >
+                        <ClipBadgeIcon size={34} />
+                    </button>
                     <div className="ml-auto [[data-ara-kb]_&]:hidden">
                         <WriteCheckRow
                             showAnonymous={!!scope || currentBoard?.name_type === 3}
