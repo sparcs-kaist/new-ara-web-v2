@@ -1,28 +1,41 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/app/web_view/_components';
+import { RightChevronIcon, Skeleton } from '@/app/web_view/_components';
 import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
-import { displayRestaurantName, formatMealDate, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
+import { formatMealDate, shortRestaurantName, timeStringToMealType, type MealSlot } from '@/lib/types/meal';
 import { OfficialBadge, PhotoCover, PhotoLabel } from './photoParts';
 
 export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
     const router = useRouter();
     const restaurants = useRestaurants();
     const queries = useMealPhotos(restaurants, slot && formatMealDate(), timeStringToMealType(slot?.time ?? ''));
+    const settled = queries.every((q) => !q.isPending);
+    const withPhotos = photosFirstOrder(queries).filter((i) => (queries[i].data?.num_items ?? 0) > 0);
 
     return (
         <section>
             <MainPageTextButton label="메뉴 사진" onPress={() => router.push('/web_view/Meal/Photos')} />
             {queries.every((q) => q.isError) ? (
                 <p className="px-5 pt-3 text-[14px] text-[#BBBBBB]">메뉴 사진을 불러오지 못했어요</p>
+            ) : !settled ? (
+                <Skeleton className="mx-5 mt-3 h-11 rounded-[12px]" />
+            ) : withPhotos.length === 0 ? (
+                <button
+                    type="button"
+                    onClick={() => router.push('/web_view/Meal/Photos')}
+                    className="mx-5 mt-3 flex h-11 w-[calc(100%-40px)] items-center rounded-[12px] bg-[#F6F6F6] pl-4 pr-3 text-left"
+                >
+                    <span className="flex-1 text-[14px] text-[#999999]">아직 올라온 사진이 없어요</span>
+                    <span className="text-[14px] font-semibold text-ara_red">올리기</span>
+                    <RightChevronIcon size={16} className="text-ara_red" />
+                </button>
             ) : (
                 <div className="mt-3 flex snap-x scroll-px-5 gap-[10px] overflow-x-auto px-5">
-                    {photosFirstOrder(queries).map((i) => {
+                    {withPhotos.map((i) => {
                         const restaurant = restaurants[i];
                         const { id } = restaurant;
-                        if (queries[i].isPending) return <Skeleton key={id} className="h-[108px] w-[108px] shrink-0 rounded-[12px]" />;
                         const photo = queries[i].data?.results[0];
                         return (
                             <button
@@ -32,7 +45,7 @@ export function MenuPhotoStrip({ slot }: { slot: MealSlot | null }) {
                                 className="relative h-[108px] w-[108px] shrink-0 snap-start overflow-hidden rounded-[12px]"
                             >
                                 <PhotoCover photo={photo} sizes="108px" />
-                                <PhotoLabel>{displayRestaurantName(restaurant)}</PhotoLabel>
+                                <PhotoLabel>{shortRestaurantName(restaurant)}</PhotoLabel>
                                 {photo?.is_official && <OfficialBadge className="bottom-2 right-2" />}
                             </button>
                         );

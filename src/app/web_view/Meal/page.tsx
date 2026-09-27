@@ -9,7 +9,6 @@ import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageText
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
 import { currentMealSlot, defaultRestaurant, displayRestaurantName, type MealSlot } from '@/lib/types/meal';
-import { FacilityNotices } from './_components/FacilityNotices';
 import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
 import { StoreSection } from './_components/StoreSection';
 
@@ -83,8 +82,6 @@ export default function MealHomePage() {
                     )}
                 </div>
             </section>
-
-            <FacilityNotices />
 
             <StoreSection />
 

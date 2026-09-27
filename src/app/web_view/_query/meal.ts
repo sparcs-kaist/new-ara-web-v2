@@ -18,11 +18,11 @@ export function useRestaurants(): Restaurant[] {
 }
 
 // Photos carry only the school's name, so the display name comes from the restaurants list.
-export function useRestaurantName() {
+export function useRestaurantName(format: (restaurant: Restaurant) => string = displayRestaurantName) {
     const restaurants = useRestaurants();
     return (restaurant: { id: number; name: string }) => {
         const listed = restaurants.find((r) => r.id === restaurant.id);
-        return listed ? displayRestaurantName(listed) : restaurant.name;
+        return listed ? format(listed) : restaurant.name;
     };
 }
 

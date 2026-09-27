@@ -255,7 +255,7 @@ export default function WebViewPostDetailPage() {
                 )}
             </ContentArea>
 
-            {!scope && !isPlaceholder && post.attachments && post.attachments.length > 0 && (
+            {!isPlaceholder && post.attachments && post.attachments.length > 0 && (
                 <div className="pt-3">
                     <Attachments attachments={post.attachments} />
                 </div>

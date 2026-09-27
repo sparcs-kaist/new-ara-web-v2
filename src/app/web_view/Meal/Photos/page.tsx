@@ -6,7 +6,7 @@ import { AppHeader, CameraIcon, Screen, Skeleton } from '@/app/web_view/_compone
 import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { CtaButton, FixedBottomBar } from '@/app/web_view/Delivery/_components/BottomCta';
-import { currentMealSlot, defaultRestaurant, displayRestaurantName, formatMealDate, timeStringToMealType } from '@/lib/types/meal';
+import { currentMealSlot, defaultRestaurant, formatMealDate, shortRestaurantName, timeStringToMealType } from '@/lib/types/meal';
 import { MealSegment, OfficialBadge, PhotoCover, PhotoLabel } from '../_components/photoParts';
 import { PhotoViewer, type ViewerState } from '../_components/PhotoViewer';
 import { UploadPhotoSheet } from '../_components/UploadPhotoSheet';
@@ -53,7 +53,7 @@ function MealPhotosInner() {
                 return (
                     <section key={id} id={`restaurant-${id}`} className="scroll-mt-[calc(56px+var(--ara-safe-top))] px-5 pt-6">
                         <h2 className="flex items-baseline gap-[6px] text-[16px] font-semibold text-black">
-                            {displayRestaurantName(restaurant)}
+                            {shortRestaurantName(restaurant)}
                             {q.data && <span className="text-[14px] font-medium text-[#999999]">{q.data.num_items}장</span>}
                         </h2>
                         <div className="mt-3">
