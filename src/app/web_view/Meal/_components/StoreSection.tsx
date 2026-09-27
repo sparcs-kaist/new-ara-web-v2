@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RightChevronIcon, Skeleton } from '@/app/web_view/_components';
 import { useMyStores, useStore, useStores } from '@/app/web_view/_query';
@@ -32,7 +33,11 @@ function ManageCard({ id, name }: { id: number; name?: string }) {
 export function StoreSection() {
     const router = useRouter();
     const { data, isPending } = useStores();
-    const store = data?.find((s) => s.is_open) ?? data?.[0];
+    // Drawn once per visit: the featured store changes between visits, not while the page is open.
+    const [seed] = useState(() => Math.random());
+    const open = data?.filter((s) => s.is_open);
+    const pool = open?.length ? open : data;
+    const store = pool?.length ? pool[Math.floor(seed * pool.length)] : undefined;
     // The list has no intro; the detail also warms the store page.
     const detail = useStore(store?.id ?? 0);
     const mine = useMyStores();
