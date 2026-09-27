@@ -42,9 +42,15 @@ export interface StoreSummary {
     is_active: boolean;
 }
 
+export interface StoreMenuCategory {
+    id: number;
+    name: string;
+    order: number;
+}
+
 export interface StoreMenu {
     id: number;
-    section: string;
+    category: number | null;
     name: string;
     price: number;
     description: string;
@@ -77,6 +83,7 @@ export interface StoreDetail extends StoreSummary {
     intro: string;
     phone: string;
     link: string;
+    categories: StoreMenuCategory[];
     menus: StoreMenu[];
     notices: StoreNotice[];
     events: StoreEvent[];
@@ -92,7 +99,8 @@ export interface OpsStore extends StoreSummary {
 
 export type StoreFields = Pick<OpsStore, 'name' | 'category' | 'intro' | 'zone' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link' | 'restaurant' | 'is_active' | 'order'>;
 export type StaffStoreFields = Pick<StoreFields, 'name' | 'category' | 'zone' | 'intro' | 'location' | 'hours' | 'hours_note' | 'phone' | 'link'>;
-export type MenuFields = Pick<StoreMenu, 'section' | 'name' | 'price' | 'description' | 'is_signature' | 'is_sold_out' | 'order'>;
+export type MenuFields = Pick<StoreMenu, 'category' | 'name' | 'price' | 'description' | 'is_signature' | 'is_sold_out' | 'order'>;
+export type MenuCategoryFields = Pick<StoreMenuCategory, 'name' | 'order'>;
 export type NoticeFields = Pick<StoreNotice, 'title' | 'body' | 'starts_at' | 'ends_at'>;
 export type StoreEventFields = Pick<StoreEvent, 'kind' | 'starts_at' | 'ends_at' | 'reason'> & Partial<Pick<StoreEvent, 'open' | 'close'>>;
 

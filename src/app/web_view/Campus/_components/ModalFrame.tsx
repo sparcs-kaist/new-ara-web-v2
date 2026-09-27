@@ -31,7 +31,7 @@ export function ModalFrame({ title, onCancel, onSave, saveDisabled, message, chi
                 onClick={(e) => e.stopPropagation()}
                 className="flex max-h-[80dvh] w-80 flex-col overflow-hidden rounded-xl bg-white/95 shadow-md"
             >
-                <h2 className="shrink-0 pb-3 pt-7 text-center text-[18px] font-bold text-black">{title}</h2>
+                <h2 className="shrink-0 pb-3 pt-7 text-center text-[18px] font-medium text-black">{title}</h2>
                 <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-2">{children}</div>
                 {message && <p className="shrink-0 px-6 pb-3 pt-1 text-center text-[13px] text-ara_red">{message}</p>}
                 <div className="flex shrink-0 border-t border-[#E5E5E5]">
@@ -68,7 +68,7 @@ export function ModalChoiceRow({
             aria-checked={checked}
             disabled={locked}
             onClick={onToggle}
-            className="flex h-14 w-full items-center gap-5 border-b border-[#EEEEEE] px-2.5 text-left disabled:opacity-40"
+            className="flex h-12 w-full items-center gap-5 border-b border-[#EEEEEE] px-2.5 text-left disabled:opacity-40"
         >
             {checked ? (
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ara_red text-white">

@@ -7,3 +7,6 @@ export const canUseMeal = (me: { user?: number; id?: number } | undefined) =>
     !isProd || ROLLOUT_USER_IDS.includes((me?.user ?? me?.id) as number);
 
 export const canUseCampus = canUseMeal;
+
+export const isRolloutUser = (me: { user?: number; id?: number } | undefined) =>
+    ROLLOUT_USER_IDS.includes((me?.user ?? me?.id) as number);

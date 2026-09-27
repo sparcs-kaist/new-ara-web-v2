@@ -5,9 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Editor } from '@tiptap/react';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
-import { AppHeader, Screen } from '@/app/web_view/_components';
+import {
+    AppHeader,
+    ClipBadgeIcon,
+    ComposerSpacer,
+    ImageBadgeIcon,
+    Screen,
+    StickyComposer,
+} from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
-import TextEditor from '@/components/TextEditor/TextEditor';
+import MobileTextEditor from '@/components/TextEditor/MobileTextEditor';
 import { createPost, updatePost, fetchPost, createCoursePost, createMajorPost } from '@/lib/api/post';
 import { fetchBoardList } from '@/lib/api/board';
 import { readScope, scopeQuery, SCOPED_ARTICLES_KEY, useScopeName } from '@/app/web_view/_query';
@@ -42,26 +49,6 @@ interface RawAttachment {
     type?: string;
     url?: string;
 }
-
-/**
- * TextEditor는 데스크탑과 공유하는 컴포넌트라 직접 고치지 않고, 이 페이지
- * 안에서만 먹는 규칙으로 툴바를 셸 헤더(56px) 아래에 붙이고 회색 테두리를
- * 걷어낸다.
- */
-const EDITOR_CSS = `
-.pw-editor .editor { margin-bottom: 0; border: 0; border-radius: 0; box-shadow: none; transition: none; }
-.pw-editor .editor .sticky {
-    top: calc(var(--ara-safe-top) + 56px);
-    background-color: #ffffff;
-    border-bottom: 1px solid #F0F0F0;
-    margin: 0 -20px;
-    padding: 8px 20px;
-    gap: 12px 14px;
-}
-.pw-editor .editor .sticky .bg-gray-300 { background-color: #FDF0F0; }
-.pw-editor .editor .sticky .text-gray-600 { color: #636363; }
-.pw-editor .editor .editor-content { padding: 15px 0 60px; min-height: 200px; font-size: 15px; }
-`;
 
 function PostWriteInner() {
     const router = useRouter();
@@ -199,7 +186,7 @@ function PostWriteInner() {
             });
     }, [editPostId, scope]);
 
-    // 올리기 버튼 활성화 조건(제목 + 본문)을 위해 에디터 상태를 구독한다.
+    // 올리기 버튼 활성화 조건(제목 + 본문)을 알기 위해 에디터 상태를 구독한다.
     useEffect(() => {
         let bound: Editor | null = null;
         const sync = () => setHasEditorText(!!bound && !bound.isEmpty);
@@ -217,7 +204,6 @@ function PostWriteInner() {
         };
     }, []);
 
-    // TextEditor가 이미지 업로드 요청 시 호출
     const handleOpenImageUpload = () => {
         fileInputRef.current?.click();
     };
@@ -404,7 +390,10 @@ function PostWriteInner() {
 
     const canUpload =
         title.trim() !== '' && hasEditorText && (isEditMode || !!currentBoard || !!scope);
-    const writingIn = scopeName ?? currentBoard?.ko_name ?? null;
+    // useScopeName은 수업·학과 목록 캐시가 없으면 '수업 게시판'처럼 이미 '게시판'이 붙은 이름을 준다
+    const scopedBoardName =
+        scopeName && (scopeName.endsWith('게시판') ? scopeName : `${scopeName} 게시판`);
+    const writingIn = scopedBoardName ?? currentBoard?.ko_name ?? null;
 
     return (
         <Screen withTabBar={false}>
@@ -467,85 +456,45 @@ function PostWriteInner() {
 
             <div className="mx-[20px] mt-[15px] h-px bg-[#F0F0F0]" />
 
-            <div className="flex h-[50px] items-center pl-[15px] pr-[7px]">
-                <span className="min-w-0 truncate text-[16px] font-medium text-[#BBBBBB]">
-                    {writingIn ? `${writingIn}에 글 쓰는 중...` : '게시판 선택'}
-                </span>
-                <div className="ml-auto h-[30px] w-px bg-[#F0F0F0]" />
-                <button
-                    type="button"
-                    aria-label="키보드 내리기"
-                    onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
-                    className="ml-[7px] rounded-full text-black"
-                >
-                    <KeyboardDownIcon size={36} />
-                </button>
-            </div>
-
-            {!scope && (
-                <Attachments
-                    ref={attachmentsRef}
-                    onDelete={handleAttachmentDelete}
-                    initialFiles={initialAttachments}
-                />
-            )}
-
-            <div className="mt-[15px]">
-                <WriteCheckRow
-                    showAnonymous={!!scope || currentBoard?.name_type === 3}
-                    showContentFlags={!scope}
-                    anonymous={nameType === 'ANONYMOUS'}
-                    social={isSocial}
-                    sexual={isSexual}
-                    onChangeAnonymous={(v) => setNameType(v ? 'ANONYMOUS' : 'REGULAR')}
-                    onChangeSocial={setIsSocial}
-                    onChangeSexual={setIsSexual}
-                    realnameNotice={currentBoard?.name_type === 4}
-                    disabled={saving || isEditMode}
-                />
-            </div>
-
             {isMarket && (
-                <div className="mt-[15px] flex items-center gap-[10px] px-[20px]">
-                    <span className="text-[16px] font-medium text-black">가격</span>
-                    <div className="relative flex-1">
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="\d*"
-                            maxLength={12} // 표시 문자열(콤마 포함) 길이 여유
-                            placeholder="가격을 입력하세요"
-                            value={price === '' ? '' : formatPrice(price)} // 3자리 콤마 표시
-                            onChange={(e) => {
-                                const digits = e.target.value.replace(/\D/g, '').slice(0, 8); // 8자리 제한
-                                setPrice(digits);
-                            }}
-                            className="h-[40px] w-full rounded-[10px] bg-[#F6F6F6] pl-[15px] pr-[34px] text-[16px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
-                            disabled={saving}
-                        />
-                        <span className="pointer-events-none absolute right-[15px] top-1/2 -translate-y-1/2 text-[16px] text-[#9E9E9E]">
-                            ₩
-                        </span>
-                    </div>
-                </div>
+                <label className="mx-[20px] flex h-[50px] items-center border-b border-[#F0F0F0]">
+                    <span className="shrink-0 text-[14px] text-[#646464]">가격</span>
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        maxLength={12} // 표시 문자열(콤마 포함) 길이 여유
+                        placeholder="0"
+                        value={price === '' ? '' : formatPrice(price)} // 3자리 콤마 표시
+                        onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 8); // 8자리 제한
+                            setPrice(digits);
+                        }}
+                        className="min-w-0 flex-1 bg-transparent text-right text-[16px] font-medium text-[#222222] placeholder:text-[#BBBBBB] focus:outline-none"
+                        disabled={saving}
+                    />
+                    <span className="ml-[6px] shrink-0 text-[14px] text-[#646464]">원</span>
+                </label>
             )}
 
             {isPosterBoard && (
-                <div className="relative mt-[15px] px-[20px]">
-                    <div className="flex items-center gap-[10px]">
-                        <span className="text-[16px] font-medium text-black">만료일</span>
-                        <button
-                            type="button"
-                            onClick={() => setExpirePopoverOpen((o) => !o)}
-                            className={`h-[40px] flex-1 rounded-[10px] bg-[#F6F6F6] px-[15px] text-left text-[16px] ${expireAt ? 'text-black' : 'text-[#BBBBBB]'}`}
+                <div className="relative mx-[20px] border-b border-[#F0F0F0]">
+                    <button
+                        type="button"
+                        onClick={() => setExpirePopoverOpen((o) => !o)}
+                        className="flex h-[49px] w-full items-center"
+                    >
+                        <span className="text-[14px] text-[#646464]">만료일</span>
+                        <span
+                            className={`ml-auto text-[16px] font-medium ${expireAt ? 'text-[#222222]' : 'text-[#BBBBBB]'}`}
                         >
-                            {expireAt ? formatLocalYYYYMMDD(expireAt) : '만료일을 선택하세요'}
-                        </button>
-                    </div>
+                            {expireAt ? formatLocalYYYYMMDD(expireAt) : '선택'}
+                        </span>
+                    </button>
                     {expirePopoverOpen && (
                         <div
                             ref={expirePopoverRef}
-                            className="absolute left-[20px] right-[20px] top-full z-30 mt-[8px] rounded-[10px] bg-white p-[15px] shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
+                            className="absolute left-0 right-0 top-full z-30 mt-[8px] rounded-[10px] bg-white p-[15px] shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
                         >
                             <Calendar
                                 size="md"
@@ -573,14 +522,73 @@ function PostWriteInner() {
                 </div>
             )}
 
-            <div className="pw-editor mt-[10px] flex-1 px-[20px]">
-                <TextEditor
-                    editable={true}
-                    onOpenImageUpload={scope ? undefined : handleOpenImageUpload}
-                    ref={editorRef}
-                    content={initialContent}
-                />
-            </div>
+            <MobileTextEditor
+                ref={editorRef}
+                placeholder={writingIn ? `${writingIn}에 글 쓰는 중...` : '게시판을 선택해 주세요'}
+                content={initialContent}
+                bottomInset={56}
+            />
+
+            <ComposerSpacer height={56} />
+
+            {/* [data-ara-kb]: WebViewClientLayout이 키보드가 올라와 있는 동안 <html>에 붙인다 */}
+            <StickyComposer>
+                {!scope && (
+                    <div className="[[data-ara-kb]_&]:hidden">
+                        <Attachments
+                            ref={attachmentsRef}
+                            onDelete={handleAttachmentDelete}
+                            initialFiles={initialAttachments}
+                        />
+                    </div>
+                )}
+                <div className="flex h-[56px] items-center pl-[13px] pr-[20px] [[data-ara-kb]_&]:h-[44px]">
+                    {!scope && (
+                        <>
+                            <button
+                                type="button"
+                                aria-label="사진 첨부"
+                                onClick={handleOpenImageUpload}
+                                disabled={saving}
+                                className="flex rounded-full text-[#636363]"
+                            >
+                                <ImageBadgeIcon size={34} />
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="파일 첨부"
+                                onClick={() => attachmentsRef.current?.openFilePicker()}
+                                disabled={saving}
+                                className="flex rounded-full text-[#636363]"
+                            >
+                                <ClipBadgeIcon size={34} />
+                            </button>
+                        </>
+                    )}
+                    <div className="ml-auto [[data-ara-kb]_&]:hidden">
+                        <WriteCheckRow
+                            showAnonymous={!!scope || currentBoard?.name_type === 3}
+                            showContentFlags={!scope}
+                            anonymous={nameType === 'ANONYMOUS'}
+                            social={isSocial}
+                            sexual={isSexual}
+                            onChangeAnonymous={(v) => setNameType(v ? 'ANONYMOUS' : 'REGULAR')}
+                            onChangeSocial={setIsSocial}
+                            onChangeSexual={setIsSexual}
+                            realnameNotice={currentBoard?.name_type === 4}
+                            disabled={saving || isEditMode}
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        aria-label="키보드 내리기"
+                        onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
+                        className="-mr-[6px] ml-auto hidden rounded-full text-black [[data-ara-kb]_&]:flex"
+                    >
+                        <KeyboardDownIcon size={36} />
+                    </button>
+                </div>
+            </StickyComposer>
 
             <input
                 type="file"
@@ -589,8 +597,6 @@ function PostWriteInner() {
                 accept="image/*"
                 onChange={handleImageChange}
             />
-
-            <style>{EDITOR_CSS}</style>
         </Screen>
     );
 }

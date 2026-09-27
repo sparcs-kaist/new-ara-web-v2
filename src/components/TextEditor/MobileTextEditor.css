@@ -1,0 +1,9 @@
+/* The global .editor-content placeholder rule reads data-empty-text, which TipTap never sets. */
+.mobile-text-editor .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    color: #bbbbbb;
+    font-style: normal;
+    pointer-events: none;
+}

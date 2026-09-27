@@ -66,15 +66,11 @@ export function WriteCheckRow({
     disabled = false,
 }: WriteCheckRowProps) {
     if (realnameNotice) {
-        return (
-            <div className="px-[20px]">
-                <span className="text-[16px] font-medium text-ara_red">실명제 게시판입니다</span>
-            </div>
-        );
+        return <span className="text-[16px] font-medium text-ara_red">실명제 게시판입니다</span>;
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-[15px] px-[20px]">
+        <div className="flex items-center gap-[12px]">
             {showAnonymous && (
                 <CheckItem
                     checked={anonymous}

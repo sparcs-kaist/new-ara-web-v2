@@ -7,13 +7,12 @@ import { ScopedBoardScreen } from '../../_components/ScopedBoardScreen';
 export default function MajorBoardPage() {
     const stdDeptId = Number(useParams<{ stdDeptId: string }>().stdDeptId);
     const { major, isPending } = useMajor(stdDeptId);
-    const lines = major ? [[major.major_name_eng, major.major_code, `${major.readers_count}명`].filter(Boolean).join(' · ')] : [];
 
     return (
         <ScopedBoardScreen
-            label="학과 게시판"
+            label="학과게시판"
             title={major?.major_name ?? null}
-            lines={lines}
+            lines={[]}
             pending={isPending}
             scope={{ stdDeptId }}
             canWrite={!!major?.is_mine}

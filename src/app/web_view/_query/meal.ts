@@ -26,6 +26,14 @@ export function useRestaurantName() {
     };
 }
 
+// Waits for every query so the list reorders once instead of jumping as each one lands.
+export function photosFirstOrder(queries: { isPending: boolean; data?: { num_items: number } }[]): number[] {
+    const order = queries.map((_, i) => i);
+    if (queries.some((q) => q.isPending)) return order;
+    const hasPhotos = (i: number) => (queries[i].data?.num_items ?? 0) > 0;
+    return [...order.filter(hasPhotos), ...order.filter((i) => !hasPhotos(i))];
+}
+
 // The API takes one restaurant per call; results follow the restaurants' order.
 export function useMealPhotos(restaurants: Restaurant[], date: string | null, mealTime: MealType) {
     return useQueries({

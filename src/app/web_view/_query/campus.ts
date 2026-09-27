@@ -22,7 +22,6 @@ export interface CourseTerm {
 }
 
 export const seasonLabel = (semester: number) => SEASON_LABELS[semester - 1] ?? `${semester}학기`;
-export const termLabel = (term: CourseTerm) => `${term.year}년도 ${seasonLabel(term.semester)}`;
 export const sameTerm = (a: CourseTerm, b: CourseTerm) => a.year === b.year && a.semester === b.semester;
 
 export function readStoredTerm(): CourseTerm | null {

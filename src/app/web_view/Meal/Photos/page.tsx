@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppHeader, CameraIcon, Screen, Skeleton } from '@/app/web_view/_components';
-import { useMealPhotos, useRestaurants } from '@/app/web_view/_query';
+import { photosFirstOrder, useMealPhotos, useRestaurants } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { CtaButton, FixedBottomBar } from '@/app/web_view/Delivery/_components/BottomCta';
 import { currentMealSlot, defaultRestaurant, displayRestaurantName, formatMealDate, timeStringToMealType } from '@/lib/types/meal';
@@ -45,7 +45,8 @@ function MealPhotosInner() {
                 <MealSegment value={meal} onChange={setMeal} />
             </div>
 
-            {restaurants.map((restaurant, i) => {
+            {photosFirstOrder(queries).map((i) => {
+                const restaurant = restaurants[i];
                 const { id } = restaurant;
                 const q = queries[i];
                 const photos = q.data?.results ?? [];
