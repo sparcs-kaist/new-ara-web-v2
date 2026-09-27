@@ -8,16 +8,22 @@ const STAGGER_MS = 40;
 const STAGGERED_ROWS = 6;
 
 // Only the rows painted when data first arrives animate; cached data (back-nav) is loaded on the first render, so nothing does.
-export function useEntrance(loaded: boolean) {
-    const ref = useRef({ pending: !loaded, keys: new Set<number>() });
+// With replayKey, every mount animates and each new replayKey runs the entrance again.
+export function useEntrance(loaded: boolean, { replayKey }: { replayKey?: string } = {}) {
+    const replays = replayKey !== undefined;
+    const ref = useRef({ pending: replays || !loaded, played: replayKey, keys: new Set<number>() });
+    if (replays && ref.current.played !== replayKey) {
+        ref.current = { pending: true, played: replayKey, keys: new Set() };
+    }
     const first = ref.current.pending && loaded;
     useEffect(() => {
         if (!loaded) return;
         ref.current.pending = false;
+        const { keys } = ref.current;
         // Forget the keys once the run ends, or a row remounted by a zone switch would replay.
-        const t = setTimeout(() => ref.current.keys.clear(), DURATION_MS + (STAGGERED_ROWS - 1) * STAGGER_MS);
+        const t = setTimeout(() => keys.clear(), DURATION_MS + (STAGGERED_ROWS - 1) * STAGGER_MS);
         return () => clearTimeout(t);
-    }, [loaded]);
+    }, [loaded, replayKey]);
     return (key: number, index: number): { className: string; style?: CSSProperties } => {
         if (first) ref.current.keys.add(key);
         if (!ref.current.keys.has(key)) return { className: '' };

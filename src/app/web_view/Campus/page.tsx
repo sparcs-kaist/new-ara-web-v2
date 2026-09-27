@@ -63,8 +63,8 @@ export default function CampusPage() {
     const courses = useCourses(term?.year, term?.semester);
     const majors = useMyMajors();
     const [modal, setModal] = useState<Modal>(null);
-    const enterCourse = useEntrance(!!courses.data);
-    const enterMajor = useEntrance(!!majors.data);
+    const enterCourse = useEntrance(!!courses.data, { replayKey: `${term?.year}-${term?.semester}` });
+    const enterMajor = useEntrance(!!majors.data, { replayKey: majors.data?.map((m) => m.std_dept_id).join(',') ?? '' });
 
     usePullToRefresh();
 
