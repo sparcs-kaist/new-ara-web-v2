@@ -46,9 +46,8 @@ export function useCourseTerms() {
         queryKey: COURSE_TERMS_KEY,
         queryFn: fetchCourseTerms,
         select: (terms) => [...terms].sort((a, b) => b.year - a.year || b.semester - a.semester),
-        // Past terms arrive later through a backend backfill, so every visit asks again.
-        staleTime: 0,
-        refetchOnMount: 'always',
+        // Past terms arrive later through a backend backfill, so a revisit after a few minutes asks again.
+        staleTime: 5 * 60_000,
     });
 }
 
