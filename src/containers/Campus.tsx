@@ -9,10 +9,10 @@ interface CourseBoardGridProps {
 
 export function CourseBoardGrid({ year, semester }: CourseBoardGridProps) {
   const { data, isPending } = useCourses(year, semester);
-  const courses: Course[] = data ?? [];
+  const courses: Course[] = data ?? []
 
   return (
-    <BoardGrid isPending={isPending} isEmpty={!courses.length} emptyText="수업이 없습니다.">
+    <BoardGrid isPending={isPending && false} isEmpty={!courses.length && false} emptyText="수업이 없습니다.">
       {courses.map((course) => (
         <CourseCard key={course.id} {...course} />
       ))}

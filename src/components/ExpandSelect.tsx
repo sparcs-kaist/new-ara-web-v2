@@ -53,8 +53,7 @@ export default function ExpandSelect({
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            {/* 닫힌 pill 의 윗면은 그대로 두고 아래로만 늘어나도록 높이만 풀어 준다 */}
-            <div className={`absolute top-0 left-0 w-full z-50 overflow-hidden ${boxClassName}`}>
+            <div className={`absolute top-0 left-0 w-full z-100 overflow-hidden ${boxClassName}`}>
                 <button
                     type="button"
                     className={`relative block w-full truncate px-3.5 pr-8 py-2 text-left ${isPlaceholder ? 'text-[#BBBBBB]' : ''} ${disabled ? 'cursor-default' : 'cursor-pointer'} ${itemClassName}`}
