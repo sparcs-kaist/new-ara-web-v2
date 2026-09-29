@@ -8,8 +8,7 @@ import { useCourseTerms } from "@/lib/query/campus";
 
 const FILTER_CLASS = "w-32 h-9";
 const FILTER_BOX_CLASS =
-    "bg-white outline outline-1 outline-offset-[-1px] outline-black/20 rounded-[18px] text-zinc-800 text-sm font-normal font-['Pretendard']";
-
+    "bg-white border border-black/20 rounded-[18px] text-zinc-800 text-sm font-normal font-['Pretendard']";
 // semester 1~4 의 표시 이름
 const SEASON_LABELS = ["봄", "여름", "가을", "겨울"];
 

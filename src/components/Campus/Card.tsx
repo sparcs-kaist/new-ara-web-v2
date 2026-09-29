@@ -10,7 +10,7 @@ export const CourseCard = ({ id, course_code, title, professors, credit, enrollm
                 <div className="flex flex-col gap-[3px]">
                     <div className="flex flex-col gap-0">
                         <span className="text-[#808080] text-base font-normal truncate">{course_code}</span>
-                        <span className="text-black text-2xl font-bold break-keep break-words">{title}</span>
+                        <span className="text-black text-2xl font-bold truncate">{title}</span>
                     </div>
                     <hr className="border-neutral-200" />
                 </div>

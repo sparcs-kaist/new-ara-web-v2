@@ -162,5 +162,6 @@ export const fetchCourses = async (year?: number, semester?: number) => {
   const queryString = params.toString();
   const url = `/courses/${queryString ? `?${queryString}` : ""}`;
   const { data } = await http.get(url);
+
   return data;
 }

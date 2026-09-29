@@ -25,6 +25,8 @@ export const MajorSelectModal = ({ isOpen, onClose }: MajorSelectModalProps) => 
     }, [majors, isOpen]);
 
     const departments = majors ?? [];
+    const myMajors = departments.filter((d) => d.is_mine);
+    const otherMajors = departments.filter((d) => !d.is_mine);
 
     const toggle = (dept: Major) => {
         if (dept.is_mine) return;
@@ -43,6 +45,34 @@ export const MajorSelectModal = ({ isOpen, onClose }: MajorSelectModalProps) => 
         onClose();
     };
 
+    const renderRow = (dept: Major, isLast: boolean) => (
+        <div key={dept.std_dept_id} className="flex flex-col" onClick={() => toggle(dept)}>
+            <div
+                className={`self-stretch px-2.5 py-3 flex justify-start items-center gap-5 transition-colors group ${
+                    dept.is_mine ? 'cursor-default' : 'cursor-pointer'
+                } ${selected.has(dept.std_dept_id) ? 'bg-rose-50' : 'hover:bg-zinc-50'}`}
+            >
+                {selected.has(dept.std_dept_id) ? (
+                    <div
+                        className={`w-5 h-5 rounded-xl flex items-center justify-center ${
+                            dept.is_mine ? 'bg-red-300' : 'bg-red-500'
+                        }`}
+                    >
+                        <CheckIcon />
+                    </div>
+                ) : (
+                    <div className="w-5 h-5 rounded-full border border-gray-300" />
+                )}
+
+                <div className="text-black text-base font-normal leading-4">
+                    {dept.major_name}
+                </div>
+            </div>
+
+            {!isLast && <div className="self-stretch h-px bg-gray-200" />}
+        </div>
+    );
+
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <div className="w-[844px] max-w-[95vw] bg-white/95 rounded-2xl shadow-[0px_0px_6.1px_0px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden">
@@ -50,31 +80,20 @@ export const MajorSelectModal = ({ isOpen, onClose }: MajorSelectModalProps) => 
                     <div className="text-black text-xl font-semibold">학과 선택</div>
                 </div>
 
-                {/* 2. Content: 스크롤 가능한 리스트 영역 (h-[459px]) */}
                 <div className="self-stretch h-[459px] px-6 overflow-y-auto scrollbar-hide">
-                    {departments.map((dept, index) => (
-                        <div key={dept.std_dept_id} className="flex flex-col" onClick={() => toggle(dept)}>
-                            <div
-                                className={`self-stretch px-2.5 py-3 flex justify-start items-center gap-5 transition-colors group ${dept.is_mine ? 'cursor-default' : 'cursor-pointer'} ${selected.has(dept.std_dept_id) ? 'bg-rose-50' : 'hover:bg-zinc-50'}`}
-                            >
-                                {selected.has(dept.std_dept_id) ? (
-                                    <div className="w-5 h-5 bg-red-500 rounded-xl flex items-center justify-center">
-                                        <CheckIcon />
-                                    </div>
-                                ) : (
-                                    <div className="w-5 h-5 rounded-full border border-gray-300" />
-                                )}
-
-                                <div className="text-black text-base font-normal leading-4">
-                                    {dept.major_name}
-                                </div>
-                            </div>
-
-                            {index !== departments.length - 1 && (
-                                <div className="self-stretch h-px bg-gray-200" />
-                            )}
+                    {myMajors.length > 0 && (
+                        <div className="mb-2">
+                            <div className="px-2.5 pt-2 pb-1 text-sm font-semibold text-gray-400">내 학과</div>
+                            {myMajors.map((dept, index) => renderRow(dept, index === myMajors.length - 1))}
                         </div>
-                    ))}
+                    )}
+
+                    {otherMajors.length > 0 && (
+                        <div>
+                            <div className="px-2.5 pt-2 pb-1 text-sm font-semibold text-gray-400">관심 학과</div>
+                            {otherMajors.map((dept, index) => renderRow(dept, index === otherMajors.length - 1))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="self-stretch flex justify-start items-center">
