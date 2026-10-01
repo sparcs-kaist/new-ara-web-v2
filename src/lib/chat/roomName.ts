@@ -11,6 +11,12 @@ export function displayRoomTitle(room: NamedRoom, partner: ChatPartner | null | 
     return partner?.nickname || '알 수 없음';
 }
 
+export function roomPreview(message: { message_type: string; message_content: string } | null | undefined): string {
+    if (message?.message_type === 'IMAGE') return '이미지를 보냈습니다.';
+    if (message?.message_type === 'FILE') return '파일을 보냈습니다.';
+    return message?.message_content ?? '';
+}
+
 export function displayRoomPicture(room: Omit<NamedRoom, 'room_title'> | undefined, partner: ChatPartner | null | undefined): string {
     const picture = room?.room_type === 'DM' && partner !== undefined ? partner?.picture : room?.picture;
     return picture || DEFAULT_ROOM_PICTURE;

@@ -8,7 +8,7 @@ import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
 import { createGroupDM, createDM, fetchChatRoomList } from '@/lib/api/chat';
-import { displayRoomPicture, displayRoomTitle, type ChatPartner } from '@/lib/chat/roomName';
+import { displayRoomPicture, displayRoomTitle, roomPreview, type ChatPartner } from '@/lib/chat/roomName';
 import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -225,20 +225,7 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                     {rooms.map((room) => {
                         const selected = room.id === selectedRoomId;
 
-                        // 미리보기 텍스트 조합
-                        const lastMsg = room.recent_message;
-                        const msgType = lastMsg?.message_type;
-
-                        let preview = '';
-                        if (msgType === 'IMAGE') {
-                            preview = '이미지를 보냈습니다.';
-                        } else if (msgType === 'FILE') {
-                            preview = '파일을 보냈습니다.';
-                        } else {
-                            preview = lastMsg?.message_content ?? '';
-                        }
-
-
+                        const preview = roomPreview(room.recent_message);
                         const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
 
                         // 시간 표시 (HH:MM)

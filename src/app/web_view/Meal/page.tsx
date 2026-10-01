@@ -3,19 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Screen } from '@/app/web_view/_components';
-import { useDeliveryParties, useRestaurants } from '@/app/web_view/_query';
+import { useDeliveryParties, useDeliveryPenalty, useRestaurants } from '@/app/web_view/_query';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
 import { MainPageTextButton } from '@/app/web_view/Main/_components/MainPageTextButton';
 import { DeliveryRoomCard, DeliveryRoomCardSkeleton } from '@/app/web_view/Delivery/_components/DeliveryRoomCard';
 import { apiDetail } from '@/lib/api/delivery';
+import { isPenaltyActive } from '@/lib/delivery';
 import { currentMealSlot, defaultRestaurant, displayRestaurantName, type MealSlot } from '@/lib/types/meal';
 import { MenuPhotoStrip } from './_components/MenuPhotoStrip';
+import { SectionEmpty } from './_components/SectionEmpty';
 import { StoreSection } from './_components/StoreSection';
 
 export default function MealHomePage() {
     const router = useRouter();
     const { data, isPending, isError, error } = useDeliveryParties({ page_size: 3 });
     const parties = data?.pages[0]?.results ?? [];
+    const penalty = useDeliveryPenalty();
+    const openCreate = () =>
+        router.push(isPenaltyActive(penalty.data?.until) ? '/web_view/Delivery/Restricted' : '/web_view/Delivery/New');
     const restaurants = useRestaurants();
     // Set after mount: the page is prerendered, so a render-time clock is the build's.
     const [slot, setSlot] = useState<MealSlot | null>(null);
@@ -55,13 +60,15 @@ export default function MealHomePage() {
 
             <section>
                 <MainPageTextButton label="함께 배달하기" onPress={() => router.push('/web_view/Delivery')} />
+                {!isPending && parties.length === 0 ? (
+                    <SectionEmpty
+                        text={isError ? apiDetail(error) : '지금 모집 중인 함께 배달이 없어요'}
+                        action={isError ? undefined : { label: '첫 방 만들기', onPress: openCreate }}
+                    />
+                ) : (
                 <div className="mt-3 space-y-3 px-5">
                     {isPending ? (
                         [0, 1, 2].map((i) => <DeliveryRoomCardSkeleton key={i} />)
-                    ) : parties.length === 0 ? (
-                        <p className="py-3 text-center text-[14px] text-[#BBBBBB]">
-                            {isError ? apiDetail(error) : '지금 모집 중인 함께 배달이 없어요'}
-                        </p>
                     ) : (
                         <>
                             {parties.map((p) => (
@@ -81,6 +88,7 @@ export default function MealHomePage() {
                         </>
                     )}
                 </div>
+                )}
             </section>
 
             <StoreSection />
