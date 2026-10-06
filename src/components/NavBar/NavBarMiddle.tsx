@@ -83,9 +83,11 @@ export default function NavBarMiddle() {
       <Link href="/board" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">
         전체보기
       </Link>
-      {/* <Link href="/campus" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">
-        학교게시판
-      </Link> */}
+      <Link href="/campus" className="py-2 whitespace-nowrap hover:text-ara_red transition-colors duration-200">
+        학사게시판
+      </Link>
+
+      {/* 소식 드롭다운 */}
       <div
         className="relative"
         onMouseEnter={() => handleMouseEnter("news")}

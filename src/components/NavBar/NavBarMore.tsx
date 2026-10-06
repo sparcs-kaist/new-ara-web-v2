@@ -61,6 +61,16 @@ export default function NavBarMore({ onClose }: { onClose: () => void }) {
             📝 자유게시판
           </Link>
         </li>
+        {/* 학사 게시판 */}
+        <li>
+          <Link
+            href="/campus"
+            className="block px-4 py-2 rounded-md text-lg font-medium"
+            onClick={onClose}
+          >
+            📚 학사게시판
+          </Link>
+        </li>
         {/* 거래 */}
         <li>
           <button
