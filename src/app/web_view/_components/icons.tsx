@@ -80,11 +80,23 @@ export function HomeIcon(p: IconProps) {
 export function PostListIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/post_list.svg`} fallback={32} {...p} />;
 }
+export function MealIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/meal.svg`} fallback={32} {...p} />;
+}
+export function CampusIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/campus.svg`} fallback={32} {...p} />;
+}
+export function ChatIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/chat.svg`} fallback={32} {...p} />;
+}
 export function NotificationIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/notification.svg`} fallback={32} {...p} />;
 }
 export function MemberIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/member.svg`} fallback={32} {...p} />;
+}
+export function PersonIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/person.svg`} fallback={32} {...p} />;
 }
 
 /* =========================================================================
@@ -117,6 +129,9 @@ export function RightChevronIcon(p: IconProps) {
 }
 export function RightArrow2Icon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/right_arrow_2.svg`} fallback={16} {...p} />;
+}
+export function ChevronDownIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/chevron_down.svg`} fallback={20} {...p} />;
 }
 
 /* =========================================================================
@@ -161,6 +176,9 @@ export function Close2Icon(p: IconProps) {
 export function AddIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/add.svg`} fallback={20} {...p} />;
 }
+export function PlusIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/plus.svg`} fallback={32} {...p} />;
+}
 export function MenuIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/menu_1.svg`} fallback={32} {...p} />;
 }
@@ -184,6 +202,15 @@ export function LanguageIcon(p: IconProps) {
 }
 export function CameraIcon(p: IconProps) {
     return <MaskIcon src={`${ICON_BASE}/camera.svg`} fallback={24} {...p} />;
+}
+export function PinIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/pin.svg`} fallback={14} {...p} />;
+}
+export function ClockIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/clock.svg`} fallback={13} {...p} />;
+}
+export function CheckIcon(p: IconProps) {
+    return <MaskIcon src={`${ICON_BASE}/check.svg`} fallback={16} {...p} />;
 }
 
 /* =========================================================================

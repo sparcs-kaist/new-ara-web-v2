@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchChatRoomList } from '@/lib/api/chat';
+import { displayRoomPicture, displayRoomTitle, roomPreview, type ChatPartner } from '@/lib/chat/roomName';
 
 // ChatRoomList.tsx에서 사용하는 타입 정의를 가져옵니다.
 type RecentMessage = {
@@ -15,8 +16,10 @@ type RecentMessage = {
 
 type ChatRoom = {
     id: number;
+    room_type: string;
     room_title: string;
     picture?: string;
+    partner?: ChatPartner | null;
     recent_message_at?: string;
     recent_message?: RecentMessage;
     created_at?: string;
@@ -63,25 +66,30 @@ const MyChatRooms = () => {
             </Link>
             <div className="flex-grow">
                 <ul className="space-y-3">
-                    {rooms.map(room => (
-                        <li key={room.id}>
-                            <Link href={`/chat/${room.id}`} className="flex items-center p-2 -m-2 rounded-lg hover:bg-gray-50 transition">
-                                <Image
-                                    src={room.picture || '/default-room.png'}
-                                    alt={room.room_title}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full object-cover mr-3"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium truncate">{room.room_title}</p>
-                                    <p className="text-sm text-gray-500 truncate">
-                                        {room.recent_message?.message_content ?? '새로운 채팅방'}
-                                    </p>
-                                </div>
-                            </Link>
-                        </li>
-                    ))}
+                    {rooms.map(room => {
+                        const title = displayRoomTitle(room, room.partner);
+                        return (
+                            <li key={room.id}>
+                                <Link href={`/chat/${room.id}`} className="flex items-center p-2 -m-2 rounded-lg hover:bg-gray-50 transition">
+                                    <div className="relative mr-3 h-8 w-8 shrink-0">
+                                        <Image
+                                            src={displayRoomPicture(room, room.partner)}
+                                            alt={title}
+                                            fill
+                                            sizes="32px"
+                                            className="rounded-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium truncate">{title}</p>
+                                        <p className="text-sm text-gray-500 truncate">
+                                            {roomPreview(room.recent_message) || '새로운 채팅방'}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </li>
+                        );
+                    })}
                 </ul>
             </div>
         </section>

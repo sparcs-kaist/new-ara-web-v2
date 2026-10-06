@@ -7,6 +7,8 @@ import {
   fetchArticles,
   fetchAllArticlesExcludingPortalNotice,
   useArticles,
+  fetchCourseArticles,
+  fetchMajorArticles,
 } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
 import { fetchMe } from "@/lib/api/user";
@@ -343,6 +345,7 @@ export function ProfileMyArticleList({
 
   // 유저 정보 가져오기
   useEffect(() => {
+    if (!user) return;
     const fetchUser = async () => {
       try {
         setUserId(user.user);
@@ -351,7 +354,7 @@ export function ProfileMyArticleList({
       }
     };
     fetchUser();
-  }, []);
+  }, [user]);
 
   // 내가 쓴 글 가져오기 (debounce 적용)
   useEffect(() => {
@@ -634,6 +637,85 @@ export function UserProfileArticleList({ userId }: { userId: number }) {
       onPageChange={setCurrentPage}
     />
   );
+}
+
+
+interface CourseArticleListProps {
+  pageSize?: number;
+  query?: string;
+  courseId: number;
+}
+
+interface MajorArticleListProps {
+  pageSize?: number;
+  query?: string;
+  stdDeptId: number | string;
+}
+
+// 과목/학과 게시판 목록. ?page= 와 표시 옵션은 같고 데이터 출처만 다르다.
+function ScopedArticleList({
+  queryKey,
+  fetchPage,
+  postHref,
+}: {
+  queryKey: unknown[];
+  fetchPage: (page: number) => Promise<any>;
+  postHref: (post: any) => string;
+}) {
+  const searchParams = useSearchParams();
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const router = useRouter();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
+
+  const { data } = useQuery({
+    queryKey: [...queryKey, currentPage],
+    queryFn: () => fetchPage(currentPage),
+    placeholderData: keepPreviousData
+  })
+
+  return (
+    <ArticleList
+      posts={data?.results || []}
+      showTimeAgo={true}
+      showProfile={true}
+      showWriter={true}
+      showStatus={true}
+      showHit={true}
+      titleFontSize="text-[16px]"
+      showTopic={true}
+      pagination={true}
+      currentPage={currentPage}
+      totalPages={data?.num_pages || 1}
+      onPageChange={handlePageChange}
+      postHref={postHref}
+    />
+  )
+}
+
+export function CourseArticleList({ pageSize = 10, query, courseId }: CourseArticleListProps) {
+  return (
+    <ScopedArticleList
+      queryKey={["courses", courseId, pageSize, query]}
+      fetchPage={(page) => fetchCourseArticles({ courseId, query, pageSize, page })}
+      postHref={(post) => `/post/${post.id}?course_id=${courseId}`}
+    />
+  )
+}
+
+export function MajorArticleList({ pageSize = 10, query, stdDeptId }: MajorArticleListProps) {
+  return (
+    <ScopedArticleList
+      queryKey={["majorArticles", stdDeptId, pageSize, query]}
+      fetchPage={(page) => fetchMajorArticles({ stdDeptId, query, pageSize, page })}
+      postHref={(post) => `/post/${post.id}?std_dept_id=${stdDeptId}`}
+    />
+  )
 }
 
 export function MarketArticleContainer() {

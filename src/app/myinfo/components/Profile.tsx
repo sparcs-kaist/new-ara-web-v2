@@ -76,13 +76,14 @@ const Profile = () => {
   const { data } = useMe();
 
   useEffect(() => {
+    if (!data) return;
     const loadProfile = async () => {
       try {
         setUserId(data.user);
         setProfileImage(data.picture || null);
         setEmail(data.email || "");
         setNickname(data.nickname || "");
-        setNewNickname(data.nickname || "");
+        if (!isNicknameEditable) setNewNickname(data.nickname || "");
         setSeeSexual(data.see_sexual);
         setSeeSocial(data.see_social);
       } catch (error) {
@@ -90,7 +91,7 @@ const Profile = () => {
       }
     };
     loadProfile();
-  }, []);
+  }, [data]);
 
   const handlePictureClick = () => {
     fileInputRef.current?.click();

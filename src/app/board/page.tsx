@@ -6,12 +6,11 @@ import {
   BoardArticleList,
   BoardAllArticleList,
   BoardHotArticleList,
-  BoardRecentArticleList,
-  BoardBookmarkedArticlesList,
   MarketArticleContainer,
 } from "@/containers/ArticleList";
 import { fetchBoardList } from "@/lib/api/board";
 import Image from "next/image";
+import Sidebar from "@/components/Sidebar/Sidebar";
 
 interface Topic {
   id: number;
@@ -323,22 +322,7 @@ export default function Board() {
             </div>
           </div>
 
-          <div className="lg:w-1/3 xl:w-1/4">
-            <div className="bg-white rounded-lg shadow-sm px-4 py-8 sticky top-8">
-              <div className="mb-6">
-                <h2 className="text-base font-semibold text-gray-800 mb-2">
-                  최근 본 글
-                </h2>
-                <BoardRecentArticleList />
-              </div>
-              <div className="mb-6">
-                <h2 className="text-base font-semibold text-gray-800 mb-2">
-                  담아둔 글
-                </h2>
-                <BoardBookmarkedArticlesList />
-              </div>
-            </div>
-          </div>
+          <Sidebar />
         </div>
       </div>
     </div>

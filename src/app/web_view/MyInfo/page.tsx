@@ -118,7 +118,7 @@ export default function MyInfoPage() {
                     type="button"
                     onClick={() => router.push('/web_view/MyInfo/Settings')}
                     aria-label="설정"
-                    className="flex h-11 w-11 items-center justify-center text-ara_red"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                 >
                     <SettingIcon size={28} />
                 </button>
@@ -166,7 +166,7 @@ export default function MyInfoPage() {
                             aria-selected={active}
                             onClick={() => setTab(t.key)}
                             className={[
-                                'flex h-[44px] items-center justify-center bg-transparent text-[15px] font-medium',
+                                'flex h-[44px] items-center justify-center rounded-b-none bg-transparent text-[15px] font-medium',
                                 active
                                     ? '-mb-px border-b-2 border-ara_red text-ara_red'
                                     : 'text-[#B1B1B1]',
@@ -186,17 +186,17 @@ export default function MyInfoPage() {
             <div className="h-[15px]" />
 
             {/* Post list */}
-            <ul className="px-5">
+            <ul>
                 {posts.map((p, idx) => (
                     <li key={p.id}>
                         <button
                             type="button"
                             onClick={() => router.push(`/web_view/Post/${p.id}`)}
-                            className="block w-full bg-transparent py-[11px] text-left"
+                            className="block w-full rounded-none bg-transparent px-5 py-[11px] text-left"
                         >
                             <PostPreview post={p} />
                         </button>
-                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
+                        {idx < posts.length - 1 && <div className="mx-5 h-px bg-[#F0F0F0]" />}
                     </li>
                 ))}
             </ul>

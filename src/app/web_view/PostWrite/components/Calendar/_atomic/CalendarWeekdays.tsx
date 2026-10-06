@@ -22,7 +22,7 @@ const CalendarWeekdays: React.FC<CalendarSizeProps> = ({ size }) => (
     {["일", "월", "화", "수", "목", "금", "토"].map(day => (
       <div
         key={day}
-        className={`flex-1 flex items-center justify-center text-[16px] font-medium leading-5 font-pretendard text-gray-600 w-full ${getHeight(size)}`}
+        className={`flex-1 flex items-center justify-center text-[16px] font-medium leading-5 font-pretendard text-[#636363] w-full ${getHeight(size)}`}
       >
         {day}
       </div>

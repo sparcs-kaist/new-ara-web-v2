@@ -1,14 +1,15 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
-import { fetchNotifications } from '@/lib/api/notification';
-import { HomeIcon, MemberIcon, NotificationIcon, PostListIcon } from './icons';
+import type { ReactNode } from 'react';
+import { CampusIcon, ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
+import { useMe } from '@/app/web_view/_query';
+import { canUseCampus, canUseMeal } from './features';
 
 interface Tab {
     path: string;
     matcher: RegExp;
-    icon: (active: boolean, hasUnread: boolean) => ReactNode;
+    icon: (active: boolean) => ReactNode;
 }
 
 const TABS: Tab[] = [
@@ -18,21 +19,25 @@ const TABS: Tab[] = [
         icon: (active) => <HomeIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
+        path: '/web_view/Campus',
+        matcher: /^\/web_view\/Campus(\/|$)/,
+        icon: (active) => <CampusIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
         path: '/web_view/Board',
         matcher: /^\/web_view\/Board(\/|$)/,
         icon: (active) => <PostListIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
-        path: '/web_view/Notifications',
-        matcher: /^\/web_view\/Notifications(\/|$)/,
-        icon: (active, hasUnread) => (
-            <span className="relative inline-flex">
-                <NotificationIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />
-                {hasUnread && (
-                    <span className="absolute right-[5px] top-0 h-[7px] w-[7px] rounded-full bg-ara_red" />
-                )}
-            </span>
-        ),
+        path: '/web_view/Chat',
+        matcher: /^\/web_view\/Chat\/?$/,
+        icon: (active) => <ChatIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
+    },
+    {
+        // The hub only: /Meal/Menu is a pushed screen.
+        path: '/web_view/Meal',
+        matcher: /^\/web_view\/Meal\/?$/,
+        icon: (active) => <MealIcon size={36} className={active ? 'text-black' : 'text-[#BBBBBB]'} />,
     },
     {
         path: '/web_view/MyInfo',
@@ -44,32 +49,23 @@ const TABS: Tab[] = [
 export function BottomTabBar() {
     const pathname = usePathname();
     const router = useRouter();
-
-    // Mirrors NotificationProvider.checkIsNotReadExist: a single quick fetch
-    // to know whether the bell icon needs the red dot.
-    const [hasUnread, setHasUnread] = useState(false);
-    useEffect(() => {
-        let cancelled = false;
-        fetchNotifications(1, 1)
-            .then((res) => {
-                if (cancelled) return;
-                const list = (res?.results ?? []) as Array<{ is_read?: boolean }>;
-                setHasUnread(list.some((n) => n && n.is_read === false));
-            })
-            .catch(() => {});
-        return () => {
-            cancelled = true;
-        };
-    }, [pathname]);
+    const { data: me } = useMe();
+    // 내정보 moves to the person icon on the 내 게시판 home for campus users.
+    const tabs = TABS.filter((t) => {
+        if (t.path === '/web_view/Campus') return canUseCampus(me);
+        if (t.path === '/web_view/MyInfo') return !canUseCampus(me);
+        if (t.path === '/web_view/Meal') return canUseMeal(me);
+        return true;
+    });
 
     return (
         <nav
             role="tablist"
             aria-label="primary"
-            className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 items-stretch border-t border-[#F0F0F0] bg-white"
+            className={`fixed inset-x-0 bottom-0 z-50 grid ${tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-4'} items-stretch border-t border-[#F0F0F0] bg-white`}
             style={{ height: 'calc(50px + var(--ara-safe-bottom))', paddingBottom: 'var(--ara-safe-bottom)' }}
         >
-            {TABS.map((t) => {
+            {tabs.map((t) => {
                 const active = t.matcher.test(pathname ?? '');
                 return (
                     <button
@@ -77,6 +73,7 @@ export function BottomTabBar() {
                         type="button"
                         role="tab"
                         aria-selected={active}
+                        data-press="none"
                         onClick={() => {
                             if (active) return;
                             const onMain = TABS[0].matcher.test(pathname ?? '');
@@ -102,7 +99,7 @@ export function BottomTabBar() {
                         className="flex h-[50px] items-center justify-center bg-transparent"
                     >
                         <span className="flex h-9 w-9 items-center justify-center">
-                            {t.icon(active, t.path === '/web_view/Notifications' && hasUnread)}
+                            {t.icon(active)}
                         </span>
                     </button>
                 );

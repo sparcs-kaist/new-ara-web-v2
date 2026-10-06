@@ -105,8 +105,8 @@ export const logout = async (userId: number | string) => {
 };
 
 // updateFCMToken , deleteFCMToken : FCM 토큰 관리
-export const updateFCMToken = async (token: string) => {
-  const { data } = await http.patch("/fcm_token/update", { token });
+export const updateFCMToken = async (token: string, isWeb = true) => {
+  const { data } = await http.patch("/fcm_token/update", { token, is_web: isWeb });
   return data;
 };
 
@@ -151,3 +151,17 @@ export const searchUser = async (query: string = "") => {
   const { data } = await http.get(`/user_profiles/search/?query=${query}`);
   return data;
 };
+
+// semester : 1=봄, 2=여름, 3=가을, 4=겨울
+export const fetchCourses = async (year?: number, semester?: number) => {
+  const params = new URLSearchParams();
+
+  if (year !== undefined) params.append("year", year.toString());
+  if (semester !== undefined) params.append("semester", semester.toString());
+
+  const queryString = params.toString();
+  const url = `/courses/${queryString ? `?${queryString}` : ""}`;
+  const { data } = await http.get(url);
+
+  return data;
+}

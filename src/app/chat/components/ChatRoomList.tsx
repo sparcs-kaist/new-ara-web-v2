@@ -1,14 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import ChatTypePopover from './ChatTypePopover';
 import UserSearchDialog from './UserSearchDialog';
 import RoomCreateDialog from './RoomCreateDialog';
-import { fetchChatRoomList, createGroupDM, createDM } from '@/lib/api/chat';
+import { createGroupDM, createDM, fetchChatRoomList } from '@/lib/api/chat';
+import { displayRoomPicture, displayRoomTitle, roomPreview, type ChatPartner } from '@/lib/chat/roomName';
 import InvitationListDialog from './InvitationListDialog'; // 임포트 추가
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
 // ROOM 타입 정의
 type RecentMessage = {
@@ -39,6 +41,7 @@ type ChatRoom = {
     recent_message_at?: string;
     recent_message?: RecentMessage;   // <- 객체로 변경
     created_at?: string;
+    partner?: ChatPartner | null;
 };
 
 interface ChatRoomListProps {
@@ -48,28 +51,63 @@ interface ChatRoomListProps {
 }
 
 export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: ChatRoomListProps) {
-    const [rooms, setRooms] = useState<ChatRoom[]>([]);
     const [showTypePopover, setShowTypePopover] = useState(false);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [showRoomCreate, setShowRoomCreate] = useState(false);
     const [showInvitationDialog, setShowInvitationDialog] = useState(false); // 상태 추가
     const router = useRouter();
 
-    const refreshRoomList = () => {
-        fetchChatRoomList()
-            .then((data) => {
-                const sortedRooms = [...(data.results || [])].sort((a, b) => {
-                    const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
-                    const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
-                    return bTime - aTime;
-                });
-                setRooms(sortedRooms);
-            });
-    };
+    const queryClient = useQueryClient(); // 새로고침을 위한 queryClient
+    const observerTarget = useRef<HTMLDivElement>(null);
 
+    // 1. useInfiniteQuery로 무한 스크롤 데이터 및 상태 관리
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+    } = useInfiniteQuery({
+        queryKey: ['chatRooms'],
+        queryFn: ({ pageParam }) => fetchChatRoomList(pageParam, 15),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, allPages) => lastPage.results?.length === 15 ? allPages.length + 1 : undefined,
+    });
+
+    // 2. React Query의 페이지 데이터를 하나의 배열로 합치고 정렬
+    const rooms = React.useMemo<ChatRoom[]>(() => {
+        const allRooms = data?.pages.flatMap((page) => page.results || []) || [];
+        
+        // 중복 제거 및 시간순 정렬
+        const uniqueRooms = Array.from(new Map(allRooms.map(room => [room.id, room])).values());
+        return uniqueRooms.sort((a, b) => {
+            const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
+            const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
+            return bTime - aTime;
+        });
+    }, [data]);
+
+    // 3. IntersectionObserver로 맨 밑에 도달 시 다음 페이지 호출
     useEffect(() => {
-        refreshRoomList();
-    }, []);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const refreshRoomList = () => {
+        queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+    };
 
     const handleAddChatRoom = async (type: 'DM' | 'GROUP') => {
         if (type === 'DM') {
@@ -97,14 +135,7 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
     const handleCreateGroupRoom = async ({ title, picture }: { title: string; picture: File | null }) => {
         await createGroupDM(title, picture);
         setShowRoomCreate(false);
-        // 채팅방 목록 새로고침
-        const data = await fetchChatRoomList();
-        const sortedRooms = [...(data.results || [])].sort((a, b) => {
-            const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
-            const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
-            return bTime - aTime;
-        });
-        setRooms(sortedRooms);
+        refreshRoomList();
     };
 
     return (
@@ -194,25 +225,13 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                     {rooms.map((room) => {
                         const selected = room.id === selectedRoomId;
 
-                        // 미리보기 텍스트 조합
-                        const lastMsg = room.recent_message;
-                        const msgType = lastMsg?.message_type;
-
-                        let preview = '';
-                        if (msgType === 'IMAGE') {
-                            preview = '이미지를 보냈습니다.';
-                        } else if (msgType === 'FILE') {
-                            preview = '파일을 보냈습니다.';
-                        } else {
-                            preview = lastMsg?.message_content ?? '';
-                        }
-
-
+                        const preview = roomPreview(room.recent_message);
                         const previewClamped = preview.length > 80 ? preview.slice(0, 80) + '…' : preview;
 
                         // 시간 표시 (HH:MM)
                         const timeSrc = room.recent_message_at || room.created_at || '';
                         const timeStr = timeSrc ? timeSrc.slice(11, 16) : '';
+                        const title = displayRoomTitle(room, room.partner);
 
                         return (
                             <button
@@ -229,15 +248,15 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                                 )}
                                 <div className="flex-shrink-0 w-9 h-9 relative mr-3 ml-1">
                                     <Image
-                                        src={room.picture || '/default-room.png'}
-                                        alt={room.room_title}
+                                        src={displayRoomPicture(room, room.partner)}
+                                        alt={title}
                                         fill
                                         className="rounded-full object-cover"
                                         sizes="36px"
                                     />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-base truncate mt-[4px] font-medium">{room.room_title}</div>
+                                    <div className="text-base truncate mt-[4px] font-medium">{title}</div>
                                     <div className="text-xs text-gray-500 truncate">
                                         {previewClamped || '새로운 채팅방'}
                                     </div>
@@ -248,6 +267,12 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
                             </button>
                         );
                     })}
+                    <div ref={observerTarget} className="h-0 w-full" />
+                    {(isLoading || isFetchingNextPage) && (
+                        <div className="text-gray-400 text-sm text-center py-4">
+                            더 불러오는 중...
+                        </div>
+                    )}
                 </div>
 
                 <UserSearchDialog

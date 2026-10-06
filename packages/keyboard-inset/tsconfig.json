@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES2019",
+        "lib": ["DOM", "DOM.Iterable", "ES2019"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "skipLibCheck": true,
+        "types": []
+    },
+    "include": ["src/**/*.ts", "test/**/*.ts"]
+}

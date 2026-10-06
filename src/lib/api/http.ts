@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getCookie } from '../utils/cookie'
 import { errorParser } from '../utils/errorParser'
+import { isInShell } from '@/app/web_view/_bridge/isInShell'
 
 export const apiUrl = (() => {
   if (process.env.NEXT_PUBLIC_API_HOST) {
@@ -44,7 +45,7 @@ http.interceptors.response.use(
         const isWebView = window.location.pathname.startsWith('/web_view/');
 
         if (!isWebView) {
-          if (status === 401 && window.location.pathname !== '/login') window.location.href = '/login';
+          if (status === 401 && window.location.pathname !== '/login') window.location.href = isInShell() ? '/web_view/Login' : '/login';
           else if (status === 404 && window.location.pathname !== '/404') window.location.href = '/404';
           else if (status === 418 && window.location.pathname !== '/tos') window.location.href = '/tos';
           else if (status === 410 && window.location.pathname !== '/410') window.location.href = '/410';

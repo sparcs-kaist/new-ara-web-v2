@@ -21,6 +21,7 @@ import {
     PROTOCOL_VERSION,
     RequestEnvelope,
 } from './types';
+import { isInShell } from './isInShell';
 
 type Listener<T extends EventType> = (payload: EventPayload<T>) => void;
 
@@ -31,6 +32,8 @@ interface FlutterChannelLike {
 declare global {
     interface Window {
         FlutterChannel?: FlutterChannelLike;
+        // flutter_inappwebview exposes addJavaScriptHandler handlers only here.
+        flutter_inappwebview?: { callHandler: (name: string, ...args: unknown[]) => Promise<unknown> };
         AraBridge?: AraBridge;
     }
 }
@@ -142,13 +145,18 @@ class AraBridge {
     }
 
     private canPost(): boolean {
-        return typeof window !== 'undefined' && typeof window.FlutterChannel?.postMessage === 'function';
+        return isInShell();
     }
 
     private post(env: RequestEnvelope): void {
         if (!this.canPost()) return;
         try {
-            window.FlutterChannel!.postMessage(JSON.stringify(env));
+            const msg = JSON.stringify(env);
+            if (window.FlutterChannel) window.FlutterChannel.postMessage(msg);
+            else
+                window.flutter_inappwebview!.callHandler('FlutterChannel', msg).catch((e) =>
+                    console.warn('[AraBridge] callHandler failed', e),
+                );
         } catch (e) {
             console.warn('[AraBridge] postMessage failed', e);
         }
@@ -178,6 +186,12 @@ class AraBridge {
         // Event dispatch
         const type = env.type as EventType;
         const payload = (env as { payload?: unknown }).payload as EventPayload<EventType>;
+        // Ack here, before any listener or hydration work: the shell handles the press natively
+        // (goBack / exit prompt) when no ack arrives within 300ms, which must never race the web.
+        if (type === 'back:pressed') {
+            const id = (payload as EventPayload<'back:pressed'> | undefined)?.id;
+            if (id != null) this.send('back:handled', { id });
+        }
         const set = this.listeners.get(type);
         if (set && set.size > 0) {
             for (const l of set) {

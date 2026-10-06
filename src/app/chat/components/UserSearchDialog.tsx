@@ -62,8 +62,8 @@ export default function UserSearchDialog({ open, onClose, onSelectUser, title, a
 
     // 다이얼로그 내용을 정의
     const dialog = (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-30">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[calc(100vw-30px)] max-w-80 relative">
                 <button
                     className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
                     onClick={onClose}
@@ -83,31 +83,23 @@ export default function UserSearchDialog({ open, onClose, onSelectUser, title, a
                         <div className="text-gray-400 text-sm text-center py-4">검색 결과가 없습니다.</div>
                     )}
                     {users.map(user => (
-                        <div key={user.user} className="relative group">
-                            <div className="w-full flex items-center text-left px-2 py-2 rounded">
-                                <Image
-                                    src={user.picture}
-                                    alt={user.nickname}
-                                    width={32}
-                                    height={32}
-                                    className="rounded-full object-cover aspect-square mr-2"
-                                />
-                                <span>{user.nickname}</span>
-                            </div>
-                            <div
-                                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center
-                                           opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
-                                           transition-all duration-300 translate-x-4 group-hover:translate-x-0"
-                            >
-                                <button
-                                    className="flex items-center gap-2 px-3 py-1 bg-white text-[#e15858] rounded-full border-[1.5px] border-[#e15858] shadow hover:bg-[#ed3a3a]/5 transition disabled:bg-gray-400"
-                                    onClick={() => handleSelect({ id: user.user, nickname: user.nickname })}
-                                    disabled={submitting === user.user}
-                                >
-                                    <span>{submitting === user.user ? '처리중...' : actionText}</span>
-                                </button>
-                            </div>
-                        </div>
+                        <button
+                            key={user.user}
+                            type="button"
+                            onClick={() => handleSelect({ id: user.user, nickname: user.nickname })}
+                            disabled={submitting === user.user}
+                            className="w-full flex items-center text-left px-2 py-2 rounded"
+                        >
+                            <Image
+                                src={user.picture}
+                                alt={user.nickname}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover aspect-square mr-2"
+                            />
+                            <span>{user.nickname}</span>
+                            <span className="ml-auto text-[#e15858]">{submitting === user.user ? '처리중...' : actionText}</span>
+                        </button>
                     ))}
                 </div>
             </div>

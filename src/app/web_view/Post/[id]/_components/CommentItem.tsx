@@ -18,6 +18,7 @@ interface CommentItemProps {
     isAuthor?: boolean;
     onReply?: (parentId: number, defaultName: number) => void;
     onChanged?: () => void;
+    onReport?: (comment: CommentNested) => void;
 }
 
 const ANONYMOUS_NICK = '익명';
@@ -40,6 +41,7 @@ export function CommentItem({
     isAuthor = false,
     onReply,
     onChanged,
+    onReport,
 }: CommentItemProps) {
     const router = useRouter();
     const [myVote, setMyVote] = useState<boolean | null>(comment.my_vote);
@@ -139,6 +141,7 @@ export function CommentItem({
                         <button
                             type="button"
                             aria-label="more"
+                            onClick={comment.is_mine ? undefined : () => onReport?.(comment)}
                             className="flex h-[25px] w-[50px] items-center justify-end bg-transparent text-[#9E9E9E]"
                         >
                             <MoreIcon size={18} />
@@ -208,6 +211,7 @@ export function CommentItem({
                             nested
                             isAuthor={isAuthor}
                             onChanged={onChanged}
+                            onReport={onReport}
                         />
                     ))}
                 </>

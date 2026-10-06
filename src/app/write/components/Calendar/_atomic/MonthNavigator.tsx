@@ -43,7 +43,7 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({
           <path d="M13 16L7 10L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-      <div className="flex-1 text-center cursor-pointer" onClick={handleTodayClick}>
+      <div role="button" className="flex-1 text-center cursor-pointer" onClick={handleTodayClick}>
         {formatMonth(currentDate)}
       </div>
       <button type="button" onClick={handleNext} className="p-1 rounded hover:bg-gray-100 transition">

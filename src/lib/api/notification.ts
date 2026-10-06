@@ -9,3 +9,8 @@ export const readAllNotifications = async () => {
     const { data } = await http.post(`notifications/read_all/`);
     return data;
 }
+
+export const readNotification = async (id: number) => {
+    const { data } = await http.post(`notifications/${id}/read/`);
+    return data;
+}

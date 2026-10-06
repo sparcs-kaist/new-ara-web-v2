@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import http from '@/lib/api/http';
+import { apiDetail } from '@/lib/api/delivery';
 import { Close1Icon, SendIcon, StickyComposer } from '@/app/web_view/_components';
 
 interface CommentComposerProps {
@@ -32,7 +33,7 @@ const MAX_LINES = 5;
  *   │      │ #f8f8f8 rounded-10 input   │ send 30  │
  *   └──────────────────────────────────────────────┘
  *
- * Lifts above the keyboard via `StickyComposer`'s `--ara-keyboard-height`.
+ * Lifts above the keyboard via `StickyComposer` (--kb-inset / --ara-kb-shrink).
  */
 export function CommentComposer({
     postId,
@@ -96,7 +97,7 @@ export function CommentComposer({
             taRef.current?.blur();
             onPosted?.();
         } catch (e) {
-            console.warn('createComment failed', e);
+            alert(apiDetail(e));
         } finally {
             setSubmitting(false);
         }
@@ -108,16 +109,8 @@ export function CommentComposer({
           ? `'${replyToNickname ?? ''}'님께 답글을 작성하는 중`
           : '';
 
-    // KakaoTalk-style: when the textarea gains focus and the keyboard
-    // animates in, scroll the textarea into view so the last comment +
-    // composer stay visible above the keyboard. Single instant pass
-    // *after* the keyboard transition lands — smooth scroll overlapped
-    // with adjustResize and the page visibly slid in from the side.
-    const onFocus = () => {
-        window.setTimeout(() => {
-            taRef.current?.scrollIntoView({ block: 'end', behavior: 'auto' });
-        }, 350);
-    };
+    // No focus scroll hack: the composer is viewport-fixed, so it is on
+    // screen by definition and the browser's own focus reveal suffices.
 
     return (
         <StickyComposer aboveTabBar={false}>
@@ -134,7 +127,7 @@ export function CommentComposer({
                             type="button"
                             onClick={onCancelReply}
                             aria-label="취소"
-                            className="mr-2 flex h-[30px] w-[30px] items-center justify-center bg-transparent text-ara_red"
+                            className="mr-2 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-transparent text-ara_red"
                         >
                             <Close1Icon size={22} />
                         </button>
@@ -163,12 +156,13 @@ export function CommentComposer({
                             ref={taRef}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            onFocus={onFocus}
                             placeholder="댓글을 입력하세요"
                             rows={1}
                             inputMode="text"
                             autoCapitalize="sentences"
                             className="block w-full resize-none border-0 bg-transparent text-[14px] leading-[22px] text-black placeholder:text-[#BBBBBB] focus:outline-none"
+                            // Chromium scrolls an ancestor to reveal the caret on every resize step; the composer rides the column instead.
+                            style={{ scrollMarginBottom: '-9999px' }}
                         />
                     </div>
 
@@ -178,7 +172,7 @@ export function CommentComposer({
                         disabled={disabled}
                         aria-label="전송"
                         className={[
-                            'ml-3 flex h-[30px] w-[30px] shrink-0 items-center justify-center bg-transparent',
+                            'ml-3 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-transparent',
                             disabled ? 'text-[#BBBBBB]' : 'text-ara_red',
                         ].join(' ')}
                     >

@@ -9,8 +9,15 @@ export const PROTOCOL_VERSION = 1 as const;
 
 export type Platform = 'ios' | 'android';
 export type PushPlatform = 'fcm' | 'apns';
-export type PermissionKind = 'camera' | 'photos' | 'notifications' | 'microphone';
-export type PermissionStatus = 'granted' | 'denied' | 'permanentlyDenied';
+// Any permission_handler permission name ('notifications' is accepted as an alias).
+export type PermissionKind = 'notification' | 'camera' | 'photos' | 'microphone' | (string & {});
+export type PermissionStatus =
+    | 'granted'
+    | 'denied'
+    | 'permanentlyDenied'
+    | 'restricted'
+    | 'limited'
+    | 'provisional';
 export type StatusBarStyle = 'light' | 'dark';
 export type HapticKind = 'light' | 'medium' | 'heavy' | 'selection';
 export type AppLifecycleState = 'foreground' | 'background' | 'inactive';
@@ -40,8 +47,11 @@ export type CommandMap = {
     log: { req: { level: 'debug' | 'info' | 'warn' | 'error'; message: string; data?: unknown }; res: void };
     goBack: { req: void; res: void };
     exit: { req: void; res: void };
+    'back:handled': { req: { id: number }; res: void };
     setStatusBar: { req: { color: string; style: StatusBarStyle }; res: void };
     setSafeArea: { req: SafeAreaInsets; res: void };
+    /** Opens any installed handler for the url (custom app schemes included);
+     *  rejects with `unavailable` when nothing opens it, which is the "not installed" signal. */
     openExternal: { req: { url: string }; res: void };
     share: { req: { title?: string; text?: string; url?: string }; res: { shared: boolean } };
     pickImage: {
@@ -56,6 +66,11 @@ export type CommandMap = {
         req: { kind: PermissionKind };
         res: { granted: boolean; status: PermissionStatus };
     };
+    getPermissionStatus: {
+        req: { kind: PermissionKind };
+        res: { granted: boolean; status: PermissionStatus };
+    };
+    openAppSettings: { req: void; res: { opened: boolean } };
     getPushToken: { req: void; res: { token: string | null; platform: PushPlatform } };
     subscribeTopic: { req: { topic: string }; res: void };
     unsubscribeTopic: { req: { topic: string }; res: void };
@@ -84,11 +99,12 @@ export type EventMap = {
         locale: string;
         safeArea: SafeAreaInsets;
     };
-    'back:pressed': void;
+    'back:pressed': { id?: number; ts?: number };
     'appstate:changed': { state: AppLifecycleState };
     'network:changed': { online: boolean; type?: NetworkType };
-    'keyboard:changed': { height: number; visible: boolean };
+    'keyboard:changed': { height: number; visible: boolean; durationMs?: number; curve?: 'android' | 'ios' };
     'push:received': { title?: string; body?: string; data?: Record<string, unknown>; foreground: boolean };
+    'push:token': { token: string; platform: 'fcm' };
     'push:opened': { data: Record<string, unknown>; deepLink?: string };
     'deeplink:received': { url: string };
     'auth:expired': void;

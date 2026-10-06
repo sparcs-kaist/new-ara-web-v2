@@ -9,15 +9,30 @@
  * Pretendard font is already loaded globally in `app/globals.css`.
  */
 
+/* Soft-keyboard state — published on <html> by @sparcs-kaist/keyboard-inset
+   (WebViewClientLayout's useKeyboardCssVars). Un-gated on :root so formulas
+   using them are valid before hydration sets [data-ara-shell]; an
+   unresolvable var() would invalidate whole declarations at computed-value
+   time. */
+:root {
+    --kb-inset: 0px;
+    --kb-visible: 0;
+    --kb-visual-height: 100dvh;
+    /* Layout-viewport shrink in px, published synchronously per resize
+       frame by WebViewClientLayout (resize-mode host hand-off). */
+    --ara-kb-shrink: 0px;
+    /* Shrink the layout has not realized yet (predicted / replayed lift); fixed bars ride it. */
+    --ara-kb-pending: 0px;
+    /* Shrink the layout viewport has actually realized (raw); the fixed bars' safe pad follows this one. */
+    --ara-kb-layout: 0px;
+}
+
 [data-ara-shell] {
     /* Safe-area insets — overridden by layout.tsx from the bridge handshake. */
     --ara-safe-top: env(safe-area-inset-top, 0px);
     --ara-safe-bottom: env(safe-area-inset-bottom, 0px);
     --ara-safe-left: env(safe-area-inset-left, 0px);
     --ara-safe-right: env(safe-area-inset-right, 0px);
-
-    /* Software keyboard height — driven by useKeyboard() / native event. */
-    --ara-keyboard-height: 0px;
 
     background: #ffffff;
     color: #111111;
@@ -35,6 +50,18 @@
 [data-ara-shell] *::before,
 [data-ara-shell] *::after {
     box-sizing: border-box;
+}
+
+/* While a keyboard is up ([data-ara-kb], stamped by WebViewClientLayout),
+   the shell's own bottom-anchored folds own the scroll position; Chromium's
+   scroll anchoring is a second writer with a different target and the two
+   fight for a frame during the per-frame IME resize. Scoped to the keyboard
+   presentation on purpose: with no keyboard, native anchoring still absorbs
+   content growing above the viewport (post images decoding while the reader
+   is down in the comments). */
+[data-ara-shell][data-ara-kb],
+[data-ara-shell][data-ara-kb] * {
+    overflow-anchor: none;
 }
 
 /* Native-app feel: hide every scrollbar inside the WebView shell. The
@@ -70,4 +97,64 @@
 
 [data-ara-shell] button {
     -webkit-tap-highlight-color: transparent;
+}
+
+@property --ara-press-x { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
+@property --ara-press-y { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
+@property --ara-press-r { syntax: '<length-percentage>'; inherits: false; initial-value: 0px; }
+@property --ara-press-a { syntax: '<number>'; inherits: false; initial-value: 0; }
+/* Ripple: pressFeedback.ts sets the inline geometry vars (touch point, centre, covering radius). */
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press]) {
+    --ara-press-x: var(--ara-press-tx, 50%);
+    --ara-press-y: var(--ara-press-ty, 50%);
+    --ara-press-r: calc(var(--ara-press-max, 100vmax) * 0.3);
+}
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed],
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
+    --ara-press-x: var(--ara-press-cx, 50%);
+    --ara-press-y: var(--ara-press-cy, 50%);
+    --ara-press-r: calc(var(--ara-press-max, 100vmax) + 24px);
+    background-image: radial-gradient(circle at var(--ara-press-x) var(--ara-press-y), rgba(0, 0, 0, var(--ara-press-a)) calc(var(--ara-press-r) - 24px), transparent var(--ara-press-r));
+}
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-pressed] {
+    --ara-press-a: 0.06;
+    /* background-color keeps Tailwind transition-colors elements (the Settings switch) fading while pressed. */
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 100ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press="strong"][data-pressed] {
+    --ara-press-a: 0.12;
+}
+[data-ara-shell] :is(button, a, [role="button"], [role="tab"], summary, [data-press])[data-press-release] {
+    --ara-press-a: 0;
+    /* r/x/y stay listed: dropping them would cancel a quick tap's still-running growth. */
+    transition: --ara-press-r 300ms cubic-bezier(0.2, 0, 0, 1), --ara-press-x 300ms ease-out, --ara-press-y 300ms ease-out, --ara-press-a 200ms ease-out, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Chips flip their selected fill at once; only the ripple animates. */
+[data-ara-shell] [data-chip]:is([data-pressed], [data-press-release]) {
+    transition-property: --ara-press-r, --ara-press-x, --ara-press-y, --ara-press-a;
+}
+/* Zero specificity so an element's own rounded-* wins; the ripple follows the radius. */
+:where([data-ara-shell] [data-pressed], [data-ara-shell] [data-press-release]) {
+    border-radius: 10px;
+}
+
+@property --ara-glow-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes ara-glow-spin {
+    to { --ara-glow-angle: 360deg; }
+}
+[data-ara-shell] [data-urgent] {
+    padding: 1.5px;
+    border-radius: 16px;
+    background: conic-gradient(from var(--ara-glow-angle), transparent 0deg, transparent 240deg, #ed3a3a 320deg, transparent 360deg), rgba(237, 58, 58, 0.45);
+    animation: ara-glow-spin 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-ara-shell] [data-urgent] {
+        background: #ed3a3a;
+        animation: none;
+    }
+}
+
+@keyframes ara-pop {
+    from { transform: scale(0.85); }
 }

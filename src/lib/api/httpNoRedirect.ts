@@ -26,7 +26,8 @@ httpNoRedirect.interceptors.response.use(
       const status = error.response.status;
 
       // 404 에러는 리디렉션하지 않음
-      if (typeof window !== 'undefined') {
+      // 웹뷰 셸엔 /login, /tos, /410 이 없어 셸 밖으로 튕기지 않도록 건너뛴다
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/web_view/')) {
         if (status === 401) window.location.href = '/login';
         // 404 처리 제거 - 컴포넌트에서 직접 처리하도록 함
         else if (status === 418) window.location.href = '/tos';

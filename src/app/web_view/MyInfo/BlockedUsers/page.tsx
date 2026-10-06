@@ -91,7 +91,7 @@ export default function BlockedUsersPage() {
                     type="button"
                     onClick={onBack}
                     aria-label="뒤로"
-                    className="flex h-14 w-14 items-center justify-center text-ara_red"
+                    className="flex h-14 w-14 items-center justify-center rounded-full text-ara_red"
                 >
                     <LeftChevronIcon size={35} />
                 </button>
@@ -137,7 +137,7 @@ export default function BlockedUsersPage() {
                                         onClick={() => onUnblock(b.id)}
                                         disabled={removing === b.id}
                                         aria-label="차단 해제"
-                                        className="flex h-10 w-10 items-center justify-center bg-transparent text-black disabled:opacity-50"
+                                        className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-black disabled:opacity-50"
                                     >
                                         <Close2Icon size={25} />
                                     </button>

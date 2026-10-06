@@ -189,3 +189,37 @@ export const fetchAllArticlesExcludingPortalNotice = async (params: ArticleQuery
   const { data } = await http.get(`articles/?${queryBuilder(buildArticleParams(overridden))}`);
   return data;
 };
+
+type CourseQuery = {
+  courseId: number;
+  query?: string;
+  page?: number;
+  pageSize?: number;
+  order?: string;
+};
+
+export async function fetchCourseArticles({ courseId, ...params }: CourseQuery) {
+  const context: Record<string, QueryValue> = {};
+
+  if (params.query) context.main_search__contains = params.query;
+  if (params.page) context.page = params.page;
+  if (params.pageSize) context.page_size = params.pageSize;
+  if (params.order) context.order = params.order;
+
+  const { data } = await http.get(`courses/${courseId}/articles/?${queryBuilder(context)}`);
+  return data
+}
+
+type MajorQuery = Omit<CourseQuery, 'courseId'> & { stdDeptId: number | string };
+
+export async function fetchMajorArticles({ stdDeptId, ...params }: MajorQuery) {
+  const context: Record<string, QueryValue> = {};
+
+  if (params.query) context.main_search__contains = params.query;
+  if (params.page) context.page = params.page;
+  if (params.pageSize) context.page_size = params.pageSize;
+  if (params.order) context.order = params.order;
+
+  const { data } = await http.get(`majors/${stdDeptId}/articles/?${queryBuilder(context)}`);
+  return data
+}

@@ -3,12 +3,24 @@ import { queryClient } from "../queryClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 type VoteAction = "vote_cancel" | "vote_negative" | "vote_positive";
+
+export type ArticleScope = { courseId?: number; stdDeptId?: number | string };
+
+const articlePath = (postId: number, scope?: ArticleScope) => {
+  if (scope?.courseId != null)
+    return `courses/${scope.courseId}/articles/${postId}/`;
+  if (scope?.stdDeptId != null)
+    return `majors/${scope.stdDeptId}/articles/${postId}/`;
+  return `articles/${postId}/`;
+};
+
 interface PostParams {
   postId: number;
   context?: VoteAction;
   fromView?: string;
   current?: number;
   overrideHidden?: boolean;
+  scope?: ArticleScope;
 }
 
 interface AttachmentParams {
@@ -23,10 +35,11 @@ export const fetchPost = async ({
   fromView,
   current,
   overrideHidden,
+  scope,
 }: PostParams) => {
   const baseUrl = context
     ? `articles/${postId}/${context}/`
-    : `articles/${postId}/`;
+    : articlePath(postId, scope);
 
   const params = new URLSearchParams();
   if (fromView) params.append("from_view", fromView);
@@ -45,6 +58,7 @@ export const usePost = ({
   fromView = "all",
   current = 3,
   overrideHidden = true,
+  scope,
 }: PostParams) => {
   const queryClient = useQueryClient();
 
@@ -56,6 +70,7 @@ export const usePost = ({
       fromView ?? null,
       current ?? null,
       overrideHidden ?? null,
+      scope ?? null,
     ],
     queryFn: () =>
       fetchPost({
@@ -64,6 +79,7 @@ export const usePost = ({
         fromView,
         current,
         overrideHidden,
+        scope,
       }),
     placeholderData: () => {
       /* eslint-disable-next-line */
@@ -107,10 +123,17 @@ export const createPost = async ({
 export const updatePost = async ({
   postId,
   newArticle,
+  scope,
 }: {
   postId: number;
   newArticle: Record<string, unknown>;
+  scope?: ArticleScope;
 }) => {
+  if (scope?.courseId != null || scope?.stdDeptId != null) {
+    const { data } = await http.patch(articlePath(postId, scope), newArticle);
+    return data;
+  }
+
   const { data } = await http.put(`articles/${postId}/`, {
     ...newArticle,
   });
@@ -129,23 +152,9 @@ export const unarchivePost = async (scrapId: number) => {
   return data;
 };
 
-// 게시글 신고
-export const reportPost = async (
-  postId: number,
-  typeReport: string,
-  reasonReport: string,
-) => {
-  const { data } = await http.post("reports/", {
-    parent_article: postId,
-    type: typeReport,
-    content: reasonReport,
-  });
-  return data;
-};
-
 // 게시글 삭제
-export const deletePost = async (postId: number) => {
-  const { data } = await http.delete(`articles/${postId}/`);
+export const deletePost = async (postId: number, scope?: ArticleScope) => {
+  const { data } = await http.delete(articlePath(postId, scope));
 
   // useMe 호출을 다시 호출해야 게시물 개수 갱신 가능
   queryClient.invalidateQueries({ queryKey: ["me"] });
@@ -245,20 +254,6 @@ export const voteComment = async (commentId: number, action: VoteAction) => {
   return data;
 };
 
-// 댓글 신고
-export const reportComment = async (
-  commentId: number,
-  typeReport: string = "others",
-  reasonReport: string,
-) => {
-  const { data } = await http.post("reports/", {
-    parent_comment: commentId,
-    type: typeReport,
-    content: reasonReport,
-  });
-  return data;
-};
-
 // 댓글 삭제
 export const deleteComment = async (commentId: number) => {
   const { data } = await http.delete(`comments/${commentId}/`);
@@ -299,4 +294,35 @@ export const uploadAttachments = async (
   }
 
   return http.post("attachments/", generateFormData(attachments), httpOptions);
+};
+
+export const fetchCoursePost = async ({ courseId, postId }: { courseId: number, postId: number}) => {
+  const { data } = await http.get(`/courses/${courseId}/articles/${postId}/`);
+  return data
+}
+
+export const createCoursePost = async ({
+  courseId,
+  newArticle,
+}: {
+  courseId: number;
+  newArticle: Record<string, unknown>;
+}) => {
+  const { data } = await http.post(`courses/${courseId}/articles/`, newArticle);
+
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+  return data;
+};
+
+export const createMajorPost = async ({
+  stdDeptId,
+  newArticle,
+}: {
+  stdDeptId: number | string;
+  newArticle: Record<string, unknown>;
+}) => {
+  const { data } = await http.post(`majors/${stdDeptId}/articles/`, newArticle);
+
+  queryClient.invalidateQueries({ queryKey: ["me"] });
+  return data;
 };

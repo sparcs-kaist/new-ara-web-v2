@@ -3,7 +3,12 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useParams, notFound, useRouter } from "next/navigation";
+import {
+  useParams,
+  notFound,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import {
   fetchPost,
   votePost,
@@ -13,6 +18,7 @@ import {
   createComment,
   deletePost,
   usePost,
+  type ArticleScope,
 } from "@/lib/api/post";
 import TextEditor from "@/components/TextEditor/TextEditor";
 import { formatPost } from "../util/getPost";
@@ -32,6 +38,15 @@ export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params?.id ? parseInt(params.id as string, 10) : null;
+
+  const searchParams = useSearchParams();
+  const courseIdParam = searchParams.get("course_id");
+  const stdDeptIdParam = searchParams.get("std_dept_id");
+  const scope: ArticleScope | undefined = courseIdParam
+    ? { courseId: Number(courseIdParam) }
+    : stdDeptIdParam
+      ? { stdDeptId: stdDeptIdParam }
+      : undefined;
 
   const [post, setPost] = useState<PostData | null>(null);
   // const [isLoading, setIsLoading] = useState(true);
@@ -101,6 +116,7 @@ export default function PostDetailPage() {
     fromView: "all",
     current: 3,
     overrideHidden: true,
+    scope,
   });
 
   useEffect(() => {
@@ -408,6 +424,14 @@ export default function PostDetailPage() {
 
   // 게시물 수정 핸들러
   const handleEdit = () => {
+    if (scope?.courseId != null) {
+      router.push(`/write/course?course_id=${scope.courseId}&edit=${postId}`);
+      return;
+    }
+    if (scope?.stdDeptId != null) {
+      router.push(`/write/major?std_dept_id=${scope.stdDeptId}&edit=${postId}`);
+      return;
+    }
     router.push(`/write?edit=${postId}`);
   };
 
@@ -415,9 +439,15 @@ export default function PostDetailPage() {
   const handleDelete = async () => {
     if (window.confirm("정말로 이 게시물을 삭제하시겠습니까?")) {
       try {
-        await deletePost(postId!);
+        await deletePost(postId!, scope);
         alert("게시물이 삭제되었습니다.");
-        router.push("/"); // 삭제 후 홈으로 이동
+        router.push(
+          scope?.courseId != null
+            ? `/course_board/${scope.courseId}`
+            : scope?.stdDeptId
+              ? `/major_board/${scope.stdDeptId}`
+              : "/",
+        ); // 삭제 후 게시판 또는 홈으로 이동
       } catch (error: any) {
         console.error("게시물 삭제 실패:", error);
         const errorMessage =

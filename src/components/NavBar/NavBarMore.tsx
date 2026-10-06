@@ -11,11 +11,12 @@ export default function NavBarMore({ onClose }: { onClose: () => void }) {
   const { data: user_data } = useMe();
 
   useEffect(() => {
+    if (!user_data) return;
     const fetchUser = async () => {
       setUserId(user_data.user);
     };
     fetchUser();
-  }, []);
+  }, [user_data]);
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({
     notice: false,
     clubs: false,

@@ -18,6 +18,12 @@ export const viewport: Viewport = {
     maximumScale: 1,
     userScalable: false,
     viewportFit: 'cover',
+    // Plain Android Chrome (>=108) defaults to resizes-visual: the keyboard
+    // shrinks only the visual viewport and fixed-bottom bars go behind it.
+    // resizes-content restores layout-viewport resizing so browsers behave
+    // like the adjustResize WebView shell. No effect inside the WebView
+    // (windowSoftInputMode rules there) or on iOS (never implemented).
+    interactiveWidget: 'resizes-content',
 };
 
 export default function WebViewLayout({ children }: { children: ReactNode }) {

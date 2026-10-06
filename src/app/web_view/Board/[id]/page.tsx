@@ -200,7 +200,7 @@ export default function BoardIdPage() {
                                         : '/web_view/PostWrite',
                                 )
                             }
-                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
                             <PostIcon size={28} />
                         </button>
@@ -214,7 +214,7 @@ export default function BoardIdPage() {
                                         : '/web_view/Search',
                                 )
                             }
-                            className="flex h-11 w-11 items-center justify-center text-ara_red"
+                            className="flex h-11 w-11 items-center justify-center rounded-full text-ara_red"
                         >
                             <SearchIcon size={28} />
                         </button>
@@ -222,17 +222,17 @@ export default function BoardIdPage() {
                 }
             />
 
-            <ul className="px-5">
+            <ul>
                 {posts.map((p, idx) => (
                     <li key={p.id}>
                         <button
                             type="button"
                             onClick={() => router.push(`/web_view/Post/${p.id}`)}
-                            className="block w-full bg-transparent py-[11px] text-left"
+                            className="block w-full rounded-none bg-transparent px-5 py-[11px] text-left"
                         >
                             <PostPreview post={p} />
                         </button>
-                        {idx < posts.length - 1 && <div className="h-px bg-[#F0F0F0]" />}
+                        {idx < posts.length - 1 && <div className="mx-5 h-px bg-[#F0F0F0]" />}
                     </li>
                 ))}
             </ul>

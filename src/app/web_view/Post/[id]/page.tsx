@@ -1,21 +1,31 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
     archivePost,
-    reportPost,
     unarchivePost,
     votePost,
 } from '@/lib/api/post';
 import { formatPost } from '@/app/post/util/getPost';
 import TextEditor from '@/components/TextEditor/TextEditor';
-import type { Comment, PostData } from '@/lib/types/post';
-import { AppHeader, CenteredSpinner, ContentArea, LeftChevronIcon, Screen } from '@/app/web_view/_components';
+import type { Comment, CommentNested, PostData } from '@/lib/types/post';
+import {
+    AppHeader,
+    CenteredSpinner,
+    ComposerSpacer,
+    ContentArea,
+    LeftChevronIcon,
+    ReportSheet,
+    Screen,
+    type ReportSubject,
+} from '@/app/web_view/_components';
 import { useSafeBack } from '@/app/web_view/hooks/useSafeBack';
 import { usePullToRefresh } from '@/app/web_view/hooks/usePullToRefresh';
-import { usePost } from '@/app/web_view/_query';
+import { postKey, readScope, scopeQuery, SCOPED_ARTICLES_KEY, usePost, useScopeName } from '@/app/web_view/_query';
+import { useWindowBottomAnchoredScroll } from '@sparcs-kaist/keyboard-inset/react';
+import { KEYBOARD_GLIDE } from '@/app/web_view/_components/keyboardMotion';
 import { ArticleHeader } from './_components/ArticleHeader';
 import { Attachments } from './_components/Attachments';
 import { CommentComposer } from './_components/CommentComposer';
@@ -31,9 +41,15 @@ export default function WebViewPostDetailPage() {
     const onBack = useSafeBack();
     const idRaw = (params?.id ?? '') as string;
     const postId = Number.parseInt(idRaw, 10);
+    const searchParams = useSearchParams();
+    const scope = useMemo(() => readScope(searchParams), [searchParams]);
+    const scopeName = useScopeName(scope);
 
     const qc = useQueryClient();
     const [replyTarget, setReplyTarget] = useState<{ id: number; nickname: string } | null>(null);
+    const [report, setReport] = useState<ReportSubject | null>(null);
+    // Stable: a new identity would restart the report sheet's auto-close timer.
+    const closeReport = useCallback(() => setReport(null), []);
 
     /**
      * Fetch via the WebView-scoped query cache. `placeholderData` looks up
@@ -42,7 +58,7 @@ export default function WebViewPostDetailPage() {
      * instantly on push, then the body fills in once the detail call
      * completes. Lifts the perceived latency on Board → Post by ~200ms.
      */
-    const postQuery = usePost({ postId });
+    const postQuery = usePost({ postId, scope });
     const isInvalidId = !Number.isFinite(postId) || postId <= 0;
 
     // The list cache holds raw `ResponsePost`s; the detail endpoint adds
@@ -61,14 +77,18 @@ export default function WebViewPostDetailPage() {
 
     usePullToRefresh(reload);
 
+    // Messenger-style fold: preserve the bottom-edge content (comments above the
+    // fixed composer) when the keyboard resizes the document, wherever the user is.
+    useWindowBottomAnchoredScroll(KEYBOARD_GLIDE);
+
     /** Optimistic mutate of the cached post so VoteRow / scrap buttons stay snappy. */
     const patchPost = useCallback(
         (patch: (p: PostData) => PostData) => {
-            qc.setQueryData<PostData>(['webview', 'post', postId], (prev) =>
+            qc.setQueryData<PostData>(postKey(postId, scope), (prev) =>
                 prev ? patch(prev) : prev,
             );
         },
-        [qc, postId],
+        [qc, postId, scope],
     );
 
     const handleVote = async (action: VoteAction) => {
@@ -143,22 +163,17 @@ export default function WebViewPostDetailPage() {
         }
     };
 
-    const handleReport = async () => {
+    const handleReport = () => {
         if (!post) return;
-        if (typeof window === 'undefined') return;
-        const reason = window.prompt('신고 사유를 입력하세요');
-        if (!reason) return;
-        try {
-            await reportPost(post.id, 'others', reason);
-            window.alert('신고가 접수되었습니다.');
-        } catch (e) {
-            console.warn('reportPost failed', e);
-        }
+        setReport({ target: { kind: 'article', articleId: post.id }, label: '게시글', preview: post.title });
     };
+
+    const reportComment = (c: CommentNested) =>
+        setReport({ target: { kind: 'comment', commentId: c.id }, label: '댓글', preview: c.content.split('\n')[0] });
 
     const handleEdit = () => {
         if (!post) return;
-        router.push(`/web_view/PostWrite?edit=${post.id}`);
+        router.push(`/web_view/PostWrite?edit=${post.id}${scope ? `&${scopeQuery(scope)}` : ''}`);
     };
 
     const handleDelete = async () => {
@@ -166,7 +181,8 @@ export default function WebViewPostDetailPage() {
         if (typeof window !== 'undefined' && !window.confirm('정말 삭제하시겠어요?')) return;
         try {
             const { deletePost } = await import('@/lib/api/post');
-            await deletePost(post.id);
+            await deletePost(post.id, scope);
+            if (scope) qc.removeQueries({ queryKey: SCOPED_ARTICLES_KEY });
             onBack();
         } catch (e) {
             console.warn('deletePost failed', e);
@@ -206,12 +222,11 @@ export default function WebViewPostDetailPage() {
 
     if (!post) return null;
 
-    const boardName = post.parent_board?.ko_name ?? '';
+    const boardName = scopeName ?? post.parent_board?.ko_name ?? '';
     const isAnonymousPost = post.name_type === 2;
     const isBlockedAuthor = !!post.created_by?.is_blocked;
     const totalCommentCount = countComments(post.comments ?? []);
 
-    // Faithful Flutter AppBar: red chevron + small red board name on the left.
     const leading = (
         <button
             type="button"
@@ -265,7 +280,6 @@ export default function WebViewPostDetailPage() {
                 onDelete={handleDelete}
             />
 
-            {/* Divider before comment section. */}
             <div className="mx-5 mt-[15px] h-px bg-[#F0F0F0]" />
 
             <h3 className="px-5 pt-[15px] pb-[15px] text-[16px] font-bold text-black">
@@ -292,6 +306,7 @@ export default function WebViewPostDetailPage() {
                                 })
                             }
                             onChanged={reload}
+                            onReport={reportComment}
                         />
                     ))
                 ) : (
@@ -301,8 +316,10 @@ export default function WebViewPostDetailPage() {
                 )}
             </section>
 
-            {/* Reserve space so the last comment doesn't sit under the composer. */}
-            <div aria-hidden className="h-24" />
+            {/* Reserve space so the last comment doesn't sit under the
+                composer — sized from the composer's measured height, since
+                a reply header or a five-line draft grows well past 96px. */}
+            <ComposerSpacer height={96} />
 
             <CommentComposer
                 postId={post.id}
@@ -315,6 +332,8 @@ export default function WebViewPostDetailPage() {
                     reload();
                 }}
             />
+
+            <ReportSheet subject={report} onClose={closeReport} />
         </Screen>
     );
 }

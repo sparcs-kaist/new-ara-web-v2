@@ -26,6 +26,7 @@ const SmallMyInfo = () => {
   const { data } = useMe();
 
   useEffect(() => {
+    if (!data) return;
     const getUserData = async () => {
       try {
         setUserData(data);
@@ -39,7 +40,7 @@ const SmallMyInfo = () => {
       }
     };
     getUserData();
-  }, []);
+  }, [data]);
 
   // 로딩 중이거나 유저 데이터가 없는 경우 (비로그인 상태 포함)
   if (loading || !userData) {

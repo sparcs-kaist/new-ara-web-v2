@@ -20,9 +20,18 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@sparcs-kaist/keyboard-inset": ["packages/keyboard-inset/src/index.ts"],
+      "@sparcs-kaist/keyboard-inset/react": ["packages/keyboard-inset/src/react.ts"]
     }
   },
   "include": ["declarations.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.js"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "packages/*/dist",
+    "packages/*/test",
+    "packages/*/tsup.config.ts",
+    "packages/*/vitest.config.ts"
+  ]
 }

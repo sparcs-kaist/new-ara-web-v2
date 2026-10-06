@@ -6,6 +6,7 @@ import LanguageSwitcher from "./components/LanguageSwitcher";
 import { tosContent } from "./content";
 import { updateTos } from "@/lib/api/user";
 import { useMe } from "@/lib/query/user";
+import { isInShell } from "@/app/web_view/_bridge/isInShell";
 
 export default function TOSPage() {
   // 기본 언어는 한국어로 설정
@@ -15,6 +16,7 @@ export default function TOSPage() {
   const { data: userData } = useMe();
 
   useEffect(() => {
+    if (!userData) return;
     //User 정보 가져오기
     const fetchUserData = async () => {
       try {
@@ -25,7 +27,7 @@ export default function TOSPage() {
       }
     };
     fetchUserData();
-  }, []);
+  }, [userData]);
   useEffect(() => {
     // URL에서 언어 파라미터 가져오기
     const urlParams = new URLSearchParams(window.location.search);
@@ -45,7 +47,7 @@ export default function TOSPage() {
     if (user) {
       updateTos(user);
     }
-    window.location.href = "/"; // 약관 동의 후 홈으로 redirect
+    window.location.href = isInShell() ? "/web_view/Main" : "/"; // 약관 동의 후 홈으로 redirect
   };
 
   // 약관 거절 핸들러

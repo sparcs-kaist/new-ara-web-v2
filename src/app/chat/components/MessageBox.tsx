@@ -14,6 +14,7 @@ type MessageBoxProps = {
     readStatus?: 'read' | 'delivered' | 'sending';
     readCount?: number;
     isGrouped?: boolean;                // 추가
+    bare?: boolean;                     // 말풍선 없이 카드(투표·정산)만
 };
 
 export default function MessageBox({
@@ -26,6 +27,7 @@ export default function MessageBox({
     readStatus,
     readCount,
     isGrouped = false,
+    bare = false,
 }: MessageBoxProps) {
     const hasTheme = (t: string): t is MessageTheme => t in messageThemes;
     const themeKey: MessageTheme = hasTheme(theme) ? theme : 'ara';
@@ -72,7 +74,7 @@ export default function MessageBox({
                 {/* 말풍선 + 시간/읽음: 내 메시지는 시간 칼럼을 왼쪽에 배치 */}
                 <div className="flex items-end gap-1">
                     {isMe ? InfoCol : null}
-                    <div className={`${bubbleBase} ${bubbleColor} whitespace-pre-wrap break-words max-w-[28rem]`}>
+                    <div className={bare ? undefined : `${bubbleBase} ${bubbleColor} whitespace-pre-wrap break-words max-w-[28rem]`}>
                         {children}
                     </div>
                     {!isMe ? InfoCol : null}

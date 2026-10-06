@@ -90,8 +90,8 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
 
     // 다이얼로그 내용을 정의
     const dialog = (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-96 relative">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-30">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[calc(100vw-30px)] max-w-96 relative">
                 <button
                     className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
                     onClick={onClose}
@@ -99,7 +99,7 @@ export default function InvitationListDialog({ open, onClose, onActionComplete }
                     ✕
                 </button>
                 <h3 className="text-lg font-bold mb-4">받은 초대 목록</h3>
-                <div className="max-h-96 min-h-96 overflow-y-auto space-y-3">
+                <div className="max-h-96 min-h-[240px] overflow-y-auto space-y-3">
                     {loading && <div className="text-gray-400 text-sm text-center py-4">불러오는 중...</div>}
                     {!loading && invitations.length === 0 && (
                         <div className="text-gray-400 text-sm text-center py-4">받은 초대가 없습니다.</div>

@@ -74,8 +74,8 @@ const RoomCreateDialog: React.FC<RoomCreateDialogProps> = ({
 
   // 다이얼로그 내용을 정의
   const dialog = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-30">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[calc(100vw-30px)] max-w-80 relative">
         <h2 className="text-lg font-bold mb-4">채팅방 만들기</h2>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-2">
