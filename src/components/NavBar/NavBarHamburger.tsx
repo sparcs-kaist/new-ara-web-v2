@@ -17,7 +17,6 @@ export default function NavBarHamburger() {
       style={{ marginRight: "clamp(20px, 5vw, 150px" }}
       className="flex justify-center items-center space-x-[10px] z-50"
     >
-      {" "}
       {/*z-50 : 최상단*/}
       {/*글쓰기 버튼*/}
       <Link href="/write">
