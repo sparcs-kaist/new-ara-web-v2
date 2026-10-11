@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { CampusIcon, ChatIcon, HomeIcon, MealIcon, MemberIcon, PostListIcon } from './icons';
 import { useMe } from '@/app/web_view/_query';
-import { canUseCampus, canUseMeal } from './features';
+import { canUseMeal } from './features';
 
 interface Tab {
     path: string;
@@ -50,10 +50,9 @@ export function BottomTabBar() {
     const pathname = usePathname();
     const router = useRouter();
     const { data: me } = useMe();
-    // 내정보 moves to the person icon on the 내 게시판 home for campus users.
+    // 내정보 moves to the person icon on the 내 게시판 home for delivery test users.
     const tabs = TABS.filter((t) => {
-        if (t.path === '/web_view/Campus') return canUseCampus(me);
-        if (t.path === '/web_view/MyInfo') return !canUseCampus(me);
+        if (t.path === '/web_view/MyInfo') return !canUseMeal(me);
         if (t.path === '/web_view/Meal') return canUseMeal(me);
         return true;
     });
