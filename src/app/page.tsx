@@ -13,6 +13,7 @@ import MyChatRooms from '@/components/MyChatRoom/MyChatRooms';
 import MarketPreview from "@/components/MarketPreview/MarketPreview";
 import PosterCarousel from "@/components/PosterPreview/PosterCarousel";
 import SparcsNotice from "@/components/SparcsNotice/SparcsNotice";
+import GlobalBanner from "@/components/GlobalBanner/GlobalBanner";
 
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
@@ -45,6 +46,11 @@ export default function Home() {
     <div className="max-w-[1280px] mx-auto">
       {/* 상단 그라데이션 배경 적용 */}
       <div className="absolute top-0 left-0 w-full h-[300px] -z-10 bg-gradient-to-b from-[#fcefef] to-white"></div>
+
+      {/* 서비스 전체 공지 배너 (설정: lib/globalBanner.ts) */}
+      <div className="pt-3 xl:px-1 md:px-16 sm:px-12 xs:px-8 px-4 empty:hidden">
+        <GlobalBanner className="rounded-[12px]" />
+      </div>
 
       <div className="h-[110px] w-full flex justify-center items-center pb-4 relative">
         <form

@@ -11,6 +11,8 @@ import { MainPageTextButton } from './_components/MainPageTextButton';
 import { PopularBoardRow } from './_components/PopularBoardRow';
 import { SectionBox, HairlineDivider } from './_components/SectionBox';
 import { NoticeRow } from './_components/NoticeRow';
+import GlobalBanner from '@/components/GlobalBanner/GlobalBanner';
+import { bridge } from '@/app/web_view/_bridge';
 
 interface BoardItem {
     id: number;
@@ -145,6 +147,14 @@ export default function MainPage() {
     return (
         <Screen>
             <HomeAppBar />
+            {/* 서비스 전체 공지 배너 (설정: lib/globalBanner.ts) */}
+            <GlobalBanner
+                onOpenLink={(link) => {
+                    if (link.startsWith('/web_view/')) return router.push(link);
+                    if (bridge?.isNative) bridge.send('openExternal', { url: link });
+                    else window.open(link, '_blank', 'noopener,noreferrer');
+                }}
+            />
 
             {/* 실시간 인기 */}
             <section className="pt-2">
