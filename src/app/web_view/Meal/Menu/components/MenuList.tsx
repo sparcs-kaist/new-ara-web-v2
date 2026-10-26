@@ -134,7 +134,7 @@ export default function MenuList({
                 {course.course_name}
               </h3>
               <span className="font-bold text-[#ed3a3a] text-[14px]">
-                {course.price.toLocaleString()}원
+                {course.price != null && `${course.price.toLocaleString()}원`}
               </span>
             </div>
 
@@ -171,7 +171,7 @@ export default function MenuList({
     // 선택된 메뉴들의 총 가격 계산
     const totalPrice = Array.from(selectedItems).reduce((sum, index) => {
       if (index < cafeteriaMenus.length) {
-        return sum + cafeteriaMenus[index].price;
+        return sum + (cafeteriaMenus[index].price ?? 0);
       }
       return sum;
     }, 0);
@@ -202,7 +202,7 @@ export default function MenuList({
                 </span>
               </div>
               <span className="font-medium text-xs text-black">
-                {item.price.toLocaleString()}원
+                {item.price != null && `${item.price.toLocaleString()}원`}
               </span>
             </button>
           ))}

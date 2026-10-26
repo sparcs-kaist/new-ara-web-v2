@@ -10,7 +10,7 @@ export interface Menu {
 // 카페테리아 메뉴 아이템 (가격 포함)
 export interface CafeteriaMenu {
   menu_name: string;
-  price: number;
+  price: number | null;
   allergy_codes: number[];
   has_user_allergy: boolean;
 }
@@ -18,7 +18,7 @@ export interface CafeteriaMenu {
 // 코스 메뉴 아이템 (일품코너 등)
 export interface Course {
   course_name: string;
-  price: number;
+  price: number | null;
   menus: Menu[];
 }
 
