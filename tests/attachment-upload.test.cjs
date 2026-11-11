@@ -6,7 +6,7 @@ const ts = require('typescript');
 
 function load(path, imports, globals = {}) {
   const source = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   const exports = {};
   vm.runInNewContext(source, {
@@ -219,3 +219,109 @@ test('every article save path checks upload readiness before sending', () => {
     assert.match(save.slice(0, save.indexOf('setSaving(true)')), /attachmentsReady|!file.uploaded/);
   }
 });
+
+function chatHarness(compact) {
+  const slots = [];
+  let cursor = 0;
+  const react = {
+    useState: initial => {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = initial;
+      return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }];
+    },
+    useRef: initial => {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = { current: initial };
+      return slots[index];
+    },
+    useEffect: () => {},
+  };
+  const messages = [];
+  let attempts = 0;
+  let sessions = 0;
+  let rejectUpload;
+  const pendingUpload = new Promise((resolve, reject) => { rejectUpload = reject; });
+  const jsx = (type, props) => ({ type, props });
+  const { default: ChatInput } = load('src/app/chat/components/ChatInput.tsx', {
+    react: { default: react, ...react },
+    'react/jsx-runtime': { jsx, jsxs: jsx, Fragment: 'fragment' },
+    'react-dom': { createPortal: content => content },
+    'next/image': { default: 'image' },
+    'react-textarea-autosize': { default: 'textarea' },
+    '@/lib/api/chat': {
+      sendMessage: async (roomId, text) => { messages.push({ roomId, text }); },
+      sendAttachmentMessage: async (...args) => { messages.push({ attachment: args }); },
+    },
+    '@/lib/api/attachmentUpload': { createAttachmentUpload: () => {
+      sessions++;
+      return {
+        upload: () => ++attempts === 1 ? pendingUpload : Promise.resolve({ data: { id: 42, file: 'https://cdn/file' } }),
+        cancel: () => {},
+      };
+    } },
+    '@/lib/socket/chat': { chatSocket: {} },
+    '@/app/web_view/_components/icons': {},
+  }, { alert: () => {} });
+  let nodes = [];
+  const render = () => {
+    cursor = 0;
+    nodes = [];
+    const visit = node => {
+      if (Array.isArray(node)) return node.forEach(visit);
+      if (!node || typeof node !== 'object') return;
+      nodes.push(node);
+      visit(node.props?.children);
+    };
+    visit(ChatInput({ roomId: 7, myId: null, onMessageSent: () => {}, compact }));
+  };
+  const find = predicate => {
+    const node = nodes.find(predicate);
+    assert.ok(node, 'Expected chat control');
+    return node.props;
+  };
+  return {
+    render, find, messages, rejectUpload,
+    get attempts() { return attempts; },
+    get sessions() { return sessions; },
+  };
+}
+
+for (const compact of [false, true]) {
+  test(`chat (${compact ? 'compact' : 'desktop'}): failed upload permits text send and preserves attachment retry`, async () => {
+    const chat = chatHarness(compact);
+    chat.render();
+    const textarea = () => chat.find(node => node.type === 'textarea');
+    textarea().onChange({ target: { value: 'hello' } });
+    chat.render();
+    const selected = file();
+    chat.find(node => node.type === 'input' && node.props.type === 'file' && node.props.accept !== 'image/*')
+      .onChange({ target: { files: [selected], value: 'file.zip' } });
+    const enter = () => textarea().onKeyDown({ key: 'Enter', nativeEvent: {}, preventDefault() {} });
+    enter();
+    assert.equal(chat.messages.length, 0, 'blocks even before state rerender');
+    chat.render();
+    enter();
+    assert.equal(chat.messages.length, 0, 'blocks during upload');
+    chat.rejectUpload(new Error('S3 failed'));
+    await new Promise(resolve => setImmediate(resolve));
+    chat.render();
+    const send = chat.find(node => node.type === 'button' && node.props['aria-label']?.includes('전송'));
+    assert.equal(send.disabled, false);
+    await send.onClick();
+    assert.equal(chat.messages.length, 1, 'text sends despite retained retry session');
+    chat.render();
+    textarea().onChange({ target: { value: 'second' } });
+    chat.render();
+    enter();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(chat.messages.length, 2, 'Enter also sends after upload failure');
+    chat.render();
+    chat.find(node => node.type === 'button' && node.props.children === '재시도').onClick();
+    await new Promise(resolve => setImmediate(resolve));
+    chat.render();
+    assert.equal(chat.attempts, 2);
+    assert.equal(chat.sessions, 1, 'retains failed session for completion-only retry');
+    await chat.find(node => node.type === 'button' && node.props['aria-label']?.includes('전송')).onClick();
+    assert.equal(chat.messages[2].attachment[3], 42);
+  });
+}

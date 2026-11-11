@@ -54,6 +54,7 @@ export default function ChatInput({
   }>(null);
   const [isUploading, setIsUploading] = useState(false);
   const uploadRef = useRef<ReturnType<typeof createAttachmentUpload> | null>(null);
+  const uploadingRef = useRef(false);
   const [failedUpload, setFailedUpload] = useState<{ file: File; kind: 'IMAGE' | 'FILE' } | null>(null);
   useEffect(() => () => { uploadRef.current?.cancel(); uploadRef.current = null; }, []);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +106,7 @@ export default function ChatInput({
   }, [input, myId]); // 의존성 배열에 myId 추가
 
   const handleSend = async () => {
-    if (uploadRef.current || !roomId || (input.trim() === "" && !pending)) return;
+    if (uploadingRef.current || !roomId || (input.trim() === "" && !pending)) return;
     closeSheet();
 
     // 메시지 전송 시 즉시 '입력 중' 상태 해제
@@ -136,11 +137,12 @@ export default function ChatInput({
   };
 
   const pickAndUpload = async (file: File, kind: "IMAGE" | "FILE") => {
-    if (isUploading) return;
+    if (uploadingRef.current) return;
     const task = failedUpload?.file === file && uploadRef.current
       ? uploadRef.current : createAttachmentUpload({ file });
     if (uploadRef.current !== task) uploadRef.current?.cancel();
     uploadRef.current = task;
+    uploadingRef.current = true;
     setFailedUpload(null);
     setIsUploading(true);
     try {
@@ -154,6 +156,7 @@ export default function ChatInput({
       setFailedUpload({ file, kind });
       alert(e?.message || "파일 업로드 실패");
     } finally {
+      uploadingRef.current = false;
       setIsUploading(false);
     }
   };
