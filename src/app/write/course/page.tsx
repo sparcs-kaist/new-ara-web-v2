@@ -114,12 +114,16 @@ export default function CourseWrite() {
     // 에디터 -> Attachments (업로드) -> 에디터 삽입
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
-        const uploads = await attachmentsRef.current?.handleUpload(e.target.files);
+        await attachmentsRef.current?.handleUpload(e.target.files);
+        e.target.value = "";
+    };
+
+    const handleAttachmentAdd = (uploads: UploadObject[]) => {
         const editor = editorRef.current;
-        if (!editor || !uploads) return;
+        if (!editor) return;
 
         // 서버가 준 URL 을 바로 에디터에 삽입
-        uploads.forEach((u) => {
+        uploads.filter(u => u.type === 'image').forEach((u) => {
             editor
                 .chain()
                 .focus()
@@ -131,7 +135,6 @@ export default function CourseWrite() {
                 .run();
         });
 
-        e.target.value = "";
     };
 
     // 삭제 시 에디터에서도 지우기
@@ -163,6 +166,10 @@ export default function CourseWrite() {
     const handleSavePost = async () => {
         if (!editorRef.current) return;
         const attachmentFiles = attachmentsRef.current?.files ?? [];
+        if (attachmentFiles.some(file => !file.uploaded)) {
+            alert('첨부파일 업로드를 완료하거나 실패한 파일을 제거해 주세요.');
+            return;
+        }
         setSaving(true);
         const content = JSON.stringify(editorRef.current.getJSON());
 
@@ -277,6 +284,7 @@ export default function CourseWrite() {
                 <Attachments
                     ref={attachmentsRef}
                     onDelete={handleAttachmentDelete}
+                    onAdd={handleAttachmentAdd}
                     initialFiles={initialAttachments}
                 />
 
