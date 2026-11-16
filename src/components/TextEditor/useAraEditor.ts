@@ -14,6 +14,7 @@ import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
 import AttachmentImage from '@/components/TextEditor/components/AttachmentImage';
 import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
 import { cleanJsonString } from '@/components/TextEditor/utils/cleanJsonString';
+import { decodeContentEntities } from '@/components/TextEditor/utils/decodeContentEntities';
 
 const PROSE_CLASS = 'prose prose-sm sm:prose focus:outline-none max-w-full';
 
@@ -103,6 +104,7 @@ export default function useAraEditor({
       }
 
       if (parsedContent) {
+        parsedContent = decodeContentEntities(parsedContent);
         const currentContentStr = JSON.stringify(editor.getJSON());
         const newContentStr = JSON.stringify(parsedContent);
 
