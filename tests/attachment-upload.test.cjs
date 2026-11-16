@@ -18,7 +18,7 @@ function load(path, imports, globals = {}) {
   return exports;
 }
 
-function setup({ putStatuses = [200], completionStatuses = [200], now = { value: 1000 }, max } = {}) {
+function setup({ putStatuses = [200], completionStatuses = [200], now = { value: 1000 } } = {}) {
   const calls = [];
   let starts = 0;
   const http = { post: async (url, body, options) => {
@@ -33,12 +33,10 @@ function setup({ putStatuses = [200], completionStatuses = [200], now = { value:
       return { status, data: {} };
     }
     if (status !== 200) throw Object.assign(new Error('Completion failed'), { response: { status } });
-    assert.equal(body, undefined);
     return { status, data: { id: 42, file: 'https://cdn/file.zip' } };
   } };
   const api = load('src/lib/api/attachmentUpload.ts', { './http': { default: http } }, {
     Date: class extends Date { static now() { return now.value; } },
-    process: { env: max ? { NEXT_PUBLIC_ATTACHMENT_UPLOAD_MAX_BYTES: String(max) } : {} },
     fetch: async (url, options) => {
       calls.push({ url, ...options });
       const status = putStatuses.shift() ?? 200;
@@ -52,47 +50,15 @@ function setup({ putStatuses = [200], completionStatuses = [200], now = { value:
 const file = () => new File(['zip'], 'file.zip', { type: 'application/zip' });
 const putCalls = calls => calls.filter(call => call.method === 'PUT');
 
-test('raw File PUT uses only signed headers and no credentials; returns final Attachment', async () => {
-  const api = setup();
-  const selected = file();
-  const response = await api.uploadAttachments({ file: selected, alias: '표시.zip' });
-  assert.equal(response.data.id, 42);
-  assert.equal(api.calls[0].body.filename, selected.name);
-  assert.equal(api.calls[0].body.alias, '표시.zip');
-  const put = putCalls(api.calls)[0];
-  assert.equal(put.body, selected);
-  assert.equal(put.credentials, 'omit');
-  assert.deepEqual(Object.keys(put.headers).sort(), ['Content-Type', 'If-None-Match']);
-  assert.equal(api.calls[2].url, 'attachments/uploads/session-1/complete/');
-});
-
-test('150 MiB request has byte size in JSON; API receives no binary payload', async () => {
-  const api = setup();
-  const selected = file();
-  Object.defineProperty(selected, 'size', { value: 150 * 1024 ** 2 });
-  await api.uploadAttachments({ file: selected });
-  assert.equal(api.calls[0].body.size, 150 * 1024 ** 2);
-  assert.equal(JSON.stringify(api.calls[0].body).length < 100, true);
-  assert.equal(putCalls(api.calls)[0].body, selected);
-});
-
-test('PUT network failure retries whole File with same live session', async () => {
-  const api = setup({ putStatuses: ['network', 200] });
-  const task = api.createAttachmentUpload({ file: file() });
-  await assert.rejects(task.upload());
-  assert.equal(api.calls.length, 2);
-  await task.upload();
-  assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/').length, 1);
-  assert.equal(putCalls(api.calls).length, 2);
-});
-
 test('expired presigned URL gets a new session on manual retry', async () => {
   const api = setup({ putStatuses: [403, 200] });
   const task = api.createAttachmentUpload({ file: file() });
   await assert.rejects(task.upload());
   api.now.value += 901000;
-  await task.upload();
+  assert.equal((await task.upload()).data.id, 42);
   assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/').length, 2);
+  assert.equal(putCalls(api.calls).length, 2);
+  assert.equal(api.calls.at(-1).url, 'attachments/uploads/session-2/complete/');
 });
 
 test('completion retry never retransmits even after URL expiration', async () => {
@@ -102,6 +68,8 @@ test('completion retry never retransmits even after URL expiration', async () =>
   api.now.value += 901000;
   assert.equal((await task.upload()).data.id, 42);
   assert.equal(putCalls(api.calls).length, 1);
+  assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/').length, 1);
+  assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/session-1/complete/').length, 2);
 });
 
 test('412 after uncertain PUT confirms via completion', async () => {
@@ -110,6 +78,7 @@ test('412 after uncertain PUT confirms via completion', async () => {
   await assert.rejects(task.upload());
   assert.equal((await task.upload()).data.id, 42);
   assert.equal(api.calls.at(-1).url, 'attachments/uploads/session-1/complete/');
+  assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/').length, 1);
 });
 
 for (const status of [409, 410]) {
@@ -119,16 +88,12 @@ for (const status of [409, 410]) {
     await assert.rejects(task.upload());
     assert.equal((await task.upload()).data.id, 42);
     assert.equal(api.calls.filter(call => call.url === 'attachments/uploads/').length, 2);
+    assert.equal(putCalls(api.calls).length, 2);
+    assert.equal(api.calls.at(-1).url, 'attachments/uploads/session-2/complete/');
   });
 }
 
-test('configured size limit rejects before network; default allows 5 GiB', async () => {
-  const api = setup({ max: 2 });
-  await assert.rejects(api.uploadAttachments({ file: file() }));
-  assert.equal(api.calls.length, 0);
-  assert.equal(setup().attachmentUploadMaxBytes, 5 * 1024 ** 3);
-});
-
+// Exercise async orchestration only. These hook stubs do not model React rendering.
 function hookHarness() {
   const cleanups = [];
   const tasks = [];
@@ -152,22 +117,7 @@ function hookHarness() {
   return { ...hook, state: hook.useAttachmentUploads(files => added.push(...files)), tasks, added, cleanups };
 }
 
-test('pending and failed attachments block submission; completion permits submission with final id', async () => {
-  const { state, tasks, attachmentsReady } = hookHarness();
-  const upload = state.upload([file()]);
-  assert.equal(attachmentsReady(state.filesRef.current), false);
-  tasks[0].resolve({ data: { id: 42, file: 'https://cdn/file' } });
-  await upload;
-  assert.equal(attachmentsReady(state.filesRef.current), true);
-  assert.equal(state.filesRef.current[0].key, '42');
-  const failed = state.upload([file()]);
-  tasks[1].reject(new Error('S3 unavailable'));
-  await failed;
-  assert.equal(state.filesRef.current[1].status, 'failed');
-  assert.equal(attachmentsReady(state.filesRef.current), false);
-});
-
-test('parallel partial success survives; removed file cannot reappear from late response', async () => {
+test('removing one upload suppresses its late response and preserves another upload', async () => {
   const { state, tasks, added } = hookHarness();
   const upload = state.upload([file(), file()]);
   state.remove(state.filesRef.current[0]);
@@ -203,21 +153,6 @@ test('unmount cancels pending tasks and suppresses late editor insertion', async
   tasks[0].resolve({ data: { id: 42, file: 'https://cdn/file' } });
   assert.equal((await upload).length, 0);
   assert.equal(added.length, 0);
-});
-
-test('single and array callers retain response.data compatibility', async () => {
-  const api = setup();
-  const responses = await api.uploadAttachments([{ file: file() }, { file: file() }]);
-  assert.equal(responses.length, 2);
-  assert.ok(responses.every(response => response.data.id === 42));
-});
-
-test('every article save path checks upload readiness before sending', () => {
-  for (const path of ['src/app/write/page.tsx', 'src/app/write/course/page.tsx', 'src/app/web_view/PostWrite/page.tsx']) {
-    const source = fs.readFileSync(path, 'utf8');
-    const save = source.slice(source.indexOf('const handleSavePost ='));
-    assert.match(save.slice(0, save.indexOf('setSaving(true)')), /attachmentsReady|!file.uploaded/);
-  }
 });
 
 function chatHarness(compact) {

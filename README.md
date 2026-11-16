@@ -44,10 +44,12 @@ tagged `ara-upload=pending` with retention longer than 24 hours (e.g. 7 days).
 Verify a real upload larger than 100 MB, browser CORS, authentication/CSRF, and
 article creation/editing in both web and WebView against the deployed environment.
 
-Run focused mocked regression tests with `node --test tests/attachment-upload.test.cjs`.
-The 150 MiB test supplies file-size metadata without allocating or transmitting a
-large file. Tests cover upload/retry state and submission guards; live S3 transfer
-and browser integration still require the deployment checks above.
+Run focused regression tests with `npm run test:attachments` (also run in CI).
+They cover retry recovery, suppression of late responses after removal/unmount,
+and chat text sending after an upload failure. Network calls and React rendering
+are mocked; these tests do not verify browser rendering, article submission, or
+large-file transfer. Live S3 and browser integration require the deployment checks
+above.
 
 ## Learn More
 
