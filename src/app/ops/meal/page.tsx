@@ -24,7 +24,7 @@ export default function OpsMealPage() {
     // Bumped on every nav click so a section's sub-view (edit/staff/menus) resets to its list.
     const [visit, setVisit] = useState(0);
     const { data: me } = useQuery<{ nickname?: string }>({ queryKey: ['me'], queryFn: fetchMe, staleTime: 10 * 60_000 });
-    const stores = useQuery({ queryKey: OPS_STORES_KEY, queryFn: opsFetchStores, retry: false });
+    const stores = useQuery({ queryKey: OPS_STORES_KEY, queryFn: opsFetchStores, retry: false, staleTime: 30_000 });
 
     // The console must look like it does not exist to non-staff.
     if (stores.isError && [401, 403].includes(errorStatus(stores.error) ?? 0)) notFound();

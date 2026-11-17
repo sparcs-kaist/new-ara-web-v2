@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchArticles } from '@/lib/api/board';
@@ -18,24 +19,14 @@ export interface MarketArticle {
 }
 
 const MarketPreview = () => {
-    const [articles, setArticles] = useState<MarketArticle[]>([]);
-    const [loading, setLoading] = useState(true);
     const [errorIndexes, setErrorIndexes] = useState<number[]>([]);
 
-    useEffect(() => {
-        const getMarketData = async () => {
-            try {
-                // 장터 게시판(id: 4), 최신 3개 게시물
-                const response = await fetchArticles({ boardId: 4, pageSize: 3 });
-                setArticles(response.results);
-            } catch (error) {
-                console.error('Failed to fetch market articles:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        getMarketData();
-    }, []);
+    // 장터 게시판(id: 4), 최신 3개 게시물
+    const { data: articles = [], isLoading: loading } = useQuery<MarketArticle[]>({
+        queryKey: ['home', 'market'],
+        queryFn: async () => (await fetchArticles({ boardId: 4, pageSize: 3 })).results,
+        staleTime: 30_000,
+    });
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('ko-KR').format(price);

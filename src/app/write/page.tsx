@@ -1,7 +1,8 @@
 /* eslint-disable */
 
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { invalidateArticleQueries } from "@/lib/queryClient";
 import { useSearchParams, useRouter } from "next/navigation"; // useRouter import
 import type { Editor } from "@tiptap/react";
 import type { AttachmentsHandles } from "./components/Attachments";
@@ -10,7 +11,7 @@ import { BoardOptionBar } from "./components/PostOptionBar";
 import Attachments, { UploadObject } from "./components/Attachments";
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { createPost, updatePost, fetchPost } from "@/lib/api/post"; // updatePost, fetchPost import
-import { fetchBoardList } from "@/lib/api/board";
+import { useBoardList } from "@/lib/query/board";
 import {
   makeMarketMetadata,
   makePosterMetadata,
@@ -39,12 +40,12 @@ export default function Write() {
     topics: Array<{ id: number; ko_name: string }>;
   };
 
-  const [boards, setBoards] = useState<ApiBoard[]>([]);
-  useEffect(() => {
-    fetchBoardList()
-      .then((data) => setBoards(data.filter((b: ApiBoard) => b.user_writable)))
-      .catch(console.error);
-  }, []);
+  // NavBar·/board와 같은 ['boards'] 캐시를 쓴다.
+  const { data: allBoards } = useBoardList<ApiBoard>();
+  const boards = useMemo(
+    () => (allBoards ?? []).filter((b) => b.user_writable),
+    [allBoards],
+  );
 
   // URL query param으로 게시판 자동 설정 (?board=5 등)
   useEffect(() => {
@@ -235,6 +236,7 @@ export default function Write() {
           postId: Number(editPostId),
           newArticle: articleData,
         });
+        await invalidateArticleQueries();
         alert("글이 수정되었습니다.");
         router.push(`/post/${editPostId}`); // 수정된 게시글로 이동
       } else {
@@ -251,6 +253,7 @@ export default function Write() {
           ...(metadata ? { metadata } : {}),
         };
         const result = await createPost({ boardId: boardId!, newArticle });
+        await invalidateArticleQueries();
         alert(`글이 저장되었습니다.`);
         router.push(`/post/${result.id}`); // 생성된 게시글로 이동
       }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { fetchBoardList } from "@/lib/api/board";
+import { useBoardList } from "@/lib/query/board";
 
 // 화살표 아이콘을 컴포넌트
 const DropdownArrow = ({ isOpen, isHovered }: { isOpen: boolean, isHovered: boolean }) => (
@@ -31,15 +31,13 @@ interface ApiBoard {
   slug: string;
 }
 
+const EMPTY_BOARDS: ApiBoard[] = [];
+
 export default function NavBarMiddle() {
-  const [boardList, setBoardList] = useState<ApiBoard[]>([]);
+  const { data: boardList = EMPTY_BOARDS } = useBoardList<ApiBoard>();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [pinnedItem, setPinnedItem] = useState<string | null>(null); // 클릭으로 고정될 드롭다운 메뉴
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchBoardList().then(setBoardList);
-  }, []);
 
   useEffect(() => {
     const onDocMouseDown = (e: MouseEvent) => {

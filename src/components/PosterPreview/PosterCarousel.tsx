@@ -77,6 +77,8 @@ export default function PosterCarousel() {
             }
             return acc;
         },
+        // 60일치를 여러 페이지 연속 요청하므로 길게 캐시한다.
+        staleTime: 5 * 60_000,
         select: (data) => {
             const now = new Date();
             const filtered = data.filter(a => {
