@@ -90,7 +90,8 @@ export const useArticles = (params: ArticleQuery & {hidePortalNotice?: boolean} 
 
       return data;
     },
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
   });
 };
 

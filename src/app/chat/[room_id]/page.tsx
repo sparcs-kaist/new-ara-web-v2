@@ -35,6 +35,7 @@ export default function ChatRoomPage() {
         queryFn: ({ pageParam }) => fetchChatRoomList(pageParam, 15),
         initialPageParam: 1,
         getNextPageParam: (lastPage, allPages) => lastPage.results?.length === 15 ? allPages.length + 1 : undefined,
+        staleTime: 10_000,
     });
 
     const rooms = useMemo<ChatRoom[]>(() => {

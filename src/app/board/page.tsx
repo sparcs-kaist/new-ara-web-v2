@@ -8,7 +8,7 @@ import {
   BoardHotArticleList,
   MarketArticleContainer,
 } from "@/containers/ArticleList";
-import { fetchBoardList } from "@/lib/api/board";
+import { useBoardList } from "@/lib/query/board";
 import Image from "next/image";
 import Sidebar from "@/components/Sidebar/Sidebar";
 
@@ -35,11 +35,14 @@ const POPULAR_BOARD = {
   description: "인기있는 게시글 모음",
 };
 
+// 로딩 중 기본값. 렌더마다 새 배열이 생기면 boardConfigs에 의존하는 effect가 매번 다시 돈다.
+const EMPTY_BOARDS: BoardConfig[] = [];
+
 export default function Board() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [boardConfigs, setBoardConfigs] = useState<BoardConfig[]>([]);
+  const { data: boardConfigs = EMPTY_BOARDS } = useBoardList<BoardConfig>();
   const [selectedBoard, setSelectedBoard] = useState<BoardConfig | null>(null);
   const [currentBoardType, setCurrentBoardType] = useState<
     "all" | "popular" | "board"
@@ -74,10 +77,6 @@ export default function Board() {
     setSearch(urlSearch);
     setSearchInput(urlSearch);
   }, [searchParams]); // searchParams.toString()
-
-  useEffect(() => {
-    fetchBoardList().then((data) => setBoardConfigs(data));
-  }, []);
 
   useEffect(() => {
     if (boardConfigs.length === 0) return;

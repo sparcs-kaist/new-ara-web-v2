@@ -1,11 +1,8 @@
-/* eslint-disable */
 
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchMe } from "@/lib/api/user";
 import { useMe } from "@/lib/query/user";
 
 interface UserData {
@@ -21,29 +18,19 @@ interface UserData {
 }
 
 const SmallMyInfo = () => {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { data } = useMe();
+  // 캐시된 useMe 데이터를 그대로 쓴다. state로 옮겨 담으면 마운트마다 한 프레임 비어 보인다.
+  const { data, isLoading } = useMe();
+  const userData = data as UserData | undefined;
 
-  useEffect(() => {
-    if (!data) return;
-    const getUserData = async () => {
-      try {
-        setUserData(data);
-      } catch (error) {
-        // 로그인하지 않은 사용자는 401 에러를 받으므로, 콘솔에 에러를 찍지 않음
-        if ((error as any).response?.status !== 401) {
-          console.error("Failed to fetch user data:", error);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    getUserData();
-  }, [data]);
+  // 아직 불러오는 중이면 '로그인' 버튼 대신 같은 크기의 빈 박스를 보여준다.
+  if (isLoading) {
+    return (
+      <div className="p-4 bg-white rounded-[16px] shadow border border-gray-200 main-page-block-shadow h-[122px] animate-pulse" />
+    );
+  }
 
-  // 로딩 중이거나 유저 데이터가 없는 경우 (비로그인 상태 포함)
-  if (loading || !userData) {
+  // 유저 데이터가 없는 경우 (비로그인 상태)
+  if (!userData) {
     return (
       <div className="p-4 bg-white rounded-lg shadow border border-gray-200 h-[122px] flex items-center justify-center">
         <Link

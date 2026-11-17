@@ -2,11 +2,9 @@
 
 import SearchBar from "@/components/searchBar";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ResponsePost } from "@/lib/types/post";
-import { fetchTopArticles, fetchArticles } from "@/lib/api/board";
 import { HotPreview, RecentPreview, ToSchoolPreview } from "@/containers/ArticleList";
 import SmallMyInfo from '@/components/SmallMyinfo/SmallMyInfo';
 import MyChatRooms from '@/components/MyChatRoom/MyChatRooms';
@@ -18,29 +16,6 @@ import GlobalBanner from "@/components/GlobalBanner/GlobalBanner";
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const router = useRouter();
-  const [, setHotArticles] = useState<ResponsePost[]>([]);
-  const [, setRecentArticles] = useState<ResponsePost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [hotResponse, recentResponse] = await Promise.all([
-          fetchTopArticles({ pageSize: 3 }),
-          fetchArticles({ pageSize: 3, ordering: '-created_at' })
-        ]);
-
-        setHotArticles(hotResponse.results);
-        setRecentArticles(recentResponse.results);
-      } catch (error) {
-        console.error("Error fetching articles:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   return (
     <div className="max-w-[1280px] mx-auto">
@@ -74,10 +49,7 @@ export default function Home() {
 
       {/* 실제 메인 페이지 컨텐츠 - Grid 레이아웃, 좌우 여백(padding) 추가 */}
       <main className="grid grid-cols-10 gap-3 xl:px-1 md:px-16 sm:px-12 xs:px-8 px-4">
-        {loading ? (
-          <div className="col-span-10 text-center py-8"></div>
-        ) : (
-          <>
+        <>
             {/* --- 상단 왼쪽 영역 (1, 2행) --- */}
             <div className="col-span-10 xl:col-span-7 flex flex-col gap-3">
               {/* 1행: lg 이하는 세로, lg 이상은 가로 그리드 */}
@@ -135,7 +107,6 @@ export default function Home() {
               <SparcsNotice className="h-full w-full" />
             </div>
           </>
-        )}
       </main>
       {/* 포스터는 왼쪽 그리드 내부 3행에 배치됨 */}
     </div>

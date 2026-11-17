@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { invalidateArticleQueries, queryClient } from "@/lib/queryClient";
 import {
   useParams,
   notFound,
@@ -123,6 +124,11 @@ export default function PostDetailPage() {
     if (data === undefined) return;
     setPost(formatPost({ data }));
   }, [data]);
+
+  // 글을 열면 서버의 '최근 본 글'이 바뀌므로 캐시를 무효화한다. (다음에 목록을 열 때 다시 받아옴)
+  useEffect(() => {
+    if (postId) queryClient.invalidateQueries({ queryKey: ["recentViewed"] });
+  }, [postId]);
 
   if (error) notFound();
 
@@ -336,6 +342,9 @@ export default function PostDetailPage() {
         // API 응답 전체를 my_scrap 상태로 설정
         setPost((prev) => (prev ? { ...prev, my_scrap: newScrap } : null));
       }
+      // 담아둔 글 목록(사이드바/내 정보)과, 다시 들어왔을 때의 글 상세(my_scrap)를 갱신한다.
+      queryClient.invalidateQueries({ queryKey: ["archives"] });
+      queryClient.invalidateQueries({ queryKey: ["article", post.id] });
     } catch (error: any) {
       console.error("스크랩 처리 오류:", error);
       const errorMessage =
@@ -440,6 +449,7 @@ export default function PostDetailPage() {
     if (window.confirm("정말로 이 게시물을 삭제하시겠습니까?")) {
       try {
         await deletePost(postId!, scope);
+        await invalidateArticleQueries();
         alert("게시물이 삭제되었습니다.");
         router.push(
           scope?.courseId != null

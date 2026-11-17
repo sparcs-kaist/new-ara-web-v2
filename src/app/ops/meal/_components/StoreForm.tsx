@@ -8,7 +8,7 @@ import { eventsSummary, hoursSummary } from '@/lib/store';
 import { ZONE_LABELS, type OpsStore, type StoreFields, type Zone } from '@/lib/types/store';
 import { ConfirmDialog } from '@/app/web_view/_components/ConfirmDialog';
 import { Breadcrumb, Button, Card, Field, inputCls, StatusLine, type Status } from './ui';
-import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY, opsStoreEventsKey } from './keys';
+import { OPS_RESTAURANTS_KEY, OPS_STORES_KEY, opsStoreEventsKey, opsStoreKey } from './keys';
 import HoursPanel from './HoursPanel';
 import EventsPanel from './EventsPanel';
 
@@ -46,9 +46,9 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
     const fileRef = useRef<HTMLInputElement>(null);
     const [hoursOpen, setHoursOpen] = useState(false);
     const [eventsOpen, setEventsOpen] = useState(false);
-    const { data: restaurants = [] } = useQuery({ queryKey: OPS_RESTAURANTS_KEY, queryFn: opsFetchRestaurants });
+    const { data: restaurants = [] } = useQuery({ queryKey: OPS_RESTAURANTS_KEY, queryFn: opsFetchRestaurants, staleTime: 30_000 });
     const storeId = store?.id ?? 0;
-    const { data: events = [] } = useQuery({ queryKey: opsStoreEventsKey(storeId), queryFn: () => fetchStoreEvents(storeId), enabled: storeId > 0 });
+    const { data: events = [] } = useQuery({ queryKey: opsStoreEventsKey(storeId), queryFn: () => fetchStoreEvents(storeId), enabled: storeId > 0, staleTime: 30_000 });
 
     useEffect(() => () => {
         if (cover) URL.revokeObjectURL(cover.url);
@@ -83,6 +83,7 @@ export default function StoreForm({ store, onBack, onSaved }: Props) {
             setCover(null);
             setStatus({ ok: true, text: '저장했어요.' });
             qc.invalidateQueries({ queryKey: OPS_STORES_KEY });
+            qc.invalidateQueries({ queryKey: opsStoreKey(saved.id) });
             onSaved(saved);
         } catch (e) {
             setStatus({ ok: false, text: apiDetail(e) });

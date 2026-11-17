@@ -1,7 +1,7 @@
-/* eslint-disable */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import { fetchChatRoomList } from '@/lib/api/chat';
@@ -26,31 +26,23 @@ type ChatRoom = {
 };
 
 const MyChatRooms = () => {
-    const [rooms, setRooms] = useState<ChatRoom[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const getRooms = async () => {
-            try {
-                const data = await fetchChatRoomList();
-                const sortedRooms = [...(data.results || [])].sort((a, b) => {
-                    const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
-                    const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
-                    return bTime - aTime;
-                });
-                // 메인 페이지에서는 일부만 보여줍니다 (예: 상위 5개)
-                setRooms(sortedRooms.slice(0, 5));
-            } catch (error) {
-                // 비로그인 사용자의 401 에러는 무시합니다.
-                if ((error as any).response?.status !== 401) {
-                    console.error('Failed to fetch chat rooms:', error);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-        getRooms();
-    }, []);
+    const { data: rooms = [], isLoading: loading } = useQuery<ChatRoom[]>({
+        queryKey: ['home', 'chatRooms'],
+        queryFn: async () => {
+            const data = await fetchChatRoomList();
+            const sortedRooms = [...(data.results || [])].sort((a: ChatRoom, b: ChatRoom) => {
+                const aTime = new Date(a.recent_message_at || a.created_at || 0).getTime();
+                const bTime = new Date(b.recent_message_at || b.created_at || 0).getTime();
+                return bTime - aTime;
+            });
+            // 메인 페이지에서는 일부만 보여줍니다 (예: 상위 5개)
+            return sortedRooms.slice(0, 5);
+        },
+        // 목록은 소켓으로 갱신되지 않으므로 짧게 둔다.
+        staleTime: 10_000,
+        // 비로그인(401)이면 재시도하지 않고 빈 목록으로 둔다.
+        retry: false,
+    });
 
     // 비로그인 상태에서는 이 컴포넌트를 렌더링하지 않거나, 다른 내용을 보여줄 수 있습니다.
     // 여기서는 비로그인 시 아무것도 표시하지 않도록 처리합니다.

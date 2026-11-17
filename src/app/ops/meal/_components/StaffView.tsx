@@ -16,7 +16,7 @@ const label = (u: OpsUser) => u.nickname ?? u.email;
 
 export default function StaffView({ store, onBack }: { store: OpsStore; onBack: () => void }) {
     const qc = useQueryClient();
-    const staff = useQuery({ queryKey: opsStaffKey(store.id), queryFn: () => opsFetchStaff(store.id) });
+    const staff = useQuery({ queryKey: opsStaffKey(store.id), queryFn: () => opsFetchStaff(store.id), staleTime: 30_000 });
     const [q, setQ] = useState('');
     const [results, setResults] = useState<OpsUser[] | null>(null);
     const [searchStatus, setSearchStatus] = useState<Status>(null);

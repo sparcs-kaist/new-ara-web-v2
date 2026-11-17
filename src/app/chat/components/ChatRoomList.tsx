@@ -72,6 +72,8 @@ export default function ChatRoomList({ selectedRoomId, isPanelOpen, onClose }: C
         queryFn: ({ pageParam }) => fetchChatRoomList(pageParam, 15),
         initialPageParam: 1,
         getNextPageParam: (lastPage, allPages) => lastPage.results?.length === 15 ? allPages.length + 1 : undefined,
+        // 목록은 소켓으로 갱신되지 않고 refetch에 의존하므로 짧게 둔다.
+        staleTime: 10_000,
     });
 
     // 2. React Query의 페이지 데이터를 하나의 배열로 합치고 정렬

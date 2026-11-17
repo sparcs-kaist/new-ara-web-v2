@@ -64,7 +64,7 @@ function Row({ restaurant }: { restaurant: OpsRestaurant }) {
 }
 
 export default function RestaurantsSection() {
-    const restaurants = useQuery({ queryKey: OPS_RESTAURANTS_KEY, queryFn: opsFetchRestaurants });
+    const restaurants = useQuery({ queryKey: OPS_RESTAURANTS_KEY, queryFn: opsFetchRestaurants, staleTime: 30_000 });
 
     return (
         <section>

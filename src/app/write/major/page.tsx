@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { invalidateArticleQueries } from "@/lib/queryClient";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { Editor } from "@tiptap/react";
 import TextEditor from "../../../components/TextEditor/TextEditor";
@@ -53,6 +54,7 @@ export default function MajorWrite() {
                     },
                     scope: { stdDeptId },
                 });
+                await invalidateArticleQueries();
                 alert("글이 수정되었습니다.");
                 router.push(`/post/${editPostId}?std_dept_id=${stdDeptId}`);
             } else {
@@ -64,6 +66,7 @@ export default function MajorWrite() {
                         name_type: anonymous ? "ANONYMOUS" : "REGULAR",
                     },
                 });
+                await invalidateArticleQueries();
                 alert("글이 저장되었습니다.");
                 router.push(`/post/${result.id}?std_dept_id=${stdDeptId}`);
             }

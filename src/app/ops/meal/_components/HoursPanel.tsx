@@ -7,7 +7,7 @@ import { apiDetail, opsUpdateStore } from '@/lib/api/store';
 import { validateHours } from '@/lib/store';
 import type { OpsStore } from '@/lib/types/store';
 import { Button, StatusLine, type Status } from './ui';
-import { OPS_STORES_KEY } from './keys';
+import { OPS_STORES_KEY, opsStoreKey } from './keys';
 
 export default function HoursPanel({ store, onSaved, onCancel }: { store: OpsStore; onSaved: (store: OpsStore) => void; onCancel: () => void }) {
     const qc = useQueryClient();
@@ -24,6 +24,7 @@ export default function HoursPanel({ store, onSaved, onCancel }: { store: OpsSto
         try {
             const saved = await opsUpdateStore(store.id, { hours: draft.week, hours_note: draft.note.trim() });
             qc.invalidateQueries({ queryKey: OPS_STORES_KEY });
+            qc.invalidateQueries({ queryKey: opsStoreKey(store.id) });
             onSaved(saved);
         } catch (e) {
             setStatus({ ok: false, text: apiDetail(e) });

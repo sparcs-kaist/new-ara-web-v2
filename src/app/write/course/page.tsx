@@ -2,6 +2,7 @@
 
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { invalidateArticleQueries } from "@/lib/queryClient";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { Editor } from "@tiptap/react";
 import type { AttachmentsHandles } from "../components/Attachments";
@@ -186,6 +187,7 @@ export default function CourseWrite() {
                     newArticle: articleData,
                     scope: { courseId },
                 });
+                await invalidateArticleQueries();
                 alert("글이 수정되었습니다.");
                 router.push(`/post/${editPostId}?course_id=${courseId}`); // 수정된 게시글로 이동
             } else {
@@ -199,6 +201,7 @@ export default function CourseWrite() {
                     name_type: nameType
                 };
                 const result = await createCoursePost({ courseId, newArticle });
+                await invalidateArticleQueries();
                 alert(`글이 저장되었습니다.`);
                 router.push(`/post/${result.id}?course_id=${courseId}`);
             }

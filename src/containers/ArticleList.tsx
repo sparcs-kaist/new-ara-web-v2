@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import ArticleList from "@/components/ArticleList/ArticleList";
 import {
   fetchTopArticles,
@@ -11,9 +11,7 @@ import {
   fetchMajorArticles,
 } from "@/lib/api/board";
 import { fetchRecentViewedPosts, fetchArchives } from "@/lib/api/board";
-import { fetchMe } from "@/lib/api/user";
 import { fetchUserPosts } from "@/lib/api/user_profile";
-import { debounce } from "lodash";
 import { useMe } from "@/lib/query/user";
 import { GridArticleList } from "@/components/ArticleList/GridArticleList";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -22,14 +20,11 @@ import { useRouter } from "next/navigation";
 
 //메인 페이지 - 지금 핫한 글
 export function HotPreview() {
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      const Response = await fetchTopArticles({ pageSize: 3 });
-      setPosts(Response.results);
-    };
-    fetchData();
-  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  const { data: posts = [] } = useQuery({
+    queryKey: ["home", "hot"],
+    queryFn: async () => (await fetchTopArticles({ pageSize: 3 })).results,
+    staleTime: 30_000,
+  });
   return (
     <ArticleList
       posts={posts}
@@ -46,17 +41,12 @@ export function HotPreview() {
 //메인 페이지 - 방금 올라온 글
 // 포탈 공지(board id 1) 제외 — 운영진 공지가 사용자 글을 묻는 걸 막기 위함.
 export function RecentPreview() {
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      const Response = await fetchAllArticlesExcludingPortalNotice({
-        pageSize: 3,
-        ordering: "-created_at",
-      });
-      setPosts(Response.results);
-    };
-    fetchData();
-  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  const { data: posts = [] } = useQuery({
+    queryKey: ["home", "recent"],
+    queryFn: async () =>
+      (await fetchAllArticlesExcludingPortalNotice({ pageSize: 3, ordering: "-created_at" })).results,
+    staleTime: 30_000,
+  });
   return (
     <ArticleList
       posts={posts}
@@ -72,14 +62,11 @@ export function RecentPreview() {
 
 //메인 페이지 - 학교에게 전합니다.
 export function ToSchoolPreview() {
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      const Response = await fetchArticles({ pageSize: 3, boardId: 14 });
-      setPosts(Response.results);
-    };
-    fetchData();
-  }, []); // 빈 배열 추가 - 컴포넌트 마운트 시 한 번만 실행
+  const { data: posts = [] } = useQuery({
+    queryKey: ["home", "toSchool"],
+    queryFn: async () => (await fetchArticles({ pageSize: 3, boardId: 14 })).results,
+    staleTime: 30_000,
+  });
   return (
     <ArticleList
       posts={posts}
@@ -113,8 +100,6 @@ export function BoardArticleList({
   query,
   dateType = "relative",
 }: BoardArticleListProps) {
-  const [posts, setPosts] = useState([]);
-
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page")) || 1;
   const router = useRouter();
@@ -126,29 +111,10 @@ export function BoardArticleList({
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
-
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
-
-    const fetchData = async () => {
-      const Response = await fetchArticles({
-        pageSize,
-        boardId,
-        page: currentPage,
-        topicId,
-        query,
-      });
-
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [boardId, pageSize, currentPage, topicId, query]);
-
+  // useArticles(staleTime 포함)를 쓴다. 글 작성/삭제 시 invalidateArticleQueries로 갱신된다.
+  const { data } = useArticles({ pageSize, boardId, page: currentPage, topicId, query });
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
   return (
     <ArticleList
       posts={posts}
@@ -218,8 +184,6 @@ export function BoardHotArticleList({
   pageSize = 10,
   query,
 }: BoardArticleListProps) {
-  const [posts, setPosts] = useState([]);
-
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get("page")) || 1;
   const router = useRouter();
@@ -231,27 +195,15 @@ export function BoardHotArticleList({
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
-
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
-
-    const fetchData = async () => {
-      const Response = await fetchTopArticles({
-        pageSize,
-        page: currentPage,
-        query,
-      });
-
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [pageSize, currentPage, query]);
-
+  // queryKey가 'articles'로 시작해서 invalidateArticleQueries로 같이 갱신된다.
+  const { data } = useQuery({
+    queryKey: ["articles", "top", pageSize, currentPage, query],
+    queryFn: () => fetchTopArticles({ pageSize, page: currentPage, query }),
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  });
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
   return (
     <ArticleList
       posts={posts}
@@ -276,14 +228,12 @@ export function BoardHotArticleList({
 
 //Board 페이지 - 최근 본 게시글
 export function BoardRecentArticleList() {
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    const fetchData = async () => {
-      const Response = await fetchRecentViewedPosts({ pageSize: 5 });
-      setPosts(Response.results);
-    };
-    fetchData();
-  }, []);
+  // 글을 열면 post/[id]에서 ['recentViewed']를 무효화한다.
+  const { data: posts = [] } = useQuery({
+    queryKey: ["recentViewed", 5, 1],
+    queryFn: async () => (await fetchRecentViewedPosts({ pageSize: 5 })).results,
+    staleTime: 30_000,
+  });
   return (
     <ArticleList
       posts={posts}
@@ -296,18 +246,16 @@ export function BoardRecentArticleList() {
 
 //Board 페이지 - 북마크한 게시글
 export function BoardBookmarkedArticlesList() {
-  const [posts, setPosts] = useState([]);
-  useEffect(() => {
-    const fetchData = async () => {
+  // 담기/빼기 시 post/[id]에서 ['archives']를 무효화한다.
+  const { data: posts = [] } = useQuery({
+    queryKey: ["archives", "sidebar"],
+    queryFn: async () => {
       const Response = await fetchArchives();
       //@ TODO : 알맞는 타입 추가하기
-      const articles = (Response.results || []).map(
-        (item: any) => item.parent_article,
-      );
-      setPosts(articles);
-    };
-    fetchData();
-  }, []);
+      return (Response.results || []).map((item: any) => item.parent_article);
+    },
+    staleTime: 30_000,
+  });
   return (
     <ArticleList
       posts={posts}
@@ -329,6 +277,32 @@ function isPostHidden(post: any, filters: Filters) {
   return false;
 }
 
+// 프로필 목록 공통: 성인/정치 필터 표시 + 제목/본문 검색 (서버가 아니라 화면에서 거른다)
+function applyFilters(posts: any[], filters: Filters, search: string) {
+  let filteredPosts = posts.map((post: any) => {
+    if (isPostHidden(post, filters)) {
+      const newPost = { ...post };
+      newPost.why_hidden = newPost.why_hidden ? [...newPost.why_hidden] : [];
+      if (post.isSexual && !filters.seeSexual)
+        newPost.why_hidden.push("ADULT_CONTENT");
+      if (post.isSocial && !filters.seeSocial)
+        newPost.why_hidden.push("SOCIAL_CONTENT");
+      return newPost;
+    }
+    return post;
+  });
+
+  if (search) {
+    const lowerSearch = search.toLowerCase();
+    filteredPosts = filteredPosts.filter(
+      (post: any) =>
+        post.title?.toLowerCase().includes(lowerSearch) ||
+        post.content?.toLowerCase().includes(lowerSearch),
+    );
+  }
+  return filteredPosts;
+}
+
 export function ProfileMyArticleList({
   filters,
   search,
@@ -336,77 +310,23 @@ export function ProfileMyArticleList({
   filters: Filters;
   search: string;
 }) {
-  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [userId, setUserId] = useState<number | null>(null);
-
   const { data: user } = useMe();
+  const userId = user?.user as number | undefined;
 
-  // 유저 정보 가져오기
-  useEffect(() => {
-    if (!user) return;
-    const fetchUser = async () => {
-      try {
-        setUserId(user.user);
-      } catch (error) {
-        console.error("유저 정보를 불러오는 데 실패했습니다.", error);
-      }
-    };
-    fetchUser();
-  }, [user]);
-
-  // 내가 쓴 글 가져오기 (debounce 적용)
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchData = async (searchTerm: string) => {
-      try {
-        const response = await fetchArticles({
-          pageSize: 10,
-          page: currentPage,
-          userId: Number(userId),
-        });
-
-        let filteredPosts = response.results.map((post: any) => {
-          if (isPostHidden(post, filters)) {
-            const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden
-              ? [...newPost.why_hidden]
-              : [];
-            if (post.isSexual && !filters.seeSexual)
-              newPost.why_hidden.push("ADULT_CONTENT");
-            if (post.isSocial && !filters.seeSocial)
-              newPost.why_hidden.push("SOCIAL_CONTENT");
-            return newPost;
-          }
-          return post;
-        });
-
-        if (searchTerm) {
-          const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter(
-            (post: any) =>
-              post.title?.toLowerCase().includes(lowerSearch) ||
-              post.content?.toLowerCase().includes(lowerSearch),
-          );
-        }
-
-        setPosts(filteredPosts);
-        setTotalPages(response.num_pages || 1);
-      } catch (error) {
-        console.error("게시글을 불러오는 데 실패했습니다.", error);
-      }
-    };
-
-    const debouncedFetch = debounce(fetchData, 300);
-    debouncedFetch(search);
-
-    return () => {
-      debouncedFetch.cancel(); // cleanup
-    };
-  }, [userId, currentPage, filters, search]);
-
+  // 서버에는 페이지만 보낸다. 검색/필터는 받아온 결과를 화면에서 거르므로 debounce가 필요 없다.
+  const { data } = useQuery({
+    queryKey: ["articles", "mine", userId, currentPage],
+    queryFn: () => fetchArticles({ pageSize: 10, page: currentPage, userId: Number(userId) }),
+    enabled: !!userId,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+  const totalPages = data?.num_pages || 1;
+  const posts = useMemo(
+    () => applyFilters(data?.results || [], filters, search),
+    [data, filters, search],
+  );
   return (
     <ArticleList
       posts={posts}
@@ -435,59 +355,20 @@ export function ProfileRecentArticleList({
   filters: Filters;
   search: string;
 }) {
-  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
-
-    const fetchData = async (searchTerm: string) => {
-      try {
-        const response = await fetchRecentViewedPosts({
-          pageSize: 10,
-          page: currentPage,
-        });
-
-        let filteredPosts = response.results.map((post: any) => {
-          if (isPostHidden(post, filters)) {
-            const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden
-              ? [...newPost.why_hidden]
-              : [];
-            if (post.isSexual && !filters.seeSexual)
-              newPost.why_hidden.push("ADULT_CONTENT");
-            if (post.isSocial && !filters.seeSocial)
-              newPost.why_hidden.push("SOCIAL_CONTENT");
-            return newPost;
-          }
-          return post;
-        });
-
-        if (searchTerm) {
-          const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter(
-            (post: any) =>
-              post.title?.toLowerCase().includes(lowerSearch) ||
-              post.content?.toLowerCase().includes(lowerSearch),
-          );
-        }
-
-        setPosts(filteredPosts);
-        setTotalPages(response.num_pages || 1);
-      } catch (error) {
-        console.error("최근 본 게시글을 불러오는 데 실패했습니다.", error);
-      }
-    };
-
-    // 300ms debounce
-    debounceTimer = setTimeout(() => {
-      fetchData(search);
-    }, 300);
-
-    return () => clearTimeout(debounceTimer); // cleanup
-  }, [currentPage, filters, search]);
-
+  // 서버에는 페이지만 보낸다. 검색/필터는 받아온 결과를 화면에서 거른다.
+  const { data } = useQuery({
+    queryKey: ["recentViewed", 10, currentPage],
+    queryFn: () => fetchRecentViewedPosts({ pageSize: 10, page: currentPage }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+  const totalPages = data?.num_pages || 1;
+  const posts = useMemo(
+    () => applyFilters(data?.results || [], filters, search),
+    [data, filters, search],
+  );
   return (
     <ArticleList
       posts={posts}
@@ -517,60 +398,21 @@ export function ProfileBookmarkedArticlesList({
   filters: Filters;
   search: string;
 }) {
-  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
-
-    const fetchData = async (searchTerm: string) => {
-      try {
-        const response = await fetchArchives({
-          pageSize: 10,
-          page: currentPage,
-        });
-
-        const articles = (response.results || [])
-          .map((item: any) => item?.parent_article)
-          .filter((article: any) => article && article.id && article.title);
-
-        let filteredPosts = articles.map((post: any) => {
-          if (isPostHidden(post, filters)) {
-            const newPost = { ...post };
-            newPost.why_hidden = newPost.why_hidden
-              ? [...newPost.why_hidden]
-              : [];
-            if (post.isSexual && !filters.seeSexual)
-              newPost.why_hidden.push("ADULT_CONTENT");
-            if (post.isSocial && !filters.seeSocial)
-              newPost.why_hidden.push("SOCIAL_CONTENT");
-            return newPost;
-          }
-          return post;
-        });
-
-        if (searchTerm) {
-          const lowerSearch = searchTerm.toLowerCase();
-          filteredPosts = filteredPosts.filter(
-            (post: any) =>
-              post.title?.toLowerCase().includes(lowerSearch) ||
-              post.content?.toLowerCase().includes(lowerSearch),
-          );
-        }
-
-        setPosts(filteredPosts);
-        setTotalPages(response.num_pages || 1);
-      } catch (error) {
-        console.error("북마크 게시글을 불러오는 데 실패했습니다.", error);
-      }
-    };
-
-    debounceTimer = setTimeout(() => fetchData(search), 300); // 300ms debounce
-
-    return () => clearTimeout(debounceTimer); // cleanup
-  }, [currentPage, filters, search]);
-
+  const { data } = useQuery({
+    queryKey: ["archives", 10, currentPage],
+    queryFn: () => fetchArchives({ pageSize: 10, page: currentPage }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+  const totalPages = data?.num_pages || 1;
+  const posts = useMemo(() => {
+    const articles = (data?.results || [])
+      .map((item: any) => item?.parent_article)
+      .filter((article: any) => article && article.id && article.title);
+    return applyFilters(articles, filters, search);
+  }, [data, filters, search]);
   return (
     <ArticleList
       posts={posts}
@@ -599,25 +441,16 @@ export function PostBottomeArticleList() {
 
 // User Profile 페이지 - 다른 사용자가 작성한 글
 export function UserProfileArticleList({ userId }: { userId: number }) {
-  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
 
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
-
-    const fetchData = async () => {
-      const Response = await fetchUserPosts(userId, currentPage);
-
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [userId, currentPage]);
-
+  const { data } = useQuery({
+    queryKey: ["articles", "user", userId, currentPage],
+    queryFn: () => fetchUserPosts(userId, currentPage),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
   return (
     <ArticleList
       posts={posts}
@@ -676,7 +509,8 @@ function ScopedArticleList({
   const { data } = useQuery({
     queryKey: [...queryKey, currentPage],
     queryFn: () => fetchPage(currentPage),
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 60 * 1000,
   })
 
   return (
@@ -719,29 +553,11 @@ export function MajorArticleList({ pageSize = 10, query, stdDeptId }: MajorArtic
 }
 
 export function MarketArticleContainer() {
-  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const requestTokenRef = useRef(0);
 
-  useEffect(() => {
-    const currentToken = ++requestTokenRef.current;
-
-    const fetchData = async () => {
-      const Response = await fetchArticles({
-        boardId: 4,
-        pageSize: 12,
-        page: currentPage,
-      });
-
-      if (requestTokenRef.current === currentToken) {
-        setPosts(Response.results);
-        setTotalPages(Response.num_pages || 1);
-      }
-    };
-    fetchData();
-  }, [currentPage]);
-
+  const { data } = useArticles({ boardId: 4, pageSize: 12, page: currentPage });
+  const posts = data?.results || [];
+  const totalPages = data?.num_pages || 1;
   return (
     <GridArticleList
       posts={posts}

@@ -44,7 +44,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     async function checkAuth() {
       try {
-        await fetchMe()
+        // useMe와 같은 ['me'] 캐시를 채운다. 그래서 NavBar/프로필 박스가 /me를 다시 요청하지 않고,
+        // 페이지를 이동할 때도 5분 동안은 요청 없이 캐시로 확인한다.
+        await queryClient.fetchQuery({
+          queryKey: ["me"],
+          queryFn: fetchMe,
+          staleTime: 300000,
+          retry: false,
+        });
         setIsLoggedIn(true);
       } catch {
         console.error("인증 실패, 로그인 페이지로 리다이렉트합니다.");

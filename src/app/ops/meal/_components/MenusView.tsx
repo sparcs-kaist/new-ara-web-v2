@@ -186,7 +186,7 @@ function MenuForm({
 
 export default function MenusView({ store, onBack }: { store: OpsStore; onBack: () => void }) {
     const qc = useQueryClient();
-    const detail = useQuery({ queryKey: opsStoreKey(store.id), queryFn: () => fetchStore(store.id) });
+    const detail = useQuery({ queryKey: opsStoreKey(store.id), queryFn: () => fetchStore(store.id), staleTime: 30_000 });
     const [editing, setEditing] = useState<StoreMenu | null | undefined>(undefined);
     const [deleteTarget, setDeleteTarget] = useState<StoreMenu | null>(null);
     const [status, setStatus] = useState<Status>(null);
