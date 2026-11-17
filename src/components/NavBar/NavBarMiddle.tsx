@@ -100,7 +100,7 @@ export default function NavBarMiddle() {
           <DropdownArrow isOpen={openMenu === "news"} isHovered={hoveredItem === "news"} />
         </div>
         {openMenu === "news" && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[200px] z-50">
+          <div className="absolute top-full left-0 mt-1 before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-[''] bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[200px] z-50">
             <div className="py-3">
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">공지</div>
               <Link
@@ -157,7 +157,7 @@ export default function NavBarMiddle() {
           <DropdownArrow isOpen={openMenu === "market"} isHovered={hoveredItem === "market"} />
         </div>
         {openMenu === "market" && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[150px] z-50">
+          <div className="absolute top-full left-0 mt-1 before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-[''] bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[150px] z-50">
             <div className="py-3">
               <Link
                 href={getBoardSlug("장터") ? `/board?board=${getBoardSlug("장터")}` : "#"}
@@ -197,7 +197,7 @@ export default function NavBarMiddle() {
           <DropdownArrow isOpen={openMenu === "communication"} isHovered={hoveredItem === "communication"} />
         </div>
         {openMenu === "communication" && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[200px] z-50">
+          <div className="absolute top-full left-0 mt-1 before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-[''] bg-white border border-gray-200 rounded-2xl shadow-lg min-w-[200px] z-50">
             <div className="py-3">
               <div className="px-5 py-2 font-bold text-gray-400 text-sm">의견</div>
               <Link
