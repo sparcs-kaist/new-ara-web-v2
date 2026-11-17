@@ -13,7 +13,7 @@ import Italic from '@tiptap/extension-italic';
 import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
 import AttachmentImage from '@/components/TextEditor/components/AttachmentImage';
 import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
-import { cleanJsonString } from '@/components/TextEditor/utils/cleanJsonString';
+import { parseEditorContent } from '@/components/TextEditor/utils/parseEditorContent';
 
 const PROSE_CLASS = 'prose prose-sm sm:prose focus:outline-none max-w-full';
 
@@ -84,38 +84,18 @@ export default function useAraEditor({
   }, [editor, placeholder]);
 
   useEffect(() => {
-    if (!editor || !content) {
+    if (!editor) {
       return;
     }
 
-    let parsedContent: object | null = null;
+    const parsedContent = parseEditorContent(content);
+    const unchanged = typeof parsedContent === 'string'
+      ? editor.getHTML() === parsedContent
+      : JSON.stringify(editor.getJSON()) === JSON.stringify(parsedContent);
 
-    try {
-      if (typeof content === 'string') {
-        try {
-          parsedContent = JSON.parse(content);
-        } catch {
-          console.log('Direct JSON parsing failed, attempting to clean and re-parse...');
-          parsedContent = JSON.parse(cleanJsonString(content));
-        }
-      } else if (typeof content === 'object' && content !== null) {
-        parsedContent = content;
-      }
-
-      if (parsedContent) {
-        const currentContentStr = JSON.stringify(editor.getJSON());
-        const newContentStr = JSON.stringify(parsedContent);
-
-        // Only replace when empty or different, so an unchanged prop does not jump the caret.
-        if (editor.isEmpty || currentContentStr !== newContentStr) {
-          editor.commands.setContent(parsedContent, false);
-        }
-      }
-    } catch (e) {
-      if (typeof content === 'string' && editor.getText() !== content) {
-        editor.commands.setContent(content, false);
-      }
-      console.error('Failed to parse content even after cleaning, treating as plain text:', e);
+    // Only replace when different, so an unchanged prop does not jump the caret.
+    if (!unchanged) {
+      editor.commands.setContent(parsedContent, false);
     }
   }, [content, editor]);
 
