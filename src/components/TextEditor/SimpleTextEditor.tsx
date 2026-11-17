@@ -9,18 +9,7 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
-import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-
-import AttachmentImage from './components/AttachmentImage';
-import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
+import { createEditorExtensions } from './extensions';
 import TextEditorLinkDialog from '@/components/TextEditor/components/TextEditorLinkDialog';
 
 interface TextEditorProps {
@@ -36,51 +25,25 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
     const editor = useEditor({
       editable,
+      immediatelyRender: false,
+      shouldRerenderOnTransaction: true,
       editorProps: {
         attributes: {
           class:
             'prose prose-sm sm:prose m-5 focus:outline-none max-w-full',
         },
       },
-      extensions: [
-        LinkBookmark,
-        AttachmentImage.configure({
-          errorCallback: () => setImgError(true),
-        }),
-
-        StarterKit.configure({
-          bold: false,
-          italic: false,
-          codeBlock: false,
-          heading: {
-            levels: [1, 2, 3],
-          },
-        }),
-        Underline,
-        CustomCodeBlock,
-        Link.configure({
-          openOnClick: false,
-          autolink: false,
-          linkOnPaste: false,
-        }),
-        Placeholder.configure({
-          placeholder: 'Write something …',
-          showOnlyWhenEditable: true,
-        }),
-        Italic,
-        TextStyle,
-        Color.configure({
-          types: ['textStyle'],
-        }),
-        Bold,
-      ],
+      extensions: createEditorExtensions({
+        placeholder: 'Write something …',
+        onImageError: () => setImgError(true),
+      }),
       content,
     });
 
     // view 모드일 땐 content만 갱신
     useEffect(() => {
       if (editor && !editable) {
-        editor.commands.setContent(content);
+        editor.commands.setContent(content, { emitUpdate: false });
       }
     }, [content, editable, editor]);
 

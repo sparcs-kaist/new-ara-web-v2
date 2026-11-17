@@ -8,7 +8,7 @@ import type { AttachmentsHandles } from "../components/Attachments";
 import TextEditor from "../../../components/TextEditor/TextEditor";
 import { CourseOptionBar } from "../components/PostOptionBar";
 import Attachments, { UploadObject } from "../components/Attachments";
-import type { Node as ProseMirrorNode } from "prosemirror-model";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { updatePost, fetchCoursePost, createCoursePost } from "@/lib/api/post";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCourses } from "@/lib/api/user";

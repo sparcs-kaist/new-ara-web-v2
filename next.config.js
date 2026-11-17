@@ -11,6 +11,5 @@ const merge = (a, b) => ({
 
 module.exports = () => {
   const isDev = process.env.NEXT_PUBLIC_APP_ENV === 'development'; //dev server + local
-  const isProd = process.env.NEXT_PUBLIC_APP_ENV === 'production';
   return isDev ? merge(base, dev) : merge(base, prod);
 };

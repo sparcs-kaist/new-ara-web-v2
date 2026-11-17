@@ -69,7 +69,7 @@ const CustomComponent = (props: ExtendedNodeViewRendererProps) => {
         ))}
       </select>
       <pre>
-        <NodeViewContent as="code" spellCheck={false}/>
+        <NodeViewContent<'code'> as="code" spellCheck={false}/>
       </pre>
     </NodeViewWrapper>
   );

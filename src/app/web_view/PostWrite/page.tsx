@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Editor } from '@tiptap/react';
-import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import {
     AppHeader,
     ClipBadgeIcon,

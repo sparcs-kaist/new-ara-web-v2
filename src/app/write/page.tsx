@@ -8,7 +8,7 @@ import type { AttachmentsHandles } from "./components/Attachments";
 import TextEditor from "../../components/TextEditor/TextEditor";
 import { BoardOptionBar } from "./components/PostOptionBar";
 import Attachments, { UploadObject } from "./components/Attachments";
-import type { Node as ProseMirrorNode } from "prosemirror-model";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { createPost, updatePost, fetchPost } from "@/lib/api/post"; // updatePost, fetchPost import
 import { fetchBoardList } from "@/lib/api/board";
 import {

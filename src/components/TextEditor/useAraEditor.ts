@@ -2,17 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-import LinkBookmark from '@/components/TextEditor/components/LinkBookmark';
-import AttachmentImage from '@/components/TextEditor/components/AttachmentImage';
-import { CustomCodeBlock } from '@/components/TextEditor/components/CodeBlock';
+import { createEditorExtensions } from './extensions';
 import { cleanJsonString } from '@/components/TextEditor/utils/cleanJsonString';
 
 const PROSE_CLASS = 'prose prose-sm sm:prose focus:outline-none max-w-full';
@@ -36,42 +26,17 @@ export default function useAraEditor({
 
   const editor = useEditor({
     editable,
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
         class: className ? `${PROSE_CLASS} ${className}` : PROSE_CLASS,
       },
     },
-    extensions: [
-      LinkBookmark,
-      AttachmentImage.configure({
-        errorCallback: onImageError,
-      }),
-      StarterKit.configure({
-        bold: false,
-        italic: false,
-        codeBlock: false,
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      Underline,
-      CustomCodeBlock,
-      Link.configure({
-        openOnClick: false,
-        autolink: false,
-        linkOnPaste: false,
-      }),
-      Placeholder.configure({
-        placeholder: () => placeholderRef.current,
-        showOnlyWhenEditable: true,
-      }),
-      Italic,
-      TextStyle,
-      Color.configure({
-        types: ['textStyle'],
-      }),
-      Bold,
-    ],
+    extensions: createEditorExtensions({
+      placeholder: () => placeholderRef.current,
+      onImageError,
+    }),
     // The content option only applies at creation; posts load later, so the effect below sets it.
     content: '',
   });
@@ -108,12 +73,12 @@ export default function useAraEditor({
 
         // Only replace when empty or different, so an unchanged prop does not jump the caret.
         if (editor.isEmpty || currentContentStr !== newContentStr) {
-          editor.commands.setContent(parsedContent, false);
+          editor.commands.setContent(parsedContent, { emitUpdate: false });
         }
       }
     } catch (e) {
       if (typeof content === 'string' && editor.getText() !== content) {
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, { emitUpdate: false });
       }
       console.error('Failed to parse content even after cleaning, treating as plain text:', e);
     }

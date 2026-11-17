@@ -58,11 +58,11 @@
         }
     },
     "devDependencies": {
-        "@types/react": "^19",
-        "jsdom": "^26",
-        "tsup": "^8",
-        "typescript": "^5",
-        "vitest": "^3"
+        "@types/react": "^19.3.0",
+        "jsdom": "^31.0.1",
+        "tsup": "^9.0.0",
+        "typescript": "~6.0.3",
+        "vitest": "^5.1.0"
     },
     "keywords": [
         "keyboard",

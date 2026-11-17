@@ -98,11 +98,12 @@ const AttachmentImage = Node.create<AttachmentImageOptions>({
 
   addAttributes() {
     return {
-      src: { default: null },
-      alt: { default: null },
-      title: { default: null },
+      src: { default: null, parseHTML: element => element.getAttribute('src') },
+      alt: { default: null, parseHTML: element => element.getAttribute('alt') },
+      title: { default: null, parseHTML: element => element.getAttribute('title') },
       width: { default: 500 },
-      'data-attachment': { default: null },
+      // v3 otherwise coerces numeric-looking identifiers when pasting HTML.
+      'data-attachment': { default: null, parseHTML: element => element.getAttribute('data-attachment') },
     }
   },
 

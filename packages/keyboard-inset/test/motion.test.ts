@@ -265,7 +265,8 @@ describe('getSharedKeyboardGlide', () => {
         expect(getSharedKeyboardGlide({ glide: true })).toBe(a);
         expect(getSharedKeyboardGlide({ glide: true, glideThresholdPx: 8 })).not.toBe(a);
         // Callers pass their whole hook options; only the glide ones split the cache.
-        expect(getSharedKeyboardGlide({ glide: true, prefix: 'ara' })).toBe(a);
+        const hookOptions = { glide: true, prefix: 'ara' };
+        expect(getSharedKeyboardGlide(hookOptions)).toBe(a);
         a.destroy();
         expect(getSharedKeyboardGlide({ glide: true })).not.toBe(a);
     });
