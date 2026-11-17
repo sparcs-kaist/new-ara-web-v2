@@ -206,7 +206,8 @@ const TextEditor = forwardRef<Editor | null, TextEditorProps>(
 
         <EditorContent
           editor={editor}
-          className={`editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none ${editable ? 'p-4' : ''
+          // 높이는 wrapper가 아니라 실제 입력 영역(.ProseMirror)에 줘야 빈 공간을 클릭해도 포커스된다.
+          className={`editor-content w-full max-w-full text-sm leading-relaxed dark:text-gray-100 min-h-[10rem] focus:outline-none ${editable ? 'p-4 [&_.ProseMirror]:min-h-[8rem] [&_.ProseMirror]:cursor-text' : ''
             }`}
         />
 
