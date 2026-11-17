@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test:attachments": "node --test tests/attachment-upload.test.cjs",
     "lint": "next lint",
     "lint:package": "eslint packages/keyboard-inset/src",
     "build:server": "next build"

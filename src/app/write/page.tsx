@@ -2,6 +2,7 @@
 
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { attachmentsReady } from '@/lib/useAttachmentUploads';
 import { useSearchParams, useRouter } from "next/navigation"; // useRouter import
 import type { Editor } from "@tiptap/react";
 import type { AttachmentsHandles } from "./components/Attachments";
@@ -151,12 +152,16 @@ export default function Write() {
   // 에디터 -> Attachments (업로드) -> 에디터 삽입
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const uploads = await attachmentsRef.current?.handleUpload(e.target.files);
+    await attachmentsRef.current?.handleUpload(e.target.files);
+    e.target.value = "";
+  };
+
+  const handleAttachmentAdd = (uploads: UploadObject[]) => {
     const editor = editorRef.current;
-    if (!editor || !uploads) return;
+    if (!editor) return;
 
     // 서버가 준 URL 을 바로 에디터에 삽입
-    uploads.forEach((u) => {
+    uploads.filter(u => u.type === 'image').forEach((u) => {
       editor
         .chain()
         .focus()
@@ -168,7 +173,6 @@ export default function Write() {
         .run();
     });
 
-    e.target.value = "";
   };
 
   // 삭제 시 에디터에서도 지우기
@@ -200,6 +204,10 @@ export default function Write() {
   const handleSavePost = async () => {
     if (!editorRef.current) return;
     const attachmentFiles = attachmentsRef.current?.files ?? [];
+    if (!attachmentsReady(attachmentFiles)) {
+      alert('첨부파일 업로드를 완료하거나 실패한 파일을 제거해 주세요.');
+      return;
+    }
     if (isPosterBoard) {
       const imageCount = attachmentFiles.filter(
         (f) => f.type === "image",
@@ -437,6 +445,7 @@ export default function Write() {
         <Attachments
           ref={attachmentsRef}
           onDelete={handleAttachmentDelete}
+          onAdd={handleAttachmentAdd}
           initialFiles={initialAttachments}
         />
 
