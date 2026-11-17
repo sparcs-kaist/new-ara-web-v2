@@ -9,7 +9,8 @@ import React, {
   useCallback,
 } from "react";
 import Image from "next/image";
-import { uploadAttachments } from "@/lib/api/post";
+import { useAttachmentUploads, type UploadObject } from '@/lib/useAttachmentUploads';
+export type { UploadObject } from '@/lib/useAttachmentUploads';
 
 const ALLOWED_EXTENSIONS = [
   "txt",
@@ -26,16 +27,6 @@ const ALLOWED_EXTENSIONS = [
   "jpeg",
   "gif",
 ];
-
-export interface UploadObject {
-  key: string;
-  name: string;
-  type: string; // 'image', 'text', ...
-  uploaded: boolean;
-  file?: File;
-  url?: string; //서버가 준 파일 URL
-  blobUrl?: string | null; // local preview
-}
 
 export interface AttachmentsHandles {
   handleUpload: (files: FileList | File[]) => Promise<UploadObject[]>;
@@ -55,7 +46,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
   (props, ref) => {
     const { multiple = false, onAdd, onDelete, accepted, initialFiles } = props;
 
-    const [files, setFiles] = useState<UploadObject[]>([]);
+    const { files, filesRef, setFiles, upload, retry, remove } = useAttachmentUploads(onAdd);
     const [dropzoneEnabled, setDropzoneEnabled] = useState(false);
 
     //자식 요소위에서도 drag state를 관리하기 위해 counter 사용
@@ -70,72 +61,14 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
     const imageInputRef = useRef<HTMLInputElement>(null);
 // 파일 업로드 처리
     const handleUpload = useCallback(async (fileList: FileList | File[]) => {
-      const filesArray = Array.from(fileList);
-
-      const [success, error] = filesArray.reduce<
-        [UploadObject[], UploadObject[]]
-      >(
-        ([successArr, errorArr], file) => {
-          const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-          const isAllowed = ALLOWED_EXTENSIONS.includes(extension);
-
-          const uploadObject: UploadObject = {
-            key: Math.random().toString(36).slice(2),
-            type: file.type.split("/")[0],
-            name: file.name,
-            uploaded: false,
-            file,
-            blobUrl: undefined,
-          };
-
-          if (!isAllowed) {
-            errorArr.push(uploadObject);
-            return [successArr, errorArr];
-          }
-
-          if (uploadObject.type === "image") {
-            uploadObject.blobUrl = URL.createObjectURL(file);
-          }
-
-          successArr.push(uploadObject);
-          return [successArr, errorArr];
-        },
-        [[], []],
-      );
-
-      if (error.length > 0) {
-        setDropzoneFailedReason("dropzone-unallowed-extensions");
-        setTimeout(() => {
-          setDropzoneFailedReason(null);
-        }, 1500);
+      const selected = Array.from(fileList);
+      const allowed = selected.filter(file => ALLOWED_EXTENSIONS.includes(file.name.split('.').pop()?.toLowerCase() ?? ''));
+      if (allowed.length !== selected.length) {
+        setDropzoneFailedReason('dropzone-unallowed-extensions');
+        setTimeout(() => setDropzoneFailedReason(null), 1500);
       }
-      //upload to server
-      const response = await uploadAttachments(
-        success.map((u) => ({ file: u.file!, alias: u.file?.name })),
-      );
-      const result = Array.isArray(response) ? response : [response];
-
-      // 서버에서 받은 id·url을 포함한 최종 배열 생성
-      const updated: UploadObject[] = success.map((u, i) => {
-        const { id, file: url } = result[i].data;
-        return {
-          key: String(id),
-          name: u.name,
-          type: u.type,
-          uploaded: true,
-          file: u.file,
-          url,
-          blobUrl: url,
-        };
-      });
-
-      // 최종 배열을 한 번에 state 에 추가
-      setFiles((prev) => [...prev, ...updated]);
-
-      // onAdd 콜백
-      onAdd?.(updated);
-      return updated;
-    }, [onAdd]);
+      return upload(allowed);
+    }, [upload]);
     
     // Paste 이벤트 리스너
     useEffect(() => {
@@ -162,14 +95,8 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
       document.addEventListener("paste", pasteListener);
       return () => {
         document.removeEventListener("paste", pasteListener);
-        // blobUrl 해제
-        files.forEach((file) => {
-          if (file.blobUrl) {
-            URL.revokeObjectURL(file.blobUrl);
-          }
-        });
       };
-    }, [files, handleUpload]);
+    }, [handleUpload]);
 
     // Merge initial files from parent (edit mode)
     useEffect(() => {
@@ -182,7 +109,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
         });
         return merged;
       });
-    }, [initialFiles]);
+    }, [initialFiles, setFiles]);
 
     
 
@@ -245,10 +172,7 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
 
     // 파일 삭제
     const deleteFile = (file: UploadObject) => {
-      setFiles((prev) => prev.filter((f) => f.key !== file.key));
-      if (file.blobUrl) {
-        URL.revokeObjectURL(file.blobUrl);
-      }
+      remove(file);
       if (onDelete) onDelete(file);
     };
 
@@ -257,12 +181,12 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
       ref,
       () => ({
         handleUpload,
-        files,
+        get files() { return filesRef.current; },
         openImageUpload: () => {
           imageInputRef.current?.click();
         },
       }),
-      [files, handleUpload],
+      [filesRef, handleUpload],
     );
 
     return (
@@ -333,6 +257,10 @@ const Attachments = forwardRef<AttachmentsHandles, AttachmentsProps>(
                   <span className="flex-1 min-w-0 truncate" title={file.name}>
                     {file.name}
                   </span>
+                  <span role="status" className="text-sm text-gray-500">
+                    {file.status === 'uploading' ? '업로드 중…' : file.status === 'failed' ? file.error : '완료'}
+                  </span>
+                  {file.status === 'failed' && <button type="button" onClick={() => void retry(file.key)}>재시도</button>}
                   <button
                     type="button"
                     className="bg-transparent font-normal text-[#ed3a3a] rounded-full px-3 py-0.5 shrink-0

@@ -23,11 +23,6 @@ interface PostParams {
   scope?: ArticleScope;
 }
 
-interface AttachmentParams {
-  file: File;
-  alias?: string | null;
-}
-
 // 게시글 단건 조회 (context에 vote action을 넣으면 해당 액션 경로 호출)
 export const fetchPost = async ({
   postId,
@@ -264,37 +259,7 @@ export const deleteComment = async (commentId: number) => {
 };
 
 // 파일 업로드 (단일/다중)
-export const uploadAttachments = async (
-  attachments: AttachmentParams | AttachmentParams[],
-) => {
-  const generateFormData = (attachment: AttachmentParams) => {
-    const formData = new FormData();
-    formData.append("file", attachment.file);
-
-    if (attachment.alias) {
-      formData.append("alias", attachment.alias);
-    }
-
-    return formData;
-  };
-
-  const httpOptions = {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  };
-
-  // @TODO: File type인지 체크하기
-  if (Array.isArray(attachments)) {
-    return Promise.all(
-      attachments.map((attachment) =>
-        http.post("attachments/", generateFormData(attachment), httpOptions),
-      ),
-    );
-  }
-
-  return http.post("attachments/", generateFormData(attachments), httpOptions);
-};
+export { uploadAttachments } from './attachmentUpload';
 
 export const fetchCoursePost = async ({ courseId, postId }: { courseId: number, postId: number}) => {
   const { data } = await http.get(`/courses/${courseId}/articles/${postId}/`);

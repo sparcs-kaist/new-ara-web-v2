@@ -262,7 +262,9 @@ const projects: Project[] = [
         "youns:최윤서",
         "appleseed:강찬규",
         "kwon:권남윤",
-        "benny:문가온"
+        "benny:문가온",
+        "autumn:최태훈",
+        "sori:유태영",
       ],
       DS: [
         "cheese:서인성",
